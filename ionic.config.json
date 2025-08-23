@@ -1,0 +1,7 @@
+{
+  "name": "oniduuru-marketplace",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
