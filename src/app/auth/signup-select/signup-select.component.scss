@@ -1,0 +1,12 @@
+body{
+    background-color: black;
+}
+
+/* my-page.component.scss */
+@import "@ionic/angular/css/palettes/dark.system.css";
+
+/* Optional: force dark theme regardless of system preference */
+:host {
+  --ion-background-color: #000;
+  --ion-text-color: #fff;
+}

@@ -5,6 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { HomePage } from './home.page';
 
 import { HomePageRoutingModule } from './home-routing.module';
+import { MaterialModule } from '../shared/material-module';
+import { WelcomePageComponent } from "../auth/welcome-page/welcome-page.component";
+
 
 
 @NgModule({
@@ -12,8 +15,10 @@ import { HomePageRoutingModule } from './home-routing.module';
     CommonModule,
     FormsModule,
     IonicModule,
-    HomePageRoutingModule
-  ],
+    HomePageRoutingModule,
+    MaterialModule,
+    WelcomePageComponent
+],
   declarations: [HomePage]
 })
 export class HomePageModule {}

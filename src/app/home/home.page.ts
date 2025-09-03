@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { accountOptions } from '../models/stores';
 
 @Component({
   selector: 'app-home',
@@ -8,6 +9,7 @@ import { Component } from '@angular/core';
 })
 export class HomePage {
 
+   accountOption: any[] = accountOptions;
   constructor() {}
 
 }

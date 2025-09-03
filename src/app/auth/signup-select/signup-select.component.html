@@ -1,0 +1,41 @@
+<ion-content [fullscreen]="true" class="ion-padding bg-black">
+  <div class="flex flex-col lg:flex-row p-4 lg:p-8 space-y-6 lg:space-y-0 lg:space-x-6 min-h-screen">
+
+    <!--Talent's Card -->
+    <div (click)="routeToTalentSignup()"
+      class="relative w-full lg:w-1/2 h-[28rem] rounded-3xl overflow-hidden shadow-2xl transition-transform transform duration-300 ease-in-out hover:scale-105 cursor-pointer group"
+    >
+      <img
+        [src]="talentImage"
+        alt="Talent"
+        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-75"
+      />
+      <div class="absolute inset-0 bg-black opacity-25 group-hover:opacity-50 transition-opacity duration-300"></div>
+      <div class="relative z-10 p-6 flex flex-col justify-end h-full text-white">
+        <h2 class="text-3xl font-bold mb-2">Talent Signup</h2>
+        <p class="text-lg">
+          Create your profile, showcase your work, and connect with top recruiters across Africa.
+        </p>
+      </div>
+    </div>
+
+    <!--Scouter's Card -->
+    <div (click)="routeToScouterSignup()"
+      class="relative w-full lg:w-1/2 h-[28rem] rounded-3xl overflow-hidden shadow-2xl transition-transform transform duration-300 ease-in-out hover:scale-105 cursor-pointer group"
+    >
+      <img
+        [src]="scouterImage"
+        alt="Scouter"
+        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-75"
+      />
+      <div class="absolute inset-0 bg-black opacity-25 group-hover:opacity-50 transition-opacity duration-300"></div>
+      <div class="relative z-10 p-6 flex flex-col justify-end h-full text-white">
+        <h2 class="text-3xl font-bold mb-2">Scouter Signup</h2>
+        <p class="text-lg">
+          Sign up, discover vetted talents, manage contracts, & resolve business needs
+        </p>
+      </div>
+    </div>
+
+  </div>
+</ion-content>

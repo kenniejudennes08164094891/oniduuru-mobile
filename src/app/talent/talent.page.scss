@@ -1,0 +1,10 @@
+.example-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+ion-tab-button {
+  --color-selected: #101828; /* Tailwind blue-500 */
+}

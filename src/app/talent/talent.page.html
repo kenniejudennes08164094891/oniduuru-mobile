@@ -1,0 +1,11 @@
+<ion-tabs>
+  <!-- Content of selected tab renders here -->
+  <ion-router-outlet></ion-router-outlet>
+
+  <!-- Tab bar -->
+  <ion-tab-bar slot="bottom" class="bg-gray-900 text-white">
+    <ion-tab-button *ngFor="let tab of tabItems" [tab]="tab.path" [routerLink]="tab.routerLink">
+     <ion-icon [name]="tab.ionIcon"></ion-icon>
+    </ion-tab-button>
+  </ion-tab-bar>
+</ion-tabs>

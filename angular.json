@@ -31,7 +31,10 @@
                 "output": "./svg"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
+            "styles": [
+              "src/global.scss",
+              "src/theme/variables.scss"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -72,12 +75,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "app:build"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "app:build:production"
+                 "browserTarget": "app:build:production"
             },
             "development": {
-              "buildTarget": "app:build:development"
+               "browserTarget": "app:build:development"
             },
             "ci": {
               "progress": false
@@ -111,8 +117,14 @@
                 "output": "./svg"
               }
             ],
-            "styles": ["src/global.scss", "src/theme/variables.scss"],
-            "scripts": []
+            "styles": [
+              "src/global.scss",
+              "src/theme/variables.scss",
+              "src/theme/material-theme.scss"
+            ],
+            "scripts": [
+              "node_modules/flowbite/dist/flowbite.js"
+            ]
           },
           "configurations": {
             "ci": {

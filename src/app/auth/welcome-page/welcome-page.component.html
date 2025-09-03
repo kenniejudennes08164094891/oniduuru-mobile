@@ -1,0 +1,72 @@
+<body>
+  <ion-header [translucent]="false">
+    <mat-toolbar class="flex justify-between items-center shadow-lg px-4 navbar h-20">
+      <span class="text-lg font-semibold">∯ Oniduuru</span>
+      <div class="flex gap-3">
+        <button mat-button class="text-sm">Sign In</button>
+        <button (click)="signupSelect()" mat-button class="text-sm">Create Account</button>
+      </div>
+    </mat-toolbar>
+  </ion-header>
+
+
+  <ion-content class="h-screen [--background:transparent] p-0">
+    <ion-grid class="h-full grid grid-rows-4 bg-transparen float-left">
+
+      <!-- Row 1 -->
+      <ion-row class="flex justify-center items-center bg-transparent">
+        <ion-col class="text-white text-center">
+        </ion-col>
+      </ion-row>
+
+      <!-- Row 2 -->
+      <ion-row class="flex justify-center items-center bg-transparent">
+        <ion-col class="text-white text-center">
+          <div class="m-auto w-full max-w-xs md:max-w-md lg:max-w-lg px-4">
+            <h2 class="text-white text-xl md:text-3xl lg:text-4xl font-semibold text-left">
+              <!-- Oniduuru Marketplace -->
+              <span class="text-animation" #textAnimation></span>
+            </h2>
+          
+            <p class="text-gray-300 text-sm md:text-lg lg:text-xl text-left">
+              An efficient social services platform to find skill services
+            </p>
+            <!-- <ion-button expand="block" class="mt-4 w-fit text-white bg-[#101323] [--background:#101323] 
+               hover:bg-white/10 rounded-lg px-4 py-2 md:px-6 md:py-3 md:text-lg lg:text-xl">
+              Get Started
+            </ion-button> -->
+            <ion-button expand="block"
+              class="mt-4 w-fit text-white bg-[#101323] [--background:#101323] hover:bg-white/10 rounded-lg">
+              Get Started
+            </ion-button>
+          </div>
+        </ion-col>
+      </ion-row>
+
+      <!-- Row 3 -->
+      <ion-row class="flex justify-center items-center bg-transparent">
+        <ion-col class="text-white text-center">
+        </ion-col>
+      </ion-row>
+
+      <!-- Row 4 -->
+      <ion-row class="flex justify-center items-center bg-transparent">
+        <ion-col class="text-white text-center">
+        </ion-col>
+      </ion-row>
+
+    </ion-grid>
+  </ion-content>
+
+
+
+
+  <ion-footer class="bg-[#101323] text-gray-200">
+    <ion-toolbar>
+      <ion-title class="text-center text-gray-200">
+        © 2025 Oniduuru Marketplace
+      </ion-title>
+    </ion-toolbar>
+  </ion-footer>
+
+</body>
