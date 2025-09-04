@@ -9,12 +9,13 @@ import {MatMenuModule} from '@angular/material/menu';
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatSelectModule} from "@angular/material/select";
 import {MatRadioModule} from '@angular/material/radio';
+import {MatSnackBarModule} from "@angular/material/snack-bar";
 
 // ng generate module shared/material --module=app --flat
 
 const materialModules = [
 MatButtonModule, MatInputModule, MatIconModule, MatCardModule, MatToolbarModule,MatMenuModule,
-MatFormFieldModule,MatSelectModule,MatRadioModule
+MatFormFieldModule,MatSelectModule,MatRadioModule,MatSnackBarModule
 ];
 
 @NgModule({

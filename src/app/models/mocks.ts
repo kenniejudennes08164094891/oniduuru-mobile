@@ -13,3 +13,7 @@ export interface TabItems{
     ionIcon: string;
     routerLink?:string;
 }
+export interface LoginCredentials{
+  email: string,
+  password: string
+}

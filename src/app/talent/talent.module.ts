@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { TalentPageRoutingModule } from './talent-routing.module';
 import { TalentPage } from './talent.page';
+import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
+import {SpinnerComponent} from "../utilities/spinner/spinner.component";
 
 @NgModule({
   imports: [
@@ -12,8 +14,11 @@ import { TalentPage } from './talent.page';
     IonicModule,
     TalentPageRoutingModule
   ],
+  exports: [
+    SpinnerComponent
+  ],
   declarations: [
-    TalentPage
-  ] 
+    TalentPage, TalentDashboardComponent, SpinnerComponent
+  ]
 })
 export class TalentPageModule { }

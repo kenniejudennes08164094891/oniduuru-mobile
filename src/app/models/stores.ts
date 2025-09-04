@@ -26,3 +26,8 @@ export const talentOnboardingTabItems:TabItems[] = [
 {  path: 'talent-login-credentials', ionIcon: 'key-outline' , routerLink:'/talent/create-account/talent-login-credentials' },
 {  path: 'talent-verify-credentials', ionIcon: 'shield-checkmark-outline',  routerLink:'/talent/create-account/talent-verify-credentials' },
 ]
+
+export const dummyLogin = [
+  { email: 'scouter@oniduuru.com', password: 'scouter', role: 'scouter', route: '/scouter/dashboard' },
+  { email: 'talent@oniduuru.com', password: 'talent', role: 'talent', route: '/talent/dashboard' }
+];

@@ -9,15 +9,18 @@ import { initFlowbite } from 'flowbite';
   standalone: false,
 })
 export class AppComponent implements OnInit {
-  constructor(private router:Router) { }
+  constructor(private router:Router) {
+    document.body.classList.remove('dark');
+  }
 
   ngOnInit(): void {
-      console.log("current url>>",window.location.pathname);
     initFlowbite();
+    document.body.classList.remove('dark');
   }
 
   toggleDarkMode() {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-    document.body.classList.toggle('dark', prefersDark.matches);
+    // const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    // document.body.classList.toggle('dark', prefersDark.matches);
+    document.body.classList.remove('dark');
   }
 }
