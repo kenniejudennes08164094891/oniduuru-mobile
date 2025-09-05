@@ -1,20 +1,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { IonicModule } from '@ionic/angular';
-
 import { UtilitiesPageRoutingModule } from './utilities-routing.module';
-
 import { UtilitiesPage } from './utilities.page';
+import {ToastComponent} from "./toast/toast.component";
+import {MaterialModule} from "../shared/material-module";
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    UtilitiesPageRoutingModule
+    UtilitiesPageRoutingModule,
+    MaterialModule
   ],
-  declarations: [UtilitiesPage]
+  declarations: [UtilitiesPage,ToastComponent]
 })
 export class UtilitiesPageModule {}

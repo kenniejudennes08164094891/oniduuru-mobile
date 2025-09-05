@@ -1,11 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule,ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AuthPageRoutingModule } from './auth-routing.module';
 import { AuthPage } from './auth.page';
 import { WelcomePageComponent } from './welcome-page/welcome-page.component';
-import { SignupSelectComponent } from './signup-select/signup-select.component';
+import {MatToolbarModule} from "@angular/material/toolbar";
+
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { SignupSelectComponent } from './signup-select/signup-select.component';
     IonicModule,
     AuthPageRoutingModule,
     WelcomePageComponent,
-    // SignupSelectComponent
+    MatToolbarModule,
+    ReactiveFormsModule
   ],
   declarations: [AuthPage]
 })

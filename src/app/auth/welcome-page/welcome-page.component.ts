@@ -32,13 +32,19 @@ export class WelcomePageComponent implements AfterViewInit {
   }, 150); // Adjust the speed of typing here (in milliseconds)
 }
 
-signupSelect(){
-  this.router.navigate(['/auth/signup-select'], {relativeTo: this.route});
+async signupSelect():Promise<any>{
+  await this.router.navigate(['/auth/signup-select'], {relativeTo: this.route});
+}
+
+async routeToLoginScreen():Promise<any>{
+   await this.router.navigate(['/auth/login'],{
+      relativeTo: this.route
+    })
 }
 
 
 ngAfterViewInit(): void {
-  this.animateText(); 
+  this.animateText();
 }
 
 

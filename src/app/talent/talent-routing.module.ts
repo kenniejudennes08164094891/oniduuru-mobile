@@ -5,7 +5,7 @@ import { LoginCredentialsComponent } from './onboarding/login-credentials/login-
 import { OtherDetailsComponent } from './onboarding/other-details/other-details.component';
 import { TalentDetailsComponent } from './onboarding/talent-details/talent-details.component';
 import { VerifyCredentialsComponent } from './onboarding/verify-credentials/verify-credentials.component';
-
+import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
 
 const routes: Routes = [
   {
@@ -19,6 +19,10 @@ const routes: Routes = [
       { path: 'talent-verify-credentials', component: VerifyCredentialsComponent },
     ]
   },
+  {
+    path: 'dashboard',
+    component: TalentDashboardComponent
+  }
 ];
 
 @NgModule({

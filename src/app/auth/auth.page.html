@@ -1,13 +1,100 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>auth</ion-title>
-  </ion-toolbar>
+<body>
+<ion-header [translucent]="false">
+  <mat-toolbar class="flex justify-between items-center shadow-lg px-4 navbar h-20">
+    <span class="text-lg font-semibold">∯ Oniduuru</span>
+    <div class="flex gap-3">
+      <button (click)="signupSelect()" mat-button class="text-sm">Create Account</button>
+    </div>
+  </mat-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">auth</ion-title>
-    </ion-toolbar>
-  </ion-header>
+
+<ion-content class="h-screen [--background:transparent] p-0">
+  <ion-grid class="h-full grid grid-rows-4 bg-transparen float-left w-full">
+
+    <!-- Row 1 -->
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center">
+      </ion-col>
+    </ion-row>
+
+    <!-- Row 2 -->
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center">
+        <form [formGroup]="loginForm" (keyup.enter)="submitForm()" class="max-w-sm mx-auto">
+          <h1 class="text-2xl font-bold mb-4 float-left" id="signIn-text">
+            Welcome back — sign in
+          </h1>
+          <br><br>
+          <div class="mb-5">
+            <label for="email" class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white float-left">Email</label>
+            <input type="email" formControlName="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Input email" required />
+          </div>
+          <div class="mb-5 relative">
+            <label class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white float-left">Your password</label>
+            <div class="relative">
+              <input
+                [type]="showEye ? 'text' : 'password'"
+                placeholder="Input your password"
+                formControlName="password"
+                class="w-full text-gray-900 px-3 py-2 border rounded-md pr-10"
+              >
+
+              <ion-icon
+                (click)="showEye = !showEye"
+                [name]="showEye ? 'eye-outline' : 'eye-off-outline'"
+                class="absolute right-3 top-1/2 mt-4 -translate-y-1/2 text-gray-500 cursor-pointer text-xl"
+              >
+              </ion-icon>
+            </div>
+
+          </div>
+          <div class="flex items-center justify-between mb-5">
+            <!-- Remember me -->
+            <div class="flex items-center">
+              <input
+                id="remember"
+                type="checkbox"
+                class="w-4 h-4 cursor-pointer text-[#101323] bg-[#ffff] border-[#101323] rounded focus:ring-[#101323] dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label for="remember" class="ml-2 text-sm font-medium text-[#FFFFFF] dark:text-gray-300">
+                Remember me
+              </label>
+            </div>
+
+            <!-- Forgot password -->
+            <a class="text-sm text-[#FFFFFF] hover:underline dark:text-blue-500">
+              Forgot password?
+            </a>
+          </div>
+
+          <ion-button (click)="submitForm()"
+            [disabled]="!loginForm.valid"
+            [ngClass]="{ 'disabled-btn': !loginForm.valid ,'active-btn': loginForm.valid }"
+            expand="block"
+            [color]="!loginForm.valid ? null : 'primary'"
+            type="submit" class="text-[#FFFFFF]">
+            {{loginText}}
+          </ion-button>
+
+        </form>
+
+      </ion-col>
+    </ion-row>
+
+    <!-- Row 3 -->
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center">
+      </ion-col>
+    </ion-row>
+
+    <!-- Row 4 -->
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center">
+      </ion-col>
+    </ion-row>
+
+  </ion-grid>
 </ion-content>
+
+</body>
