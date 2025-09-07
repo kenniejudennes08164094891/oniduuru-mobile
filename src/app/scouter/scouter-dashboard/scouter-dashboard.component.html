@@ -1,6 +1,237 @@
-<p>
-  scouter-dashboard works!
-</p>
-<div *ngIf="showSpinner === true">
+<!-- Modified HTML with header scroll behavior -->
+<div
+  *ngIf="showSpinner"
+  class="fixed inset-0 flex items-center justify-center bg-white z-50"
+>
   <app-spinner [loadingText]="loading"></app-spinner>
 </div>
+
+<!-- Always show content but make it invisible during loading -->
+<ion-content fullscreen (ionScroll)="onContentScroll($event)">
+  <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
+    <app-scouter-header
+      [class.header-hidden]="headerHidden"
+      [class.header-visible]="!headerHidden"
+    >
+    </app-scouter-header>
+
+    <div class="container mx-auto px-4 py-6 flex-1">
+      <!-- Rest of your content remains exactly the same -->
+      <!-- Greeting section -->
+      <div class="flex items-center gap-3 mb-6">
+        <span class="text-2xl">{{ timeIcon }}</span>
+        <span class="text-xl font-semibold text-gray-800"
+          >Good {{ timeOfDay }}, {{ userName }}</span
+        >
+      </div>
+
+      <!-- Info Card with background image and dark overlay -->
+      <div
+        class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
+      >
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon
+              class="h-7 w-7"
+              name="information-circle-outline"
+            ></ion-icon>
+            <span class="font-normal text-[20px] leading-tight"
+              >YOU CAN HIRE TALENTS AFTER MAKING A YEARLY ONE-TIME PAYMENT</span
+            >
+          </div>
+          <p class="text-gray-200 mb-4 text-lg leading-relaxed">
+            Please click the 'Make Payment' button below to initiate your
+            payment and upload your payment receipt.
+          </p>
+          <ion-button
+            fill=""
+            class="bg-transparent rounded-lg hover:bg-white hover:cursor-pointer hover:text-black"
+          >
+            Make Payment
+          </ion-button>
+        </div>
+      </div>
+
+      <div class="border py-6 px-3 mt-12">
+        <!-- Dashboard content goes here -->
+        <h3 class="text-xl font-semibold py-5 md:text-left">
+          Scouter's Dashboard Statistics
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            *ngFor="let card of dashboardCards"
+            class="bg-white rounded-lg shadow-md p-6 border border-gray-300"
+          >
+            <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
+              <!-- Status Dot -->
+              <span
+                class="h-3 w-3 rounded-full"
+                [ngStyle]="{ 'background-color': getStatusColor(card.status) }"
+              ></span>
+
+              {{ card.title }}
+            </h3>
+            <p class="text-2xl font-semibold">{{ card.value }}</p>
+          </div>
+        </div>
+
+        <div class="py-4 mt-5">
+          <h3 class="text-xl font-semibold">Total Market by Percentage</h3>
+        </div>
+        <!--  -->
+        <div class="mt-10 flex flex-col justify-center items-center">
+          <div
+            class="w-full flex flex-col md:flex-row justify-center items-center gap-8"
+          >
+            <!-- Left: Circle Chart -->
+            <div
+              class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80"
+            >
+              <!-- Circular progress indicators -->
+              <!-- Replace the circular progress indicators section with this code -->
+              <ng-container
+                *ngFor="
+                  let circle of percentageCircles;
+                  let i = index;
+                  trackBy: trackByCircle
+                "
+              >
+                <svg
+                  class="absolute"
+                  [attr.width]="circle.size"
+                  [attr.height]="circle.size"
+                  [style.zIndex]="100 - i"
+                >
+                  <!-- Grey background circle -->
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    [attr.r]="circle.size / 2 - 8"
+                    fill="none"
+                    stroke="#e5e7eb"
+                    stroke-width="8"
+                  />
+
+                  <!-- Colored progress circle -->
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    [attr.r]="circle.size / 2 - 8"
+                    fill="none"
+                    [attr.stroke]="circle.color"
+                    stroke-width="8"
+                    [attr.stroke-dasharray]="
+                      getCircumference(circle.size / 2 - 8)
+                    "
+                    [attr.stroke-dashoffset]="
+                      getStrokeDashoffset(
+                        circle.size / 2 - 8,
+                        circle.percentage
+                      )
+                    "
+                    class="transition-all duration-700 ease-in-out"
+                    [attr.transform]="
+                      'rotate(-90, ' +
+                      circle.size / 2 +
+                      ', ' +
+                      circle.size / 2 +
+                      ')'
+                    "
+                  />
+
+                  <!-- Progress Dot -->
+                  <circle
+                    [attr.cx]="
+                      getProgressDotPosition(
+                        circle.size / 2 - 8,
+                        circle.percentage,
+                        circle.size
+                      ).x
+                    "
+                    [attr.cy]="
+                      getProgressDotPosition(
+                        circle.size / 2 - 8,
+                        circle.percentage,
+                        circle.size
+                      ).y
+                    "
+                    r="5"
+                    [attr.fill]="circle.color"
+                  />
+                </svg>
+              </ng-container>
+            </div>
+
+            <!-- Right: Percentage Breakdown -->
+            <div
+              class="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 md:gap-4"
+            >
+              <div
+                *ngFor="let card of dashboardStatCards"
+                class="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="h-3 w-3 rounded-full flex-shrink-0"
+                    [ngStyle]="{
+                      'background-color': getPercentageStatusColor(card.status)
+                    }"
+                  ></span>
+                  <span
+                    class="text-gray-700 text-sm font-medium whitespace-nowrap"
+                    >{{ card.title }}</span
+                  >
+                </div>
+                <span class="text-lg font-semibold text-gray-900 ml-4">
+                  {{ card.value }}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="border py-6 px-3 mt-12">
+        <div class="">
+          <h3 class="px-4 text-xl font-semibold">My Recent Market Rating</h3>
+
+          <div class="flex flex-col items-center mt-10">
+            <img
+              class="w-[232px] h-[246px]"
+              [src]="images.NoDataImage"
+              alt="No Data "
+            />
+
+            <h4>No Data Available</h4>
+            <p>Oops!.. No record exists for now.</p>
+          </div>
+        </div>
+        <div class="mt-20">
+          <h3 class="px-4 text-xl font-semibold">My Recent Hires</h3>
+
+          <div class="flex flex-col items-center mt-10">
+            <img
+              class="w-[232px] h-[246px]"
+              [src]="images.NoDataImage"
+              alt="No Data "
+            />
+
+            <h4>No Data Available</h4>
+            <p>Oops!.. No record exists for now.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed Footer -->
+    <footer class="mt-auto py-5">
+      <div class="container mx-auto px-4 text-left text-gray-600">
+        <p>Shoft Africa © {{ currentYear }}</p>
+      </div>
+    </footer>
+  </div>
+</ion-content>

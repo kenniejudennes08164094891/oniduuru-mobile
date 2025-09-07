@@ -1,0 +1,64 @@
+/* scouter-dashboard.component.scss */
+.dark-card-background {
+  background-image: url("/assets/images/dark-card-background.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
+
+.circle-chart {
+  position: relative;
+}
+.circle-chart div {
+  transition: all 0.4s ease-in-out;
+}
+
+.hidden {
+  transform: translateY(-100%);
+}
+
+// Add these styles to your scouter-dashboard.component.scss file
+app-scouter-header {
+  position: sticky;
+  top: 0;
+  transition: transform 0.3s ease-in-out;
+  z-index: 10;
+}
+
+.header-hidden {
+  transform: translateY(-100%);
+}
+
+.header-visible {
+  transform: translateY(0);
+}
+
+
+
+// Add these styles to your component's SCSS file
+.border-4 {
+  border-width: 4px;
+}
+
+.border-solid {
+  border-style: solid;
+}
+
+// Ensure proper layering of circles
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+// Style adjustments for the percentage breakdown
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
