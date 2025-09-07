@@ -9,6 +9,7 @@ import { TalentPageModule } from '../talent/talent.module';
 import { ScouterHeaderComponent } from './scouter-header/scouter-header.component';
 import { ProfilePopupSettingsModalComponent } from '../shared/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from '../shared/modals/notifications-popup-modal/notifications-popup-modal.component';
+import { LogComplaintsPopupModalComponent } from '../shared/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
 
 @NgModule({
   imports: [
@@ -24,6 +25,7 @@ import { NotificationsPopupModalComponent } from '../shared/modals/notifications
     ScouterDashboardComponent,
     ProfilePopupSettingsModalComponent,
     NotificationsPopupModalComponent,
+    LogComplaintsPopupModalComponent,
   ],
 })
 export class ScouterPageModule {}
