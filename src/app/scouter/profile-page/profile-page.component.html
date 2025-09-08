@@ -1,0 +1,235 @@
+<ion-header>
+  <app-scouter-header
+    [class.header-hidden]="headerHidden"
+    [class.header-visible]="!headerHidden"
+  >
+  </app-scouter-header>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="bg-[#F2F4F7]">
+    <div class="space-y-4 mt-10">
+      <div
+        class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
+      >
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon
+              class="h-7 w-7"
+              name="information-circle-outline"
+            ></ion-icon>
+            <span class="font-normal text-[16px] leading-tight"
+              >Why haven’t you created your security questions yet?</span
+            >
+          </div>
+
+          <ion-button
+            fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+          >
+            Create Security Questions
+          </ion-button>
+        </div>
+      </div>
+
+      <div
+        class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
+      >
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon
+              class="h-7 w-7"
+              name="information-circle-outline"
+            ></ion-icon>
+            <span class="font-normal text-[16px] leading-tight"
+              >Why haven’t you uploaded your profile picture yet?</span
+            >
+          </div>
+
+          <ion-button
+            fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+          >
+            Upload picture
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12">
+      <div class="logcomplainModalBG h-[69px] pt-2">
+        <p class="text-white text-xl font-bold item-start mt-3 px-5">
+          Personal Information
+        </p>
+      </div>
+
+      <!-- here -->
+      <div class="p-6">
+        <!-- Profile Picture -->
+        <p class="mt-3 pb-3 text-gray-600">profile picture</p>
+        <div class="flex flex-col mb-6">
+          <!-- Outer Circle -->
+          <div
+            class="w-28 h-28 rounded-full border-4 border-gray-600 flex items-center justify-center"
+          >
+            <!-- Inner Circle -->
+            <div
+              class="w-24 h-24 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center relative"
+            >
+              <ion-icon
+                name="person-outline"
+                class="text-gray-500 text-4xl"
+              ></ion-icon>
+
+              <!-- Edit Icon -->
+              <div
+                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md"
+              >
+                <ion-icon
+                  name="pencil-outline"
+                  class="text-gray-700 text-base"
+                ></ion-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Name -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+          <input
+            type="text"
+            placeholder="Vikiwest"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          />
+        </div>
+
+        <!-- Phone Number -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2"
+            >Enter your Phone Number</label
+          >
+          <input
+            type="number"
+            placeholder="e.g 0908123456"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          />
+        </div>
+
+        <!-- Email -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2"
+            >Enter your Email Address</label
+          >
+          <input
+            type="email"
+            placeholder="baba.saala@gmail.com"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Password</label>
+          <input
+            type="password"
+            placeholder="********************"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          />
+        </div>
+
+        <!-- Location -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2"
+            >Enter your Location</label
+          >
+          <input
+            type="text"
+            placeholder="e.g Ikeja, Lagos"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="logcomplainModalBG h-[69px] pt-2">
+      <p class="text-white text-xl font-bold item-start mt-3 px-5">
+        Other Details
+      </p>
+    </div>
+
+    <div class="mt-6 px-6">
+      <!-- Phone Number -->
+      <div class="mb-4">
+        <div class="flex gap-3 items-center">
+          <label class="block text-gray-600 text-sm mb-2"
+            >Your Organization Type(s):</label
+          >
+          <span
+            class="bg-[#CAD2DF] rounded-lg px-2 py-1 mb-2 flex items-center gap-1 w-fit"
+          >
+            Individual
+            <button
+              class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
+            >
+              ×
+            </button>
+          </span>
+        </div>
+        <input
+          type="text"
+          placeholder="e.g  Corporate, Small business, Individual...etc"
+          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-gray-600 text-sm mb-2"
+          >Scouting Purpose (Reasons for Hiring talent)</label
+        >
+        <input
+          type="text"
+          placeholder="Painting"
+          class="w-full border-none rounded-md px-4 pb-32 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+        />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
+        <input
+          type="text"
+          placeholder="30,000"
+          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          (input)="formatNumber($event)"
+        />
+      </div>
+
+      <div class="space-y-4 py-16">
+        <button
+          class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer"
+        >
+          Save
+        </button>
+        <button
+          class="bg-white border border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+        >
+          Return
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fixed Footer -->
+  <footer class="mt-auto py-5">
+    <div class="container mx-auto px-4 text-left text-gray-600">
+      <p>Shoft Africa © {{ currentYear }}</p>
+    </div>
+  </footer>
+</ion-content>

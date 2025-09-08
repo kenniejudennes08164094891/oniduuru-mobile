@@ -21,6 +21,7 @@ export const imageIcons = {
   ProfileIcon: '/assets/images/Profile-Icon.svg',
   InfoIcon: '/assets/icon/Info-Icon.svg',
   NoDataImage: '/assets/images/NoDataImage.svg',
+  LogComplaintModalBg: '/assets/images/Log-complaint-background.png',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

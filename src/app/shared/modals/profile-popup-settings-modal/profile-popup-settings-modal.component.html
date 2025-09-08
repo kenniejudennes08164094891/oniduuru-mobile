@@ -1,43 +1,39 @@
-<!-- <ion-header>
-  <ion-toolbar>
-    <ion-title>Profile Settings</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="dismiss()">
-        <ion-icon name="close"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header> -->
-
 <ion-content
-  class="ion-padding bg-white rounded-2xl shadow-xl w-[250px] py-10 px-6 space-y-6"
+  class="ion-padding bg-white rounded-2xl shadow-xl w-[260px] py-8 px-6 space-y-6"
 >
+  <!-- Profile -->
   <button
+    (click)="openProfilePage()"
     class="flex items-center gap-3 text-base hover:text-primary transition"
   >
-    <ion-icon name="person-outline"></ion-icon>
-    <p>Profile</p>
+    <ion-icon name="person-outline" class="text-lg"></ion-icon>
+    <span>Profile</span>
   </button>
 
+  <!-- Account Activation -->
   <button
+    (click)="openActivationPage()"
     class="flex items-center gap-3 text-base hover:text-primary transition"
   >
-    <ion-icon name="checkmark-done-outline"></ion-icon>
-    <p>Account Activation</p>
+    <ion-icon name="checkmark-done-outline" class="text-lg"></ion-icon>
+    <span>Account Activation</span>
   </button>
 
+  <!-- Log Complaint -->
   <button
+    (click)="openComplaintModal()"
     class="flex items-center gap-3 text-base hover:text-primary transition"
   >
-    <ion-icon name="sad-outline"></ion-icon>
-    <p>Log Complain</p>
+    <ion-icon name="sad-outline" class="text-lg"></ion-icon>
+    <span>Log Complaint</span>
   </button>
 
+  <!-- Logout -->
   <button
     (click)="logoutUser()"
     class="flex items-center gap-3 text-base text-red-500 hover:text-red-600 transition"
   >
-    <ion-icon name="log-out-outline"></ion-icon>
-    <p>Logout</p>
+    <ion-icon name="log-out-outline" class="text-lg"></ion-icon>
+    <span>Logout</span>
   </button>
 </ion-content>

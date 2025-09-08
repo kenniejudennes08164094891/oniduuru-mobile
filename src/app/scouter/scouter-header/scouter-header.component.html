@@ -1,8 +1,10 @@
-<ion-header class="bg-[#CDD5DF59]">
+<ion-header class="bg-[#EEF0F6]">
   <!-- <div class="bg-[#CDD5DF59]"> -->
   <div class="w-full flex justify-between items-center px-4 py-2">
     <!-- App Logo/Title -->
-    <span class="text-2xl font-semibold">∯ Oniduuru</span>
+
+    <!-- here -->
+    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
 
     <div class="flex items-center gap-4 relative">
       <!-- Notification Icon with Badge -->
@@ -18,7 +20,10 @@
       </button>
 
       <!-- Profile Avatar with Status Dot -->
-      <button class="relative hover:cursor-pointer" (click)="openProfilePopover($event)">
+      <button
+        class="relative hover:cursor-pointer"
+        (click)="openProfilePopover($event)"
+      >
         <!-- Avatar with Double Border -->
         <div class="border border-black rounded-full p-0.5">
           <div class="border-1 border-white rounded-full">

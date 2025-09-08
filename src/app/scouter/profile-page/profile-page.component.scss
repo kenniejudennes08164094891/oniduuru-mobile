@@ -1,0 +1,15 @@
+.dark-card-background {
+  background-image: url("/assets/images/dark-card-background.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
+
+.logcomplainModalBG {
+  background-image: url("/assets/images/Profile-Information-BG.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  --background: transparent; // override Ionic default background
+}

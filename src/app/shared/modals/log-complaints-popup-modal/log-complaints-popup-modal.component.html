@@ -1,3 +1,35 @@
-<p>
-  log-complaints-popup-modal works!
-</p>
+<ion-header>
+  <ion-toolbar class="logcomplainModalBG h-16 justify-between">
+    <p class="text-white text-xl font-bold item-start mt-3 px-5">
+      Log Complaint
+    </p>
+    <ion-buttons slot="end" class="px-5">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="close" class="text-white"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="border rounded-2xl pt-12">
+    <div class="flex flex-col space-y-10">
+      <p class="text-lg text-[#101828] font-semibold px-5">
+        Log your complaints here. An admin would contact you as soon as
+        possible.
+      </p>
+      <div
+        class="flex gap-2 items-center bg-[#CDD5DF33] px-2 py-2 rounded-b-2xl"
+      >
+        <ion-button expand="block" color="primary" (click)="submitComplaint()">
+          Submit
+        </ion-button>
+        <input
+          class="h-10 w-full text-2xl bg-transparent border-none outline-none"
+          placeholder="Describe your issue..."
+          [(ngModel)]="complaintText"
+        />
+      </div>
+    </div>
+  </div>
+</ion-content>

@@ -10,7 +10,7 @@ import { ScouterHeaderComponent } from './scouter-header/scouter-header.componen
 import { ProfilePopupSettingsModalComponent } from '../shared/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from '../shared/modals/notifications-popup-modal/notifications-popup-modal.component';
 import { LogComplaintsPopupModalComponent } from '../shared/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
-
+import { ProfilePageComponent } from './profile-page/profile-page.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -26,6 +26,7 @@ import { LogComplaintsPopupModalComponent } from '../shared/modals/log-complaint
     ProfilePopupSettingsModalComponent,
     NotificationsPopupModalComponent,
     LogComplaintsPopupModalComponent,
+    ProfilePageComponent,
   ],
 })
 export class ScouterPageModule {}
