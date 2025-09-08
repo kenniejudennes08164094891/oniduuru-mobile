@@ -6,7 +6,9 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./account-activation-page.component.scss'],
 })
 export class AccountActivationPageComponent  implements OnInit {
+  headerHidden: boolean = false;
 
+  
   constructor() { }
 
   ngOnInit() {}
