@@ -164,26 +164,27 @@ export class ScouterDashboardComponent implements OnInit {
     return { x, y };
   }
 
-  private setTimeOfDay(): void {
-    const hour = new Date().getHours();
+private setTimeOfDay(): void {
+  const hour = new Date().getHours();
 
-    if (hour < 5) {
-      this.timeOfDay = 'Night';
-      this.timeIcon = '🌜'; // or '🌃' or '✨'
-    } else if (hour < 12) {
-      this.timeOfDay = 'Morning';
-      this.timeIcon = '🌄'; // or '☀️' or '🌤️'
-    } else if (hour < 17) {
-      this.timeOfDay = 'Afternoon';
-      this.timeIcon = '🔆'; // or '🏙️' or '🌞'
-    } else if (hour < 21) {
-      this.timeOfDay = 'Evening';
-      this.timeIcon = '🌅'; // or '🌆' or '🌇'
-    } else {
-      this.timeOfDay = 'Night';
-      this.timeIcon = '🌙'; // or '🌠' or '🌌'
-    }
+  if (hour < 5) {
+    this.timeOfDay = 'Night';
+    this.timeIcon = imageIcons.Night;
+  } else if (hour < 12) {
+    this.timeOfDay = 'Morning';
+    this.timeIcon = imageIcons.Morning;
+  } else if (hour < 17) {
+    this.timeOfDay = 'Afternoon';
+    this.timeIcon = imageIcons.Afternoon;
+  } else if (hour < 21) {
+    this.timeOfDay = 'Evening';
+    this.timeIcon = imageIcons.Evening;
+  } else {
+    this.timeOfDay = 'Night';
+    this.timeIcon = imageIcons.Night;
   }
+}
+
 
   dashboardCards = [
     {

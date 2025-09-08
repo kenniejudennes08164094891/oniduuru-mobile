@@ -19,7 +19,12 @@
       <!-- Rest of your content remains exactly the same -->
       <!-- Greeting section -->
       <div class="flex items-center gap-3 mb-6">
-        <span class="text-2xl">{{ timeIcon }}</span>
+        <img
+          *ngIf="timeIcon"
+          [src]="timeIcon"
+          [alt]="timeOfDay + ' icon'"
+          class="w-10 h-10 inline-block align-middle"
+        />
         <span class="text-xl font-semibold text-gray-800"
           >Good {{ timeOfDay }}, {{ userName }}</span
         >

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { ProfilePageComponent } from './scouter/profile-page/profile-page.component';
+import { AccountActivationPageComponent } from './scouter/account-activation-page/account-activation-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -34,8 +35,11 @@ const routes: Routes = [
     path: 'scouter/profile',
     component: ProfilePageComponent,
   },
+  {
+    path: 'scouter/account-activation',
+    component: AccountActivationPageComponent,
+  },
 ];
-
 
 @NgModule({
   imports: [

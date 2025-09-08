@@ -225,6 +225,80 @@
         </button>
       </div>
     </div>
+
+    <!-- Security Question -->
+
+    <!-- Render Question/Answer inputs -->
+    <div class="logcomplainModalBG h-[69px] pt-2 mt-12">
+      <p class="text-white text-xl font-bold item-start mt-3 px-5">
+        Create Security Questions
+      </p>
+    </div>
+
+    <div class="mb-4 px-6 py-6">
+      <label class="block text-gray-600 text-sm mb-2">
+        You're advised to create up to 3 security questions
+      </label>
+
+      <!-- Fake input (click to add questions) -->
+      <div
+        class="w-full border rounded-md px-4 py-4 bg-white shadow-md cursor-pointer hover:bg-gray-50 transition"
+        (click)="toggleQuestions()"
+      >
+        <span *ngIf="securityQuestions.length === 0" class="text-gray-400">
+          Click to add questions
+        </span>
+        <span *ngIf="securityQuestions.length > 0">
+          {{ securityQuestions.length }} / 5
+        </span>
+      </div>
+    </div>
+
+    <!-- Render Question/Answer inputs -->
+    <div class="px-6 space-y-6" *ngIf="showQuestions">
+      <div
+        *ngFor="let qa of securityQuestions; let i = index"
+        class="p-4 border rounded-lg shadow-sm bg-gray-50"
+      >
+        <label class="block text-gray-600 text-sm mb-2">
+          Question {{ i + 1 }}
+        </label>
+        <input
+          type="text"
+          placeholder="First pet's name"
+          [(ngModel)]="qa.question"
+          class="w-full border rounded-md px-4 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
+        />
+
+        <label class="block text-gray-600 text-sm mb-2">
+          Answer {{ i + 1 }}
+        </label>
+        <input
+          type="text"
+          placeholder="Ruby"
+          [(ngModel)]="qa.answer"
+          class="w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
+        />
+      </div>
+
+      <!-- Add new Question button (max 2) -->
+      <button
+        class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full"
+        (click)="addQuestion()"
+        [disabled]="securityQuestions.length >= 5"
+      >
+        + Add Question
+      </button>
+    </div>
+
+    <div class="px-6 py-10">
+      <button
+        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="securityQuestions.length < 1"
+      >
+        Save
+      </button>
+    </div>
   </div>
 
   <!-- Fixed Footer -->

@@ -11,6 +11,7 @@ import { ProfilePopupSettingsModalComponent } from '../shared/modals/profile-pop
 import { NotificationsPopupModalComponent } from '../shared/modals/notifications-popup-modal/notifications-popup-modal.component';
 import { LogComplaintsPopupModalComponent } from '../shared/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
 import { ProfilePageComponent } from './profile-page/profile-page.component';
+import { AccountActivationPageComponent } from './account-activation-page/account-activation-page.component';
 @NgModule({
   imports: [
     CommonModule,
@@ -27,6 +28,7 @@ import { ProfilePageComponent } from './profile-page/profile-page.component';
     NotificationsPopupModalComponent,
     LogComplaintsPopupModalComponent,
     ProfilePageComponent,
+    AccountActivationPageComponent,
   ],
 })
 export class ScouterPageModule {}

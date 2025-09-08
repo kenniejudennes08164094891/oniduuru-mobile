@@ -48,6 +48,7 @@ export class ProfilePopupSettingsModalComponent {
 
   async openActivationPage() {
     await this.popoverCtrl.dismiss();
+    this.router.navigate(['scouter/account-activation']);
 
     // TODO: replace with your activation component
     // const modal = await this.modalCtrl.create({
