@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-profile-page',
@@ -10,19 +11,21 @@ export class ProfilePageComponent implements OnInit {
   currentYear: number = new Date().getFullYear();
   headerHidden: boolean = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private location: Location) {}
 
   goToProfile() {
     this.router.navigate(['/profile']);
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   ngOnInit() {}
 
   formatNumber(event: any) {
     let input = event.target as HTMLInputElement;
-    // Strip non-digits
     let value = input.value.replace(/\D/g, '');
-    // Add commas
     input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
 }
