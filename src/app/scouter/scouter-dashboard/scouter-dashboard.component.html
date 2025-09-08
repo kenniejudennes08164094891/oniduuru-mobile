@@ -55,6 +55,7 @@
           <ion-button
             fill="clear"
             class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+            (click)="openMakePaymentPopup()"
           >
             Make Payment
           </ion-button>
@@ -211,8 +212,12 @@
               alt="No Data "
             />
 
-            <h4>No Data Available</h4>
-            <p>Oops!.. No record exists for now.</p>
+            <div class="text-center space-y-2">
+              <h3 class="text-[#000000] font-semibold text-[20px]">
+                Oops! No Data Available
+              </h3>
+              <p class="text-[#000000] text-[16px]">No record exists for now</p>
+            </div>
           </div>
         </div>
         <div class="mt-20">
@@ -225,8 +230,12 @@
               alt="No Data "
             />
 
-            <h4>No Data Available</h4>
-            <p>Oops!.. No record exists for now.</p>
+            <div class="text-center space-y-2">
+              <h3 class="text-[#000000] font-semibold text-[20px]">
+                Oops! No Data Available
+              </h3>
+              <p class="text-[#000000] text-[16px]">No record exists for now</p>
+            </div>
           </div>
         </div>
       </div>

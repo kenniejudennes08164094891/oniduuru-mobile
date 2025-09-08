@@ -1,0 +1,13 @@
+.make-payment-modal {
+  --width: 90%;
+  --max-width: 400px;
+  --height: auto;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  --background: #fff;
+
+  .modal-wrapper {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+}

@@ -1,7 +1,8 @@
 // Modified TypeScript component
 import { Component, OnInit, HostListener } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
-
+import { MakePaymentPopupModalComponent } from 'src/app/shared/modals/make-payment-popup-modal/make-payment-popup-modal.component';
+import { ModalController } from '@ionic/angular';
 @Component({
   selector: 'app-scouter-dashboard',
   templateUrl: './scouter-dashboard.component.html',
@@ -28,7 +29,7 @@ export class ScouterDashboardComponent implements OnInit {
   scrollPosition: number = 0;
   previousScrollPosition: number = 0;
 
-  constructor() {}
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit(): void {
     this.setTimeOfDay();
@@ -164,27 +165,37 @@ export class ScouterDashboardComponent implements OnInit {
     return { x, y };
   }
 
-private setTimeOfDay(): void {
-  const hour = new Date().getHours();
-
-  if (hour < 5) {
-    this.timeOfDay = 'Night';
-    this.timeIcon = imageIcons.Night;
-  } else if (hour < 12) {
-    this.timeOfDay = 'Morning';
-    this.timeIcon = imageIcons.Morning;
-  } else if (hour < 17) {
-    this.timeOfDay = 'Afternoon';
-    this.timeIcon = imageIcons.Afternoon;
-  } else if (hour < 21) {
-    this.timeOfDay = 'Evening';
-    this.timeIcon = imageIcons.Evening;
-  } else {
-    this.timeOfDay = 'Night';
-    this.timeIcon = imageIcons.Night;
-  }
+async openMakePaymentPopup() {
+  const modal = await this.modalCtrl.create({
+    component: MakePaymentPopupModalComponent,
+    cssClass: 'make-payment-modal', // optional custom style
+    backdropDismiss: true, // allow closing on backdrop click
+  });
+  return await modal.present();
 }
 
+
+
+  private setTimeOfDay(): void {
+    const hour = new Date().getHours();
+
+    if (hour < 5) {
+      this.timeOfDay = 'Night';
+      this.timeIcon = imageIcons.Night;
+    } else if (hour < 12) {
+      this.timeOfDay = 'Morning';
+      this.timeIcon = imageIcons.Morning;
+    } else if (hour < 17) {
+      this.timeOfDay = 'Afternoon';
+      this.timeIcon = imageIcons.Afternoon;
+    } else if (hour < 21) {
+      this.timeOfDay = 'Evening';
+      this.timeIcon = imageIcons.Evening;
+    } else {
+      this.timeOfDay = 'Night';
+      this.timeIcon = imageIcons.Night;
+    }
+  }
 
   dashboardCards = [
     {

@@ -5,9 +5,38 @@
   >
   </app-scouter-header>
 </ion-header>
-<ion-content>
-<p>
-  account-activation-page works!
-</p>
 
+<ion-content>
+  <div
+    class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
+  >
+    <div class="flex gap-2 items-center h-16">
+      <ion-icon
+        class="h-7 w-7 font-bold"
+        name="information-circle-outline"
+      ></ion-icon>
+      <span
+        >Hi Vikiwest,
+        <span class="font-bold text-[16px] text-[#444444]">Click here</span> to
+        upload screenshot evidence of your payment receipt</span
+      >
+    </div>
+  </div>
+  <div class="w-full h-full space-y-">
+    <img class="mx-auto w-full" [src]="images.NoDataImage" alt="NoData" />
+
+    <div class="text-center space-y-2">
+      <h3 class="text-[#000000] font-semibold text-[20px]">
+        Oops! No Data Available
+      </h3>
+      <p class="text-[#000000] text-[16px]">No record exists for now</p>
+    </div>
+  </div>
+
+  <!-- Fixed Footer -->
+  <footer class="mt-auto py-5">
+    <div class="container mx-auto px-4 text-left text-gray-600">
+      <p>Shoft Africa © {{ currentYear }}</p>
+    </div>
+  </footer>
 </ion-content>
