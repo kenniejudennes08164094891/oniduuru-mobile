@@ -1,0 +1,48 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Upload Payment Receipt</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="flex justify-center items-center p-6">
+  <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6">
+    <!-- Upload Card -->
+    <div
+      class="border-2 border-dashed border-gray-300 rounded-lg h-56 flex flex-col items-center justify-center text-center cursor-pointer"
+      (click)="fileInput.click()"
+    >
+      <ion-icon
+        name="cloud-upload-outline"
+        class="text-3xl text-gray-500"
+      ></ion-icon>
+      <p class="mt-2 font-medium text-gray-700">
+        Click to upload <span class="text-gray-500">or drag and drop</span>
+      </p>
+      <p class="text-xs text-gray-500">SVG, PNG, JPG or GIF (max. 800×400px)</p>
+      <input
+        type="file"
+        #fileInput
+        class="hidden"
+        accept=".png,.jpg,.jpeg,.gif,.svg"
+        (change)="onFileSelected($event)"
+      />
+    </div>
+
+    <!-- Preview -->
+    <div *ngIf="previewUrl" class="mt-4">
+      <img
+        [src]="previewUrl"
+        alt="Preview"
+        class="rounded-lg max-h-40 mx-auto"
+      />
+    </div>
+
+    <!-- Upload Button -->
+    <button
+      (click)="uploadReceipt()"
+      class="mt-4 w-full bg-[#111827] text-white py-2 rounded-md shadow-md hover:bg-[#000000]"
+    >
+      Upload Receipt
+    </button>
+  </div>
+</ion-content>

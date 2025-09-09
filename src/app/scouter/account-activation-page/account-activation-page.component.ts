@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
-
+import { UploadScreenshotPopupModalComponent } from 'src/app/shared/modals/upload-screenshot-popup-modal/upload-screenshot-popup-modal.component';
 @Component({
   selector: 'app-account-activation-page',
   templateUrl: './account-activation-page.component.html',
@@ -11,7 +12,16 @@ export class AccountActivationPageComponent implements OnInit {
   headerHidden: boolean = false;
   currentYear: number = new Date().getFullYear();
 
-  constructor() {}
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}
+
+  async openUploadScreenshotPopup() {
+    const modal = await this.modalCtrl.create({
+      component: UploadScreenshotPopupModalComponent,
+      cssClass: 'upload-screenshot-modal',
+      backdropDismiss: true,
+    });
+    return await modal.present();
+  }
 }

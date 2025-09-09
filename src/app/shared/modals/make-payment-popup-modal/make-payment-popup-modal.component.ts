@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController, IonicModule } from '@ionic/angular';
+import { ModalController, IonicModule, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 
 interface PaymentDetail {
@@ -24,7 +24,10 @@ export class MakePaymentPopupModalComponent implements OnInit {
     { label: 'Account Name', value: 'Shoft Africa Inc', bold: true },
   ];
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(
+    private modalCtrl: ModalController,
+    private toastCtrl: ToastController
+  ) {}
 
   ngOnInit() {}
 
@@ -41,8 +44,16 @@ export class MakePaymentPopupModalComponent implements OnInit {
     return await modal.present();
   }
 
-  copyToClipboard(value: string) {
-    navigator.clipboard.writeText(value);
-    alert('Copied: ' + value);
+  async copyToClipboard(value: string) {
+    await navigator.clipboard.writeText(value);
+
+    const toast = await this.toastCtrl.create({
+      message: `Copied: ${value}`,
+      duration: 2500,
+      position: 'bottom',
+      color: 'success',
+    });
+
+    await toast.present();
   }
 }

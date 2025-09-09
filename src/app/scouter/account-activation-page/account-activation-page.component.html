@@ -15,11 +15,16 @@
         class="h-7 w-7 font-bold"
         name="information-circle-outline"
       ></ion-icon>
-      <span
-        >Hi Vikiwest,
-        <span class="font-bold text-[16px] text-[#444444]">Click here</span> to
-        upload screenshot evidence of your payment receipt</span
-      >
+      <span>
+        Hi Vikiwest,
+        <span
+          class="font-bold text-[16px] text-[#444444] cursor-pointer underline"
+          (click)="openUploadScreenshotPopup()"
+        >
+          Click here
+        </span>
+        to upload screenshot evidence of your payment receipt
+      </span>
     </div>
   </div>
   <div class="w-full h-full space-y-">
