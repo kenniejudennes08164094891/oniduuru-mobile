@@ -1,15 +1,72 @@
-<ion-content class="p-6">
-  <div class="text-center">
-    <h2 class="text-xl font-semibold mb-3">Make Payment</h2>
-    <p class="mb-6 text-gray-600">
-      Please proceed with your payment and upload your receipt.
+<ion-header>
+  <!-- <div class="logcomplainModalBG "> -->
+  <div class="items-center flex justify-between h-20 px-4 bg-[#CDD5DF33]">
+    <p class="text-[#CC0000] text-[24px] font-semibold item-start">
+      Oniduuru Payment Invioce
     </p>
+    <ion-buttons slot="end" class="">
+      <ion-button (click)="close()">
+        <ion-icon name="close" class="text-black"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </div>
+  <!-- </div> -->
+</ion-header>
 
-    <ion-button expand="block" color="primary" class="mb-3">
-      Proceed to Payment
-    </ion-button>
-    <ion-button expand="block" color="medium" (click)="close()">
-      Close
-    </ion-button>
+<ion-content>
+  <div class="text-[#444444] space-y-5 px-4 py-4">
+    <h3 class="text-[18px]">
+      Hi, <span class="font-bold text-[18px] text-[#444444]">Vikiwest</span>,
+    </h3>
+    <p class="text-[18px]">
+      Thank you for trusting Oniduuru to find skilled professionals in your
+      vicinity.
+      <br />Please be aware that a
+      <span class="font-bold text-[#444444]"> yearly one-time payment </span>
+      is required before receiving our services.
+      <br />
+      We appreciate your cooperation.
+    </p>
+  </div>
+
+  <div class="px-4 flex flex-col items-end mt-4 space-y-1">
+    <h3 class="text-[16px] text-[#CC0000]">Invoice ID:</h3>
+    <p class="text-[16px]">#INV-2025-0615-013</p>
+    <p class="text-[16px]">15th,JUNE 2025</p>
+  </div>
+
+  <!-- Payment Details Card -->
+  <div class="px-4 mt-6">
+    <div
+      *ngFor="let item of paymentDetails"
+      class="bg-[#CDD5DF33] border-t border-1 border-[#364152] rounded-xl px-3 py-6 flex justify-between items-center"
+    >
+      <!-- Label -->
+      <p class="text-[#CC0000] text-sm font-semibold">{{ item.label }}</p>
+
+      <!-- Value + optional copy icon -->
+      <div class="flex items-center space-x-2 text-right">
+        <p
+          class="text-sm"
+          [ngClass]="{ 'font-bold': item.bold, 'font-medium': !item.bold }"
+        >
+          {{ item.value }}
+        </p>
+        <ion-icon
+          *ngIf="item.isCopy"
+          name="copy-outline"
+          class="text-lg text-[#3E4784] font-semibold cursor-pointer"
+          (click)="copyToClipboard(item.value)"
+        ></ion-icon>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-4 py-10">
+    <button
+      class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Save
+    </button>
   </div>
 </ion-content>

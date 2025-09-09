@@ -22,7 +22,7 @@ export const imageIcons = {
   InfoIcon: '/assets/icon/Info-Icon.svg',
   NoDataImage: '/assets/images/NoDataImage.svg',
   LogComplaintModalBg: '/assets/images/Log-complaint-background.png',
-  Morning: '/assets/icon/Morning',
+  Morning: '/assets/icon/Morning.png',
   Afternoon: '/assets/icon/Afternoon.png',
   Evening: '/assets/icon/Evening.png',
   Night: '/assets/icon/Night.png',
