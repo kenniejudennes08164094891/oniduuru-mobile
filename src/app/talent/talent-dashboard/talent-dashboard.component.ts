@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
-
 Chart.register(...registerables);
 
 @Component({
@@ -19,7 +18,7 @@ export class TalentDashboardComponent implements OnInit {
   userName: string = 'Samuel';
   timeOfDay: string = '';
   timeIcon: string = '';
-
+  myIcon: string = imageIcons.infoIcon;
   // Header scroll state
   headerHidden: boolean = false;
   scrollPosition: number = 0;
@@ -43,6 +42,8 @@ export class TalentDashboardComponent implements OnInit {
   // Ratings chart data
   ratingsData = [
     { date: '17/September/2024 8:15AM', yourRating: 5, scouterRating: 4 },
+    { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
+    { date: '17/September/2024 8:15AM', yourRating: 3, scouterRating: 4 },
     { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
   ];
 
@@ -126,6 +127,7 @@ export class TalentDashboardComponent implements OnInit {
             data: this.ratingsData.map((r) => r.scouterRating),
             backgroundColor: '#7C3AED', // purple
           },
+
         ],
       },
       options: {

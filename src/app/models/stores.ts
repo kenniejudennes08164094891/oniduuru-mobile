@@ -23,9 +23,10 @@ export const imageIcons = {
   NoDataImage: '/assets/images/NoDataImage.svg',
   LogComplaintModalBg: '/assets/images/Log-complaint-background.png',
   Morning: '/assets/icon/Morning.png',
-  Afternoon: '/assets/icon/Afternoon.png',
+  Afternoon: '/assets/icon/afternoon.png',
   Evening: '/assets/icon/Evening.png',
   Night: '/assets/icon/Night.png',
+  infoIcon: '/assets/icon/icon.png',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

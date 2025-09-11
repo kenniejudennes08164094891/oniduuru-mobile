@@ -15,22 +15,22 @@
       <div class="flex items-center gap-3 mb-6">
         <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
           class="w-10 h-10 inline-block align-middle" />
-        <span class="text-xl font-semibold text-gray-800">Good {{ timeOfDay }}, {{ userName }}</span>
+        <span class="text-xl font-semibold text-black">Good {{ timeOfDay }}, <span class="text-xl font-light text-black ">{{ userName }}</span></span>
       </div>
 
       <!-- Dark Info Card -->
-      <div class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden">
+      <div class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden justify-center items-center">
         <div class="absolute inset-0 bg-black bg-opacity-70"></div>
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
-            <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-            <span class="font-normal text-[20px] leading-tight">
-              YOU CAN MODIFY YOUR MARKET PROFILE
+            <!-- <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon> -->
+             <img [src]="myIcon" alt="myIcon" class="h-7 w-7"/>
+            <span class="font-semibold text-[20px] leading-tight">
+              MODIFY MARKET PROFILE
             </span>
           </div>
-          <p class="text-gray-200 mb-4 text-lg leading-relaxed">
-            Please click the 'Proceed' button below to update your profile
-            details.
+          <p class="text-gray-200 mb-4 text-base leading-relaxed">
+            You can update your market profile <br> here.
           </p>
           <ion-button fill="clear"
             class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black">
@@ -38,7 +38,7 @@
           </ion-button>
         </div>
         <!-- Wallet Balance Card -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200 text-center z-50 relative">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200 text-left z-50 relative mt-3">
           <p class="text-gray-500 text-sm mb-2">Wallet Balance</p>
           <h2 class="text-3xl font-bold text-gray-900">₦30,000.00</h2>
         </div>
