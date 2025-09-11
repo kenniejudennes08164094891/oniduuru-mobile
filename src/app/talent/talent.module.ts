@@ -4,21 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { TalentPageRoutingModule } from './talent-routing.module';
 import { TalentPage } from './talent.page';
-import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
-import {SpinnerComponent} from "../utilities/spinner/spinner.component";
+import { UtilitiesPageModule } from '../utilities/utilities.module';
+import { TalentDashboardComponent } from './talent-dashboard/talent-dashboard.component';
+import { TalentHeaderComponent } from './talent-header/talent-header.component';
+import { SpinnerComponent } from '../utilities/spinner/spinner.component';
 
 @NgModule({
+  declarations: [TalentPage,TalentDashboardComponent,TalentHeaderComponent],
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
-    TalentPageRoutingModule
-  ],
-  exports: [
+    TalentPageRoutingModule,
+    UtilitiesPageModule,
     SpinnerComponent
   ],
-  declarations: [
-    TalentPage, TalentDashboardComponent, SpinnerComponent
-  ]
 })
 export class TalentPageModule { }
+

@@ -17,3 +17,11 @@ export interface LoginCredentials{
   email: string,
   password: string
 }
+ export interface Stat {
+  key: string;
+  label: string;
+  value: number;
+  delta?: number;
+  color?: string;
+  suffix?: string; 
+}

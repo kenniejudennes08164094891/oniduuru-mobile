@@ -1,8 +1,10 @@
 // Modified TypeScript component
 import { Component, OnInit, HostListener } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { MakePaymentPopupModalComponent } from 'src/app/shared/modals/make-payment-popup-modal/make-payment-popup-modal.component';
-import { ModalController } from '@ionic/angular';
+
+
 @Component({
   selector: 'app-scouter-dashboard',
   templateUrl: './scouter-dashboard.component.html',

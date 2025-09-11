@@ -5,7 +5,6 @@ import { IonicModule } from '@ionic/angular';
 import { ScouterPageRoutingModule } from './scouter-routing.module';
 import { ScouterPage } from './scouter.page';
 import { ScouterDashboardComponent } from './scouter-dashboard/scouter-dashboard.component';
-import { TalentPageModule } from '../talent/talent.module';
 import { ScouterHeaderComponent } from './scouter-header/scouter-header.component';
 import { ProfilePopupSettingsModalComponent } from '../shared/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from '../shared/modals/notifications-popup-modal/notifications-popup-modal.component';
@@ -13,6 +12,8 @@ import { LogComplaintsPopupModalComponent } from '../shared/modals/log-complaint
 import { ProfilePageComponent } from './profile-page/profile-page.component';
 import { AccountActivationPageComponent } from './account-activation-page/account-activation-page.component';
 import { UploadScreenshotPopupModalComponent } from '../shared/modals/upload-screenshot-popup-modal/upload-screenshot-popup-modal.component';
+import { UtilitiesPageModule } from '../utilities/utilities.module';
+import { SpinnerComponent } from '../utilities/spinner/spinner.component';
 
 @NgModule({
   imports: [
@@ -20,7 +21,8 @@ import { UploadScreenshotPopupModalComponent } from '../shared/modals/upload-scr
     FormsModule,
     IonicModule,
     ScouterPageRoutingModule,
-    TalentPageModule,
+    UtilitiesPageModule,
+    SpinnerComponent
   ],
   declarations: [
     ScouterPage,
@@ -32,6 +34,7 @@ import { UploadScreenshotPopupModalComponent } from '../shared/modals/upload-scr
     ProfilePageComponent,
     AccountActivationPageComponent,
     UploadScreenshotPopupModalComponent,
+
   ],
 })
-export class ScouterPageModule {}
+export class ScouterPageModule { }

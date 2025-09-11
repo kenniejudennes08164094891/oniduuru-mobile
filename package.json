@@ -15,10 +15,10 @@
   "dependencies": {
     "@angular/animations": "16.2.12",
     "@angular/cdk": "^16.2.14",
-    "@angular/common": "16.2.12",
+    "@angular/common": "^16.2.12",
     "@angular/compiler": "16.2.12",
-    "@angular/core": "16.2.12",
-    "@angular/forms": "16.2.12",
+    "@angular/core": "^16.2.12",
+    "@angular/forms": "^16.2.12",
     "@angular/material": "^16.2.14",
     "@angular/platform-browser": "16.2.12",
     "@angular/platform-browser-dynamic": "16.2.12",
@@ -28,15 +28,15 @@
     "@capacitor/haptics": "7.0.2",
     "@capacitor/keyboard": "7.0.2",
     "@capacitor/status-bar": "7.0.2",
-    "@ionic/angular": "8.2.2",
+    "@ionic/angular": "^8.2.2",
+    "chart.js": "^4.5.0",
     "flowbite": "^3.1.2",
     "ionicons": "7.0.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.2",
-    "zone.js": "0.13.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "16.2.12",
+    "@angular-devkit/build-angular": "^16.2.12",
     "@angular-eslint/builder": "16.1.0",
     "@angular-eslint/eslint-plugin": "16.1.0",
     "@angular-eslint/eslint-plugin-template": "16.1.0",
@@ -63,7 +63,8 @@
     "karma-jasmine-html-reporter": "2.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "zone.js": "^0.13.3"
   },
   "description": "An Ionic project"
 }

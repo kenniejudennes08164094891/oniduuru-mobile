@@ -1,0 +1,66 @@
+/* Dark card */
+.dark-card-background {
+  background: url('/assets/images/yy.jpg') center/cover no-repeat;
+  border-radius: 1rem;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.dark-card-background:hover {
+  transform: translateY(-2px);
+}
+
+/* Dashboard stat cards */
+.dashboard-stat-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+.dashboard-stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Donut legend */
+.donut-legend {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.donut-legend-item {
+  @apply flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.donut-dot {
+  height: 0.75rem;
+  width: 0.75rem;
+  border-radius: 9999px;
+}
+
+.donut-dot.accepted {
+  background-color: #189537;
+}
+.donut-dot.pending {
+  background-color: #ffa086;
+}
+.donut-dot.rejected {
+  background-color: #cc0000;
+}
+.donut-dot.engagement {
+  background-color: #79797b;
+}
+
+/* Ratings chart container */
+.ratings-chart {
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  padding: 1rem;
+}

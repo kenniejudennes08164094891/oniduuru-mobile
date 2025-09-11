@@ -1,6 +1,195 @@
-<p>
-  talent-dashboard works!
-</p>
-<div *ngIf="showSpinner === true">
+<!-- Spinner overlay -->
+<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
   <app-spinner [loadingText]="loading"></app-spinner>
 </div>
+
+<!-- Dashboard content -->
+<ion-content fullscreen (ionScroll)="onContentScroll($event)">
+  <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+    </app-talent-header>
+
+    <div class="container mx-auto px-4 py-6 flex-1">
+      <!-- Greeting -->
+      <div class="flex items-center gap-3 mb-6">
+        <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
+          class="w-10 h-10 inline-block align-middle" />
+        <span class="text-xl font-semibold text-gray-800">Good {{ timeOfDay }}, {{ userName }}</span>
+      </div>
+
+      <!-- Dark Info Card -->
+      <div class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div class="relative z-10 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
+            <span class="font-normal text-[20px] leading-tight">
+              YOU CAN MODIFY YOUR MARKET PROFILE
+            </span>
+          </div>
+          <p class="text-gray-200 mb-4 text-lg leading-relaxed">
+            Please click the 'Proceed' button below to update your profile
+            details.
+          </p>
+          <ion-button fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black">
+            Proceed
+          </ion-button>
+        </div>
+        <!-- Wallet Balance Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200 text-center z-50 relative">
+          <p class="text-gray-500 text-sm mb-2">Wallet Balance</p>
+          <h2 class="text-3xl font-bold text-gray-900">₦30,000.00</h2>
+        </div>
+      </div>
+
+
+
+      <!-- Dashboard Statistics -->
+      <div class="border py-6 px-3 mt-12">
+        <h3 class="text-xl font-semibold py-5 md:text-left">
+          Talent’s Dashboard Statistics
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let card of dashboardCards" class="dashboard-stat-card">
+            <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full" [ngStyle]="{ 'background-color': getStatusColor(card.status) }"></span>
+              {{ card.title }}
+            </h3>
+            <p class="text-2xl font-semibold">{{ card.value }}</p>
+          </div>
+        </div>
+
+        <!-- Donut Chart -->
+        <div class="py-4 mt-5">
+          <h3 class="text-xl font-semibold">Total Market by Percentage</h3>
+        </div>
+
+        <div class="mt-10 flex flex-col justify-center items-center">
+          <div class="w-full flex flex-col md:flex-row justify-center items-center gap-8">
+            <!-- Left: Concentric Circles -->
+            <div class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80">
+              <ng-container *ngFor="
+                  let circle of percentageCircles;
+                  let i = index;
+                  trackBy: trackByCircle
+                ">
+                <svg class="absolute" [attr.width]="circle.size" [attr.height]="circle.size" [style.zIndex]="100 - i">
+                  <!-- Grey background -->
+                  <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" stroke="#e5e7eb"
+                    stroke-width="8" />
+
+                  <!-- Progress -->
+                  <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" [attr.stroke]="circle.color"
+                    stroke-width="8" [attr.stroke-dasharray]="
+                      getCircumference(circle.size / 2 - 8)
+                    " [attr.stroke-dashoffset]="
+                      getStrokeDashoffset(
+                        circle.size / 2 - 8,
+                        circle.percentage
+                      )
+                    " class="transition-all duration-700 ease-in-out" [attr.transform]="
+                      'rotate(-90, ' +
+                      circle.size / 2 +
+                      ', ' +
+                      circle.size / 2 +
+                      ')'
+                    " />
+
+                  <!-- Progress Dot -->
+                  <circle [attr.cx]="
+                      getProgressDotPosition(
+                        circle.size / 2 - 8,
+                        circle.percentage,
+                        circle.size
+                      ).x
+                    " [attr.cy]="
+                      getProgressDotPosition(
+                        circle.size / 2 - 8,
+                        circle.percentage,
+                        circle.size
+                      ).y
+                    " r="5" [attr.fill]="circle.color" />
+                </svg>
+              </ng-container>
+            </div>
+
+            <!-- Right: Legend -->
+            <div class="donut-legend w-full md:w-auto">
+              <div *ngFor="let card of dashboardStatCards" class="donut-legend-item">
+                <div class="flex items-center gap-3">
+                  <span class="donut-dot" [ngClass]="{
+                      accepted: card.status === 'active',
+                      pending: card.status === 'pending',
+                      rejected: card.status === 'inactive',
+                      engagement: card.status === ''
+                    }"></span>
+                  <span>{{ card.title }}</span>
+                </div>
+                <span>{{ card.value }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ratings Chart (HTML/CSS Bars) -->
+      <!-- Ratings Card -->
+      <div class="bg-white p-4 rounded-lg shadow mt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">My Recent Market Ratings</h3>
+
+        <canvas id="ratingsChart"></canvas>
+
+        <!-- Custom Legend -->
+        <div class="flex justify-center gap-6 mt-4">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <span class="text-sm text-gray-600">Your Ratings</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-purple-600"></span>
+            <span class="text-sm text-gray-600">Scouter’s Ratings</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Hires Card -->
+      <!-- Recent Hires Card -->
+      <div class="rounded-xl p-4 mt-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">My Recent Hires</h3>
+          <button class="bg-[#101828] text-white px-4 py-1 rounded-lg text-sm">
+            View All Hires
+          </button>
+        </div>
+
+        <!-- Hires List -->
+        <div *ngFor="let hire of recentHires" class="flex justify-between items-center py-3 border-b last:border-b-0">
+          <div class="flex items-center gap-3">
+            <!-- Avatar -->
+            <img [src]="hire.avatar" alt="{{ hire.name }}" class="w-10 h-10 rounded-full object-cover" />
+            <!-- Info -->
+            <div class="flex flex-col">
+              <span class="text-sm font-medium text-gray-900">{{ hire.name }}</span>
+              <span class="text-xs text-gray-500">{{ hire.date }}</span>
+            </div>
+          </div>
+          <!-- Amount -->
+          <div class="text-gray-900 font-semibold">
+            ₦ {{ hire.amount | number : '1.0-2' }}
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Fixed Footer -->
+      <footer class="mt-auto py-5">
+        <div class="container mx-auto px-4 text-left text-gray-600">
+          <p>Shoft Africa © {{ currentYear }}</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+</ion-content>
