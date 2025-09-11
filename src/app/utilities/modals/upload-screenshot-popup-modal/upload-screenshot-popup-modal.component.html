@@ -1,11 +1,23 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Upload Payment Receipt</ion-title>
-  </ion-toolbar>
-</ion-header>
+<header class="shadow-md px-6 py-4 flex">
+  <!-- <div class="shadow-md"> -->
+  <div class="flex justify-center items-center gap-2 w-full shadow-xl py-3">
+    <img
+      [src]="images.UploadPayment"
+      alt="Upload Payment"
+      class="h-8 w-8 object-contain"
+    />
+    <span class="text-base font-semibold"> Upload Payment Receipt </span>
+    <ion-buttons slot="end" class="">
+      <ion-button (click)="close()">
+        <ion-icon name="close" class="text-black"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </div>
+  <!-- </div> -->
+</header>
 
 <ion-content class="flex justify-center items-center p-6">
-  <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6">
+  <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6 mx-auto">
     <!-- Upload Card -->
     <div
       class="border-2 border-dashed border-gray-300 rounded-lg h-56 flex flex-col items-center justify-center text-center cursor-pointer"

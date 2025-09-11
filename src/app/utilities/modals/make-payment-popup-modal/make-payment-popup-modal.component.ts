@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController, IonicModule, ToastController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 interface PaymentDetail {
   label: string;
   value: string;
   isCopy?: boolean; // flag to show copy icon
   bold?: boolean; // flag for bold text
+  copied?: boolean; // flag for copied state
 }
 
 @Component({
@@ -25,6 +27,7 @@ export class MakePaymentPopupModalComponent implements OnInit {
   ];
 
   constructor(
+    private router: Router,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController
   ) {}
@@ -33,6 +36,13 @@ export class MakePaymentPopupModalComponent implements OnInit {
 
   close() {
     this.modalCtrl.dismiss();
+  }
+
+  goToActivateAccount() {
+    // close modal first
+    this.modalCtrl.dismiss();
+
+    this.router.navigate(['/scouter/account-activation']);
   }
 
   async openMakePaymentPopup() {
@@ -44,16 +54,22 @@ export class MakePaymentPopupModalComponent implements OnInit {
     return await modal.present();
   }
 
-  async copyToClipboard(value: string) {
-    await navigator.clipboard.writeText(value);
+  async copyToClipboard(item: PaymentDetail) {
+    await navigator.clipboard.writeText(item.value);
+
+    item.copied = true; // safe now
+
+    // reset after 2s
+    setTimeout(() => {
+      item.copied = false;
+    }, 2000);
 
     const toast = await this.toastCtrl.create({
-      message: `Copied: ${value}`,
-      duration: 2500,
+      message: `Copied: ${item.value}`,
+      duration: 1500,
       position: 'bottom',
       color: 'success',
     });
-
     await toast.present();
   }
 }

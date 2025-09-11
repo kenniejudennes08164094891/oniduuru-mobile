@@ -1,0 +1,21 @@
+.make-payment-modal {
+  --width: 100%;
+  --height: 100%;
+  --border-radius: 0; // remove rounded corners
+  --box-shadow: none; // remove floating shadow
+
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.make-payment-modal .modal-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+ion-header {
+  @apply shadow-lg;
+}
+
+

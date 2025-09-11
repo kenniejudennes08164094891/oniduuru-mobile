@@ -18,17 +18,21 @@
         Log your complaints here. An admin would contact you as soon as
         possible.
       </p>
-      <div
-        class="flex gap-2 items-center bg-[#CDD5DF33] px-2 py-2 rounded-b-2xl"
-      >
-        <ion-button expand="block" color="primary" (click)="submitComplaint()">
-          Submit
-        </ion-button>
-        <input
-          class="h-10 w-full text-2xl bg-transparent border-none outline-none"
+      <div class="flex bg-[#CDD5DF33] px-2 py-2 rounded-b-2xl gap-2">
+        <!-- Button -->
+        <div class="flex items-end">
+          <ion-button color="primary" (click)="submitComplaint()">
+            Submit
+          </ion-button>
+        </div>
+        
+        <!-- Textarea -->
+        <textarea
+          rows="4"
+          class="flex-1 text-lg bg-transparent border-none outline-none p-4 resize-none"
           placeholder="Describe your issue..."
           [(ngModel)]="complaintText"
-        />
+        ></textarea>
       </div>
     </div>
   </div>

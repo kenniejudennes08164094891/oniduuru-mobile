@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
-import { UploadScreenshotPopupModalComponent } from 'src/app/shared/modals/upload-screenshot-popup-modal/upload-screenshot-popup-modal.component';
+import { UploadScreenshotPopupModalComponent } from 'src/app/utilities/modals/upload-screenshot-popup-modal/upload-screenshot-popup-modal.component';
+import { PaymentService } from 'src/app/services/payment.service';
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-account-activation-page',
   templateUrl: './account-activation-page.component.html',
@@ -10,11 +12,28 @@ import { UploadScreenshotPopupModalComponent } from 'src/app/shared/modals/uploa
 export class AccountActivationPageComponent implements OnInit {
   images = imageIcons;
   headerHidden: boolean = false;
+  currentMonth: string = new Date().toLocaleString('en-US', { month: 'short' });
+  // 👉 "Sep"
   currentYear: number = new Date().getFullYear();
+  currentDate: number = new Date().getDay(); // 👈 add this
+  currentTime: string = new Date().toLocaleTimeString(); // 👉 "10:32:05 AM"
+  paymentStatus: any;
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(
+    private modalCtrl: ModalController,
+    private paymentService: PaymentService,
+    private router: Router
+  ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.paymentService.paymentStatus$.subscribe((status) => {
+      this.paymentStatus = status;
+    });
+  }
+
+  routeBack() {
+    this.router.navigate(['/scouter/dashboard']);
+  }
 
   async openUploadScreenshotPopup() {
     const modal = await this.modalCtrl.create({
@@ -23,5 +42,14 @@ export class AccountActivationPageComponent implements OnInit {
       backdropDismiss: true,
     });
     return await modal.present();
+  }
+
+  downloadReceipt() {
+    if (this.paymentStatus?.receiptUrl) {
+      const link = document.createElement('a');
+      link.href = this.paymentStatus.receiptUrl;
+      link.download = 'receipt.png'; // 👈 customize filename
+      link.click();
+    }
   }
 }

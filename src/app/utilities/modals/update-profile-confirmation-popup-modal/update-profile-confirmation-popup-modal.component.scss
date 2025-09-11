@@ -1,0 +1,18 @@
+:host {
+  ion-content {
+    --background: #ffffff; // page background
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+ion-button {
+  --border-radius: 8px;
+  font-size: 14px;
+}
+.ion-btn--successgreen {
+  --background: #057A55;
+  --background-activated: #046b48;
+  --color: #fff;
+}

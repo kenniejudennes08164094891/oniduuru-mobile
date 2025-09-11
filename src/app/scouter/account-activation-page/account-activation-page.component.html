@@ -7,38 +7,94 @@
 </ion-header>
 
 <ion-content>
-  <div
-    class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
-  >
-    <div class="flex gap-2 items-center h-16">
-      <ion-icon
-        class="h-7 w-7 font-bold"
-        name="information-circle-outline"
-      ></ion-icon>
-      <span>
-        Hi Vikiwest,
-        <span
-          class="font-bold text-[16px] text-[#444444] cursor-pointer underline"
+  <!-- UNPAID -->
+  <div *ngIf="!paymentStatus?.isPaid">
+    <div
+      class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
+    >
+      <div class="flex gap-2 items-center h-16">
+        <ion-icon
+          class="h-7 w-7 font-bold"
+          name="information-circle-outline"
+        ></ion-icon>
+        <span>
+          Hi Vikiwest,
+          <span
+            class="font-bold text-[16px] text-[#444444] cursor-pointer underline"
+            (click)="openUploadScreenshotPopup()"
+          >
+            Click here
+          </span>
+          to upload screenshot evidence of your payment receipt
+        </span>
+      </div>
+    </div>
+
+    <div class="w-full h-full">
+      <img class="mx-auto w-full" [src]="images.NoDataImage" alt="NoData" />
+      <div class="text-center space-y-2">
+        <h3 class="text-[#000000] font-semibold text-[20px]">
+          Oops! No Data Available
+        </h3>
+        <p class="text-[#000000] text-[16px]">No record exists for now</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAID -->
+  <div *ngIf="paymentStatus?.isPaid">
+    <div
+      class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
+    >
+      <div class="flex gap-2 items-center h-[10%]">
+        <ion-icon
+          class="h-7 w-7 font-bold"
+          name="information-circle-outline"
+        ></ion-icon>
+        <span>
+          Hi Vikiwest,
+          <span class="font-bold text-[16px] text-[#444444]">
+            Congratulations!....
+          </span>
+          please find below your evidence of one-year account activation
+          uploaded on {{ currentMonth }} {{ currentDate }}, {{ currentYear }},
+          {{ currentTime }}
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-4 text-center">
+      <img
+        [src]="paymentStatus?.receiptUrl"
+        alt="Receipt"
+        class="h-[70%] w-[70%] mx-auto shadow-md"
+      />
+      <div class="mt-4 space-y-3 px-16 w-96 items-start flex flex-col ">
+        <button
+          class="bg-[#101828] text-white px-4 py-4 rounded-lg"
+          (click)="downloadReceipt()"
+        >
+          Download Receipt
+        </button>
+
+        <button
+          class="bg-[#101828] text-white px-4 py-4 rounded-lg"
           (click)="openUploadScreenshotPopup()"
         >
-          Click here
-        </span>
-        to upload screenshot evidence of your payment receipt
-      </span>
-    </div>
-  </div>
-  <div class="w-full h-full space-y-">
-    <img class="mx-auto w-full" [src]="images.NoDataImage" alt="NoData" />
+          Upload new Receipt?
+        </button>
 
-    <div class="text-center space-y-2">
-      <h3 class="text-[#000000] font-semibold text-[20px]">
-        Oops! No Data Available
-      </h3>
-      <p class="text-[#000000] text-[16px]">No record exists for now</p>
+        <button
+          class="bg-[#101828] text-white px-4 py-4 rounded-lg"
+          (click)="routeBack()"
+        >
+          Route Back
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Fixed Footer -->
+  <!-- Footer -->
   <footer class="mt-auto py-5">
     <div class="container mx-auto px-4 text-left text-gray-600">
       <p>Shoft Africa © {{ currentYear }}</p>

@@ -1,0 +1,37 @@
+<ion-content class="ion-padding bg-white">
+  <!-- Modal Container -->
+  <div class="bg-white rounded-xl overflow-hidden shadow-md">
+    <!-- Modal Header -->
+    <div class="bg-white px-6 py-5 flex flex-col justify items-center">
+      <img [src]="images.VerifiedIconUpdateProfile" alt="" />
+      <h2 class="text-lg font-semibold text-[#383a3e]">Update your profile</h2>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="px-6 py-5 text-center">
+      <p class="text-[#383a3e] font-medium mb-2">
+        Are you sure you want to update your profile?
+      </p>
+      <p class="text-sm text-gray-500 mb-4">Some actions are irreversible</p>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
+      <ion-button
+        fill="solid"
+        class="ion-btn--successgreen rounded-md"
+        (click)="dismiss('confirm')"
+      >
+        Update Scouter Record
+      </ion-button>
+
+      <ion-button
+        class="rounded-md shadow-lg w-full text-black"
+        fill="clear"
+        (click)="dismiss('cancel')"
+      >
+        Cancel
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

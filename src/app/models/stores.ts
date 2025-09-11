@@ -26,6 +26,10 @@ export const imageIcons = {
   Afternoon: '/assets/icon/Afternoon.png',
   Evening: '/assets/icon/Evening.png',
   Night: '/assets/icon/Night.png',
+  UploadPayment: '/assets/icon/upload-payment.svg',
+  VerifiedIconUpdateProfile: '/assets/icon/VerifiedIconUpdateProfile.svg',
+  ViewHireFolderIcon: '/assets/icon/view-hire-folder-icon.svg',
+  FoxCryptoIcon: '/assets/icon/Fox-crypto-Icon.svg',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

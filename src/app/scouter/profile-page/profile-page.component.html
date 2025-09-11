@@ -86,18 +86,38 @@
             <div
               class="w-24 h-24 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center relative"
             >
+              <!-- Show uploaded image OR default icon -->
+              <img
+                *ngIf="profileImage"
+                [src]="profileImage"
+                alt="Profile"
+                class="w-full h-full object-cover rounded-full"
+              />
+
               <ion-icon
+                *ngIf="!profileImage"
                 name="person-outline"
                 class="text-gray-500 text-4xl"
               ></ion-icon>
 
+              <!-- Hidden file input -->
+              <input
+                type="file"
+                accept="image/*"
+                #fileInput
+                class="hidden"
+                (change)="onFileSelected($event)"
+              />
+
               <!-- Edit Icon -->
               <div
                 class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md"
+                (click)="fileInput.click()"
               >
                 <ion-icon
                   name="pencil-outline"
                   class="text-gray-700 text-base"
+                  (click)="fileInput.click()"
                 ></ion-icon>
               </div>
             </div>
@@ -216,6 +236,7 @@
       <div class="space-y-4 py-16">
         <button
           class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer"
+          (click)="openConfirmationPopup()"
         >
           Save
         </button>

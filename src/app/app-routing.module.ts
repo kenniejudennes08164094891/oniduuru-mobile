@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { ProfilePageComponent } from './scouter/profile-page/profile-page.component';
 import { AccountActivationPageComponent } from './scouter/account-activation-page/account-activation-page.component';
+import { ViewAllHiresPageComponent } from './scouter/view-all-hires-page/view-all-hires-page.component';
+import { HireTalentPageComponent } from './scouter/hire-talent-page/hire-talent-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -38,6 +40,14 @@ const routes: Routes = [
   {
     path: 'scouter/account-activation',
     component: AccountActivationPageComponent,
+  },
+  {
+    path: 'scouter/view-hires',
+    component: ViewAllHiresPageComponent,
+  },
+  {
+    path: 'scouter/hire-talent',
+    component: HireTalentPageComponent,
   },
 ];
 

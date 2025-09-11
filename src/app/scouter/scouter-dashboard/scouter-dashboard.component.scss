@@ -6,6 +6,13 @@
   background-position: center;
   position: relative;
 }
+.paid-dark-card-background {
+  background-image: url("/assets/images/PainDashboardBG.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
 
 .circle-chart {
   position: relative;
@@ -33,8 +40,6 @@ app-scouter-header {
 .header-visible {
   transform: translateY(0);
 }
-
-
 
 // Add these styles to your component's SCSS file
 .border-4 {
