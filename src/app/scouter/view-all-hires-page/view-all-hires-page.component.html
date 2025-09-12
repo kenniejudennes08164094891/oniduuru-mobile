@@ -6,6 +6,7 @@
   </app-scouter-header>
 </ion-header>
 
+
 <ion-content class="ion-padding">
   <div
     class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
@@ -54,7 +55,7 @@
   </div>
 
   <!-- Section for Selected Category -->
-  <div #categoryDisplaySection  *ngIf="activeCategoryBtn" class="py-4 px-1">
+  <div #categoryDisplaySection *ngIf="activeCategoryBtn" class="py-4 px-1">
     <h3 class="font-semibold text-lg mb-4">
       Showing {{ getActiveCategoryTitle() }}
     </h3>
@@ -188,7 +189,10 @@
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
+        <tbody
+          *ngIf="paginatedHires.length > 0; else noDataTable"
+          class="divide-y divide-gray-100"
+        >
           <tr
             *ngFor="let hire of paginatedHires"
             class="hover:bg-gray-50 transition-colors"
@@ -211,7 +215,7 @@
             <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600">
               {{ hire.date }}
             </td>
-            <!-- Amount -->
+            <!-- Start Date -->
             <td
               class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base"
             >
@@ -219,19 +223,35 @@
             </td>
           </tr>
         </tbody>
+
+        <!-- No Data Template -->
+        <ng-template #noDataTable>
+          <tbody>
+            <tr>
+              <td
+                colspan="3"
+                class="px-16 py-6 text- text-gray-500 italic text-sm sm:text-base"
+              >
+                No hires found matching your search.
+              </td>
+            </tr>
+          </tbody>
+        </ng-template>
       </table>
     </div>
 
     <!-- Pagination -->
     <div
+      *ngIf="paginatedHires.length > 0"
       class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-100"
     >
       <button
         (click)="prevPage()"
         [disabled]="currentPage === 1"
-        class="flex items-center px-3 py-2 gap-1 sm:gap-2 border rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        class="pagination-button flex items-center px-3 py-2 gap-2 border-2 border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        <ion-icon name="chevron-back-outline"></ion-icon> Previous
+        <ion-icon name="chevron-back-outline"></ion-icon>
+        Previous
       </button>
 
       <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
@@ -248,7 +268,7 @@
       <button
         (click)="nextPage()"
         [disabled]="currentPage === totalPages"
-        class="flex items-center px-3 py-2 gap-1 sm:gap-2 border rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        class="pagination-button flex items-center px-3 py-2 gap-1 sm:gap-2 border border-gray-400 rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         Next <ion-icon name="chevron-forward-outline"></ion-icon>
       </button>

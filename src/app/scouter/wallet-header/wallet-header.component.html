@@ -1,0 +1,54 @@
+<ion-header class="bg-[#EEF0F6]">
+  <!-- <div class="bg-[#CDD5DF59]"> -->
+  <div class="w-full flex justify-between items-center px-4 py-2">
+    <!-- App Logo/Title -->
+
+    <!-- here -->
+    <button
+      class="flex items-center gap-3 text-2xl font-semibold text-[#101828]"
+      (click)="openMenu()"
+    >
+      <!-- Menu -->
+      <ion-icon name="menu-outline"></ion-icon>
+
+      ∯ Oniduuru
+    </button>
+
+    <div class="flex items-center gap-4 relative">
+      <!-- Notification Icon with Badge -->
+      <button class="relative" (click)="openNotificationPopover($event)">
+        <button class="bg-[#444444] rounded-xl p-2.5 hover:cursor-pointer">
+          <img [src]="images.NotificationIcon" alt="Notification" />
+        </button>
+        <span
+          class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold border-2 border-white rounded-full min-w-[20px] h-[20px] flex items-center justify-center"
+        >
+          21
+        </span>
+      </button>
+
+      <!-- Profile Avatar with Status Dot -->
+      <button
+        class="relative hover:cursor-pointer"
+        (click)="openProfilePopover($event)"
+      >
+        <!-- Avatar with Double Border -->
+        <div class="border border-black rounded-full p-0.5">
+          <div class="border-1 border-white rounded-full">
+            <img
+              class="rounded-full w-10 h-10"
+              [src]="images.ProfileIcon"
+              alt="Profile"
+            />
+          </div>
+        </div>
+
+        <!-- Status Dot -->
+        <span
+          class="absolute top-1.5 right-1.5 bg-green-500 h-2 w-2 rounded-full border-1 border-white"
+        ></span>
+      </button>
+    </div>
+  </div>
+  <!-- </div> -->
+</ion-header>

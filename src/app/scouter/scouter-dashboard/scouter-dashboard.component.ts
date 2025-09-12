@@ -59,6 +59,10 @@ export class ScouterDashboardComponent implements OnInit {
     this.router.navigate(['/scouter/hire-talent']);
   }
 
+  goToWalletPage() {
+    this.router.navigate(['/scouter/wallet-page']);
+  }
+
   ngOnInit(): void {
     this.setTimeOfDay();
 

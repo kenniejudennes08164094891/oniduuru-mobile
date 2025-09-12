@@ -16,6 +16,9 @@ import { UploadScreenshotPopupModalComponent } from '../utilities/modals/upload-
 import { UpdateProfileConfirmationPopupModalComponent } from '../utilities/modals/update-profile-confirmation-popup-modal/update-profile-confirmation-popup-modal.component';
 import { ViewAllHiresPageComponent } from './view-all-hires-page/view-all-hires-page.component';
 import { HireTalentPageComponent } from './hire-talent-page/hire-talent-page.component';
+import { WalletPageComponent } from './wallet-page/wallet-page.component';
+import { WalletHeaderComponent } from './wallet-header/wallet-header.component';
+import { WalletMenuComponent } from '../utilities/modals/wallet-menu/wallet-menu.component';
 
 @NgModule({
   imports: [
@@ -38,6 +41,9 @@ import { HireTalentPageComponent } from './hire-talent-page/hire-talent-page.com
     UpdateProfileConfirmationPopupModalComponent,
     ViewAllHiresPageComponent,
     HireTalentPageComponent,
+    WalletPageComponent,
+    WalletHeaderComponent,
+    WalletMenuComponent,
   ],
 })
 export class ScouterPageModule {}

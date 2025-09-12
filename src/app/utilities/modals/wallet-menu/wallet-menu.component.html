@@ -1,9 +1,7 @@
-<!--SCOUTER WALLET MENU -->
-
-<!-- Side Menu -->
-<ion-menu side="start" menuId="scouter-menu" contentId="main-content">
+<!-- ✅ Scouter Menu -->
+<ion-menu side="start" menuId="scouter-menu" contentId="scouter-content">
   <ion-header>
-    <ion-toolbar>
+    <ion-toolbar color="light">
       <ion-title>Scouter Menu</ion-title>
     </ion-toolbar>
   </ion-header>
@@ -23,11 +21,13 @@
   </ion-content>
 </ion-menu>
 
-<!-- Main Content Area -->
-<div id="main-content">
+<!-- ✅ Content area -->
+<div class="main-wrapper" id="scouter-content">
+  <!-- Header stays here -->
+  <ion-header>
+    <app-wallet-header></app-wallet-header>
+  </ion-header>
+
+  <!-- Router outlet MUST be directly inside content wrapper -->
   <ion-router-outlet></ion-router-outlet>
 </div>
-
-<ion-app>
-  <ion-router-outlet></ion-router-outlet>
-</ion-app>

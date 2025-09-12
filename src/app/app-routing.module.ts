@@ -4,6 +4,7 @@ import { ProfilePageComponent } from './scouter/profile-page/profile-page.compon
 import { AccountActivationPageComponent } from './scouter/account-activation-page/account-activation-page.component';
 import { ViewAllHiresPageComponent } from './scouter/view-all-hires-page/view-all-hires-page.component';
 import { HireTalentPageComponent } from './scouter/hire-talent-page/hire-talent-page.component';
+import { WalletPageComponent } from './scouter/wallet-page/wallet-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -48,6 +49,10 @@ const routes: Routes = [
   {
     path: 'scouter/hire-talent',
     component: HireTalentPageComponent,
+  },
+  {
+    path: 'scouter/wallet-page',
+    component: WalletPageComponent,
   },
 ];
 

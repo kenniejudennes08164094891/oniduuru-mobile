@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
   styleUrls: ['./hire-talent-page.component.scss'],
 })
 export class HireTalentPageComponent implements OnInit {
+  headerHidden: boolean = false;
+
   constructor(private router: Router) {}
 
   goToViewHires() {
