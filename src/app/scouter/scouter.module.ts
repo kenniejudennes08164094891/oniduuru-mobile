@@ -18,7 +18,16 @@ import { ViewAllHiresPageComponent } from './view-all-hires-page/view-all-hires-
 import { HireTalentPageComponent } from './hire-talent-page/hire-talent-page.component';
 import { WalletPageComponent } from './wallet-page/wallet-page.component';
 import { WalletHeaderComponent } from './wallet-header/wallet-header.component';
-import { WalletMenuComponent } from '../utilities/modals/wallet-menu/wallet-menu.component';
+import { AwaitingPaymentVerificationModalComponent } from '../utilities/modals/awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
+import { MarketEngagementMarketPricePreparationComponent } from './market-engagement-market-price-preparation/market-engagement-market-price-preparation.component';
+import { RecentHiresDashboardComponent } from '../utilities/modals/recent-hires-dashboard-component/recent-hires-dashboard-component.component';
+import { RecentMarketRatingDashboardComponent } from '../utilities/modals/recent-market-rating-dashboard-component/recent-market-rating-dashboard-component.component';
+import { NgChartsModule } from 'ng2-charts';
+import { MarketEngagementTabsComponent } from '../utilities/modals/market-engagement-tabs-switch/market-engagement-tabs.component';
+import { MarketStatsComponent } from '../utilities/modals/market-stats/market-stats.component';
+import { MarketEngagementsTableComponent } from '../utilities/modals/market-engagements-table/market-engagements-table.component';
+import { TotalDeliveryEvaluationComponent } from '../utilities/modals/total-delivery-evaluation/total-delivery-evaluation.component';
+import { SlideshowTextForViewHiresComponent } from '../utilities/modals/slideshow-text-for-view-hires/slideshow-text-for-view-hires.component';
 
 @NgModule({
   imports: [
@@ -27,6 +36,7 @@ import { WalletMenuComponent } from '../utilities/modals/wallet-menu/wallet-menu
     IonicModule,
     ScouterPageRoutingModule,
     TalentPageModule,
+    NgChartsModule,
   ],
   declarations: [
     ScouterPage,
@@ -43,7 +53,17 @@ import { WalletMenuComponent } from '../utilities/modals/wallet-menu/wallet-menu
     HireTalentPageComponent,
     WalletPageComponent,
     WalletHeaderComponent,
-    WalletMenuComponent,
+    AwaitingPaymentVerificationModalComponent,
+    MarketEngagementMarketPricePreparationComponent,
+    RecentHiresDashboardComponent,
+    RecentMarketRatingDashboardComponent,
+    MarketEngagementMarketPricePreparationComponent,
+    MarketEngagementTabsComponent,
+    MarketStatsComponent,
+    MarketEngagementsTableComponent,
+    TotalDeliveryEvaluationComponent,
+    SlideshowTextForViewHiresComponent,
   ],
+  exports: [TotalDeliveryEvaluationComponent],
 })
 export class ScouterPageModule {}

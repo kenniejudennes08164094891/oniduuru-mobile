@@ -3,7 +3,7 @@ import { ModalController, ToastController } from '@ionic/angular';
 import { ImageConfig } from '@angular/common';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
-
+import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
 @Component({
   selector: 'app-upload-screenshot-popup-modal',
   templateUrl: './upload-screenshot-popup-modal.component.html',
@@ -29,38 +29,47 @@ export class UploadScreenshotPopupModalComponent {
     if (file) {
       this.selectedFile = file;
 
-      // Show preview
+      // Convert to base64
       const reader = new FileReader();
       reader.onload = () => {
-        this.previewUrl = reader.result;
+        this.previewUrl = reader.result as string; // base64 string
       };
       reader.readAsDataURL(file);
     }
   }
 
+  removeScreenshot() {
+    this.selectedFile = null;
+    this.previewUrl = null;
+  }
+
   async uploadReceipt() {
     if (this.selectedFile) {
-      // 1. TODO: send file to backend & get back a URL
-      const uploadedUrl = URL.createObjectURL(this.selectedFile); // fake for now
-
-      // 2. Update state
+      // Convert to base64 already done in onFileSelected
       this.paymentService.setPaymentStatus({
         isPaid: true,
-        // receiptUrl: uploadedUrl,
-        receiptUrl: this.previewUrl as string, // from file preview or backend
+        receiptUrl: this.previewUrl as string,
         transactionId: 'INV-2025-0615-013',
       });
 
-      // 3. Toast + Close
+      // Success toast
       const toast = await this.toastCtrl.create({
         message: 'Receipt uploaded successfully ✅',
-        duration: 3000,
+        duration: 2000,
         position: 'bottom',
         color: 'success',
       });
       await toast.present();
 
-      this.close();
+      // 1. Close the upload screenshot modal
+      await this.modalCtrl.dismiss();
+
+      // 2. Immediately open awaiting verification modal
+      const modal = await this.modalCtrl.create({
+        component: AwaitingPaymentVerificationModalComponent,
+        cssClass: 'awaiting-modal', // optional custom class
+      });
+      await modal.present();
     }
   }
 }

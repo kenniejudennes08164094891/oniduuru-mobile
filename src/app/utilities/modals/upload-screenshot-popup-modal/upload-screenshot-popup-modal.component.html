@@ -18,8 +18,9 @@
 
 <ion-content class="flex justify-center items-center p-6">
   <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6 mx-auto">
-    <!-- Upload Card -->
+    <!-- Upload Card (hide if previewUrl exists) -->
     <div
+      *ngIf="!previewUrl"
       class="border-2 border-dashed border-gray-300 rounded-lg h-56 flex flex-col items-center justify-center text-center cursor-pointer"
       (click)="fileInput.click()"
     >
@@ -40,19 +41,27 @@
       />
     </div>
 
-    <!-- Preview -->
-    <div *ngIf="previewUrl" class="mt-4">
+    <!-- Preview with Remove Button -->
+    <div *ngIf="previewUrl" class="mt-4 relative">
       <img
         [src]="previewUrl"
         alt="Preview"
         class="rounded-lg max-h-40 mx-auto"
       />
+      <!-- ❌ Remove Button -->
+      <button
+        class="absolute top-2 right-2 bg-white rounded-full shadow-md p-1"
+        (click)="removeScreenshot()"
+      >
+        <ion-icon name="close" class="text-red-500 text-lg"></ion-icon>
+      </button>
     </div>
 
     <!-- Upload Button -->
     <button
+      [disabled]="!previewUrl"
       (click)="uploadReceipt()"
-      class="mt-4 w-full bg-[#111827] text-white py-2 rounded-md shadow-md hover:bg-[#000000]"
+      class="mt-4 w-full bg-[#111827] text-white py-2 rounded-md shadow-md hover:bg-[#000000] disabled:bg-gray-400 disabled:cursor-not-allowed"
     >
       Upload Receipt
     </button>

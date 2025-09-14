@@ -77,13 +77,7 @@
               class="bg-white rounded-lg shadow-md p-6 border border-gray-300"
             >
               <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
-                <!-- Status Dot -->
-                <span
-                  class="h-3 w-3 rounded-full"
-                  [ngStyle]="{
-                    'background-color': getStatusColor(card.status)
-                  }"
-                ></span>
+                c
 
                 {{ card.title }}
               </h3>
@@ -449,88 +443,20 @@
         <div class="border">
           <div class="py-6 px-3 mt-12">
             <h3 class="px-4 text-xl font-semibold">My Recent Market Rating</h3>
-            <div class="flex flex-col items-center mt-10">
-              <img
-                class="w-[232px] h-[246px]"
-                [src]="images.NoDataImage"
-                alt="No Data "
-              />
-              <div class="text-center space-y-2">
-                <h3 class="text-[#000000] font-semibold text-[20px]">
-                  Oops! No Data Available
-                </h3>
-                <p class="text-[#000000] text-[16px]">
-                  No record exists for now
-                </p>
-              </div>
-            </div>
+            <app-recent-market-rating-dashboard-component></app-recent-market-rating-dashboard-component>
           </div>
-          <div class="py-6 mt-12 px-3">
-            <div class="flex justify-between items-center px-1.5">
-              <h3 class="px- text-xl font-semibold">My Recent Hires</h3>
-              <button
-                (click)="goToViewHires()"
-                class="bg-[#101828] px-4 py-3 rounded-lg text-white"
-              >
-                View All Hires
-              </button>
-            </div>
 
-            <div>
-              <div
-                *ngFor="let hire of MockRecentHires"
-                class="flex items-center justify-between py-4 px-1 border-1 border-b border-[#33333333] rounded-lg last:border-0"
-              >
-                <!-- Left: Avatar + Info -->
-                <div class="flex items-center gap-3 px-1 py-1">
-                  <img
-                    [src]="hire.profilePic"
-                    alt="{{ hire.name }}"
-                    class="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <p class="font-semibold text-[#101828]">
-                      {{ hire.name }}
-                    </p>
-                    <p class="text-sm text-[#33333333]">{{ hire.date }}</p>
-                  </div>
-                </div>
-
-                <!-- Right: Amount -->
-                <span class="font-normal text-[16px] text-[#101828]">{{
-                  getFormattedAmount(hire.amount)
-                }}</span>
-              </div>
-            </div>
-
-            <!-- Fallback -->
-            <!-- <ng-template #noPayments>
-              <div class="flex flex-col items-center mt-10">
-                <img
-                  class="w-[232px] h-[246px]"
-                  [src]="images.NoDataImage"
-                  alt="No Data "
-                />
-                <div class="text-center space-y-2">
-                  <h3 class="text-[#000000] font-semibold text-[20px]">
-                    Oops! No Data Available
-                  </h3>
-                  <p class="text-[#000000] text-[16px]">
-                    No record exists for now
-                  </p>
-                </div>
-              </div>
-            </ng-template> -->
-          </div>
+          <!-- Inside Paid Dashboard -->
+          <app-recent-hires-dashboard></app-recent-hires-dashboard>
         </div>
       </div>
     </ng-template>
 
     <!-- Fixed Footer -->
-    <footer class="mt-auto py-5">
+    <!-- <footer class="mt-auto py-5">
       <div class="container mx-auto px-4 text-left text-gray-600">
         <p>Shoft Africa © {{ currentYear }}</p>
       </div>
-    </footer>
+    </footer> -->
   </div>
 </ion-content>

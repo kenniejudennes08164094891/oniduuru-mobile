@@ -1,0 +1,37 @@
+<!-- recent-hires-dashboard-component.component.html -->
+<div class="py-6 mt-12 px-3">
+  <div class="flex justify-between items-center px-1.5">
+    <h3 class="px- text-xl font-semibold">My Recent Hires</h3>
+    <button
+      (click)="goToViewHires()"
+      class="bg-[#101828] px-4 py-3 rounded-lg text-white"
+    >
+      View All Hires
+    </button>
+  </div>
+
+  <div>
+    <div
+      *ngFor="let hire of limitedRecentHires"
+      class="flex items-center justify-between py-4 px-1 border-b border-[#33333333] rounded-lg last:border-0 cursor-pointer"
+    >
+      <!-- Left: Avatar + Info -->
+      <div class="flex items-center gap-3 px-1 py-1">
+        <img
+          [src]="hire.profilePic"
+          alt="{{ hire.name }}"
+          class="w-10 h-10 rounded-full"
+        />
+        <div>
+          <p class="font-semibold text-[#101828]">{{ hire.name }}</p>
+          <p class="text-sm text-[#333333]">{{ hire.date }}</p>
+        </div>
+      </div>
+
+      <!-- Right: Amount -->
+      <span class="font-normal text-[16px] text-[#101828]">
+        {{ getFormattedAmount(hire.amount) }}
+      </span>
+    </div>
+  </div>
+</div>

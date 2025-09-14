@@ -5,6 +5,7 @@ import { AccountActivationPageComponent } from './scouter/account-activation-pag
 import { ViewAllHiresPageComponent } from './scouter/view-all-hires-page/view-all-hires-page.component';
 import { HireTalentPageComponent } from './scouter/hire-talent-page/hire-talent-page.component';
 import { WalletPageComponent } from './scouter/wallet-page/wallet-page.component';
+import { MarketEngagementMarketPricePreparationComponent } from './scouter/market-engagement-market-price-preparation/market-engagement-market-price-preparation.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -53,6 +54,10 @@ const routes: Routes = [
   {
     path: 'scouter/wallet-page',
     component: WalletPageComponent,
+  },
+  {
+    path: 'scouter/market-engagement-market-price-preparation/:id',
+    component: MarketEngagementMarketPricePreparationComponent,
   },
 ];
 

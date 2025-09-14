@@ -1,0 +1,158 @@
+<div
+  *ngIf="isModalOpen"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 mt-16 p-4"
+  (click)="closeModal()"
+>
+  <div
+    class="bg-white rounded-lg shadow-lg w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- HEADER -->
+    <div
+      class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+    >
+      <h2 class="text-lg font-bold text-white">Total Delivery Evaluation</h2>
+      <button (click)="closeModal()" class="text-white hover:text-gray-700">
+        ✕
+      </button>
+    </div>
+
+    <!-- SCROLLABLE BODY -->
+    <div class="p-6 space-y-6 overflow-y-auto flex-1">
+      <!-- Instruction -->
+      <div>
+        <p class="text-sm text-[#79797B] mb-4">
+          Pls evaluate the quality of the artisan's work. Remember, comments to
+          the talents should follow our
+          <strong class="text-[#0033FF]">Community Guidelines</strong>.
+        </p>
+
+        <p class="font-medium mb-2 text-[#79797B]">
+          Your Job Description:
+          <span class="text-[#363757]"> I need a DevOps engineer</span>
+        </p>
+
+        <!-- Comment textarea -->
+        <!-- <textarea
+          [(ngModel)]="comment"
+          placeholder="Write your comment..."
+          class="w-full border p-3 rounded mt-2 text-sm text-[#79797B]"
+        ></textarea> -->
+      </div>
+
+      <!-- Attachments / Location -->
+      <div
+        class="flex items-center gap-4 border bg-[#CDD5DF33] px-4 py-3 rounded-b-md w-full"
+      >
+        <div class="flex justify-between items-center gap-2 w-1/2">
+          <!-- Hidden file input -->
+          <input
+            type="file"
+            multiple
+            (change)="handleFileInput($event)"
+            #fileInput
+            hidden
+          />
+
+          <!-- Attach button -->
+          <button
+            type="button"
+            (click)="fileInput.click()"
+            class="flex items-center gap-2 text-gray-700"
+          >
+            <ion-icon name="attach-outline"></ion-icon> Attach..
+          </button>
+
+          <!-- Location button -->
+          <button
+            type="button"
+            (click)="setLocation('Selected Location')"
+            class="flex items-center gap-2 text-gray-700"
+          >
+            <ion-icon name="location-outline"></ion-icon> Locat..
+          </button>
+
+          <!-- Disabled Image Icon -->
+          <button class="flex items-center gap-2 text-gray-700">
+            <ion-icon name="image-outline"></ion-icon> Photo
+          </button>
+        </div>
+      </div>
+
+      <!-- Display selected attachments & location -->
+      <div *ngIf="attachments.length > 0" class="mt-2">
+        <p class="text-sm font-medium">Attachments:</p>
+        <ul class="list-disc list-inside">
+          <li *ngFor="let file of attachments; let i = index">
+            {{ file.name }}
+            <button (click)="removeAttachment(i)" class="text-red-500 ml-2">
+              Remove
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="location" class="mt-2 text-sm text-[#79797B]">
+        Location: {{ location }}
+      </div>
+
+      <!-- Rating -->
+      <div class="space-y-4">
+        <div class="flex gap-2 items-center">
+          <h3 class="font-medium text-[#CDD5DF]">Your Rating:</h3>
+          <div class="flex space-x-1 text-yellow-400 cursor-pointer">
+            <span
+              *ngFor="let star of [1, 2, 3, 4, 5]"
+              (click)="setRating(star)"
+              [class.text-yellow-600]="rating >= star"
+            >
+              ★
+            </span>
+          </div>
+        </div>
+
+        <!-- Payment options -->
+        <div>
+          <h3 class="font-medium mb-2 text-[#999999]">
+            Select Payment Option:
+          </h3>
+          <div
+            class="flex flex-col text-[#101828] border p-3 space-y-4 rounded-b-lg"
+          >
+            <div class="flex gap-1 items-center">
+              <input
+                type="radio"
+                id="wallet"
+                name="payment"
+                value="wallet"
+                [(ngModel)]="paymentOption"
+              />
+              <label for="wallet">Pay via wallet transfer</label>
+            </div>
+            <div class="border-t"></div>
+            <div class="flex gap-1 items-center">
+              <input
+                type="radio"
+                id="bank"
+                name="payment"
+                value="bank"
+                [(ngModel)]="paymentOption"
+              />
+              <label for="bank">Pay via personal bank transfer</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <div>
+        <button
+          (click)="submitEvaluation()"
+          class="bg-[#CDD5DF80] text-white py-3 px-4 rounded-md font-bold hover:bg-blue-700 transition"
+        >
+          Post comment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

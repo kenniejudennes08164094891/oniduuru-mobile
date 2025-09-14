@@ -6,6 +6,7 @@ module.exports = {
   ],
   theme: {
     extend: {
+      
       fontFamily: {
         euclid: ["'Euclid Circular A'", "sans-serif"],
       },

@@ -1,13 +1,28 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Input } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
+import { Router } from '@angular/router';
+import {
+  MockRecentHires,
+  HireCategories,
+  HireFilters,
+} from 'src/app/models/mocks';
 
 interface MockPayment {
+  id: string; // unique identifier for routing
   profilePic: string;
   name: string;
   email: string;
   date: string;
   startDate: string;
   amount: number;
+  status: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+
+  // NEW FIELDS
+  jobDescription: string;
+  yourComment: string;
+  yourRating: number;
+  talentComment: string;
+  talentRating: number;
 }
 
 @Component({
@@ -16,7 +31,11 @@ interface MockPayment {
   styleUrls: ['./view-all-hires-page.component.scss'],
 })
 export class ViewAllHiresPageComponent implements OnInit {
-    @ViewChild('categoryDisplaySection') categoryDisplaySection!: ElementRef;
+  @ViewChild('categoryDisplaySection') categoryDisplaySection!: ElementRef;
+
+  MockRecentHires = MockRecentHires;
+  categories = HireCategories;
+  filters = HireFilters;
 
   headerHidden: boolean = false;
   images = imageIcons;
@@ -26,52 +45,79 @@ export class ViewAllHiresPageComponent implements OnInit {
   searchTerm: string = '';
   currentPage: number = 1;
   pageSize: number = 5; // rows per page
+  isFilterOpen: boolean = false;
 
-  constructor() {}
+  slideshowTexts: string[] = [
+    `Your Total Market Expenditures for the Month of ${new Date().toLocaleString(
+      'en-US',
+      { month: 'short' }
+    )} is ₦${(25000).toLocaleString()}`,
+    'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
+  ];
+
+  getFilterStatus(key: string): string {
+    return this.filters.find((f) => f.key === key)?.status || '';
+  }
+
+  getFilterTitle(key: string): string {
+    return this.filters.find((f) => f.key === key)?.title || '';
+  }
+  constructor(private router: Router) {}
+
+  viewMarketPricePreposition(id: string) {
+    this.router.navigate([
+      '/scouter/market-engagement-market-price-preparation',
+      id,
+    ]);
+  }
 
   ngOnInit() {}
 
-  MockRecentHires: MockPayment[] = [
-    {
-      profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
-      name: 'John Doe',
-      email: 'JohnDoe@gmail.com',
-      date: 'Sep 10, 2025, 11:45 AM',
-      startDate: 'Jan 1, 2025',
-      amount: 123120.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
-      name: 'Jane Smith',
-      email: 'Janesmt@gmail.com',
-      date: 'Sep 9, 2025, 03:15 PM',
-      startDate: 'Jan 9, 2025',
-      amount: 123250.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
-      name: 'Michael Johnson',
-      email: 'MichaelJohnson@gmail.com',
-      date: 'Sep 8, 2025, 09:30 AM',
-      startDate: 'Feb 1, 2025',
-      amount: 23475.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
-      name: 'Emily Davis',
-      email: 'Emily@gmail.com',
-      date: 'Sep 7, 2025, 07:50 PM',
-      startDate: 'Dec 1, 2025',
-      amount: 234599.99,
-    },
-  ];
+  getSlideAnimationDuration(text: string): string {
+    const baseDuration = 15; // seconds for ~40 chars
+    const extraPerChar = 0.3; // add 0.3s per char
+    const duration = baseDuration + text.length * extraPerChar;
+    return `${duration}s`;
+  }
 
-  categories = [
-    { title: 'Most Hired Talent', key: 'most' },
-    { title: 'Least Hired Talent', key: 'least' },
-    { title: 'Underperformers', key: 'under' },
-    { title: 'Top Performers', key: 'top' },
-  ];
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Offer Accepted':
+        return '#189537'; // GREEN
+      case 'Awaiting Acceptance':
+        return '#FFA500'; // ORANGE
+      case 'Offer Rejected':
+        return '#CC0000'; // RED
+      default:
+        return '#79797B'; // GRAY
+    }
+  }
+
+  getStatusBg(status: string): string {
+    switch (status) {
+      case 'Offer Accepted':
+        return '#D1FAE5'; // light green bg
+      case 'Awaiting Acceptance':
+        return '#FEF3C7'; // light orange bg
+      case 'Offer Rejected':
+        return '#FECACA'; // light red bg
+      default:
+        return '#E5E7EB'; // gray bg
+    }
+  }
+
+  getStatusText(status: string): string {
+    switch (status) {
+      case 'Offer Accepted':
+        return '#065F46'; // dark green text
+      case 'Awaiting Acceptance':
+        return '#92400E'; // dark orange text
+      case 'Offer Rejected':
+        return '#991B1B'; // dark red text
+      default:
+        return '#374151'; // dark gray
+    }
+  }
 
   // Separate states
   activeCategoryBtn: string | null = null;
@@ -120,7 +166,14 @@ export class ViewAllHiresPageComponent implements OnInit {
     return Object.values(
       this.MockRecentHires.reduce((acc, hire) => {
         if (!acc[hire.email]) {
-          acc[hire.email] = { ...hire };
+          acc[hire.email] = {
+            ...hire,
+            jobDescription: hire.jobDescription ?? '',
+            yourComment: hire.yourComment ?? '',
+            yourRating: hire.yourRating ?? 0,
+            talentComment: hire.talentComment ?? '',
+            talentRating: hire.talentRating ?? 0,
+          };
         }
         return acc;
       }, {} as Record<string, MockPayment>)
@@ -153,22 +206,30 @@ export class ViewAllHiresPageComponent implements OnInit {
     const maxCount = counts.length ? Math.max(...counts) : 0;
     const minCount = counts.length ? Math.min(...counts) : 0;
 
+    let hires: MockPayment[] = [];
+
     switch (categoryKey) {
       case 'most':
-        return uniqueHires.filter((h) => occurrences[h.email] === maxCount);
+        hires = uniqueHires.filter((h) => occurrences[h.email] === maxCount);
+        break;
       case 'least':
-        return uniqueHires.filter((h) => occurrences[h.email] === minCount);
+        hires = uniqueHires.filter((h) => occurrences[h.email] === minCount);
+        break;
       case 'under':
-        return uniqueHires.filter((h) => h.amount < 50000);
+        hires = uniqueHires.filter((h) => h.amount < 50000);
+        break;
       case 'top':
-        return uniqueHires.filter((h) => h.amount >= 100000);
+        hires = uniqueHires.filter((h) => h.amount >= 100000);
+        break;
       default:
-        return [];
+        hires = [];
     }
+
+    // 👉 Limit results to 5 (or change number as needed)
+    return hires.slice(0, 4);
   }
 
-
-    private scrollToCategoryDisplay() {
+  private scrollToCategoryDisplay() {
     if (this.categoryDisplaySection) {
       this.categoryDisplaySection.nativeElement.scrollIntoView({
         behavior: 'smooth',
@@ -177,10 +238,45 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
   }
 
+  private filterByStatus(filterKey: string): MockPayment[] {
+    if (!this.MockRecentHires.length) return [];
+
+    if (filterKey === 'all') {
+      return this.MockRecentHires.map((hire) => ({
+        ...hire,
+        jobDescription: hire.jobDescription ?? '',
+        yourComment: hire.yourComment ?? '',
+        yourRating: hire.yourRating ?? 0,
+        talentComment: hire.talentComment ?? '',
+        talentRating: hire.talentRating ?? 0,
+      }));
+    }
+
+    const status = this.getFilterStatus(filterKey);
+    return this.MockRecentHires.filter((h) => h.status === status).map(
+      (hire) => ({
+        ...hire,
+        jobDescription: hire.jobDescription ?? '',
+        yourComment: hire.yourComment ?? '',
+        yourRating: hire.yourRating ?? 0,
+        talentComment: hire.talentComment ?? '',
+        talentRating: hire.talentRating ?? 0,
+      })
+    );
+  }
+
+  get totalMarketExpenditure(): number {
+    if (!this.MockRecentHires.length) return 0;
+    return this.MockRecentHires.reduce((sum, hire) => sum + hire.amount, 0);
+  }
+
+  get hasMarketExpenditure(): boolean {
+    return this.totalMarketExpenditure > 0;
+  }
 
   get filteredAndSearchedHires() {
     let hires = this.activeCategoryTable
-      ? this.filterByCategory(this.activeCategoryTable)
+      ? this.filterByStatus(this.activeCategoryTable)
       : this.MockRecentHires;
 
     if (this.searchTerm) {

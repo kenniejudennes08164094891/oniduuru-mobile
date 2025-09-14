@@ -10,3 +10,29 @@
   border: 1px solid #d0d5dd !important; /* gray-400 */
   border-radius: 0.5rem; /* rounded-lg */
 }
+
+.slide-container {
+  overflow: hidden; // keep it neat
+  white-space: nowrap; // prevent wrapping
+  width: 100%; // full width
+}
+
+.slide-inner {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.slide-inner span {
+  display: inline-block;
+  padding-right: 100%; // ensures smooth looping
+  animation: slide-left linear infinite;
+}
+
+@keyframes slide-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

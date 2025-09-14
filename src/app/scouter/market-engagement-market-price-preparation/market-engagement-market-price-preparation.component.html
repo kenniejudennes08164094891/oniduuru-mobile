@@ -1,0 +1,73 @@
+<ion-header>
+  <app-scouter-header></app-scouter-header>
+</ion-header>
+
+<ion-content class="ion-padding" *ngIf="hire">
+  <!-- Top Section -->
+  <div
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+  >
+    <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" />
+        <div>
+          <span class="font-medium text-[24px] leading-tight">{{
+            userName
+          }}</span>
+          <p class="text-gray-200 text-lg leading-relaxed">
+            View your hires with scouter stated above
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="pb-3 text-[#000000] text-[16px] font-semibold">
+    Market Price Preposition:
+  </h3>
+
+  <!-- Job Info -->
+  <div class="bg-[#CDD5DF] rounded-lg shadow p-6 space-y-3">
+    <p><strong>Job Description:</strong> {{ hire.jobDescription }}</p>
+    <p><strong>Amount to Pay:</strong> {{ hire.amount | currency : "NGN" }}</p>
+    <p><strong>Date of Hire:</strong> {{ hire.date }}</p>
+    <p><strong>Your own comment:</strong> {{ hire.yourComment }}</p>
+
+    <!-- Stars -->
+    <div class="flex items-center gap-1">
+      <strong>Your Rating:</strong>
+      <ng-container *ngFor="let star of [].constructor(hire.yourRating)">
+        ⭐
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Talent Info -->
+  <div class="bg-[#CDD5DF] rounded-lg shadow p-6 space-y-3 mt-4">
+    <p class="gap-2 flex items-center">
+      <strong>Hire Status:</strong>
+      <span class="flex gap-2 items-center">
+        <span
+          class="inline-block h-3 w-3 rounded-full"
+          [ngStyle]="{ 'background-color': getStatusColor(hire.status) }"
+        ></span>
+        {{ hire.status }}
+      </span>
+    </p>
+
+    <p><strong>Talent’s Email:</strong> {{ hire.email }}</p>
+    <p><strong>Start Date:</strong> {{ hire.startDate }}</p>
+    <p><strong>Comment by Talent:</strong> {{ hire.talentComment }}</p>
+
+    <!-- Stars -->
+    <div class="flex items-center gap-1">
+      <strong>Talent Rating:</strong>
+      <ng-container *ngFor="let star of [].constructor(hire.talentRating)">
+        ⭐
+      </ng-container>
+    </div>
+  </div>
+
+  <app-market-engagement-tabs></app-market-engagement-tabs>
+</ion-content>

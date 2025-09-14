@@ -5,12 +5,15 @@ import { MakePaymentPopupModalComponent } from 'src/app/utilities/modals/make-pa
 import { ModalController } from '@ionic/angular';
 import { PaymentService } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
-interface MockPayment {
-  profilePic: string;
-  name: string;
-  date: string;
-  amount: number;
-}
+import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { ActivatedRoute } from '@angular/router';
+
+// interface MockPayment {
+//   profilePic: string;
+//   name: string;
+//   date: string;
+//   amount: number;
+// }
 
 @Component({
   selector: 'app-scouter-dashboard',
@@ -18,6 +21,10 @@ interface MockPayment {
   styleUrls: ['./scouter-dashboard.component.scss'],
 })
 export class ScouterDashboardComponent implements OnInit {
+  MockRecentHires: MockPayment[] = MockRecentHires; // ✅ now available to template
+
+  hire: MockPayment | undefined;
+
   images = imageIcons;
   loading: string = 'Loading...';
   showSpinner: boolean = true;
@@ -49,7 +56,8 @@ export class ScouterDashboardComponent implements OnInit {
   constructor(
     private modalCtrl: ModalController,
     private paymentService: PaymentService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   goToViewHires() {
@@ -63,7 +71,17 @@ export class ScouterDashboardComponent implements OnInit {
     this.router.navigate(['/scouter/wallet-page']);
   }
 
+  goToHireDetails(hireId: string) {
+    this.router.navigate([
+      `/market-engagement-market-price-preparation`,
+      hireId,
+    ]);
+  }
+
   ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.hire = MockRecentHires.find((h) => h.id === id);
+
     this.setTimeOfDay();
 
     // Subscribe to paymentStatus
@@ -368,30 +386,30 @@ export class ScouterDashboardComponent implements OnInit {
     });
   }
 
-  MockRecentHires: MockPayment[] = [
-    {
-      profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
-      name: 'John Doe',
-      date: 'Sep 10, 2025, 11:45 AM',
-      amount: 123120.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
-      name: 'Jane Smith',
-      date: 'Sep 9, 2025, 03:15 PM',
-      amount: 123250.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
-      name: 'Michael Johnson',
-      date: 'Sep 8, 2025, 09:30 AM',
-      amount: 23475.0,
-    },
-    {
-      profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
-      name: 'Emily Davis',
-      date: 'Sep 7, 2025, 07:50 PM',
-      amount: 234599.99,
-    },
-  ];
+  // MockRecentHires: MockPayment[] = [
+  //   {
+  //     profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
+  //     name: 'John Doe',
+  //     date: 'Sep 10, 2025, 11:45 AM',
+  //     amount: 123120.0,
+  //   },
+  //   {
+  //     profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
+  //     name: 'Jane Smith',
+  //     date: 'Sep 9, 2025, 03:15 PM',
+  //     amount: 123250.0,
+  //   },
+  //   {
+  //     profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
+  //     name: 'Michael Johnson',
+  //     date: 'Sep 8, 2025, 09:30 AM',
+  //     amount: 23475.0,
+  //   },
+  //   {
+  //     profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
+  //     name: 'Emily Davis',
+  //     date: 'Sep 7, 2025, 07:50 PM',
+  //     amount: 234599.99,
+  //   },
+  // ];
 }
