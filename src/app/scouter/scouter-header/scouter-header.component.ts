@@ -9,7 +9,7 @@ import { UserService } from 'src/app/models/user.services'; // 👈 import servi
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from 'src/app/utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
 import { Router } from '@angular/router';
-
+import { Notification, NotificationsData } from 'src/app/models/mocks';
 @Component({
   selector: 'app-scouter-header',
   templateUrl: './scouter-header.component.html',
@@ -19,6 +19,9 @@ export class ScouterHeaderComponent implements OnInit {
   images = imageIcons;
   profileImage!: string;
 
+  notifications: Notification[] = [];
+
+  
   constructor(
     private modalCtrl: ModalController,
     private popoverCtrl: PopoverController,
@@ -37,6 +40,7 @@ export class ScouterHeaderComponent implements OnInit {
     this.userService.profileImage$.subscribe((img: string) => {
       this.profileImage = img;
     });
+    this.notifications = NotificationsData;
   }
 
   async openProfilePopover(ev: any) {

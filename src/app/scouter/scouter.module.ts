@@ -27,6 +27,10 @@ import { MarketStatsComponent } from '../utilities/modals/market-stats/market-st
 import { MarketEngagementsTableComponent } from '../utilities/modals/market-engagements-table/market-engagements-table.component';
 import { TotalDeliveryEvaluationComponent } from '../utilities/modals/total-delivery-evaluation/total-delivery-evaluation.component';
 import { SlideshowTextForViewHiresComponent } from '../utilities/modals/slideshow-text-for-view-hires/slideshow-text-for-view-hires.component';
+import { WalletProfileComponent } from './wallet-profile/wallet-profile.component';
+import { FundWalletComponent } from './fund-wallet/fund-wallet.component';
+import { WithdrawFundComponent } from './withdraw-fund/withdraw-fund.component';
+import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
 
 @NgModule({
   imports: [
@@ -61,6 +65,10 @@ import { SlideshowTextForViewHiresComponent } from '../utilities/modals/slidesho
     MarketEngagementsTableComponent,
     TotalDeliveryEvaluationComponent,
     SlideshowTextForViewHiresComponent,
+    WalletProfileComponent,
+    FundWalletComponent,
+    WithdrawFundComponent,
+    FundTransferComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

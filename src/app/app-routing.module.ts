@@ -6,6 +6,10 @@ import { ViewAllHiresPageComponent } from './scouter/view-all-hires-page/view-al
 import { HireTalentPageComponent } from './scouter/hire-talent-page/hire-talent-page.component';
 import { WalletPageComponent } from './scouter/wallet-page/wallet-page.component';
 import { MarketEngagementMarketPricePreparationComponent } from './scouter/market-engagement-market-price-preparation/market-engagement-market-price-preparation.component';
+import { WalletProfileComponent } from './scouter/wallet-profile/wallet-profile.component';
+import { FundWalletComponent } from './scouter/fund-wallet/fund-wallet.component';
+import { WithdrawFundComponent } from './scouter/withdraw-fund/withdraw-fund.component';
+import { FundTransferComponent } from './scouter/fund-transfer/fund-transfer.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -58,6 +62,22 @@ const routes: Routes = [
   {
     path: 'scouter/market-engagement-market-price-preparation/:id',
     component: MarketEngagementMarketPricePreparationComponent,
+  },
+  {
+    path: 'scouter/wallet-page/wallet-profile',
+    component: WalletProfileComponent,
+  },
+  {
+    path: 'scouter/wallet-page/fund-wallet',
+    component: FundWalletComponent,
+  },
+  {
+    path: 'scouter/wallet-page/withdraw-funds',
+    component: WithdrawFundComponent,
+  },
+  {
+    path: 'scouter/wallet-page/fund-transfer',
+    component: FundTransferComponent,
   },
 ];
 
