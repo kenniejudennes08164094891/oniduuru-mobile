@@ -6,7 +6,9 @@ import { OtherDetailsComponent } from './onboarding/other-details/other-details.
 import { TalentDetailsComponent } from './onboarding/talent-details/talent-details.component';
 import { VerifyCredentialsComponent } from './onboarding/verify-credentials/verify-credentials.component';
 import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
-
+// Update the import path below to the correct location of TalentProfilePageComponent
+// Example: If the file is actually at './profile-page/profile-page.component'
+import { ProfilePageComponent } from "./profile-page/profile-page.component";
 const routes: Routes = [
   {
     path: 'create-account',
@@ -22,7 +24,12 @@ const routes: Routes = [
   {
     path: 'dashboard',
     component: TalentDashboardComponent
-  }
+  },
+  {
+  path: 'profile-page',
+  component: ProfilePageComponent
+}
+
 ];
 
 @NgModule({
