@@ -1,27 +1,34 @@
-<!-- <ion-header>
-  <ion-toolbar>
-    <ion-title>Profile Settings</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="dismiss()">
-        <ion-icon name="close"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header> -->
+<div class="flex flex-col h-screen bg-white">
+  <!-- Header -->
+  <div class="flex w-full items-center justify-center py-4">
+    <h3
+      class="text-base font-normal text-[#101828] px-4 py-3 bg-[#CDD5DF59] rounded-xl w-[80%] text-center"
+    >
+      Recent Notifications
+    </h3>
+  </div>
 
-<div class=" bg-white rounded-2xl shadow-xl ">
-  <div class="space-y-10 py-3 ">
-    <div class="space-y-3">
-      <h3 class="text-base font-semibold px-4">Recent Notification</h3>
-
-      <button class="flex gap-3 items-center px-4">
-        <ion-icon name="trash-outline"></ion-icon>
-        <p>Clear all</p>
-      </button>
+  <!-- Notifications List -->
+  <div class="flex-1 overflow-y-auto px-4 py-2 space-y-4">
+    <!-- Example Notification -->
+    <div *ngFor="let notif of notifications" class="flex items-center gap-3">
+      <img class="w-10 h-10 rounded-full" [src]="notif.avatar" alt="avatar" />
+      <div class="text-sm text-left">
+        <p class="font-semibold text-[#101828] text-[14px]">
+          You have a notification from {{ notif.sender }}:
+        </p>
+        <p class="text-[#0033FFCC] text-[14px]">{{ notif.handle }}</p>
+        <p class="text-[#79797B] text-[14px]">{{ notif.message }}</p>
+        <p class="text-[14px] text-[#79797B]">
+          Time Logged In: {{ notif.timeLogged }} <br />
+          <span class="text-[#79797B]">The Oniduuru Team ❤️</span>
+        </p>
+        <a href="#" class="text-[14px] text-[#0033FFCC] underline">{{
+          notif.dateLink
+        }}</a>
+      </div>
     </div>
 
-    <div class="text-center">
-      <code>🌚 No Notifications</code>
-    </div>
+    <!-- Repeat notifications dynamically here -->
   </div>
 </div>

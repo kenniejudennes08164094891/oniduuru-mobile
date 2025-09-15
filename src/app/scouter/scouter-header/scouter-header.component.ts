@@ -1,6 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
-import { MenuController, PopoverController } from '@ionic/angular';
+import {
+  ModalController,
+  MenuController,
+  PopoverController,
+} from '@ionic/angular';
 import { UserService } from 'src/app/models/user.services'; // 👈 import service
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from 'src/app/utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
@@ -16,6 +20,7 @@ export class ScouterHeaderComponent implements OnInit {
   profileImage!: string;
 
   constructor(
+    private modalCtrl: ModalController,
     private popoverCtrl: PopoverController,
     public userService: UserService,
     private router: Router,
@@ -44,14 +49,15 @@ export class ScouterHeaderComponent implements OnInit {
     await popover.present();
   }
 
-  async openNotificationPopover(ev: any) {
-    const popover = await this.popoverCtrl.create({
+  async openNotificationModal() {
+    const modal = await this.modalCtrl.create({
       component: NotificationsPopupModalComponent,
-      event: ev,
-      side: 'bottom',
-      translucent: true,
+      cssClass: 'notification-fullscreen-modal',
+      breakpoints: [0, 1], // allow 0 (closed) and 1 (full screen)
+      initialBreakpoint: 1,
+      backdropDismiss: true, // close when swiping down or tapping backdrop
     });
-    await popover.present();
+    await modal.present();
   }
 
   openMenu() {
