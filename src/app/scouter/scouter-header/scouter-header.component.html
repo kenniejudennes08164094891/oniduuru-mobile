@@ -1,10 +1,22 @@
 <ion-header class="bg-[#EEF0F6]">
-  <!-- <div class="bg-[#CDD5DF59]"> -->
   <div class="w-full flex justify-between items-center px-4 py-2">
     <!-- App Logo/Title -->
 
-    <!-- here -->
-    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+    <button *ngIf="!isWallet" class="text-2xl font-semibold text-[#101828]">
+      ∯ Oniduuru
+    </button>
+
+    <div
+      *ngIf="isWallet"
+      class="flex items-center gap-3 text-2xl font-semibold text-[#101828]"
+    >
+      <button (click)="openMenu()">
+        <!-- Menu -->
+        <ion-icon name="menu-outline"></ion-icon>
+      </button>
+
+      ∯ Oniduuru
+    </div>
 
     <div class="flex items-center gap-4 relative">
       <!-- Notification Icon with Badge -->
@@ -29,7 +41,7 @@
           <div class="border-1 border-white rounded-full">
             <img
               class="rounded-full w-10 h-10"
-              [src]="images.ProfileIcon"
+              [src]="profileImage"
               alt="Profile"
             />
           </div>
@@ -42,5 +54,4 @@
       </button>
     </div>
   </div>
-  <!-- </div> -->
 </ion-header>

@@ -28,6 +28,16 @@
     <span>Log Complaint</span>
   </button>
 
+  <!-- Route Back button (only if NOT on dashboard) -->
+  <button
+    *ngIf="!isDashboard"
+    (click)="goBack()"
+    class="flex w-full items-center gap-3 text-base hover:text-primary transition"
+  >
+    <ion-icon name="arrow-back-outline" class="text-lg"></ion-icon>
+    <span>Route Back</span>
+  </button>
+
   <!-- Logout -->
   <button
     (click)="logoutUser()"

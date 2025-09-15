@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { IonContent, ModalController } from '@ionic/angular'; // 👈 add this
 import { UpdateProfileConfirmationPopupModalComponent } from 'src/app/utilities/modals/update-profile-confirmation-popup-modal/update-profile-confirmation-popup-modal.component';
-
+import { UserService } from 'src/app/models/user.services'; // adjust path
 
 interface SecurityQA {
   question: string;
@@ -30,7 +30,8 @@ export class ProfilePageComponent implements OnInit {
   constructor(
     private router: Router,
     private location: Location,
-    private modalCtrl: ModalController // 👈 add this
+    private modalCtrl: ModalController, // 👈 add this
+    public userService: UserService
   ) {}
   ngOnInit() {}
 
@@ -76,12 +77,29 @@ export class ProfilePageComponent implements OnInit {
       const reader = new FileReader();
 
       reader.onload = () => {
-        this.profileImage = reader.result as string; // base64 string
-        console.log('Base64 image:', this.profileImage); // you can send this to API
+        this.profileImage = reader.result as string;
+        this.userService.setProfileImage(this.profileImage as string); // 👈 update global state
+        this.scrollToTop();
       };
 
       reader.readAsDataURL(file);
     }
+  }
+
+  // Call this when security questions are saved
+  saveSecurityQuestions() {
+    // you might already have save logic here (API call etc)
+
+    // Close question inputs
+    this.showQuestions = false;
+
+    // Scroll to top after saving
+    this.scrollToTop();
+  }
+
+  // Reusable scroll-to-top function
+  scrollToTop() {
+    this.pageContent.scrollToTop(600); // smooth scroll duration: 600ms
   }
 
   // 👇 function to open modal

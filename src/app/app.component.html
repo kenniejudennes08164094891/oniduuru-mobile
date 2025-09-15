@@ -1,33 +1,76 @@
-<!--SCOUTER WALLET MENU -->
-
-<!-- Side Menu -->
-<ion-menu side="start" menuId="scouter-menu" contentId="main-content">
-  <ion-header>
-    <ion-toolbar>
-      <ion-title>Scouter Menu</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <ion-content>
-    <ion-list>
-      <ion-item routerLink="/scouter/dashboard">
-        <ion-icon slot="start" name="home-outline"></ion-icon>
-        <ion-label>Dashboard</ion-label>
-      </ion-item>
-
-      <ion-item routerLink="/scouter/wallet-page">
-        <ion-icon slot="start" name="wallet-outline"></ion-icon>
-        <ion-label>Wallet</ion-label>
-      </ion-item>
-    </ion-list>
-  </ion-content>
-</ion-menu>
-
-<!-- Main Content Area -->
-<div id="main-content">
-  <ion-router-outlet></ion-router-outlet>
-</div>
-
 <ion-app>
-  <ion-router-outlet></ion-router-outlet>
+  <!-- Wallet Menu -->
+  <ion-menu
+    side="start"
+    menuId="scouter-menu"
+    contentId="main-content"
+    class="scouter-menu-bg"
+  >
+    <ion-header>
+      <ion-toolbar class="menu-toolbar">
+        <ion-title class="menu-title">Wallets (₦)</ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-list class="px-4 flex flex-col gap-2">
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page')"
+        >
+          <!-- <ion-icon slot="start" name="home-outline"></ion-icon> -->
+          <ion-label>Wallet Dashboard</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page')"
+        >
+          <!-- <ion-icon slot="start" name="wallet-outline"></ion-icon> -->
+          <ion-label>Wallet Profile</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page/fund')"
+        >
+          <!-- <ion-icon slot="start" name="cash-outline"></ion-icon> -->
+          <ion-label>Fund Wallet</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page/withdraw')"
+        >
+          <!-- <ion-icon slot="start" name="card-outline"></ion-icon> -->
+          <ion-label>Withdraw to Bank</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page/transfer')"
+        >
+          <!-- <ion-icon slot="start" name="swap-horizontal-outline"></ion-icon> -->
+          <ion-label>Funds Transfer</ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/dashboard')"
+        >
+          <!-- <ion-icon slot="start" name="home-outline"></ion-icon> -->
+          <ion-label>Dashboard</ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+
+  <!-- Main Content -->
+  <ion-router-outlet id="main-content"></ion-router-outlet>
 </ion-app>

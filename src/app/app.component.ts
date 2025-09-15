@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { initFlowbite } from 'flowbite';
+import { MenuController } from '@ionic/angular';
 
 @Component({
   selector: 'app-root',
@@ -9,7 +10,7 @@ import { initFlowbite } from 'flowbite';
   standalone: false,
 })
 export class AppComponent implements OnInit {
-  constructor(private router:Router) {
+  constructor(private menuCtrl: MenuController, private router: Router) {
     document.body.classList.remove('dark');
   }
 
@@ -22,5 +23,10 @@ export class AppComponent implements OnInit {
     // const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
     // document.body.classList.toggle('dark', prefersDark.matches);
     document.body.classList.remove('dark');
+  }
+
+  async navigateAndCloseMenu(route: string) {
+    await this.menuCtrl.close('scouter-menu');
+    this.router.navigate([route]);
   }
 }

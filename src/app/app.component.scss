@@ -3,3 +3,49 @@
 // body, html, ion-app, div, ion-content, ion-header {
 //   // font-family: 'Euclid Circular A', sans-serif;
 // }
+
+/* Sidebar menu background */
+.scouter-menu-bg {
+  --ion-background-color: #1f2937; /* menu background */
+  color: white;
+
+  /* Toolbar/Header background */
+  ion-header,
+  ion-toolbar {
+    --background: #1f2937;
+    color: white;
+    padding: 5px;
+  }
+
+  /* Title left-aligned using toolbar flex */
+  .menu-toolbar {
+    display: flex;
+    justify-content: flex-start; /* left-align title */
+    align-items: center;
+  }
+
+  .menu-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: white;
+    margin-left: 0.5rem; /* optional spacing from edge */
+  }
+
+  /* Menu items */
+  ion-item.menu-button {
+    --background: #1e429f; /* button bg color */
+    border: 1px solid white; /* white border */
+    border-radius: 0.5rem;
+    margin: 0.25rem 0; /* spacing between buttons */
+    color: white;
+
+    ion-icon,
+    ion-label {
+      color: white !important;
+    }
+
+    &:hover {
+      background: #1a3a8a; /* slightly darker on hover */
+    }
+  }
+}

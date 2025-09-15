@@ -17,7 +17,6 @@ import { UpdateProfileConfirmationPopupModalComponent } from '../utilities/modal
 import { ViewAllHiresPageComponent } from './view-all-hires-page/view-all-hires-page.component';
 import { HireTalentPageComponent } from './hire-talent-page/hire-talent-page.component';
 import { WalletPageComponent } from './wallet-page/wallet-page.component';
-import { WalletHeaderComponent } from './wallet-header/wallet-header.component';
 import { AwaitingPaymentVerificationModalComponent } from '../utilities/modals/awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
 import { MarketEngagementMarketPricePreparationComponent } from './market-engagement-market-price-preparation/market-engagement-market-price-preparation.component';
 import { RecentHiresDashboardComponent } from '../utilities/modals/recent-hires-dashboard-component/recent-hires-dashboard-component.component';
@@ -52,7 +51,6 @@ import { SlideshowTextForViewHiresComponent } from '../utilities/modals/slidesho
     ViewAllHiresPageComponent,
     HireTalentPageComponent,
     WalletPageComponent,
-    WalletHeaderComponent,
     AwaitingPaymentVerificationModalComponent,
     MarketEngagementMarketPricePreparationComponent,
     RecentHiresDashboardComponent,
