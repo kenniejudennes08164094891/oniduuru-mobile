@@ -29,11 +29,16 @@
     <!-- Personal Information -->
     <div class="mt-12">
 
-      <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]  bg-cover bg-center">
-        <p class="text-white text-xl font-bold mt-3 px-5">
+      <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+        <!-- Dark Overlay -->
+        <div class="absolute inset-0 bg-black/60"></div>
+
+        <!-- Text -->
+        <p class="relative text-white text-xl font-bold mt-3 px-5">
           Personal Information
         </p>
       </div>
+
 
       <div class="p-6">
         <!-- Profile Picture -->
@@ -85,9 +90,16 @@
     </div>
 
     <!-- Other Details -->
-    <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
-      <p class="text-white text-xl font-bold mt-3 px-5">Other Details</p>
+    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+      <!-- Dark Overlay -->
+      <div class="absolute inset-0 bg-black/60"></div>
+
+      <!-- Text -->
+      <p class="relative text-white text-xl font-bold mt-3 px-5">
+        Other Details
+      </p>
     </div>
+
 
     <!-- Skill Set -->
     <div class="mb-4 mt-3">
@@ -128,9 +140,16 @@
     </div>
 
     <!--Reels Upload  -->
-    <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
-      <p class="text-white text-xl font-bold mt-3 px-5">Reels upload</p>
+    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+      <!-- Dark Overlay -->
+      <div class="absolute inset-0 bg-black/60"></div>
+
+      <!-- Text -->
+      <p class="relative text-white text-xl font-bold mt-3 px-5">
+        Reels upload
+      </p>
     </div>
+
     <!-- Upload Video -->
     <div class="mb-6">
       <label class="block text-gray-600 text-sm mb-2">Upload Video</label>
@@ -142,76 +161,82 @@
     </div>
     <div class="px-6 py-10">
       <button
-      class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      [disabled]="securityQuestions.length < 1" (click)="saveProfile()">
-      Save
-    </button>
+        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="securityQuestions.length < 1" (click)="saveProfile()">
+        Save
+      </button>
       <button
         class="bg-white shadow-md mt-3 rounded-lg p-3 border border-[#101828]  w-full py-2 text-[#101828] font-medium cursor-pointer"
         (click)="goBack()">
         Return
       </button>
     </div>
-  </div>
+    <!-- Security Questions -->
 
+    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
+     <div class="absolute inset-0 bg-black/60"></div>
+      <p class="relative text-white text-xl font-bold mt-3 px-5">
+        Create Security Questions
+      </p>
+    </div>
+    <div class="mb-4 px-6 py-6">
+      <div class="flex items-center bg-white shadow-md rounded-lg p-3 gap-3 mb-3">
+        <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
+        <span class="block text-gray-600 font-normal text-[16px]   mb-2">
+          Please note! Update your security questions
+        </span>
+      </div>
 
-  <!-- Security Questions -->
+      <div class="px-6">
+        <label class="block text-gray-700 ml-14  font-medium mb-3">Questions</label>
 
-  <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
-    <p class="text-white text-xl font-bold mt-3 px-5">
-      Security Questions
-    </p>
-  </div>
-  <div class="mb-4 px-6 py-6">
-    <div class="flex items-center bg-white shadow-md rounded-lg p-3 gap-3 mb-3">
-      <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-      <span class="block text-gray-600 font-normal text-[16px]   mb-2">
-        Please note! Update your security questions
-      </span>
+        <!-- Question 1 -->
+        <div class="flex items-center">
+          <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
+          <img src="assets/icon/question 1.png" alt="Q1 Icon" class="w-5 h-5 mr-2" />
+          <ion-input type="text" placeholder="What is your pet's name" [(ngModel)]="questions[0].question"
+            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="flex items-center mt-10">
+          <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
+          <img src="assets/icon/question 1.png" alt="Q1 Icon" class="w-5 h-5 mr-2" />
+          <ion-input type="text" placeholder="Where did you meet your spouse" [(ngModel)]="questions[1].question"
+            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        </div>
+      </div>
+
+      <!-- Answers -->
+      <div class="px-6 mt-5">
+        <label class="block text-gray-700 ml-14 font-medium">Answers</label>
+
+        <!-- Answer 1 -->
+        <div class="mt-2  ml-[52px] flex">
+          <ion-input type="text" placeholder="Enter answer" [(ngModel)]="questions[0].answer"
+            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        </div>
+
+        <!-- Answer 2 -->
+        <div class="mt-10  ml-[52px] flex">
+          <ion-input type="text" placeholder="Enter answer" [(ngModel)]="questions[1].answer"
+            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        </div>
+      </div>
+
+      <!-- Save Button -->
+      <div class="px-6 py-10 flex justify-center">
+        <button
+          class="bg-[#101828] w-96 rounded-lg  py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="questions.length < 1" (click)="saveProfile()">
+          Save
+        </button>
+      </div>
     </div>
 
-
-    <!-- <div class="w-full border rounded-md px-4 py-4 bg-white shadow-md cursor-pointer hover:bg-gray-50 transition"
-      (click)="toggleQuestions()">
-      <span *ngIf="securityQuestions.length === 0" class="text-gray-400">
-        Click to add questions
-      </span>
-      <span *ngIf="securityQuestions.length > 0">
-        {{ securityQuestions.length }} / 5
-      </span>
-    </div> -->
+    <!-- </div> -->
   </div>
 
-  <!-- Render Question/Answer inputs -->
-  <!-- <div class="px-6 space-y-6" *ngIf="showQuestions">
-    <div *ngFor="let qa of securityQuestions; let i = index" class="p-4 border rounded-lg shadow-sm bg-gray-50">
-      <label class="block text-gray-600 text-sm mb-2">Question {{ i + 1 }}</label>
-      <input type="text" [(ngModel)]="qa.question" placeholder="First pet's name"
-        class="w-full border rounded-md px-4 py-2 mb-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400" />
-
-      <label class="block text-gray-600 text-sm mb-2">Answer {{ i + 1 }}</label>
-      <input type="text" [(ngModel)]="qa.answer" placeholder="Ruby"
-        class="w-full border rounded-md px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400" />
-    </div>
-
-    <button class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full" (click)="addQuestion()"
-      [disabled]="securityQuestions.length >= 5">
-      + Add Question
-    </button>
-  </div> -->
-
-  <div class="px-6 py-10">
-    <button
-      class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      [disabled]="securityQuestions.length < 1" (click)="saveProfile()">
-      Save
-    </button>
-    <button
-      class="bg-white shadow-md rounded-lg p-3 border border-[#101828]  w-full py-2 text-[#101828] font-medium cursor-pointer"
-      (click)="goBack()">
-      Return
-    </button>
-  </div>
 
   <!-- Fixed Footer -->
   <footer class="mt-auto py-5">
@@ -219,4 +244,6 @@
       <p>Shoft Africa © {{ currentYear }}</p>
     </div>
   </footer>
+  <div class="fixed bottom-0 left-0 right-0 border-t border-gray-300"></div>
+
 </ion-content>

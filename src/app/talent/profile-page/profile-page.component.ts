@@ -33,6 +33,10 @@ export class ProfilePageComponent implements OnInit {
     experience: '',
     payRange: '',
   };
+    questions = [
+    { question: '', answer: '' },
+    { question: '', answer: '' }
+  ];
   
 
   @ViewChild(IonContent) pageContent!: IonContent;
@@ -96,5 +100,10 @@ export class ProfilePageComponent implements OnInit {
       this.newSkill = ''; // clear input
     }
   }
+  saveQuestions() {
+    console.log('Saved Questions:', this.questions);
+    // You can send this.questions to your backend or service
+  }
+
 }
 
