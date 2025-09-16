@@ -89,7 +89,7 @@ export class ProfilePageComponent implements OnInit {
     this.skills = this.skills.filter(s => s !== skill);
   }
 
-  // Add a new skill
+  //  Add a new skill
   addSkill() {
     if (this.newSkill.trim()) {
       this.skills.push(this.newSkill.trim());
