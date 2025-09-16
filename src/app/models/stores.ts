@@ -30,6 +30,10 @@ export const imageIcons = {
   VerifiedIconUpdateProfile: '/assets/icon/VerifiedIconUpdateProfile.svg',
   ViewHireFolderIcon: '/assets/icon/view-hire-folder-icon.svg',
   FoxCryptoIcon: '/assets/icon/Fox-crypto-Icon.svg',
+  WalletBalance: '/assets/icon/WalletBalance.svg',
+  TotalDeposit: '/assets/icon/TotalDeposit.svg',
+  TotalWithdrawal: '/assets/icon/TotalWithdrawal.svg',
+  TotalTransfer: '/assets/icon/TotalTransfer.svg',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

@@ -2,6 +2,152 @@
   <app-scouter-header></app-scouter-header>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <p>wallet-page works!</p>
+<ion-content class="">
+  <p class="ion-padding">
+    Hi {{ userName }},Welcome to your Wallet <br />
+    Dashboard
+  </p>
+  <!-- Wallet Balance -->
+  <ion-card>
+    <ion-card-content class="flex justify-between items-center pb-6">
+      <div class="flex items-center gap-3">
+        <img [src]="images.WalletBalance" alt="wallet" width="40" />
+        <div class="space-y-3">
+          <h3>Wallet Balance</h3>
+          <p>
+            ₦
+            {{ balanceHidden ? "•••••••" : (walletBalance | number : "1.2-2") }}
+          </p>
+        </div>
+      </div>
+      <ion-icon
+        [name]="balanceHidden ? 'eye-off-outline' : 'eye-outline'"
+        (click)="toggleBalance()"
+        class="cursor-pointer"
+      ></ion-icon>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Total Deposit -->
+  <ion-card>
+    <ion-card-content class="flex items-center gap-3 py-6">
+      <img [src]="images.TotalDeposit" alt="deposit" width="40" />
+      <div class="space-y-3">
+        <h3>Total Deposit</h3>
+        <p>₦730,435.00</p>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Total Withdrawal -->
+  <ion-card>
+    <ion-card-content class="flex items-center gap-3 py-6">
+      <img [src]="images.TotalWithdrawal" alt="withdrawal" width="40" />
+      <div class="space-y-3">
+        <h3>Total Withdrawal</h3>
+        <p>₦0.00</p>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Total Transfer -->
+  <ion-card>
+    <ion-card-content class="flex items-center gap-3 py-6">
+      <img [src]="images.TotalTransfer" alt="transfer" width="40" />
+      <div class="space-y-3">
+        <h3>Total Transfer</h3>
+        <p>₦68,000.00</p>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Analytical Overview -->
+  <ion-card>
+    <ion-card-content class="flex justify-between items-center">
+      <p>
+        Analytical <br />
+        Overview
+      </p>
+      <p>
+        <b>Wallet A/C:</b>
+        <br />
+        {{ accountNumber }}
+        <ion-icon
+          [name]="copied ? 'checkmark-outline' : 'copy-outline'"
+          class="cursor-pointer ml-2"
+          (click)="copyAccountNumber()"
+        ></ion-icon>
+      </p>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Notes -->
+  <div class="py-3 px-8 space-y-2">
+    <p>⚠️ Note!: A blank bar indicates no ratings have been submitted yet.</p>
+    <p>
+      ⚠️ Note!: The statistics below reflect only Successful Fund deposits,
+      Approved Fund Withdrawals, and Successful Fund Transfers
+    </p>
+  </div>
+
+  <!-- Chart Legend -->
+  <div
+    class="legend flex justify-around items-center py-4 px-8 text-[#333333] text-[18px]"
+  >
+    <span class="blue-dot"></span> Total Fund Deposit
+    <span class="gray-dot"></span> Total Fund Withdrawal
+    <span class="dark-dot"></span> Total Fund Transfer
+  </div>
+
+  <!-- NEW Dropdown -->
+  <div class="px-4 py-4" #dropdownSection>
+    <div
+      (click)="toggleFilter()"
+      [ngClass]="{
+        'bg-[#B5BECA] text-white': filterOpen,
+        'bg-[#D9DCE5] text-[#49536E]': !filterOpen
+      }"
+      class="flex justify-between items-center py-2 px-2 cursor-pointer"
+    >
+      <p class="text-[14px]">Filter stats in the {{ selectedFilter }}</p>
+      <ion-icon
+        [name]="filterOpen ? 'chevron-up-outline' : 'chevron-down-outline'"
+      ></ion-icon>
+    </div>
+
+    <!-- Dropdown Table -->
+    <div
+      *ngIf="filterOpen"
+      class="bg-white border border-[#D9DCE5] shadow-md rounded-b-md mt-1"
+    >
+      <table class="w-full text-left">
+        <tbody>
+          <tr
+            *ngFor="let year of years"
+            class="cursor-pointer hover:bg-gray-100"
+            (click)="selectFilter(year)"
+          >
+            <td class="px-4 py-2 text-sm text-[#49536E]">{{ year }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Monthly Performance Bar Chart -->
+  <div class="px-4 py-6">
+    <h3 class="text-lg font-semibold mb-4">Monthly Transactions Overview</h3>
+
+    <div class="overflow-x-auto">
+      <div class="min-w-[900px]">
+        <canvas
+          baseChart
+          [data]="monthlyBarChartData"
+          [options]="monthlyBarChartOptions"
+          [type]="'bar'"
+          style="height: 50vh"
+        ></canvas>
+      </div>
+    </div>
+  </div>
 </ion-content>
