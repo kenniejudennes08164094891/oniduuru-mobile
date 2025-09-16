@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { MockRecentHires } from 'src/app/models/mocks';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-market-engagements-table',
@@ -14,7 +15,38 @@ export class MarketEngagementsTableComponent {
   selectedHire: any = null;
   isModalOpen: boolean = false;
 
-  openHireModal(hire: any) {
+  @Output() hireSelected = new EventEmitter<any>(); // ✅ new output event
+
+  constructor(private toastController: ToastController) {}
+
+  async openHireModal(hire: any) {
+    // always send selected hire to dashboard
+    this.hireSelected.emit(hire);
+
+    // check conditions for modal
+    if (hire.status !== 'Offer Accepted') {
+      const toast = await this.toastController.create({
+        message: `${hire.status}`,
+        duration: 2500,
+        position: 'bottom',
+        color: 'danger',
+      });
+      await toast.present();
+      return;
+    }
+
+    if (!hire.yourRating || hire.yourRating <= 0) {
+      const toast = await this.toastController.create({
+        message: `⭐ No rating provided yet. Set your own rating ↑ `,
+        duration: 2500,
+        position: 'bottom',
+        color: 'warning',
+      });
+      await toast.present();
+      return;
+    }
+
+    // ✅ passed conditions → open modal
     this.selectedHire = hire;
     this.isModalOpen = true;
   }
@@ -68,32 +100,6 @@ export class MarketEngagementsTableComponent {
         return '#CC0000'; // red dot
       default:
         return '#79797B'; // gray dot
-    }
-  }
-
-  getStatusBg(status: string): string {
-    switch (status) {
-      case 'Offer Accepted':
-        return '#E6F4EA'; // light green bg
-      case 'Awaiting Acceptance':
-        return '#FFF4E5'; // light orange bg
-      case 'Offer Rejected':
-        return '#FDECEA'; // light red bg
-      default:
-        return '#F5F5F5'; // light gray bg
-    }
-  }
-
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'Offer Accepted':
-        return '#189537'; // green text
-      case 'Awaiting Acceptance':
-        return '#FFA500'; // orange text
-      case 'Offer Rejected':
-        return '#CC0000'; // red text
-      default:
-        return '#79797B'; // gray text
     }
   }
 }

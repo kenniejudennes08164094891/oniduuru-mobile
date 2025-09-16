@@ -98,17 +98,17 @@
 
       <!-- Rating -->
       <div class="space-y-4">
-        <div class="flex gap-2 items-center">
-          <h3 class="font-medium text-[#CDD5DF]">Your Rating:</h3>
-          <div class="flex space-x-1 text-yellow-400 cursor-pointer">
-            <span
-              *ngFor="let star of [1, 2, 3, 4, 5]"
-              (click)="setRating(star)"
-              [class.text-yellow-600]="rating >= star"
-            >
-              ★
-            </span>
-          </div>
+        <!-- Total Delivery Modal -->
+        <div class="flex items-center gap-2">
+          <strong>Your Rating:</strong>
+          <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+            <ion-icon
+              name="star"
+              [class.text-yellow-500]="star <= (hire?.yourRating ?? 0)"
+              [class.text-gray-400]="star > (hire?.yourRating ?? 0)"
+              class="text-2xl"
+            ></ion-icon>
+          </ng-container>
         </div>
 
         <!-- Payment options -->

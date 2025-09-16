@@ -162,7 +162,6 @@
               <ul class="divide-y divide-gray-100">
                 <li
                   *ngFor="let f of filters"
-                
                   (click)="setActiveCategoryTable(f.key); isFilterOpen = false"
                   class="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
                 >
@@ -292,16 +291,10 @@
               <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
                 <span
                   class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-                  [ngStyle]="{
-                    'background-color': getStatusBg(hire.status),
-                    color: getStatusText(hire.status)
-                  }"
                 >
                   <span
                     class="h-2 w-2 rounded-full"
-                    [ngStyle]="{
-                      'background-color': getStatusColor(hire.status)
-                    }"
+                    [style.backgroundColor]="getStatusColor(hire.status)"
                   ></span>
                   {{ hire.status }}
                 </span>

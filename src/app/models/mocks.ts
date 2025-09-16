@@ -31,9 +31,9 @@ export interface MockPayment {
 
   jobDescription?: string;
   yourComment?: string;
-  yourRating?: number;
+  yourRating: number;
   talentComment?: string;
-  talentRating?: number;
+  talentRating: number;
 }
 
 export const MockRecentHires: MockPayment[] = [
@@ -47,10 +47,10 @@ export const MockRecentHires: MockPayment[] = [
     amount: 700000.0,
     status: 'Offer Accepted',
     jobDescription: 'I need a software dev for my startup.',
-    yourComment: 'Jude did a great work',
-    yourRating: 5,
+    yourComment: 'John did a great work',
+    yourRating: 4,
     talentComment: 'N/A',
-    talentRating: 0,
+    talentRating: 5,
   },
   {
     id: '2',
@@ -65,7 +65,7 @@ export const MockRecentHires: MockPayment[] = [
     yourComment: 'Still waiting for confirmation',
     yourRating: 0,
     talentComment: 'Looking forward to working!',
-    talentRating: 4,
+    talentRating: 0,
   },
   {
     id: '3',
@@ -93,9 +93,9 @@ export const MockRecentHires: MockPayment[] = [
     status: 'Offer Accepted',
     jobDescription: 'Mobile app designer for fintech project.',
     yourComment: 'Great collaboration so far',
-    yourRating: 4,
+    yourRating: 0,
     talentComment: 'Excited to join!',
-    talentRating: 5,
+    talentRating: 0,
   },
   {
     id: '5',

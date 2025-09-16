@@ -19,6 +19,23 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     this.hire = MockRecentHires.find((h) => h.id === id);
   }
 
+  setRating(star: number) {
+    if (!this.hire) return;
+
+    this.hire.yourRating = star;
+
+    // update mock array so it persists if needed
+    const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
+    if (index !== -1) {
+      MockRecentHires[index].yourRating = star;
+    }
+  }
+
+  // market-engagement-market-price-preparation.component.ts
+  setSelectedHire(hire: MockPayment) {
+    this.hire = hire; // ✅ update active hire in dashboard
+  }
+
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {
       style: 'currency',

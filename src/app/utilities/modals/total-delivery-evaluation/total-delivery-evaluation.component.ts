@@ -1,5 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
+import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+
+
 
 @Component({
   selector: 'app-total-delivery-evaluation',
@@ -84,4 +87,8 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
     this.location = '';
     this.closeModal();
   }
+
+
+
+  
 }

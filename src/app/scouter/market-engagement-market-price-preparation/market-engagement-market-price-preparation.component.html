@@ -5,17 +5,21 @@
 <ion-content class="ion-padding" *ngIf="hire">
   <!-- Top Section -->
   <div
-    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden bg-gradient-to-r from-[#000343] to-[#1f2937]"
   >
-    <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
+    <div class="absolute inset-0 opacity-10 bg-pattern z-0"></div>
     <div class="relative z-10 text-white">
       <div class="flex items-start gap-3">
-        <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" />
+        <img
+          [src]="images.ViewHireFolderIcon"
+          alt="Hire Icon"
+          class="h-10 w-10"
+        />
         <div>
           <span class="font-medium text-[24px] leading-tight">{{
             userName
           }}</span>
-          <p class="text-gray-200 text-lg leading-relaxed">
+          <p class="text-gray-300 text-sm leading-relaxed">
             View your hires with scouter stated above
           </p>
         </div>
@@ -28,46 +32,92 @@
   </h3>
 
   <!-- Job Info -->
-  <div class="bg-[#CDD5DF] rounded-lg shadow p-6 space-y-3">
-    <p><strong>Job Description:</strong> {{ hire.jobDescription }}</p>
-    <p><strong>Amount to Pay:</strong> {{ hire.amount | currency : "NGN" }}</p>
-    <p><strong>Date of Hire:</strong> {{ hire.date }}</p>
-    <p><strong>Your own comment:</strong> {{ hire.yourComment }}</p>
+  <div class="bg-[#CDD5DF] rounded-lg shadow px-3 py-5 space-y-3">
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span> <strong>Job Description:</strong> {{ hire.jobDescription }} </span>
+    </p>
 
-    <!-- Stars -->
-    <div class="flex items-center gap-1">
-      <strong>Your Rating:</strong>
-      <ng-container *ngFor="let star of [].constructor(hire.yourRating)">
-        ⭐
-      </ng-container>
-    </div>
-  </div>
-
-  <!-- Talent Info -->
-  <div class="bg-[#CDD5DF] rounded-lg shadow p-6 space-y-3 mt-4">
-    <p class="gap-2 flex items-center">
-      <strong>Hire Status:</strong>
-      <span class="flex gap-2 items-center">
-        <span
-          class="inline-block h-3 w-3 rounded-full"
-          [ngStyle]="{ 'background-color': getStatusColor(hire.status) }"
-        ></span>
-        {{ hire.status }}
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span>
+        <strong>Amount to Pay:</strong> {{ hire.amount | currency : "₦ " }}
       </span>
     </p>
 
-    <p><strong>Talent’s Email:</strong> {{ hire.email }}</p>
-    <p><strong>Start Date:</strong> {{ hire.startDate }}</p>
-    <p><strong>Comment by Talent:</strong> {{ hire.talentComment }}</p>
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span> <strong>Date of Hire:</strong> {{ hire.date }} </span>
+    </p>
 
-    <!-- Stars -->
-    <div class="flex items-center gap-1">
-      <strong>Talent Rating:</strong>
-      <ng-container *ngFor="let star of [].constructor(hire.talentRating)">
-        ⭐
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span> <strong>Your own comment:</strong> {{ hire.yourComment }} </span>
+    </p>
+
+    <!-- Rating -->
+    <div class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <strong>Your Rating:</strong>
+      <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+        <ion-icon
+          name="star"
+          (click)="setRating(star)"
+          [class.text-yellow-500]="star <= (hire?.yourRating ?? 0)"
+          [class.text-gray-400]="star > (hire?.yourRating ?? 0)"
+          class="cursor-pointer text-2xl"
+        ></ion-icon>
       </ng-container>
     </div>
   </div>
 
-  <app-market-engagement-tabs></app-market-engagement-tabs>
-</ion-content>
+  <div class="bg-[#CDD5DF] rounded-lg shadow px-3 py-5 space-y-3 mt-4">
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span class="flex gap-1">
+        <strong>Hire Status:</strong>
+        <span class="inline-flex items-center gap-2">
+          <span
+            class="inline-block h-3 w-3 rounded-full"
+            [ngStyle]="{ 'background-color': getStatusColor(hire.status) }"
+          ></span>
+          {{ hire.status }}
+        </span>
+      </span>
+    </p>
+
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span> <strong>Talent’s Email:</strong> {{ hire.email }} </span>
+    </p>
+
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span> <strong>Start Date:</strong> {{ hire.startDate }} </span>
+    </p>
+
+    <p class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <span>
+        <strong>Comment by Talent:</strong> {{ hire.talentComment }}
+      </span>
+    </p>
+
+    <!-- Talent Rating -->
+    <div class="flex items-center gap-2">
+      <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
+      <strong>Talent Rating:</strong>
+      <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+        <ion-icon
+          name="star"
+          [class.text-yellow-500]="star <= (hire?.talentRating ?? 0)"
+          [class.text-gray-400]="star > (hire?.talentRating ?? 0)"
+          class="text-2xl"
+        ></ion-icon>
+      </ng-container>
+    </div>
+  </div>
+
+  <app-market-engagements-table (hireSelected)="setSelectedHire($event)">
+  </app-market-engagements-table
+></ion-content>

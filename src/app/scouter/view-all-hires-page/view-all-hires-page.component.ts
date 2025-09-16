@@ -93,32 +93,6 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
   }
 
-  getStatusBg(status: string): string {
-    switch (status) {
-      case 'Offer Accepted':
-        return '#D1FAE5'; // light green bg
-      case 'Awaiting Acceptance':
-        return '#FEF3C7'; // light orange bg
-      case 'Offer Rejected':
-        return '#FECACA'; // light red bg
-      default:
-        return '#E5E7EB'; // gray bg
-    }
-  }
-
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'Offer Accepted':
-        return '#065F46'; // dark green text
-      case 'Awaiting Acceptance':
-        return '#92400E'; // dark orange text
-      case 'Offer Rejected':
-        return '#991B1B'; // dark red text
-      default:
-        return '#374151'; // dark gray
-    }
-  }
-
   // Separate states
   activeCategoryBtn: string | null = null;
   activeCategoryTable: string | null = null;

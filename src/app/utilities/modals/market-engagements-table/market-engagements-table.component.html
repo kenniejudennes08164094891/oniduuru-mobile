@@ -21,7 +21,7 @@
       >
         <!-- Profile + Name -->
         <td
-          class="w-[220px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
+          class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
         >
           <img
             class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
@@ -63,16 +63,15 @@
         <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
           <span
             class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-            [ngStyle]="{
-              'background-color': getStatusBg(hire.status),
-              color: getStatusText(hire.status)
-            }"
           >
+            <!-- colored dot -->
             <span
               class="h-2 w-2 rounded-full"
-              [ngStyle]="{ 'background-color': getStatusColor(hire.status) }"
+              [style.backgroundColor]="getStatusColor(hire.status)"
             ></span>
-            {{ hire.status }}
+            <span>
+              {{ hire.status }}
+            </span>
           </span>
         </td>
       </tr>
@@ -99,10 +98,7 @@
   <button
     (click)="prevPage()"
     [disabled]="currentPage === 1"
-    class="pagination-button flex items-center px-3 py-2 gap-2 
-           border border-gray-500 rounded-lg text-sm font-medium 
-           bg-white hover:bg-gray-100 
-           disabled:opacity-50 disabled:cursor-not-allowed transition"
+    class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
   >
     <ion-icon name="chevron-back-outline"></ion-icon>
     Previous
@@ -122,15 +118,11 @@
   <button
     (click)="nextPage()"
     [disabled]="currentPage === totalPages"
-    class="pagination-button flex items-center px-3 py-2 gap-2 
-           border border-gray-500 rounded-lg text-sm font-medium 
-           bg-white hover:bg-gray-100 
-           disabled:opacity-50 disabled:cursor-not-allowed transition"
+    class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
   >
     Next <ion-icon name="chevron-forward-outline"></ion-icon>
   </button>
 </div>
-
 
 <!-- Modal -->
 <app-total-delivery-evaluation
