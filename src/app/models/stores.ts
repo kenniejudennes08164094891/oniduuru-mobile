@@ -27,6 +27,9 @@ export const imageIcons = {
   Evening: '/assets/icon/Evening.png',
   Night: '/assets/icon/Night.png',
   infoIcon: '/assets/icon/icon.png',
+  logComplaintIcon: '/assets/icon/complaint.png',
+  logoutIcon: '/assets/icon/logout.png',
+  viewProfileIcon: '/assets/icon/profile.png',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

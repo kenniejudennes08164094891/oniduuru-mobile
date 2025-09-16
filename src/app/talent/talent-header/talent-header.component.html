@@ -1,8 +1,5 @@
-<ion-header
-  class="bg-[#EEF0F6] shadow-sm transition-transform duration-300"
-  [class.-translate-y-full]="headerHidden"
-  [class.translate-y-0]="!headerHidden"
->
+<ion-header class="bg-[#EEF0F6] shadow-sm transition-transform duration-300" [class.-translate-y-full]="headerHidden"
+  [class.translate-y-0]="!headerHidden">
   <div class="w-full flex justify-between items-center px-4 py-2">
     <!-- App Logo / Title -->
     <button class="text-2xl font-semibold text-[#101828]">
@@ -11,43 +8,29 @@
 
     <div class="flex items-center gap-4 relative">
       <!-- Notification Icon with Badge -->
-      <button
-        class="relative"
-        (click)="openNotificationPopover($event)"
-        aria-label="Notifications"
-      >
+      <button class="relative" (click)="openNotificationPopover($event)" aria-label="Notifications">
         <div class="bg-[#444444] rounded-xl p-2.5 hover:cursor-pointer">
           <img [src]="images.NotificationIcon" alt="Notification" />
         </div>
         <span
-          class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold border-2 border-white rounded-full min-w-[20px] h-[20px] flex items-center justify-center"
-        >
+          class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold border-2 border-white rounded-full min-w-[20px] h-[20px] flex items-center justify-center">
           {{ notificationCount }}
         </span>
       </button>
 
       <!-- Profile Avatar with Status Dot -->
-      <button
-        class="relative hover:cursor-pointer"
-        (click)="onAvatarClick($event)"
-        aria-label="Profile"
-      >
-        <!-- Avatar with Double Border -->
+      <!-- Profile Avatar -->
+      <button class="relative hover:cursor-pointer" (click)="openSettingsPopover($event)" aria-label="Profile Settings">
         <div class="border border-black rounded-full p-0.5">
           <div class="border border-white rounded-full">
-            <img
-              class="rounded-full w-10 h-10"
-              [src]="images.ProfileIcon"
-              alt="Profile"
-            />
+            <img class="rounded-full w-10 h-10" [src]="images.ProfileIcon" alt="Profile" />
           </div>
         </div>
 
         <!-- Status Dot -->
-        <span
-          class="absolute top-1.5 right-1.5 bg-green-500 h-2 w-2 rounded-full border border-white"
-        ></span>
+        <span class="absolute top-1.5 right-1.5 bg-green-500 h-2 w-2 rounded-full border border-white"></span>
       </button>
+
     </div>
   </div>
 </ion-header>

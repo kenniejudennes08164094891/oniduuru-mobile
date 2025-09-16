@@ -1,12 +1,209 @@
-<p>
-  profile-page works!
-</p>
-<!-- what if i want that whenever the avatar is clicked there is a  settings pop up that contains
+<ion-header>
+  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+  </app-talent-header>
+</ion-header>
 
-profile
-log complain 
-log out
+<ion-content class="ion-padding" #pageContent>
+  <div class="bg-[#F2F4F7]">
 
-and so i want each to be like a button where they route to theor respective design
+    <!-- Reminder Cards -->
+    <div class="space-y-4 mt-10">
+      <div
+        class="relative rounded-lg p-6 mb-6 overflow-hidden bg-[url('/assets/images/dark-card-background.jpg')] bg-cover bg-center">
+        <div class="absolute inset-0 bg-black bg-opacity-70 "></div>
+        <div class="relative z-10 text-white">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
+            <span class="font-normal text-[16px] leading-tight">
+              Why haven’t created your security question yet?
+            </span>
+          </div>
+          <ion-button fill="clear" class="bg-transparent border border-white rounded-lg text-white"
+            (click)="scrollToProfilePicture()">
+            Create Security Questions
+          </ion-button>
+        </div>
+      </div>
+    </div>
 
-like for instancethe clicking on the avatar and clicking on the profile should take me to my design of the profile page -->
+    <!-- Personal Information -->
+    <div class="mt-12">
+
+      <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]  bg-cover bg-center">
+        <p class="text-white text-xl font-bold mt-3 px-5">
+          Personal Information
+        </p>
+      </div>
+
+      <div class="p-6">
+        <!-- Profile Picture -->
+        <!-- Profile Picture -->
+        <p class="mt-3 pb-3 text-gray-600" #profilePicture>Profile Picture</p>
+
+        <div class="flex items-center mb-6">
+          <!-- Profile Image -->
+          <img src="assets/images/talentprofile.png" alt="Profile Picture"
+            class="w-28 h-28 rounded-full object-cover border-4 border-gray shadow-md" />
+        </div>
+
+
+        <!-- Full Name -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+          <input type="text" [(ngModel)]="talent.fullName" placeholder="Adediji Seyi"
+            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Phone Number -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Enter Your Phone Number</label>
+          <input type="number" [(ngModel)]="talent.phone" placeholder="e.g. 0908123456"
+            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Email -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Enter Your Email Address</label>
+          <input type="email" [(ngModel)]="talent.email" placeholder="adedijiSamuel@email.com"
+            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Password</label>
+          <input type="password" [(ngModel)]="talent.password" placeholder="****************"
+            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Location -->
+        <div class="mb-4">
+          <label class="block text-gray-600 text-sm mb-2">Enter Your Location</label>
+          <input type="text" [(ngModel)]="talent.location" placeholder="e.g. Ikeja, Lagos"
+            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Other Details -->
+    <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+      <p class="text-white text-xl font-bold mt-3 px-5">Other Details</p>
+    </div>
+
+    <!-- Skill Set -->
+    <div class="mb-4 mt-3">
+      <label class="block text-gray-600 text-sm mb-2"> Your skill set(s):</label>
+      <div class="flex flex-wrap gap-2 mb-2">
+        <span *ngFor="let skill of skills" class="bg-[#CAD2DF] rounded-lg px-2 py-1 flex items-center gap-1">
+          {{ skill }}
+          <button
+            class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
+            (click)="removeSkill(skill)">
+            ×
+          </button>
+        </span>
+      </div>
+      <input type="text" placeholder="e.g Singing, Painting, Acting..." [(ngModel)]="newSkill"
+        (keyup.enter)="addSkill()"
+        class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md" />
+    </div>
+
+    <!-- Skill Level -->
+    <div class="mb-4">
+      <label class="block text-gray-600 text-sm mb-2">Skill Level</label>
+      <input type="text" [(ngModel)]="talent.skillLevel" placeholder="Intermediate"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+
+    <!-- Eduactional Background -->
+    <div class="mb-4">
+      <label class="block text-gray-600 text-sm mb-2">Eduactional Background</label>
+      <input type="text" [(ngModel)]="talent.educationalBackground" placeholder="Masters Degree"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
+      <input type="text" [(ngModel)]="talent.payRange" placeholder="e.g $200 - $500"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+
+    <!--Reels Upload  -->
+    <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+      <p class="text-white text-xl font-bold mt-3 px-5">Reels upload</p>
+    </div>
+    <!-- Upload Video -->
+    <div class="mb-6">
+      <label class="block text-gray-600 text-sm mb-2">Upload Video</label>
+      <div
+        class="w-full border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer hover:border-blue-500 transition">
+        <ion-icon name="cloud-upload-outline" class="text-3xl text-gray-500 mb-2"></ion-icon>
+        <p class="text-gray-500">Drag & drop or click to upload</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Security Questions -->
+
+  <div class="h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
+    <p class="text-white text-xl font-bold mt-3 px-5">
+      Security Questions
+    </p>
+  </div>
+  <div class="mb-4 px-6 py-6">
+    <div class="flex items-center bg-white shadow-md rounded-lg p-3 gap-3 mb-3">
+      <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
+      <span class="block text-gray-600 font-normal text-[16px]   mb-2">
+        Please note! Update your security questions
+      </span>
+    </div>
+
+
+    <!-- <div class="w-full border rounded-md px-4 py-4 bg-white shadow-md cursor-pointer hover:bg-gray-50 transition"
+      (click)="toggleQuestions()">
+      <span *ngIf="securityQuestions.length === 0" class="text-gray-400">
+        Click to add questions
+      </span>
+      <span *ngIf="securityQuestions.length > 0">
+        {{ securityQuestions.length }} / 5
+      </span>
+    </div> -->
+  </div>
+
+  <!-- Render Question/Answer inputs -->
+  <!-- <div class="px-6 space-y-6" *ngIf="showQuestions">
+    <div *ngFor="let qa of securityQuestions; let i = index" class="p-4 border rounded-lg shadow-sm bg-gray-50">
+      <label class="block text-gray-600 text-sm mb-2">Question {{ i + 1 }}</label>
+      <input type="text" [(ngModel)]="qa.question" placeholder="First pet's name"
+        class="w-full border rounded-md px-4 py-2 mb-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400" />
+
+      <label class="block text-gray-600 text-sm mb-2">Answer {{ i + 1 }}</label>
+      <input type="text" [(ngModel)]="qa.answer" placeholder="Ruby"
+        class="w-full border rounded-md px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400" />
+    </div>
+
+    <button class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full" (click)="addQuestion()"
+      [disabled]="securityQuestions.length >= 5">
+      + Add Question
+    </button>
+  </div> -->
+
+  <div class="px-6 py-10">
+    <button
+      class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      [disabled]="securityQuestions.length < 1" (click)="saveProfile()">
+      Save
+    </button>
+    <button class="bg-[#101828] border border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+      (click)="goBack()">
+      Return
+    </button>
+  </div>
+
+  <!-- Fixed Footer -->
+  <footer class="mt-auto py-5">
+    <div class="container mx-auto px-4 text-left text-gray-600">
+      <p>Shoft Africa © {{ currentYear }}</p>
+    </div>
+  </footer>
+</ion-content>

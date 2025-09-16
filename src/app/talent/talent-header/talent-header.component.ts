@@ -4,6 +4,7 @@ import { PopoverController } from '@ionic/angular';
 import { ProfilePopupSettingsModalComponent } from 'src/app/shared/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from 'src/app/shared/modals/notifications-popup-modal/notifications-popup-modal.component';
 import { Router } from '@angular/router';
+import { AvatarSettingsPopoverComponent } from 'src/app/shared/modals/avatar-settings-popover/avatar-settings-popover.component';
 @Component({
   selector: 'app-talent-header',
   templateUrl: './talent-header.component.html',
@@ -30,12 +31,13 @@ export class TalentHeaderComponent implements OnInit {
     });
     await popover.present();
   }
-  onAvatarClick(ev: any) {
-    if (this.role === 'talent') {
-      this.router.navigate(['/talent/profile-page']); // 👈 goes to your talent profile page
-    } else {
-      this.router.navigate(['/scouter/profile-page']); // fallback for scouter
-    }
+  async openSettingsPopover(ev: any) {
+    const popover = await this.popoverCtrl.create({
+      component: AvatarSettingsPopoverComponent,
+      event: ev,
+      translucent: true,
+    });
+    await popover.present();
   }
   async openNotificationPopover(ev: any) {
     const popover = await this.popoverCtrl.create({

@@ -8,9 +8,9 @@ import { UtilitiesPageModule } from '../utilities/utilities.module';
 import { TalentDashboardComponent } from './talent-dashboard/talent-dashboard.component';
 import { TalentHeaderComponent } from './talent-header/talent-header.component';
 import { SpinnerComponent } from '../utilities/spinner/spinner.component';
-
+import { ProfilePageComponent } from './profile-page/profile-page.component';
 @NgModule({
-  declarations: [TalentPage,TalentDashboardComponent,TalentHeaderComponent],
+  declarations: [TalentPage,TalentDashboardComponent,TalentHeaderComponent,  ProfilePageComponent ],
   imports: [
     CommonModule,
     FormsModule,
