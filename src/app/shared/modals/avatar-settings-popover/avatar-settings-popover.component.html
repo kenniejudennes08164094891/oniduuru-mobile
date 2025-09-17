@@ -1,0 +1,23 @@
+<div class="flex flex-col w-48 p-2 bg-white">
+  <div class="flex items-center mb-4">
+    <img src="/assets/icon/profile.png" alt="profile"/>
+    <button class="text-left px-4 py-2 hover:bg-gray-100 rounded" (click)="navigateTo('/talent/profile-page')">
+      Profile
+    </button>
+  </div>
+
+  <div class="flex items-center mb-4 bg-transparent">
+    <img src="/assets/icon/complaint.png" alt="complaint" />
+    <button class="text-left px-4 py-2 hover:bg-gray-100 rounded" (click)="navigateTo('/talent/log-complaint')">
+      Log Complaint
+    </button>
+  </div>
+
+  <div class=" flex items-center mt-2 bg-transparent">
+    <img src="/assets/icon/logout.png" alt="logout"/>
+    <button class="text-left px-4 py-2  hover:bg-gray-100 rounded" (click)="logout()">
+      Logout
+    </button>
+  </div>
+
+</div>

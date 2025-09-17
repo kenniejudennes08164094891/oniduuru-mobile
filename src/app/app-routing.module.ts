@@ -31,8 +31,8 @@ const routes: Routes = [
   },
   {
     path: 'talent',
-    loadChildren: () =>
-      import('./talent/talent.module').then((m) => m.TalentPageModule),
+    loadChildren: () => import('./talent/talent.module').then( m => m.TalentPageModule)
+    
   },
   {
     path: 'utilities',

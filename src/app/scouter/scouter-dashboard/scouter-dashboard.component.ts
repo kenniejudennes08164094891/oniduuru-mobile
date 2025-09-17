@@ -1,19 +1,12 @@
 // Modified TypeScript component
 import { Component, OnInit, HostListener } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { MakePaymentPopupModalComponent } from 'src/app/utilities/modals/make-payment-popup-modal/make-payment-popup-modal.component';
-import { ModalController } from '@ionic/angular';
 import { PaymentService } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
-
-// interface MockPayment {
-//   profilePic: string;
-//   name: string;
-//   date: string;
-//   amount: number;
-// }
 
 @Component({
   selector: 'app-scouter-dashboard',
