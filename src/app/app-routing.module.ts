@@ -10,6 +10,8 @@ import { WalletProfileComponent } from './scouter/wallet-profile/wallet-profile.
 import { FundWalletComponent } from './scouter/fund-wallet/fund-wallet.component';
 import { WithdrawFundComponent } from './scouter/withdraw-fund/withdraw-fund.component';
 import { FundTransferComponent } from './scouter/fund-transfer/fund-transfer.component';
+import { WelcomeToOniduuruMarketplacePageComponent } from './scouter/welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
+import { ViewAllTalentsPageComponent } from './scouter/view-all-talents-page/view-all-talents-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -78,6 +80,14 @@ const routes: Routes = [
   {
     path: 'scouter/wallet-page/fund-transfer',
     component: FundTransferComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru',
+    component: WelcomeToOniduuruMarketplacePageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+    component: ViewAllTalentsPageComponent,
   },
 ];
 

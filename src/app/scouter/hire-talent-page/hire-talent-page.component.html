@@ -6,6 +6,60 @@
   </app-scouter-header>
 </ion-header>
 
-<ion-content>
-  <p>hire-talent-page works!</p>
+<ion-content class="ion-padding">
+  <!-- Title Card -->
+  <div class="bg-[#EDF0F4] py-6 text-center rounded-lg mt-3 space-y-1">
+    <h2 class="text-[20px] text-[#101828] font-semibold">HIRE TALENT</h2>
+    <p class="text-[16px] text-[#101828]">OTP Verification</p>
+  </div>
+
+  <!-- Info Text -->
+  <p class="py-6 px-1 text-[#101828] text-[16px]">
+    To ensure the security of your information, we require an OTP verification
+    to authorize your talent hiring. Please complete this step to proceed.
+  </p>
+  <p class="text-[12px] px-1 text-[#101828]">
+    Enter the OTP that was sent to your email address or phone number.
+  </p>
+
+  <!-- OTP Input Boxes -->
+  <div class="flex justify-center gap-3 my-6">
+    <input
+      *ngFor="let digit of otpArray; let i = index"
+      type="number"
+      inputmode="numeric"
+      maxlength="1"
+      placeholder="0"
+      class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] placeholder:text-[#D0D5DD] placeholder:text-[48px]"
+      [(ngModel)]="otp[i]"
+      (input)="onOtpInput($event, i)"
+      (keydown)="onKeyDown($event, i)"
+    />
+  </div>
+
+  <!-- Countdown -->
+  <p class="text-center text-sm text-[#101828]">
+    Didn’t receive a code?
+    <span *ngIf="countdown > 0">
+      Re-initiate OTP process in <strong>{{ countdown }}</strong
+      >s
+    </span>
+    <a
+      *ngIf="countdown === 0"
+      href="#"
+      class="text-blue-600 underline"
+      (click)="resendOtp()"
+      >Resend OTP</a
+    >
+  </p>
+
+  <!-- Action Buttons -->
+  <div class="mt-6 space-y-3">
+    <button
+      class="flex justify-center bg-white border-[1px] border-solid border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+      (click)="goToDashboard()"
+    >
+      Route Back
+    </button>
+  </div>
 </ion-content>

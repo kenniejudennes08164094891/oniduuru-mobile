@@ -31,6 +31,8 @@ import { WalletProfileComponent } from './wallet-profile/wallet-profile.componen
 import { FundWalletComponent } from './fund-wallet/fund-wallet.component';
 import { WithdrawFundComponent } from './withdraw-fund/withdraw-fund.component';
 import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
+import { WelcomeToOniduuruMarketplacePageComponent } from './welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
+import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-talents-page.component';
 
 @NgModule({
   imports: [
@@ -69,6 +71,8 @@ import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
     FundWalletComponent,
     WithdrawFundComponent,
     FundTransferComponent,
+    WelcomeToOniduuruMarketplacePageComponent,
+    ViewAllTalentsPageComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

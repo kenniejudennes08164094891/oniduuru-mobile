@@ -48,7 +48,12 @@
 
         <!-- Status Dot -->
         <span
-          class="absolute top-1.5 right-1.5 bg-green-500 h-2 w-2 rounded-full border-1 border-white"
+          class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full border border-white"
+          [ngClass]="{
+            'bg-green-500': userStatus === 'online',
+            'bg-yellow-500': userStatus === 'away',
+            'bg-gray-400': userStatus === 'offline'
+          }"
         ></span>
       </button>
     </div>

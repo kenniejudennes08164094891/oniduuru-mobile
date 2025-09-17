@@ -15,18 +15,18 @@ export class MarketEngagementsTableComponent {
   selectedHire: any = null;
   isModalOpen: boolean = false;
 
-  @Output() hireSelected = new EventEmitter<any>(); // ✅ new output event
+  @Output() hireSelected = new EventEmitter();
 
   constructor(private toastController: ToastController) {}
 
   async openHireModal(hire: any) {
-    // always send selected hire to dashboard
+    // 👉 Always update dashboard first
     this.hireSelected.emit(hire);
 
-    // check conditions for modal
-    if (hire.status !== 'Offer Accepted') {
+    // 👉 Then run modal conditions
+    if (hire.offerStatus !== 'Offer Accepted') {
       const toast = await this.toastController.create({
-        message: `${hire.status}`,
+        message: `${hire.offerStatus}`,
         duration: 2500,
         position: 'bottom',
         color: 'danger',
@@ -46,7 +46,7 @@ export class MarketEngagementsTableComponent {
       return;
     }
 
-    // ✅ passed conditions → open modal
+    // ✅ Passed → open modal
     this.selectedHire = hire;
     this.isModalOpen = true;
   }
@@ -90,8 +90,8 @@ export class MarketEngagementsTableComponent {
     });
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
+  getStatusColor(offerStatus: string): string {
+    switch (offerStatus) {
       case 'Offer Accepted':
         return '#189537'; // green dot
       case 'Awaiting Acceptance':

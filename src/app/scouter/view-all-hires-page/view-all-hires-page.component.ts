@@ -15,7 +15,8 @@ interface MockPayment {
   date: string;
   startDate: string;
   amount: number;
-  status: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+  status: 'Active' | 'Pending' | 'Away';
 
   // NEW FIELDS
   jobDescription: string;
@@ -34,6 +35,7 @@ export class ViewAllHiresPageComponent implements OnInit {
   @ViewChild('categoryDisplaySection') categoryDisplaySection!: ElementRef;
 
   MockRecentHires = MockRecentHires;
+
   categories = HireCategories;
   filters = HireFilters;
 
@@ -80,8 +82,8 @@ export class ViewAllHiresPageComponent implements OnInit {
     return `${duration}s`;
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
+  getStatusColor(offerStatus: string): string {
+    switch (offerStatus) {
       case 'Offer Accepted':
         return '#189537'; // GREEN
       case 'Awaiting Acceptance':
@@ -227,7 +229,7 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
 
     const status = this.getFilterStatus(filterKey);
-    return this.MockRecentHires.filter((h) => h.status === status).map(
+    return this.MockRecentHires.filter((h) => h.offerStatus === status).map(
       (hire) => ({
         ...hire,
         jobDescription: hire.jobDescription ?? '',
@@ -249,9 +251,9 @@ export class ViewAllHiresPageComponent implements OnInit {
   }
 
   get filteredAndSearchedHires() {
-    let hires = this.activeCategoryTable
+    let hires: MockPayment[] = this.activeCategoryTable
       ? this.filterByStatus(this.activeCategoryTable)
-      : this.MockRecentHires;
+      : (this.MockRecentHires as MockPayment[]);
 
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
@@ -269,7 +271,7 @@ export class ViewAllHiresPageComponent implements OnInit {
     return Math.ceil(this.filteredAndSearchedHires.length / this.pageSize);
   }
 
-  get paginatedHires() {
+  get paginatedHires(): MockPayment[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredAndSearchedHires.slice(start, start + this.pageSize);
   }

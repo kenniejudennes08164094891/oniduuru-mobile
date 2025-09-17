@@ -21,7 +21,13 @@ export class ScouterHeaderComponent implements OnInit {
 
   notifications: Notification[] = [];
 
-  
+  userStatus: 'online' | 'away' | 'offline' = 'offline';
+
+  // Example: function to set status
+  setStatus(status: 'online' | 'away' | 'offline') {
+    this.userStatus = status;
+  }
+
   constructor(
     private modalCtrl: ModalController,
     private popoverCtrl: PopoverController,
@@ -41,6 +47,14 @@ export class ScouterHeaderComponent implements OnInit {
       this.profileImage = img;
     });
     this.notifications = NotificationsData;
+
+    // Subscribe to status updates
+    this.userService.status$.subscribe((status) => {
+      this.userStatus = status;
+    });
+
+    // Example: set to online when component mounts
+    this.userService.setStatus('online');
   }
 
   async openProfilePopover(ev: any) {

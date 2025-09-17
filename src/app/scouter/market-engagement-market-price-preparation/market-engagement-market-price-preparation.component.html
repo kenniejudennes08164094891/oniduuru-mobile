@@ -79,9 +79,9 @@
         <span class="inline-flex items-center gap-2">
           <span
             class="inline-block h-3 w-3 rounded-full"
-            [ngStyle]="{ 'background-color': getStatusColor(hire.status) }"
+            [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus) }"
           ></span>
-          {{ hire.status }}
+          {{ hire.offerStatus }}
         </span>
       </span>
     </p>
@@ -118,6 +118,6 @@
     </div>
   </div>
 
-  <app-market-engagements-table (hireSelected)="setSelectedHire($event)">
-  </app-market-engagements-table
-></ion-content>
+  <app-market-engagement-tabs (hireSelected)="setSelectedHire($event)">
+  </app-market-engagement-tabs>
+</ion-content>

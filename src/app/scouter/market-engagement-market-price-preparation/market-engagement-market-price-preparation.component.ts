@@ -31,7 +31,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     }
   }
 
-  // market-engagement-market-price-preparation.component.ts
   setSelectedHire(hire: MockPayment) {
     this.hire = hire; // ✅ update active hire in dashboard
   }
@@ -43,8 +42,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     });
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
+  getStatusColor(offerStatus: string): string {
+    switch (offerStatus) {
       case 'Offer Accepted':
         return '#189537'; // GREEN
       case 'Awaiting Acceptance':

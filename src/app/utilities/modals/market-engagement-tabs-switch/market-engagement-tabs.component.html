@@ -26,7 +26,10 @@
 
 <!-- TAB CONTENT -->
 <div *ngIf="activeTab === 'engagements'">
-  <app-market-engagements-table></app-market-engagements-table>
+  <!-- 👇 Pass event up -->
+  <app-market-engagements-table 
+    (hireSelected)="hireSelected.emit($event)">
+  </app-market-engagements-table>
 </div>
 
 <div *ngIf="activeTab === 'stats'">
