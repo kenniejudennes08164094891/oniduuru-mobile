@@ -29,7 +29,7 @@ export class MarketEngagementsTableComponent {
         message: `${hire.offerStatus}`,
         duration: 2500,
         position: 'bottom',
-        color: 'danger',
+        color: 'success',
       });
       await toast.present();
       return;

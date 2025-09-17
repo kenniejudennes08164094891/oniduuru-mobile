@@ -31,51 +31,57 @@
           Your Job Description:
           <span class="text-[#363757]"> I need a DevOps engineer</span>
         </p>
-
-        <!-- Comment textarea -->
-        <!-- <textarea
-          [(ngModel)]="comment"
-          placeholder="Write your comment..."
-          class="w-full border p-3 rounded mt-2 text-sm text-[#79797B]"
-        ></textarea> -->
       </div>
 
-      <!-- Attachments / Location -->
-      <div
-        class="flex items-center gap-4 border bg-[#CDD5DF33] px-4 py-3 rounded-b-md w-full"
-      >
-        <div class="flex justify-between items-center gap-2 w-1/2">
-          <!-- Hidden file input -->
-          <input
-            type="file"
-            multiple
-            (change)="handleFileInput($event)"
-            #fileInput
-            hidden
-          />
+      <div class="border rounded-xl">
+        <!-- Comment textarea -->
+        <textarea
+          [(ngModel)]="comment"
+          [placeholder]="
+            'Please write a comment on your level of satisfactory work delivered by ' +
+            hire?.name +
+            ' on this role...'
+          "
+          class="w-full h-[90px] border-none focus:outline-none p-3 mt-2 text-sm text-[#79797B] bg-transparent resize-none"
+        ></textarea>
 
-          <!-- Attach button -->
-          <button
-            type="button"
-            (click)="fileInput.click()"
-            class="flex items-center gap-2 text-gray-700"
-          >
-            <ion-icon name="attach-outline"></ion-icon> Attach..
-          </button>
+        <!-- Attachments / Location -->
+        <div
+          class="flex items-center gap-4 border-t bg-[#CDD5DF33] px-4 py-3 rounded-b-xl w-full"
+        >
+          <div class="flex justify-between items-center gap-2 w-1/2">
+            <!-- Hidden file input -->
+            <input
+              type="file"
+              multiple
+              (change)="handleFileInput($event)"
+              #fileInput
+              hidden
+            />
 
-          <!-- Location button -->
-          <button
-            type="button"
-            (click)="setLocation('Selected Location')"
-            class="flex items-center gap-2 text-gray-700"
-          >
-            <ion-icon name="location-outline"></ion-icon> Locat..
-          </button>
+            <!-- Attach button -->
+            <button
+              type="button"
+              (click)="fileInput.click()"
+              class="flex items-center gap-2 text-gray-700"
+            >
+              <ion-icon name="attach-outline"></ion-icon> Attach..
+            </button>
 
-          <!-- Disabled Image Icon -->
-          <button class="flex items-center gap-2 text-gray-700">
-            <ion-icon name="image-outline"></ion-icon> Photo
-          </button>
+            <!-- Location button -->
+            <button
+              type="button"
+              (click)="setLocation('Selected Location')"
+              class="flex items-center gap-2 text-gray-700"
+            >
+              <ion-icon name="location-outline"></ion-icon> Locat..
+            </button>
+
+            <!-- Disabled Image Icon -->
+            <button class="flex items-center gap-2 text-gray-700">
+              <ion-icon name="image-outline"></ion-icon> Photo
+            </button>
+          </div>
         </div>
       </div>
 

@@ -10,28 +10,31 @@
     <!-- Modal Body -->
     <div class="px-6 py-5 text-center">
       <p class="text-[#383a3e] font-medium mb-2">
-       Your account is currently awaiting verification of payment..!
+        Your account is currently awaiting verification of payment..!
       </p>
-      <p class="text-sm text-gray-500 mb-4">We will confirm your payment in a jiffy</p>
+      <p class="text-sm text-gray-500 mb-4">
+        We will confirm your payment in a jiffy
+      </p>
     </div>
 
     <!-- Modal Footer -->
     <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
       <ion-button
         fill="solid"
-        class="ion-btn--successgreen rounded-md bg-[#101828]"
+        class="ion-btn--successgreen rounded-md"
+        style="--background: #111827"
         (click)="dismiss('confirm')"
       >
         Close
       </ion-button>
 
-      <ion-button
+      <!-- <ion-button
         class="rounded-md shadow-lg w-full text-black"
         fill="clear"
         (click)="dismiss('cancel')"
       >
         Cancel
-      </ion-button>
+      </ion-button> -->
     </div>
   </div>
 </ion-content>

@@ -30,6 +30,11 @@ import { WalletProfileComponent } from './wallet-profile/wallet-profile.componen
 import { FundWalletComponent } from './fund-wallet/fund-wallet.component';
 import { WithdrawFundComponent } from './withdraw-fund/withdraw-fund.component';
 import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
+import { WelcomeToOniduuruMarketplacePageComponent } from './welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
+import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-talents-page.component';
+import { TalentPageModule } from '../talent/talent.module';
+import { UtilitiesPageModule } from '../utilities/utilities.module';
+import { SpinnerComponent } from '../utilities/spinner/spinner.component';
 
 @NgModule({
   imports: [
@@ -40,7 +45,7 @@ import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
     TalentPageModule,
     NgChartsModule,
     UtilitiesPageModule,
-    SpinnerComponent
+    SpinnerComponent,
   ],
   declarations: [
     ScouterPage,
@@ -73,6 +78,6 @@ import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
     WelcomeToOniduuruMarketplacePageComponent,
     ViewAllTalentsPageComponent,
   ],
-  exports: [TotalDeliveryEvaluationComponent]
+  exports: [TotalDeliveryEvaluationComponent],
 })
-export class ScouterPageModule { }
+export class ScouterPageModule {}
