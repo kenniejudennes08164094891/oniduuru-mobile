@@ -5,7 +5,6 @@ import { IonicModule } from '@ionic/angular';
 import { ScouterPageRoutingModule } from './scouter-routing.module';
 import { ScouterPage } from './scouter.page';
 import { ScouterDashboardComponent } from './scouter-dashboard/scouter-dashboard.component';
-import { TalentPageModule } from '../talent/talent.module';
 import { ScouterHeaderComponent } from './scouter-header/scouter-header.component';
 import { ProfilePopupSettingsModalComponent } from '../utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopupModalComponent } from '../utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
@@ -31,8 +30,6 @@ import { WalletProfileComponent } from './wallet-profile/wallet-profile.componen
 import { FundWalletComponent } from './fund-wallet/fund-wallet.component';
 import { WithdrawFundComponent } from './withdraw-fund/withdraw-fund.component';
 import { FundTransferComponent } from './fund-transfer/fund-transfer.component';
-import { WelcomeToOniduuruMarketplacePageComponent } from './welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
-import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-talents-page.component';
 
 @NgModule({
   imports: [
@@ -42,6 +39,8 @@ import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-ta
     ScouterPageRoutingModule,
     TalentPageModule,
     NgChartsModule,
+    UtilitiesPageModule,
+    SpinnerComponent
   ],
   declarations: [
     ScouterPage,
@@ -74,6 +73,6 @@ import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-ta
     WelcomeToOniduuruMarketplacePageComponent,
     ViewAllTalentsPageComponent,
   ],
-  exports: [TotalDeliveryEvaluationComponent],
+  exports: [TotalDeliveryEvaluationComponent]
 })
-export class ScouterPageModule {}
+export class ScouterPageModule { }

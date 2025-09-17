@@ -6,6 +6,7 @@ import { UtilitiesPageRoutingModule } from './utilities-routing.module';
 import { UtilitiesPage } from './utilities.page';
 import {ToastComponent} from "./toast/toast.component";
 import {MaterialModule} from "../shared/material-module";
+import { SpinnerComponent } from './spinner/spinner.component';
 
 @NgModule({
   imports: [
@@ -15,6 +16,6 @@ import {MaterialModule} from "../shared/material-module";
     UtilitiesPageRoutingModule,
     MaterialModule
   ],
-  declarations: [UtilitiesPage,ToastComponent]
+  declarations: [UtilitiesPage,ToastComponent], 
 })
 export class UtilitiesPageModule {}

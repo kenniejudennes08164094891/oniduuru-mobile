@@ -23,7 +23,7 @@ export const imageIcons = {
   WELCOMEBGIMAGE: '/assets/images/WELCOMEBGIMAGE.svg',
 
   Morning: '/assets/icon/Morning.png',
-  Afternoon: '/assets/icon/Afternoon.png',
+  Afternoon: '/assets/icon/afternoon.png',
   Evening: '/assets/icon/Evening.png',
   Night: '/assets/icon/Night.png',
   UploadPayment: '/assets/icon/upload-payment.svg',
@@ -36,6 +36,10 @@ export const imageIcons = {
   TotalDeposit: '/assets/icon/TotalDeposit.svg',
   TotalWithdrawal: '/assets/icon/TotalWithdrawal.svg',
   TotalTransfer: '/assets/icon/TotalTransfer.svg',
+  infoIcon: '/assets/icon/icon.png',
+  logComplaintIcon: '/assets/icon/complaint.png',
+  logoutIcon: '/assets/icon/logout.png',
+  viewProfileIcon: '/assets/icon/profile.png',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

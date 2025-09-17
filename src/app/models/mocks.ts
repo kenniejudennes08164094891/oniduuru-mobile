@@ -17,7 +17,6 @@ export interface LoginCredentials {
   email: string;
   password: string;
 }
-
 // src/app/models/mock-hires.ts
 export interface MockPayment {
   id: string;
@@ -400,3 +399,11 @@ export const NotificationsData: Notification[] = [
     dateLink: 'Aug 18, 2025, 9:00 AM',
   },
 ];
+ export interface Stat {
+  key: string;
+  label: string;
+  value: number;
+  delta?: number;
+  color?: string;
+  suffix?: string;
+}
