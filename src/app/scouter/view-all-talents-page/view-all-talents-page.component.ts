@@ -3,6 +3,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { ViewAllTalentsPopupModalComponent } from 'src/app/utilities/modals/view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { ModalController } from '@ionic/angular';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-view-all-talents-page',
@@ -16,10 +17,15 @@ export class ViewAllTalentsPageComponent implements OnInit {
   currentPage: number = 1;
   pageSize: number = 5;
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(private modalCtrl: ModalController, private router: Router) {}
 
   ngOnInit() {}
 
+  goToTalentLocation() {
+    this.router.navigate([
+      '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location',
+    ]);
+  }
   // ✅ Use hires directly for now (later you can plug in search/filter)
   get filteredAndSearchedHires() {
     return this.hires;

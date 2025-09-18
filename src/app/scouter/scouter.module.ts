@@ -40,6 +40,7 @@ import { ViewAllTalentsSwitchTabComponent } from '../utilities/modals/view-all-t
 import { RecentReviewsTabComponent } from '../utilities/modals/recent-reviews-tab/recent-reviews-tab.component';
 import { ReelsAndDocumentationTabComponent } from '../utilities/modals/reels-and-documentation-tab/reels-and-documentation-tab.component';
 import { SkillSetTabComponent } from '../utilities/modals/skill-set-tab/skill-set-tab.component';
+import { ViewTalentsLocationPageComponent } from './view-talents-location-page/view-talents-location-page.component';
 
 @NgModule({
   imports: [
@@ -87,6 +88,7 @@ import { SkillSetTabComponent } from '../utilities/modals/skill-set-tab/skill-se
     RecentReviewsTabComponent,
     ReelsAndDocumentationTabComponent,
     SkillSetTabComponent,
+    ViewTalentsLocationPageComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })
