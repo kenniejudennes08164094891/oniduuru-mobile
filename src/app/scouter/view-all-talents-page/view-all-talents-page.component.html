@@ -27,7 +27,7 @@
   </div>
 
   <div
-    class="flex items-center gap-3 mb-3 bg-[#CDD5DF33] border border-[#33333333] rounded-xl p-4"
+    class="flex items-center gap-3 mb-3 bg-[#CDD5DF33] border border-[#33333333] rounded-xl py-4"
   >
     <ion-icon class="h-7 w-1/2" name="information-circle-outline"></ion-icon>
     <span class="font-normal text-[20px] leading-tight text-[#444444]">
@@ -35,6 +35,7 @@
       address at
       <strong>12, Henry Uzuoma street Awoyaya.</strong>
       If you want find based on other locations or skillsets,
+      <!-- Location Logic here -->
       <strong>click here</strong>
     </span>
   </div>
@@ -44,6 +45,9 @@
     <table class="min-w-full text-sm text-left text-gray-700">
       <thead class="border-b text-xs uppercase text-gray-500">
         <tr class="uppercase">
+          <th class="0">
+            <!-- <input type="checkbox" class="accent-indigo-600" /> -->
+          </th>
           <th class="px-4 py-3">Name</th>
           <th class="px-4 py-3">Proximity</th>
           <th class="px-4 py-3">Skill Level</th>
@@ -58,10 +62,15 @@
       >
         <tr
           *ngFor="let hire of paginatedHires"
+          (click)="openViewAllTalentsPopupModal(hire)"
           class="hover:bg-gray-50 transition-colors cursor-pointer"
         >
+          <!-- ✅ Checkbox inside a table cell -->
+          <td class="px- py-3 w-10 text-center">
+            <input type="checkbox" class="accent-indigo-600" />
+          </td>
+
           <!-- Profile + Name -->
-          <input type="checkbox" class="mt-2" />
           <td
             class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
           >
@@ -80,21 +89,21 @@
             </div>
           </td>
 
-          <!-- proximity -->
+          <!-- Proximity -->
           <td
             class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
           >
             {{ hire.proximity }}
           </td>
 
-          <!-- skillLevel -->
+          <!-- Skill Level -->
           <td
             class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
           >
-            {{ hire.skillLevel }}
+            {{ hire.skillSet[0]?.skillLevel }}
           </td>
 
-          <!-- payRange -->
+          <!-- Pay Range -->
           <td
             class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
           >
@@ -124,7 +133,7 @@
     <ng-template #noDataTable>
       <tbody>
         <tr>
-          <td colspan="5" class="text-center text-gray-500 py-6">
+          <td colspan="6" class="text-center text-gray-500 py-6">
             No hires found
           </td>
         </tr>

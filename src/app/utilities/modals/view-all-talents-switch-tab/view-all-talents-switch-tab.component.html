@@ -1,0 +1,29 @@
+<div class="flex border-b border-gray-300 mb-4 overflow-x-auto scrollbar-hide">
+  <button
+    *ngFor="let tab of tabs"
+    class="min-w-[150px] px-4 py-5 text-center font-medium text-sm transition relative flex-shrink-0"
+    [ngClass]="
+      activeTab === tab.key
+        ? 'text-[#0033FF] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0033FF]'
+        : 'text-gray-500'
+    "
+    (click)="setTab(tab.key)"
+  >
+    {{ tab.label }}
+  </button>
+</div>
+
+<!-- TAB CONTENT -->
+<div *ngIf="activeTab === 'skillSet'">
+  <app-skill-set-tab [hire]="hire"></app-skill-set-tab>
+</div>
+
+<div *ngIf="activeTab === 'reelsAndDocumentation'">
+  <app-reels-and-documentation-tab
+    [hire]="hire"
+  ></app-reels-and-documentation-tab>
+</div>
+
+<div *ngIf="activeTab === 'recentReviews'">
+  <app-recent-reviews-tab [hire]="hire"></app-recent-reviews-tab>
+</div>

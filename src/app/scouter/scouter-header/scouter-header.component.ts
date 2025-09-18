@@ -29,6 +29,7 @@ export class ScouterHeaderComponent implements OnInit {
   }
 
   constructor(
+    // THIS
     private modalCtrl: ModalController,
     private popoverCtrl: PopoverController,
     public userService: UserService,
@@ -67,6 +68,7 @@ export class ScouterHeaderComponent implements OnInit {
     await popover.present();
   }
 
+  // THIS
   async openNotificationModal() {
     const modal = await this.modalCtrl.create({
       component: NotificationsPopupModalComponent,

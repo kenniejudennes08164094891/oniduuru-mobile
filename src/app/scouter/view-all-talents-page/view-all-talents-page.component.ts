@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { MockRecentHires } from 'src/app/models/mocks';
+import { ViewAllTalentsPopupModalComponent } from 'src/app/utilities/modals/view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { ModalController } from '@ionic/angular';
 
 @Component({
   selector: 'app-view-all-talents-page',
@@ -13,7 +15,8 @@ export class ViewAllTalentsPageComponent implements OnInit {
   hires = MockRecentHires;
   currentPage: number = 1;
   pageSize: number = 5;
-  constructor() {}
+
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}
 
@@ -54,8 +57,19 @@ export class ViewAllTalentsPageComponent implements OnInit {
         return '#FFA500'; // orange dot
       case 'Away':
         return '#79797B'; // gray dot
-        default:
+      default:
         return '#ffffff'; // red dot
     }
+  }
+
+  async openViewAllTalentsPopupModal(hire: any) {
+    const modal = await this.modalCtrl.create({
+      component: ViewAllTalentsPopupModalComponent,
+      componentProps: { hire }, // ✅ pass the hire data
+      cssClass: 'all-talents-fullscreen-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: true,
+    });
+    await modal.present();
   }
 }

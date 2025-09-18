@@ -35,6 +35,11 @@ import { ViewAllTalentsPageComponent } from './view-all-talents-page/view-all-ta
 import { TalentPageModule } from '../talent/talent.module';
 import { UtilitiesPageModule } from '../utilities/utilities.module';
 import { SpinnerComponent } from '../utilities/spinner/spinner.component';
+import { ViewAllTalentsPopupModalComponent } from '../utilities/modals/view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { ViewAllTalentsSwitchTabComponent } from '../utilities/modals/view-all-talents-switch-tab/view-all-talents-switch-tab.component';
+import { RecentReviewsTabComponent } from '../utilities/modals/recent-reviews-tab/recent-reviews-tab.component';
+import { ReelsAndDocumentationTabComponent } from '../utilities/modals/reels-and-documentation-tab/reels-and-documentation-tab.component';
+import { SkillSetTabComponent } from '../utilities/modals/skill-set-tab/skill-set-tab.component';
 
 @NgModule({
   imports: [
@@ -77,6 +82,11 @@ import { SpinnerComponent } from '../utilities/spinner/spinner.component';
     FundTransferComponent,
     WelcomeToOniduuruMarketplacePageComponent,
     ViewAllTalentsPageComponent,
+    ViewAllTalentsPopupModalComponent,
+    ViewAllTalentsSwitchTabComponent,
+    RecentReviewsTabComponent,
+    ReelsAndDocumentationTabComponent,
+    SkillSetTabComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

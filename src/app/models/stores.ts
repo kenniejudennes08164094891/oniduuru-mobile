@@ -40,6 +40,7 @@ export const imageIcons = {
   logComplaintIcon: '/assets/icon/complaint.png',
   logoutIcon: '/assets/icon/logout.png',
   viewProfileIcon: '/assets/icon/profile.png',
+  SkillSetIcon: '/assets/icon/SkillSetIcon.svg',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

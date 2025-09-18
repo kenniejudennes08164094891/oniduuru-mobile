@@ -17,7 +17,27 @@ export interface LoginCredentials {
   email: string;
   password: string;
 }
-// src/app/models/mock-hires.ts
+
+export interface SkillSet {
+  jobTitle: string;
+  skillLevel: string;
+  amount: number;
+}
+export interface SkillSet {
+  jobTitle: string;
+  skillLevel: string;
+  amount: number;
+}
+
+// Define the Review structure
+export interface RecentReview {
+  profilePic: string;
+  name: string;
+  comment: string;
+  date: string;
+  yourRating: number;
+}
+
 export interface MockPayment {
   id: string;
   profilePic: string;
@@ -34,14 +54,21 @@ export interface MockPayment {
   talentComment?: string;
   talentRating: number;
   proximity: string;
-  skillLevel: string;
+  // skillLevel: string;
   payRange: string;
+  aboutTalent: string;
+  // jobTitles: string[]; // multiple job titles
+  video: File | null | string; // one video
+  pictures: string[];
+  skillSet: SkillSet[]; // 👈 multiple jobs per user
+  recentReview: RecentReview[];
 }
 
 export const MockRecentHires: MockPayment[] = [
   {
     id: '1',
-    profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
+    profilePic:
+      'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
     name: 'John Doe',
     email: 'JohnDoe@gmail.com',
     date: 'Sep 10, 2025, 11:45 AM',
@@ -55,12 +82,58 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'N/A',
     talentRating: 5,
     proximity: '12 Henry Uzuoma Street, Awoyaya Lagos',
-    skillLevel: 'Intermediate -performer',
     payRange: '₦500k - ₦1Million',
+    aboutTalent: 'Full-stack developer with passion for problem-solving.',
+    video:
+      'https://videos.pexels.com/video-files/3209833/3209833-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184611/pexels-photo-3184611.jpeg',
+      'https://images.pexels.com/photos/374074/pexels-photo-374074.jpeg',
+      'https://images.pexels.com/photos/3778680/pexels-photo-3778680.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Frontend Developer',
+        skillLevel: 'Intermediate',
+        amount: 500000,
+      },
+      {
+        jobTitle: 'Backend Developer',
+        skillLevel: 'Intermediate',
+        amount: 600000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+    ],
   },
   {
     id: '2',
-    profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
+    profilePic:
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
     name: 'Jane Smith',
     email: 'Janesmt@gmail.com',
     date: 'Sep 9, 2025, 03:15 PM',
@@ -74,12 +147,54 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Looking forward to working!',
     talentRating: 0,
     proximity: '16 Henry Uzuoma Street, Awoyaya Lagos',
-    skillLevel: 'Expert',
-    payRange: 'Above - ₦1Million',
+    payRange: 'Above ₦1 Million',
+    aboutTalent: 'Frontend developer and UI designer.',
+    video:
+      'https://videos.pexels.com/video-files/3141210/3141210-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg',
+      'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg',
+      'https://images.pexels.com/photos/3760742/pexels-photo-3760742.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Frontend Developer',
+        skillLevel: 'Advanced',
+        amount: 800000,
+      },
+      { jobTitle: 'UI/UX Designer', skillLevel: 'Expert', amount: 1000000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'John Doe',
+        comment: 'John did a great work',
+        date: 'Sep 10, 2025, 11:45 AM',
+        yourRating: 4,
+      },
+    ],
   },
   {
     id: '3',
-    profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
+    profilePic:
+      'https://images.pexels.com/photos/936229/pexels-photo-936229.jpeg',
     name: 'Michael Johnson',
     email: 'MichaelJohnson@gmail.com',
     date: 'Sep 8, 2025, 09:30 AM',
@@ -93,12 +208,57 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Thanks for the opportunity',
     talentRating: 3,
     proximity: '10 Oyedele Oguniyi Street, Anthony Lagos',
-    skillLevel: 'Professional- Experience',
     payRange: '₦750k - ₦950k',
+    aboutTalent: 'Backend engineer passionate about scalable systems.',
+    video:
+      'https://videos.pexels.com/video-files/857195/857195-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/1704488/pexels-photo-1704488.jpeg',
+      'https://images.pexels.com/photos/756231/pexels-photo-756231.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Backend Developer',
+        skillLevel: 'Professional',
+        amount: 800000,
+      },
+      {
+        jobTitle: 'Database Engineer',
+        skillLevel: 'Intermediate',
+        amount: 650000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '4',
-    profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
+    profilePic:
+      'https://images.pexels.com/photos/774095/pexels-photo-774095.jpeg',
     name: 'Emily Davis',
     email: 'Emily@gmail.com',
     date: 'Sep 7, 2025, 07:50 PM',
@@ -112,12 +272,52 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Excited to join!',
     talentRating: 0,
     proximity: '20 Martins Street, Olosha Lagos',
-    skillLevel: 'Mid-Level-Experience',
     payRange: '₦50k - ₦100k',
+    aboutTalent: 'Creative mobile app designer with fintech experience.',
+    video:
+      'https://videos.pexels.com/video-files/3184312/3184312-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184355/pexels-photo-3184355.jpeg',
+      'https://images.pexels.com/photos/3184396/pexels-photo-3184396.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Mobile UI Designer',
+        skillLevel: 'Intermediate',
+        amount: 450000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '5',
-    profilePic: 'https://randomuser.me/api/portraits/men/67.jpg',
+    profilePic:
+      'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg',
     name: 'Robert Wilson',
     email: 'RobertW@protonmail.com',
     date: 'Sep 6, 2025, 02:20 PM',
@@ -131,141 +331,431 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Great team and project',
     talentRating: 5,
     proximity: '256 Mbadiwe Close, Ikoyi Lagos',
-    skillLevel: '256 Mbadiwe Close, Ikoyi Lagos',
     payRange: '₦500k - ₦1Million',
+    aboutTalent: 'Full-stack developer skilled in SaaS.',
+    video:
+      'https://videos.pexels.com/video-files/3773493/3773493-hd_1920_1080_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
+      'https://images.pexels.com/photos/3184612/pexels-photo-3184612.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Full-Stack Developer',
+        skillLevel: 'Expert',
+        amount: 950000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '6',
-    profilePic: 'https://randomuser.me/api/portraits/women/32.jpg',
-    name: 'Sarah Thompson',
-    email: 'Sarah.T@outlook.com',
+    profilePic:
+      'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+    name: 'Sophia Brown',
+    email: 'SophiaB@gmail.com',
     date: 'Sep 5, 2025, 10:10 AM',
-    startDate: 'Apr 1, 2025',
-    amount: 275000.0,
+    startDate: 'Apr 10, 2025',
+    amount: 450000.0,
     offerStatus: 'Awaiting Acceptance',
     status: 'Active',
-    jobDescription: 'UX/UI designer for healthcare app.',
-    yourComment: 'Impressive portfolio',
+    jobDescription: 'UI/UX designer for travel booking platform.',
+    yourComment: 'Pending confirmation',
     yourRating: 0,
-    talentComment: 'Considering other offers',
-    talentRating: 4,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    talentComment: 'Happy to take this opportunity',
+    talentRating: 0,
+    proximity: '12 Adeola Odeku, Victoria Island Lagos',
+    payRange: '₦400k - ₦600k',
+    aboutTalent: 'Passionate UI/UX designer.',
+    video:
+      'https://videos.pexels.com/video-files/3141405/3141405-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg',
+      'https://images.pexels.com/photos/3182765/pexels-photo-3182765.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'UI/UX Designer', skillLevel: 'Expert', amount: 700000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '7',
-    profilePic: 'https://randomuser.me/api/portraits/men/89.jpg',
-    name: 'David Chen',
-    email: 'David.Chen@yahoo.com',
-    date: 'Sep 4, 2025, 04:45 PM',
-    startDate: 'May 10, 2025',
-    amount: 450000.0,
-    offerStatus: 'Offer Rejected',
+    profilePic:
+      'https://images.pexels.com/photos/2379007/pexels-photo-2379007.jpeg',
+    name: 'Daniel Lee',
+    email: 'DanLee@gmail.com',
+    date: 'Sep 4, 2025, 06:40 PM',
+    startDate: 'May 2, 2025',
+    amount: 600000.0,
+    offerStatus: 'Offer Accepted',
     status: 'Active',
-    jobDescription: 'Data scientist for analytics team.',
-    yourComment: 'Salary expectations too high',
-    yourRating: 3,
-    talentComment: 'Accepted better offer elsewhere',
-    talentRating: 4,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    jobDescription: 'Backend developer for logistics platform.',
+    yourComment: 'Strong performer, reliable delivery',
+    yourRating: 5,
+    talentComment: 'Great collaboration so far',
+    talentRating: 5,
+    proximity: 'Ikorodu Road, Lagos',
+    payRange: '₦600k - ₦900k',
+    aboutTalent: 'Backend engineer skilled in Node.js.',
+    video:
+      'https://videos.pexels.com/video-files/3196079/3196079-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'Backend Developer', skillLevel: 'Advanced', amount: 750000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '8',
-    profilePic: 'https://randomuser.me/api/portraits/women/56.jpg',
-    name: 'Lisa Rodriguez',
-    email: 'Lisa.R@company.com',
-    date: 'Sep 3, 2025, 09:15 AM',
-    startDate: 'Jun 5, 2025',
-    amount: 189999.5,
-    offerStatus: 'Offer Accepted',
-    status: 'Active',
-    jobDescription: 'Content writer for tech blog.',
-    yourComment: 'Strong writing samples',
-    yourRating: 4,
-    talentComment: 'Excited about the topic',
-    talentRating: 5,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    profilePic:
+      'https://images.pexels.com/photos/2381069/pexels-photo-2381069.jpeg',
+    name: 'Olivia Martinez',
+    email: 'OliviaM@gmail.com',
+    date: 'Sep 3, 2025, 09:00 AM',
+    startDate: 'Jun 12, 2025',
+    amount: 800000.0,
+    offerStatus: 'Offer Rejected',
+    status: 'Pending',
+    jobDescription: 'Frontend engineer for EdTech platform.',
+    yourComment: 'Not a good culture fit',
+    yourRating: 2,
+    talentComment: 'Thankful for the chance',
+    talentRating: 3,
+    proximity: 'Lekki Phase 1, Lagos',
+    payRange: 'Above ₦1 Million',
+    aboutTalent: 'Frontend specialist with React.',
+    video:
+      'https://videos.pexels.com/video-files/3749186/3749186-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg',
+      'https://images.pexels.com/photos/3184402/pexels-photo-3184402.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'Frontend Developer', skillLevel: 'Expert', amount: 950000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '9',
-    profilePic: 'https://randomuser.me/api/portraits/men/44.jpg',
-    name: 'James Anderson',
-    email: 'J.Anderson@mail.com',
-    date: 'Sep 2, 2025, 01:30 PM',
-    startDate: 'Jul 20, 2025',
-    amount: 625000.0,
-    offerStatus: 'Awaiting Acceptance',
+    profilePic:
+      'https://images.pexels.com/photos/2379008/pexels-photo-2379008.jpeg',
+    name: 'David Clark',
+    email: 'DavidC@gmail.com',
+    date: 'Sep 2, 2025, 04:25 PM',
+    startDate: 'Jul 5, 2025',
+    amount: 550000.0,
+    offerStatus: 'Offer Accepted',
     status: 'Active',
-    jobDescription: 'CTO for early-stage startup.',
-    yourComment: 'Perfect candidate if accepted',
-    yourRating: 0,
-    talentComment: 'Reviewing contract details',
+    jobDescription: 'DevOps engineer for banking app.',
+    yourComment: 'Solid CI/CD setup',
+    yourRating: 4,
+    talentComment: 'Enjoying the work',
     talentRating: 5,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    proximity: 'Surulere, Lagos',
+    payRange: '₦500k - ₦1Million',
+    aboutTalent: 'DevOps engineer focused on automation.',
+    video:
+      'https://videos.pexels.com/video-files/4790342/4790342-hd_1920_1080_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'DevOps Engineer', skillLevel: 'Advanced', amount: 850000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '10',
-    profilePic: 'https://randomuser.me/api/portraits/women/71.jpg',
-    name: 'Maria Garcia',
-    email: 'Maria.G@business.com',
-    date: 'Sep 1, 2025, 06:40 PM',
+    profilePic:
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+    name: 'Ava Taylor',
+    email: 'AvaT@gmail.com',
+    date: 'Sep 1, 2025, 11:30 AM',
     startDate: 'Aug 1, 2025',
-    amount: 155000.0,
-    offerStatus: 'Offer Accepted',
-    status: 'Away',
-    jobDescription: 'Social media manager for brand.',
-    yourComment: 'Creative campaign ideas',
-    yourRating: 4,
-    talentComment: 'Ready to start immediately',
-    talentRating: 5,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    amount: 700000.0,
+    offerStatus: 'Awaiting Acceptance',
+    status: 'Active',
+    jobDescription: 'Product designer for healthcare app.',
+    yourComment: 'Pending acceptance',
+    yourRating: 0,
+    talentComment: 'Eager to join the project',
+    talentRating: 0,
+    proximity: 'Mushin, Lagos',
+    payRange: '₦600k - ₦1 Million',
+    aboutTalent: 'Product designer focused on healthcare apps.',
+    video:
+      'https://videos.pexels.com/video-files/4098977/4098977-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184361/pexels-photo-3184361.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'Product Designer', skillLevel: 'Advanced', amount: 800000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '11',
-    profilePic: 'https://randomuser.me/api/portraits/men/23.jpg',
-    name: 'Thomas Miller',
-    email: 'Tom.Miller@tech.io',
-    date: 'Aug 31, 2025, 11:20 AM',
-    startDate: 'Sep 15, 2025',
-    amount: 289000.0,
-    offerStatus: 'Offer Rejected',
+    profilePic:
+      'https://images.pexels.com/photos/936229/pexels-photo-936229.jpeg',
+    name: 'Ethan Harris',
+    email: 'EthanH@gmail.com',
+    date: 'Aug 31, 2025, 08:10 PM',
+    startDate: 'Aug 20, 2025',
+    amount: 400000.0,
+    offerStatus: 'Offer Accepted',
     status: 'Away',
-    jobDescription: 'DevOps engineer for cloud infrastructure.',
-    yourComment: 'Found another candidate',
-    yourRating: 2,
-    talentComment: 'Position not the right fit',
-    talentRating: 3,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    jobDescription: 'QA engineer for e-commerce website.',
+    yourComment: 'Detail-oriented and thorough',
+    yourRating: 4,
+    talentComment: 'Team has been welcoming',
+    talentRating: 4,
+    proximity: 'Ajah, Lagos',
+    payRange: '₦350k - ₦600k',
+    aboutTalent: 'QA engineer skilled in automation.',
+    video:
+      'https://videos.pexels.com/video-files/3826554/3826554-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184410/pexels-photo-3184410.jpeg',
+    ],
+    skillSet: [
+      { jobTitle: 'QA Engineer', skillLevel: 'Advanced', amount: 550000 },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
   {
     id: '12',
-    profilePic: 'https://randomuser.me/api/portraits/women/88.jpg',
-    name: 'Jennifer White',
-    email: 'Jen.White@design.com',
-    date: 'Aug 30, 2025, 03:55 PM',
-    startDate: 'Oct 1, 2025',
-    amount: 420000.0,
+    profilePic:
+      'https://images.pexels.com/photos/2381069/pexels-photo-2381069.jpeg',
+    name: 'Mia Thompson',
+    email: 'MiaT@gmail.com',
+    date: 'Aug 30, 2025, 01:00 PM',
+    startDate: 'Aug 25, 2025',
+    amount: 950000.0,
     offerStatus: 'Offer Accepted',
-    status: 'Pending',
-    jobDescription: 'Product manager for mobile app.',
-    yourComment: 'Strong leadership qualities',
+    status: 'Active',
+    jobDescription: 'AI/ML engineer for recommendation system.',
+    yourComment: 'Brilliant with ML models',
     yourRating: 5,
-    talentComment: 'Looking forward to the challenge',
+    talentComment: 'Challenging but rewarding work',
     talentRating: 5,
-    proximity: '',
-    skillLevel: '',
-    payRange: '',
+    proximity: 'Yaba, Lagos',
+    payRange: 'Above ₦1 Million',
+    aboutTalent: 'AI/ML engineer specializing in recommendation systems.',
+    video:
+      'https://videos.pexels.com/video-files/3769693/3769693-uhd_2560_1440_25fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184368/pexels-photo-3184368.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Machine Learning Engineer',
+        skillLevel: 'Expert',
+        amount: 1200000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Jane Smith',
+        comment: 'Still waiting for confirmation',
+        date: 'Sep 9, 2025, 03:15 PM',
+        yourRating: 0,
+      },
+    ],
   },
 ];
 
@@ -399,7 +889,7 @@ export const NotificationsData: Notification[] = [
     dateLink: 'Aug 18, 2025, 9:00 AM',
   },
 ];
- export interface Stat {
+export interface Stat {
   key: string;
   label: string;
   value: number;

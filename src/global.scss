@@ -62,3 +62,14 @@ ion-input input {
   --border-radius: 0;
   --box-shadow: none;
 }
+
+// All Talents modal
+.all-talents-fullscreen-modal {
+  --width: 90%;
+  --height: 90%;
+  --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
+
+  margin: auto; /* centers modal both vertically and horizontally */
+}
