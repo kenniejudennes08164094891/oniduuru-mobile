@@ -10,6 +10,7 @@ import { TalentHeaderComponent } from './talent-header/talent-header.component';
 import { SpinnerComponent } from '../utilities/spinner/spinner.component';
 import { ProfilePageComponent } from './profile-page/profile-page.component';
 import { SharedModule } from '../shared/shared.module';
+import { AvatarSettingsPopoverComponent } from '../shared/modals/avatar-settings-popover/avatar-settings-popover.component';
 @NgModule({
   declarations: [TalentPage,TalentDashboardComponent,ProfilePageComponent ],
   imports: [
@@ -19,7 +20,8 @@ import { SharedModule } from '../shared/shared.module';
     TalentPageRoutingModule,
     UtilitiesPageModule,
     SpinnerComponent,
-    SharedModule
+    SharedModule,
+    AvatarSettingsPopoverComponent
     
   ],
 })
