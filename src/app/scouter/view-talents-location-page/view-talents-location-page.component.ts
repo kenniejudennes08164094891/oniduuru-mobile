@@ -36,24 +36,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   headerHidden = false;
   images = imageIcons;
 
-  // talents: Talent[] = [
-  //   {
-  //     name: 'Alice',
-  //     location: { lat: 6.5244, lng: 3.3792 },
-  //     skillSet: ['UI/UX'],
-  //   },
-  //   {
-  //     name: 'Bob',
-  //     location: { lat: 6.517, lng: 3.394 },
-  //     skillSet: ['Frontend'],
-  //   },
-  //   {
-  //     name: 'Charlie',
-  //     location: { lat: 6.53, lng: 3.4 },
-  //     skillSet: ['Backend'],
-  //   },
-  // ];
-
   ngOnInit(): void {}
 
   ngAfterViewInit(): void {
@@ -100,6 +82,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
         geometry: new Point(fromLonLat([t.location.lng, t.location.lat])),
         name: t.name,
         skills: t.skillSet.map((s) => s.jobTitle).join(', '), // convert to string
+        location: t.location,
       });
 
       feature.setStyle(
@@ -131,7 +114,17 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
         const coordinate = evt.coordinate;
         const name = feature.get('name');
         const skills = feature.get('skills');
-        this.popupContent.innerHTML = `<b>${name}</b><br>Skills: ${skills}`;
+        const location = feature.get('location'); // { lat, lng, city? }
+
+        // Format location nicely
+        let locationText = '';
+        if (location.city) {
+          locationText = location.city;
+        } else {
+          locationText = `Lat: ${location.lat}, Lng: ${location.lng}`;
+        }
+
+        this.popupContent.innerHTML = `<b>${name}</b><br>Skills: ${skills}<br>Location: ${locationText}`;
         this.overlay.setPosition(coordinate);
       } else {
         this.overlay.setPosition(undefined);
@@ -142,18 +135,34 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   performSearch() {
     const query = this.searchQuery.toLowerCase().trim();
 
-    // Filter talents by name or skills
     const filtered = this.talents.filter((t) => {
+      // match name
       const nameMatch = t.name.toLowerCase().includes(query);
+
+      // match skills
       const skillMatch = t.skillSet?.some(
         (s) =>
           s.jobTitle.toLowerCase().includes(query) ||
           s.skillLevel.toLowerCase().includes(query)
       );
-      return nameMatch || skillMatch;
+
+      // match location city
+      const locationMatch = t.location.city?.toLowerCase().includes(query);
+
+      return nameMatch || skillMatch || locationMatch;
     });
 
     // Reload markers with filtered talents
     this.loadMarkers(filtered);
+
+    // 👇 If at least one match, zoom to the first talent’s location
+    if (filtered.length > 0) {
+      const first = filtered[0];
+      this.map.getView().animate({
+        center: fromLonLat([first.location.lng, first.location.lat]),
+        zoom: 14,
+        duration: 1000,
+      });
+    }
   }
 }

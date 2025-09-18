@@ -41,6 +41,7 @@ export interface RecentReview {
 export interface Location {
   lat: number;
   lng: number;
+  city: string;
 }
 
 export interface MockPayment {
@@ -136,7 +137,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.517, lng: 3.394 },
+    location: { lat: 6.517, lng: 3.394, city: 'Lagos' },
   },
   {
     id: '2',
@@ -199,7 +200,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.5244, lng: 3.3792 },
+    location: { lat: 6.5244, lng: 3.3792, city: 'Lagos' },
   },
   {
     id: '3',
@@ -266,7 +267,7 @@ export const MockRecentHires: MockPayment[] = [
       },
     ],
 
-    location: { lat: 6.5244, lng: 3.3792 }, // Lagos Island
+    location: { lat: 6.5244, lng: 3.3792, city: 'Lagos Island' }, // Lagos Island
   },
   {
     id: '4',
@@ -327,7 +328,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4654, lng: 3.4064 }, // Victoria Island
+    location: { lat: 6.4654, lng: 3.4064, city: 'Victoria Island' }, // Victoria Island
   },
   {
     id: '5',
@@ -388,7 +389,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4431, lng: 3.3919 }, // Lekki
+    location: { lat: 6.4431, lng: 3.3919, city: 'Lekki' }, // Lekki
   },
   {
     id: '6',
@@ -445,7 +446,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4969, lng: 3.3673 }, // Surulere
+    location: { lat: 6.4969, lng: 3.3673, city: 'Surulere' }, // Surulere
   },
   {
     id: '7',
@@ -501,7 +502,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.455, lng: 3.3972 }, // Ikoyi
+    location: { lat: 6.455, lng: 3.3972, city: 'Ikoyi' }, // Ikoyi
   },
   {
     id: '8',
@@ -558,7 +559,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.517, lng: 3.394 }, // Ajah
+    location: { lat: 6.517, lng: 3.394, city: 'Ajah' }, // Ajah
   },
   {
     id: '9',
@@ -614,7 +615,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.5241, lng: 3.3793 }, // Marina
+    location: { lat: 6.5241, lng: 3.3793, city: 'Marina' }, // Marina
   },
   {
     id: '10',
@@ -670,7 +671,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 3,
       },
     ],
-    location: { lat: 6.5431, lng: 3.3512 }, // Apapa
+    location: { lat: 6.5431, lng: 3.3512, city: 'Apapa' }, // Apapa
   },
   {
     id: '11',
@@ -726,7 +727,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.535, lng: 3.3742 }, // Yaba
+    location: { lat: 6.535, lng: 3.3742, city: 'Yaba' }, // Yaba
   },
   {
     id: '12',
@@ -786,7 +787,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4525, lng: 3.39 }, // Banana Island
+    location: { lat: 6.4525, lng: 3.39, city: 'Banana Island' }, // Banana Island
   },
 ];
 

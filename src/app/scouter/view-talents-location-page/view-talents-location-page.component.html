@@ -54,7 +54,7 @@
       <!-- Input with search button inside -->
       <input
         type="text"
-        placeholder="Type a location..."
+        placeholder="Type a location or skill..."
         [(ngModel)]="searchQuery"
         class="w-full border border-gray-300 rounded-lg pl-10 pr-20 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
@@ -68,7 +68,8 @@
       <!-- Search Button on the right -->
       <button
         (click)="performSearch()"
-        class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#CDD5DF80] text-white rounded-md px-4 py-2 hover:bg-[#000000] hover:text-white focus:border-[#000000]"
+        [disabled]="!searchQuery.trim()"
+        class="absolute right-1 top-1/2 -translate-y-1/2 rounded-md px-4 py-2 bg-[#000000] text-white hover:bg-[#000000] hover:text-white disabled:text-[CDD5DF80] disabled:opacity-50 disabled:cursor-not-allowed focus:border-[#000000]"
       >
         Search
       </button>
