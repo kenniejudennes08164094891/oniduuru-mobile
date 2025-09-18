@@ -28,7 +28,7 @@
         </div>
       </div>
     </div>
-    <div class="space-y-5">
+    <div class="space-y-3">
       <div
         class="flex justify-between bg-[#FFFFFF] items-center border border-[#D0D5DD] px-8 py-4 rounded-md shadow-lg"
       >
@@ -42,5 +42,43 @@
         <ion-icon name="arrow-forward"></ion-icon>
       </div>
     </div>
+
+    <p class="text-[16px] text-[#101828] px-1 mt-6 mb-6">
+      Locate Professionals based on their specialized skill sets. Identify
+      expect proficient in specific fields to match your project or service
+      requirements precisely. Narrow down your search and connect with
+      professionals equipped with the exact expertise you need.
+    </p>
+
+    <div class="w-full mx-auto relative">
+      <!-- Input with search button inside -->
+      <input
+        type="text"
+        placeholder="Type a location..."
+        [(ngModel)]="searchQuery"
+        class="w-full border border-gray-300 rounded-lg pl-10 pr-20 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      <!-- Search Icon on the left -->
+      <ion-icon
+        name="search"
+        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
+      ></ion-icon>
+
+      <!-- Search Button on the right -->
+      <button
+        (click)="performSearch()"
+        class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#CDD5DF80] text-white rounded-md px-4 py-2 hover:bg-[#000000] hover:text-white focus:border-[#000000]"
+      >
+        Search
+      </button>
+    </div>
+  </div>
+  <div id="talentsMap" class="w-full h-[50vh] mt-6 rounded-lg shadow-lg"></div>
+
+  <!-- Popup for marker info -->
+  <div id="popup" class="ol-popup">
+    <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+    <div id="popup-content"></div>
   </div>
 </ion-content>
