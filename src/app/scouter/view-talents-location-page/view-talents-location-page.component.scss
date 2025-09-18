@@ -1,0 +1,12 @@
+.paid-dark-card-background {
+  background-image: url("/assets/images/PainDashboardBG.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+}
+
+.no-padding-bg {
+  --background: #EEF0F6; /* sets ion-content background */
+  padding: 0 !important; /* kills default padding */
+}

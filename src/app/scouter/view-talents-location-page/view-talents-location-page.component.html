@@ -6,6 +6,41 @@
   </app-scouter-header>
 </ion-header>
 
-<ion-content>
-  <p>view-talents-location-page works!</p>
+<ion-content [fullscreen]="true" class="no-padding-bg">
+  <div class="ion-padding">
+    <div
+      class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    >
+      <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
+
+      <div class="relative z-10 text-white">
+        <div class="flex items-start gap-3">
+          <img [src]="images.ViewHireFolderIcon" alt="" />
+          <div class="items-center">
+            <span class="font-medium text-[24px] leading-tight"
+              >Hi Vikiwest</span
+            >
+            <p class="text-gray-200 text-lg leading-relaxed">
+              View all talents at a glance based on close proximity or needed
+              skillset
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-5">
+      <div
+        class="flex justify-between bg-[#FFFFFF] items-center border border-[#D0D5DD] px-8 py-4 rounded-md shadow-lg"
+      >
+        <p>Find professionals by Location</p>
+        <ion-icon name="arrow-forward"></ion-icon>
+      </div>
+      <div
+        class="flex justify-between bg-[#FFFFFF] items-center border border-[#D0D5DD] px-8 py-4 rounded-md shadow-lg"
+      >
+        <p>Find professionals by skill set</p>
+        <ion-icon name="arrow-forward"></ion-icon>
+      </div>
+    </div>
+  </div>
 </ion-content>

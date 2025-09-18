@@ -86,6 +86,7 @@ export const MockRecentHires: MockPayment[] = [
     aboutTalent: 'Full-stack developer with passion for problem-solving.',
     video:
       'https://videos.pexels.com/video-files/3209833/3209833-uhd_2560_1440_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184611/pexels-photo-3184611.jpeg',
       'https://images.pexels.com/photos/374074/pexels-photo-374074.jpeg',
@@ -150,7 +151,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: 'Above ₦1 Million',
     aboutTalent: 'Frontend developer and UI designer.',
     video:
-      'https://videos.pexels.com/video-files/3141210/3141210-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/856675/856675-hd_1920_1080_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg',
       'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg',
@@ -211,7 +213,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦750k - ₦950k',
     aboutTalent: 'Backend engineer passionate about scalable systems.',
     video:
-      'https://videos.pexels.com/video-files/857195/857195-hd_1920_1080_30fps.mp4',
+      'https://videos.pexels.com/video-files/1526909/1526909-uhd_2560_1440_30fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/1704488/pexels-photo-1704488.jpeg',
       'https://images.pexels.com/photos/756231/pexels-photo-756231.jpeg',
@@ -275,7 +278,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦50k - ₦100k',
     aboutTalent: 'Creative mobile app designer with fintech experience.',
     video:
-      'https://videos.pexels.com/video-files/3184312/3184312-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/854171/854171-hd_1920_1080_30fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184355/pexels-photo-3184355.jpeg',
       'https://images.pexels.com/photos/3184396/pexels-photo-3184396.jpeg',
@@ -334,7 +338,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦500k - ₦1Million',
     aboutTalent: 'Full-stack developer skilled in SaaS.',
     video:
-      'https://videos.pexels.com/video-files/3773493/3773493-hd_1920_1080_25fps.mp4',
+      'https://videos.pexels.com/video-files/45208/45208-hd_1280_720_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
       'https://images.pexels.com/photos/3184612/pexels-photo-3184612.jpeg',
@@ -393,7 +398,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦400k - ₦600k',
     aboutTalent: 'Passionate UI/UX designer.',
     video:
-      'https://videos.pexels.com/video-files/3141405/3141405-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/1448733/1448733-uhd_2560_1440_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg',
       'https://images.pexels.com/photos/3182765/pexels-photo-3182765.jpeg',
@@ -448,7 +454,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦600k - ₦900k',
     aboutTalent: 'Backend engineer skilled in Node.js.',
     video:
-      'https://videos.pexels.com/video-files/3196079/3196079-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/2022395/2022395-uhd_2560_1440_24fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg',
     ],
@@ -502,7 +509,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: 'Above ₦1 Million',
     aboutTalent: 'Frontend specialist with React.',
     video:
-      'https://videos.pexels.com/video-files/3749186/3749186-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/855517/855517-hd_1920_1080_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg',
       'https://images.pexels.com/photos/3184402/pexels-photo-3184402.jpeg',
@@ -557,7 +565,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦500k - ₦1Million',
     aboutTalent: 'DevOps engineer focused on automation.',
     video:
-      'https://videos.pexels.com/video-files/4790342/4790342-hd_1920_1080_25fps.mp4',
+      'https://videos.pexels.com/video-files/856647/856647-hd_1920_1080_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184311/pexels-photo-3184311.jpeg',
     ],
@@ -611,7 +620,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦600k - ₦1 Million',
     aboutTalent: 'Product designer focused on healthcare apps.',
     video:
-      'https://videos.pexels.com/video-files/4098977/4098977-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/2098989/2098989-uhd_2560_1440_30fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184361/pexels-photo-3184361.jpeg',
     ],
@@ -665,7 +675,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: '₦350k - ₦600k',
     aboutTalent: 'QA engineer skilled in automation.',
     video:
-      'https://videos.pexels.com/video-files/3826554/3826554-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/3182836/3182836-uhd_2560_1440_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184410/pexels-photo-3184410.jpeg',
     ],
@@ -719,7 +730,8 @@ export const MockRecentHires: MockPayment[] = [
     payRange: 'Above ₦1 Million',
     aboutTalent: 'AI/ML engineer specializing in recommendation systems.',
     video:
-      'https://videos.pexels.com/video-files/3769693/3769693-uhd_2560_1440_25fps.mp4',
+      'https://videos.pexels.com/video-files/856688/856688-hd_1920_1080_25fps.mp4',
+
     pictures: [
       'https://images.pexels.com/photos/3184368/pexels-photo-3184368.jpeg',
     ],

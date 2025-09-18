@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { imageIcons } from 'src/app/models/stores';
 
 @Component({
   selector: 'app-view-talents-location-page',
@@ -7,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ViewTalentsLocationPageComponent implements OnInit {
   headerHidden: boolean = false;
-
+  images = imageIcons;
   constructor() {}
 
   ngOnInit() {}
