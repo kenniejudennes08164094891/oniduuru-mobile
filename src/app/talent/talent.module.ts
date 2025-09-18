@@ -12,7 +12,7 @@ import { ProfilePageComponent } from './profile-page/profile-page.component';
 import { SharedModule } from '../shared/shared.module';
 import { AvatarSettingsPopoverComponent } from '../shared/modals/avatar-settings-popover/avatar-settings-popover.component';
 @NgModule({
-  declarations: [TalentPage,TalentDashboardComponent,ProfilePageComponent ],
+  declarations: [TalentPage,TalentDashboardComponent,ProfilePageComponent,AvatarSettingsPopoverComponent ],
   imports: [
     CommonModule,
     FormsModule,
@@ -20,10 +20,11 @@ import { AvatarSettingsPopoverComponent } from '../shared/modals/avatar-settings
     TalentPageRoutingModule,
     UtilitiesPageModule,
     SpinnerComponent,
-    SharedModule,
-    AvatarSettingsPopoverComponent
-    
-  ],
+    SharedModule
+  ],exports: [
+    TalentHeaderComponent,
+    AvatarSettingsPopoverComponent  // optional: if you want to reuse elsewhere
+  ]
 })
 export class TalentPageModule { }
 
