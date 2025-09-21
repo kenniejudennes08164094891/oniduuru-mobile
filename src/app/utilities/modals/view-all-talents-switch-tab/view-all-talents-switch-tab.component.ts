@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 
 type TabKey = 'skillSet' | 'reelsAndDocumentation' | 'recentReviews';
@@ -9,12 +9,12 @@ type TabKey = 'skillSet' | 'reelsAndDocumentation' | 'recentReviews';
   styleUrls: ['./view-all-talents-switch-tab.component.scss'],
 })
 export class ViewAllTalentsSwitchTabComponent {
-  // @Output() hireSelected = new EventEmitter<MockPayment>();
-  @Input() hire: any; // <-- hire comes from the table row click
+  @Input() hire: any;
+  @Input() selectedSkills: any[] = [];            // ✅ receive from modal
+  @Output() skillSelectionChanged = new EventEmitter<any[]>(); 
 
   activeTab: TabKey = 'skillSet';
   hires: MockPayment[] = MockRecentHires;
-  selectedHire: MockPayment | null = null;
 
   tabs = [
     { key: 'skillSet' as TabKey, label: 'Skill Set' },
@@ -26,7 +26,8 @@ export class ViewAllTalentsSwitchTabComponent {
     this.activeTab = tab;
   }
 
-  // onHireClick(hire: MockPayment) {
-  //   this.selectedHire = hire; // set clicked hire
-  // }
+  onSkillSelectionChanged(skills: any[]) {
+    this.selectedSkills = skills;
+    this.skillSelectionChanged.emit(skills);      // ✅ bubble up to modal
+  }
 }

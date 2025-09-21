@@ -1,4 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 
 @Component({
@@ -8,12 +9,22 @@ import { imageIcons } from 'src/app/models/stores';
 })
 export class ViewAllTalentsPopupModalComponent implements OnInit {
   images = imageIcons;
-
-  @Input() hire: any; // ✅ receive hire from parent
-
-  constructor() {}
+  @Input() hire: MockPayment | any;
+  selectedSkills: any[] = [];     // ✅ central store
 
   ngOnInit() {
     console.log('Hire received in modal:', this.hire);
+  }
+
+  onSkillSelectionChanged(skills: any[]) {
+    this.selectedSkills = skills; // ✅ update central store
+  }
+
+  get hasSelectedSkill(): boolean {
+    return this.selectedSkills.length > 0;
+  }
+
+  hireTalent() {
+    console.log('Hiring:', this.hire?.name, 'with skills:', this.selectedSkills);
   }
 }

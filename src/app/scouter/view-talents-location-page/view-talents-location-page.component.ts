@@ -16,6 +16,7 @@ import { ModalController } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { Router } from '@angular/router';
 import { IonTabs } from '@ionic/angular';
+import { ProceedToHireTalentPopupModalComponent } from 'src/app/utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
 
 @Component({
   selector: 'app-view-talents-location-page',
@@ -292,5 +293,30 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
     modal.onDidDismiss().then(() => {
       this.refreshMap(); // map visible again
     });
+  }
+
+  async proceedWithSelectedSkills() {
+    if (this.selectedSkills.length === 0) return;
+
+    // 🔎 Filter hires by selected skills
+    const filtered = this.talents.filter((t) =>
+      t.skillSet?.some((s) =>
+        this.selectedSkills.some(
+          (selected) => s.jobTitle.toLowerCase() === selected.toLowerCase()
+        )
+      )
+    );
+
+    // 🛠 Open modal with filtered results
+    const modal = await this.modalCtrl.create({
+      component: ProceedToHireTalentPopupModalComponent,
+      componentProps: {
+        hires: filtered,
+        location: this.selectedSkills.join(', '), // pass selected skills as "location" label
+      },
+      cssClass: 'all-talents-fullscreen-modal',
+    });
+
+    await modal.present();
   }
 }

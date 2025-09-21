@@ -14,6 +14,14 @@
       <div class="space-y-1 mt-1.5">
         <h5 class="text-[14px] text-[#101828]">{{ hire?.name }}</h5>
         <p class="text-[12px] text-[#79797B]">{{ hire?.proximity }}</p>
+        <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+          <ion-icon
+            name="star"
+            [class.text-yellow-500]="star <= (hire?.yourRating ?? 0)"
+            [class.text-gray-400]="star > (hire?.yourRating ?? 0)"
+            class="text-xl"
+          ></ion-icon>
+        </ng-container>
       </div>
     </div>
 
@@ -24,5 +32,20 @@
 
   <app-view-all-talents-switch-tab
     [hire]="hire"
+    [selectedSkills]="selectedSkills"
+    (skillSelectionChanged)="onSkillSelectionChanged($event)"
   ></app-view-all-talents-switch-tab>
+
+  <!-- ✅ Hire button only if skills are selected -->
+  <div
+    *ngIf="hasSelectedSkill"
+    class="sticky bottom-0 left-0 right-0 bg-white mt-10 pt-2 pb-16 flex justify-end"
+  >
+    <button
+      class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+      (click)="hireTalent()"
+    >
+      Hire Talent
+    </button>
+  </div>
 </ion-content>

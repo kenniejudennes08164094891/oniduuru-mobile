@@ -42,6 +42,7 @@ import { ReelsAndDocumentationTabComponent } from '../utilities/modals/reels-and
 import { SkillSetTabComponent } from '../utilities/modals/skill-set-tab/skill-set-tab.component';
 import { ViewTalentsLocationPageComponent } from './view-talents-location-page/view-talents-location-page.component';
 import { FindProfessionalsByLocationModalComponent } from '../utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
+import { ProceedToHireTalentPopupModalComponent } from '../utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
 
 @NgModule({
   imports: [
@@ -91,6 +92,7 @@ import { FindProfessionalsByLocationModalComponent } from '../utilities/modals/f
     SkillSetTabComponent,
     ViewTalentsLocationPageComponent,
     FindProfessionalsByLocationModalComponent,
+    ProceedToHireTalentPopupModalComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

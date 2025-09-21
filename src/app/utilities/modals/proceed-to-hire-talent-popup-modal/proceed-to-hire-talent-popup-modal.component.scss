@@ -1,0 +1,18 @@
+.logcomplainModalBG {
+  background-image: url("/assets/images/Log-complaint-background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  --background: transparent; // override Ionic default background
+}
+
+
+
+.talent-modal {
+  --width: 600px;     /* ✅ limit width */
+  --height: auto;
+  --border-radius: 20px;
+  --max-height: 80%;
+  --backdrop-opacity: 0.4; /* dim background */
+  margin: auto;        /* center horizontally */
+}

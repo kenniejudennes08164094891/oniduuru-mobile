@@ -3,16 +3,11 @@
   <div
     class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
   >
-    <h2 class="text-lg font-bold text-white">
-      Talents residing around {{ currentLocation }}
-    </h2>
+    <h2 class="text-lg font-bold text-white">Talents</h2>
   </div>
 
   <!-- Main Content -->
-  <div
-    *ngIf="paginatedHires.length > 0; else noDataPage"
-    class="flex flex-col"
-  >
+  <div *ngIf="paginatedHires.length > 0; else noDataPage" class="flex flex-col">
     <!-- Search + Filter Row -->
     <div
       class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 mt-6"
@@ -65,6 +60,7 @@
           <tr
             *ngFor="let hire of paginatedHires"
             class="hover:bg-gray-50 transition-colors cursor-pointer"
+            (click)="openTalentModal(hire)"
           >
             <!-- Checkbox -->
             <td class="px- py-3 w-10 text-center">

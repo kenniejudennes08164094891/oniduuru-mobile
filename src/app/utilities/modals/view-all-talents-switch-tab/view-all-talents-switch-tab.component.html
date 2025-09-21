@@ -1,3 +1,4 @@
+<!-- view-all-talents-switch-tab.component.html -->
 <div class="flex border-b border-gray-300 mb-4 overflow-x-auto scrollbar-hide">
   <button
     *ngFor="let tab of tabs"
@@ -13,9 +14,12 @@
   </button>
 </div>
 
-<!-- TAB CONTENT -->
 <div *ngIf="activeTab === 'skillSet'">
-  <app-skill-set-tab [hire]="hire"></app-skill-set-tab>
+  <app-skill-set-tab
+    [hire]="hire"
+    [selectedSkills]="selectedSkills"
+    (skillSelectionChanged)="onSkillSelectionChanged($event)"
+  ></app-skill-set-tab>
 </div>
 
 <div *ngIf="activeTab === 'reelsAndDocumentation'">

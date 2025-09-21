@@ -1,27 +1,28 @@
-<!-- <div class="overflow-x-auto" *ngFor="let hire of hires"> -->
-  <table class="min-w-full border border-gray-200 text-sm">
-    <tbody>
-      <tr
-        *ngFor="let skill of hire?.skillSet"
-        class="hover:bg-gray-50 border-b"
+<!-- skill-set-tab.component.html -->
+<table class="min-w-full border border-gray-200 text-sm">
+  <tbody>
+    <tr *ngFor="let skill of hire?.skillSet" class="hover:bg-gray-50 border-b">
+      <td class="px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
+        <input
+          type="checkbox"
+          [checked]="isChecked(skill)"
+          (change)="onCheckboxChange($event, skill)"
+        />
+        <img [src]="images.SkillSetIcon" alt="👉" />
+        <div>
+          <p class="text-sm sm:text-base font-medium text-gray-900">
+            {{ skill.jobTitle }}
+          </p>
+          <p class="text-xs sm:text-sm text-gray-500">
+            {{ skill.skillLevel || "N/A" }}
+          </p>
+        </div>
+      </td>
+      <td
+        class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
       >
-        <td class="px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
-          <img [src]="images.SkillSetIcon" alt="👉" />
-          <div>
-            <p class="text-sm sm:text-base font-medium text-gray-900">
-              {{ skill.jobTitle }}
-            </p>
-            <p class="text-xs sm:text-sm text-gray-500">
-              {{ skill.skillLevel || "N/A" }}
-            </p>
-          </div>
-        </td>
-        <td
-          class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
-        >
-          {{ skill.amount | currency : "NGN" }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-<!-- </div> -->
+        {{ skill.amount | currency : "NGN" }}
+      </td>
+    </tr>
+  </tbody>
+</table>
