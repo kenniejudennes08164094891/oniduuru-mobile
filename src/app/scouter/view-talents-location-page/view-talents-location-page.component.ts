@@ -11,7 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import { Style, Icon } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import { imageIcons } from 'src/app/models/stores';
-import { MockRecentHires, MockPayment } from 'src/app/models/mocks'; // update path
+import { MockRecentHires, MockPayment, allSkills } from 'src/app/models/mocks'; // update path
 import { ModalController } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { Router } from '@angular/router';
@@ -30,7 +30,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   location = MockRecentHires;
   showSkillSetTab = false;
   activeTab: 'location' | 'skill' = 'location';
-
+  allSkills = allSkills;
   talents: MockPayment[] = MockRecentHires;
 
   searchQuery = '';
@@ -39,16 +39,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   images = imageIcons;
 
   currentLocation: string = '';
-
-  allSkills = [
-    'Frontend Developer',
-    'Backend Developer',
-    'UI/UX Designer',
-    'Data Scientist',
-    'Mobile Developer',
-    'DevOps Engineer',
-    'QA Tester',
-  ]; // full skill list
 
   searchTerm = '';
   filteredSkills = [...this.allSkills];
@@ -80,15 +70,13 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
     );
   }
 
-
   get dropdownSkills(): string[] {
-  // Show filtered skills first, then any selected skills not in filtered
-  const selectedNotInFiltered = this.selectedSkills.filter(
-    s => !this.filteredSkills.includes(s)
-  );
-  return [...this.filteredSkills, ...selectedNotInFiltered];
-}
-
+    // Show filtered skills first, then any selected skills not in filtered
+    const selectedNotInFiltered = this.selectedSkills.filter(
+      (s) => !this.filteredSkills.includes(s)
+    );
+    return [...this.filteredSkills, ...selectedNotInFiltered];
+  }
 
   removeSkill(skill: string) {
     this.selectedSkills = this.selectedSkills.filter((s) => s !== skill);

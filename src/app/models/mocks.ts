@@ -1202,6 +1202,90 @@ export const MockRecentHires: MockPayment[] = [
     location: { lat: 5.533, lng: 7.483, city: 'Umuahia' },
   },
 ];
+
+export const allSkills = [
+  // Web & Software Development
+  'Frontend Developer',
+  'Backend Developer',
+  'Fullstack Developer',
+  'Web Developer',
+  'Mobile Developer',
+  'iOS Developer',
+  'Android Developer',
+  'Software Engineer',
+  'Embedded Systems Engineer',
+  'Game Developer',
+  'Desktop Application Developer',
+
+  // UI/UX & Design
+  'UI Designer',
+  'UX Designer',
+  'Product Designer',
+  'Graphic Designer',
+  'Motion Designer',
+  'Visual Designer',
+  'Interaction Designer',
+  'Illustrator',
+
+  // Data & Analytics
+  'Data Scientist',
+  'Data Analyst',
+  'Business Analyst',
+  'Machine Learning Engineer',
+  'AI Engineer',
+  'Data Engineer',
+  'Statistician',
+  'Big Data Engineer',
+  'Data Visualization Specialist',
+
+  // DevOps & Cloud
+  'DevOps Engineer',
+  'Cloud Engineer',
+  'Site Reliability Engineer (SRE)',
+  'System Administrator',
+  'Network Engineer',
+  'IT Support Specialist',
+
+  // QA & Testing
+  'QA Tester',
+  'Test Automation Engineer',
+  'Manual Tester',
+  'Software Tester',
+
+  // Security
+  'Cybersecurity Specialist',
+  'Ethical Hacker',
+  'Security Analyst',
+  'Penetration Tester',
+
+  // Project & Product
+  'Project Manager',
+  'Product Manager',
+  'Scrum Master',
+  'Agile Coach',
+
+  // Marketing & Business
+  'Digital Marketer',
+  'SEO Specialist',
+  'Content Strategist',
+  'Social Media Manager',
+  'Business Development Manager',
+
+  // Emerging Tech
+  'Blockchain Developer',
+  'NFT Developer',
+  'AR/VR Developer',
+  'IoT Engineer',
+  'Robotics Engineer',
+
+  // Others
+  'Technical Writer',
+  'Database Administrator (DBA)',
+  'Customer Success Manager',
+  'Support Engineer',
+  'AI Prompt Engineer',
+];
+
 export const HireCategories = [
   { title: 'Most Hired Talent', key: 'most' },
   { title: 'Least Hired Talent', key: 'least' },
