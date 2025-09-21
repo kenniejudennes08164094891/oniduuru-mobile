@@ -225,9 +225,9 @@
       </div>
 
       <!-- Save Button -->
-      <div class="px-6 py-10 flex justify-center">
+      <div class="px-6 py-10 w-58 ml-14 flex justify-center">
         <button
-          class="bg-[#101828] w-96 rounded-lg  py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="bg-[#101828] w-48 rounded-lg px-7 pl-3 py-2 flex-1 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           [disabled]="questions.length < 1" (click)="saveProfile()">
           Save
         </button>
@@ -236,14 +236,5 @@
 
     <!-- </div> -->
   </div>
-
-
-  <!-- Fixed Footer -->
-  <footer class="mt-auto py-5">
-    <div class="container mx-auto px-4 text-left text-gray-600">
-      <p>Shoft Africa © {{ currentYear }}</p>
-    </div>
-  </footer>
-  <div class="fixed bottom-0 left-0 right-0 border-t border-gray-300"></div>
 
 </ion-content>

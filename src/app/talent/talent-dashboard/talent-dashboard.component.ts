@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
+import { Router } from '@angular/router';
 Chart.register(...registerables);
 
 @Component({
@@ -13,7 +14,14 @@ export class TalentDashboardComponent implements OnInit {
   loading: string = 'Loading...';
   showSpinner: boolean = true;
   currentYear: number = new Date().getFullYear();
+  
 
+
+   constructor(private router: Router) {}
+
+  goToViewHires() {
+    this.router.navigate(['/view-hires']);
+  }
   // Greeting
   userName: string = 'Samuel';
   timeOfDay: string = '';
