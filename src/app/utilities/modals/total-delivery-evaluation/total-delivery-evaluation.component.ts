@@ -2,8 +2,6 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 
-
-
 @Component({
   selector: 'app-total-delivery-evaluation',
   templateUrl: './total-delivery-evaluation.component.html',
@@ -24,6 +22,7 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
   constructor(private toastController: ToastController) {}
 
   ngOnInit() {}
+
 
   async showToast(message: string) {
     const toast = await this.toastController.create({
@@ -87,8 +86,4 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
     this.location = '';
     this.closeModal();
   }
-
-
-
-  
 }

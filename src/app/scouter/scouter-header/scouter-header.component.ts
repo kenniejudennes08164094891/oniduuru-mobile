@@ -15,6 +15,9 @@ import { Notification, NotificationsData } from 'src/app/models/mocks';
   templateUrl: './scouter-header.component.html',
   styleUrls: ['./scouter-header.component.scss'],
 })
+
+
+
 export class ScouterHeaderComponent implements OnInit {
   images = imageIcons;
   profileImage!: string;

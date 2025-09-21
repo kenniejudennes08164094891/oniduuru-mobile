@@ -12,12 +12,9 @@ import { Style, Icon } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import { imageIcons } from 'src/app/models/stores';
 import { MockRecentHires, MockPayment } from 'src/app/models/mocks'; // update path
-
-interface Talent {
-  name: string;
-  location: { lat: number; lng: number };
-  skillSet: string[];
-}
+import { ModalController } from '@ionic/angular';
+import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-view-talents-location-page',
@@ -28,6 +25,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   map!: Map;
   overlay!: Overlay;
   popupContent!: HTMLElement; // <-- add this
+  hires = MockRecentHires;
 
   talents: MockPayment[] = MockRecentHires;
 
@@ -36,7 +34,18 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   headerHidden = false;
   images = imageIcons;
 
-  ngOnInit(): void {}
+  currentLocation: string = '';
+
+  setCurrentLocation(location: string) {
+    this.currentLocation = location;
+  }
+
+  constructor(private modalCtrl: ModalController, private router: Router) {}
+
+  ngOnInit(): void {
+    // For now hardcode; later you can pull from geolocation
+    this.currentLocation = 'Lagos';
+  }
 
   ngAfterViewInit(): void {
     this.initMap();
@@ -49,7 +58,9 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
       target: 'talentsMap', // ID of your div
       layers: [
         new TileLayer({
-          source: new OSM(),
+          source: new OSM({
+            attributions: [], // 👈 removes OpenStreetMap watermark
+          }),
         }),
       ],
       view: new View({
@@ -132,37 +143,54 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
     });
   }
 
-  performSearch() {
+  async performSearch() {
     const query = this.searchQuery.toLowerCase().trim();
 
     const filtered = this.talents.filter((t) => {
-      // match name
       const nameMatch = t.name.toLowerCase().includes(query);
-
-      // match skills
       const skillMatch = t.skillSet?.some(
         (s) =>
           s.jobTitle.toLowerCase().includes(query) ||
           s.skillLevel.toLowerCase().includes(query)
       );
-
-      // match location city
       const locationMatch = t.location.city?.toLowerCase().includes(query);
-
       return nameMatch || skillMatch || locationMatch;
     });
 
-    // Reload markers with filtered talents
     this.loadMarkers(filtered);
 
-    // 👇 If at least one match, zoom to the first talent’s location
-    if (filtered.length > 0) {
-      const first = filtered[0];
-      this.map.getView().animate({
-        center: fromLonLat([first.location.lng, first.location.lat]),
-        zoom: 14,
-        duration: 1000,
-      });
-    }
+    // 👇 always open the modal
+    const modal = await this.modalCtrl.create({
+      component: FindProfessionalsByLocationModalComponent,
+      componentProps: {
+        hires: filtered, // could be [] if no result
+        location: query || 'Unknown',
+      },
+      cssClass: 'all-talents-fullscreen-modal',
+    });
+    await modal.present();
+  }
+
+  get currentLocationHires() {
+    return this.hires.filter(
+      (h) =>
+        h.location.city.toLowerCase() === this.currentLocation.toLowerCase()
+    );
+  }
+
+  async openFindProfessionalsByLocationModal(hires: any[], location: string) {
+    console.log('Opening modal with hires:', hires, 'and location:', location);
+
+    const modal = await this.modalCtrl.create({
+      component: FindProfessionalsByLocationModalComponent,
+      componentProps: {
+        hires,
+        location: location || 'Unknown', // fallback to avoid blank header
+      },
+      cssClass: 'all-talents-fullscreen-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: true,
+    });
+    await modal.present();
   }
 }

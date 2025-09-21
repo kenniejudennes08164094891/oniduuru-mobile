@@ -12,7 +12,7 @@
 }
 
 #talentsMap {
-  height: 60vh;
+  height: 65vh;
   width: 100%;
   overflow: hidden;
 }
@@ -34,4 +34,11 @@
   position: absolute;
   top: 2px;
   right: 8px;
+}
+
+
+/* hide attribution / watermark */
+.ol-attribution,
+.ol-attribution.ol-uncollapsible {
+  display: none !important;
 }

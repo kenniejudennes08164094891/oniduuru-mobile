@@ -4,6 +4,7 @@ import { MockRecentHires } from 'src/app/models/mocks';
 import { ViewAllTalentsPopupModalComponent } from 'src/app/utilities/modals/view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { ModalController } from '@ionic/angular';
 import { Router } from '@angular/router';
+import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 
 @Component({
   selector: 'app-view-all-talents-page',
@@ -28,7 +29,10 @@ export class ViewAllTalentsPageComponent implements OnInit {
   }
   // ✅ Use hires directly for now (later you can plug in search/filter)
   get filteredAndSearchedHires() {
-    return this.hires;
+    const currentCity = 'Lagos'; // later replace with real user location
+    return this.hires.filter((h) =>
+      h.location.city.toLowerCase().includes(currentCity.toLowerCase())
+    );
   }
 
   get totalPages(): number {
@@ -69,9 +73,17 @@ export class ViewAllTalentsPageComponent implements OnInit {
   }
 
   async openViewAllTalentsPopupModal(hire: any) {
+    const currentCity = hire.location?.city || 'Unknown';
+    const filtered = this.hires.filter(
+      (h) => h.location.city.toLowerCase() === currentCity.toLowerCase()
+    );
+
     const modal = await this.modalCtrl.create({
-      component: ViewAllTalentsPopupModalComponent,
-      componentProps: { hire }, // ✅ pass the hire data
+      component: FindProfessionalsByLocationModalComponent,
+      componentProps: {
+        hires: filtered,
+        location: currentCity, // ✅ now the header shows
+      },
       cssClass: 'all-talents-fullscreen-modal',
       initialBreakpoint: 1,
       backdropDismiss: true,

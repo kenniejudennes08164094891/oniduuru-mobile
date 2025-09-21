@@ -60,10 +60,8 @@ export interface MockPayment {
   talentComment?: string;
   talentRating: number;
   proximity: string;
-  // skillLevel: string;
   payRange: string;
   aboutTalent: string;
-  // jobTitles: string[]; // multiple job titles
   video: File | null | string; // one video
   pictures: string[];
   skillSet: SkillSet[]; // 👈 multiple jobs per user
@@ -328,7 +326,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4654, lng: 3.4064, city: 'Victoria Island' }, // Victoria Island
+    location: { lat: 6.4654, lng: 3.4064, city: 'Lagos, Victoria Island' }, // Victoria Island
   },
   {
     id: '5',
@@ -389,7 +387,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4431, lng: 3.3919, city: 'Lekki' }, // Lekki
+    location: { lat: 6.4431, lng: 3.3919, city: 'Lagos' }, // Lekki
   },
   {
     id: '6',
@@ -446,7 +444,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 4,
       },
     ],
-    location: { lat: 6.4969, lng: 3.3673, city: 'Surulere' }, // Surulere
+    location: { lat: 6.4969, lng: 3.3673, city: 'Lagos, Surulere' }, // Surulere
   },
   {
     id: '7',
@@ -502,7 +500,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.455, lng: 3.3972, city: 'Ikoyi' }, // Ikoyi
+    location: { lat: 6.455, lng: 3.3972, city: 'Lagos, Ikoyi' }, // Ikoyi
   },
   {
     id: '8',
@@ -559,7 +557,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.517, lng: 3.394, city: 'Ajah' }, // Ajah
+    location: { lat: 6.517, lng: 3.394, city: 'Lagos, Ajah' }, // Ajah
   },
   {
     id: '9',
@@ -615,7 +613,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.5241, lng: 3.3793, city: 'Marina' }, // Marina
+    location: { lat: 6.5241, lng: 3.3793, city: 'Lagos, Marina' }, // Marina
   },
   {
     id: '10',
@@ -671,7 +669,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 3,
       },
     ],
-    location: { lat: 6.5431, lng: 3.3512, city: 'Apapa' }, // Apapa
+    location: { lat: 6.5431, lng: 3.3512, city: 'Lagos, Apapa' }, // Apapa
   },
   {
     id: '11',
@@ -727,7 +725,7 @@ export const MockRecentHires: MockPayment[] = [
         yourRating: 5,
       },
     ],
-    location: { lat: 6.535, lng: 3.3742, city: 'Yaba' }, // Yaba
+    location: { lat: 6.535, lng: 3.3742, city: 'Lagos, Yaba' }, // Yaba
   },
   {
     id: '12',
@@ -789,8 +787,421 @@ export const MockRecentHires: MockPayment[] = [
     ],
     location: { lat: 6.4525, lng: 3.39, city: 'Banana Island' }, // Banana Island
   },
+  {
+    id: '13',
+    profilePic:
+      'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg',
+    name: 'Chinedu Okoro',
+    email: 'chinedu.okoro@gmail.com',
+    date: 'Sep 15, 2025, 10:30 AM',
+    startDate: 'Oct 1, 2025',
+    amount: 650000.0,
+    offerStatus: 'Offer Accepted',
+    status: 'Active',
+    jobDescription: 'Backend developer for fintech application.',
+    yourComment: 'Strong technical skills',
+    yourRating: 4,
+    talentComment: 'Excited about this opportunity',
+    talentRating: 5,
+    proximity: '12 Nnamdi Azikiwe Road, Enugu',
+    payRange: '₦550k - ₦800k',
+    aboutTalent: 'Backend developer with expertise in financial systems.',
+    video:
+      'https://videos.pexels.com/video-files/3198084/3198084-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg',
+      'https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Backend Developer',
+        skillLevel: 'Advanced',
+        amount: 700000,
+      },
+      {
+        jobTitle: 'Database Administrator',
+        skillLevel: 'Intermediate',
+        amount: 550000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+        name: 'Oluwaseun Adeyemi',
+        comment: 'Excellent problem-solving skills.',
+        date: 'Oct 18, 2025, 11:20 AM',
+        yourRating: 5,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+        name: 'Chioma Nwosu',
+        comment: 'Delivered quality work ahead of schedule.',
+        date: 'Oct 19, 2025, 2:45 PM',
+        yourRating: 4,
+      },
+    ],
+    location: { lat: 6.452, lng: 7.51, city: 'Enugu' },
+  },
+  {
+    id: '14',
+    profilePic:
+      'https://images.pexels.com/photos/1130625/pexels-photo-1130625.jpeg',
+    name: 'Aisha Bello',
+    email: 'aisha.bello@yahoo.com',
+    date: 'Sep 16, 2025, 02:15 PM',
+    startDate: 'Oct 5, 2025',
+    amount: 480000.0,
+    offerStatus: 'Awaiting Acceptance',
+    status: 'Active',
+    jobDescription: 'UI/UX designer for educational platform.',
+    yourComment: 'Impressive portfolio',
+    yourRating: 0,
+    talentComment: 'Looking forward to your response',
+    talentRating: 0,
+    proximity: '23 Ahmadu Bello Way, Kaduna',
+    payRange: '₦400k - ₦600k',
+    aboutTalent:
+      'Creative UI/UX designer with focus on educational technology.',
+    video:
+      'https://videos.pexels.com/video-files/2882110/2882110-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/1181275/pexels-photo-1181275.jpeg',
+      'https://images.pexels.com/photos/1181346/pexels-photo-1181346.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'UI/UX Designer',
+        skillLevel: 'Intermediate',
+        amount: 500000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+        name: 'Tunde Ojo',
+        comment: 'Creative designs with great attention to detail.',
+        date: 'Oct 20, 2025, 9:30 AM',
+        yourRating: 4,
+      },
+    ],
+    location: { lat: 10.516, lng: 7.438, city: 'Kaduna' },
+  },
+  {
+    id: '15',
+    profilePic:
+      'https://images.pexels.com/photos/1181695/pexels-photo-1181695.jpeg',
+    name: 'Emeka Nwankwo',
+    email: 'emeka.nwankwo@outlook.com',
+    date: 'Sep 17, 2025, 09:45 AM',
+    startDate: 'Oct 10, 2025',
+    amount: 850000.0,
+    offerStatus: 'Offer Accepted',
+    status: 'Active',
+    jobDescription: 'Full-stack developer for e-commerce platform.',
+    yourComment: 'Extensive experience with e-commerce systems',
+    yourRating: 5,
+    talentComment: 'Ready to start immediately',
+    talentRating: 5,
+    proximity: '15 Okpara Avenue, Enugu',
+    payRange: '₦700k - ₦1.2M',
+    aboutTalent: 'Full-stack developer specialized in e-commerce solutions.',
+    video:
+      'https://videos.pexels.com/video-files/3184328/3184328-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3182816/pexels-photo-3182816.jpeg',
+      'https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Full-Stack Developer',
+        skillLevel: 'Expert',
+        amount: 950000,
+      },
+      {
+        jobTitle: 'E-commerce Specialist',
+        skillLevel: 'Advanced',
+        amount: 800000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
+        name: 'Funmi Adebayo',
+        comment: 'Exceptional technical skills and reliable delivery.',
+        date: 'Oct 21, 2025, 3:15 PM',
+        yourRating: 5,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+        name: 'Bola Hassan',
+        comment: 'Went above and beyond requirements.',
+        date: 'Oct 22, 2025, 10:40 AM',
+        yourRating: 5,
+      },
+    ],
+    location: { lat: 6.335, lng: 5.623, city: 'Benin City' },
+  },
+  {
+    id: '16',
+    profilePic:
+      'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg',
+    name: 'Fatima Yusuf',
+    email: 'fatima.yusuf@gmail.com',
+    date: 'Sep 18, 2025, 04:20 PM',
+    startDate: 'Oct 15, 2025',
+    amount: 550000.0,
+    offerStatus: 'Offer Rejected',
+    status: 'Pending',
+    jobDescription: 'Frontend developer for healthcare app.',
+    yourComment: 'Good skills but declined our offer',
+    yourRating: 4,
+    talentComment: 'Accepted another position',
+    talentRating: 4,
+    proximity: '8 Sultan Road, Kano',
+    payRange: '₦500k - ₦700k',
+    aboutTalent:
+      'Frontend developer with experience in healthcare applications.',
+    video:
+      'https://videos.pexels.com/video-files/3184329/3184329-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184419/pexels-photo-3184419.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Frontend Developer',
+        skillLevel: 'Intermediate',
+        amount: 600000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+        name: 'Ibrahim Musa',
+        comment: 'Clean code and good communication.',
+        date: 'Oct 23, 2025, 1:50 PM',
+        yourRating: 4,
+      },
+    ],
+    location: { lat: 12.002, lng: 8.592, city: 'Kano' },
+  },
+  {
+    id: '17',
+    profilePic:
+      'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg',
+    name: 'Obinna Eze',
+    email: 'obinna.eze@protonmail.com',
+    date: 'Sep 19, 2025, 11:10 AM',
+    startDate: 'Oct 20, 2025',
+    amount: 720000.0,
+    offerStatus: 'Offer Accepted',
+    status: 'Active',
+    jobDescription: 'DevOps engineer for cloud infrastructure.',
+    yourComment: 'Strong background in AWS and Azure',
+    yourRating: 5,
+    talentComment: 'Excited to work on this project',
+    talentRating: 5,
+    proximity: '24 Port Harcourt Road, Aba',
+    payRange: '₦600k - ₦900k',
+    aboutTalent:
+      'DevOps engineer with expertise in cloud infrastructure and CI/CD pipelines.',
+    video:
+      'https://videos.pexels.com/video-files/3184330/3184330-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184417/pexels-photo-3184417.jpeg',
+      'https://images.pexels.com/photos/3184420/pexels-photo-3184420.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'DevOps Engineer',
+        skillLevel: 'Advanced',
+        amount: 800000,
+      },
+      {
+        jobTitle: 'Cloud Architect',
+        skillLevel: 'Intermediate',
+        amount: 750000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg',
+        name: 'Ngozi Okonkwo',
+        comment: 'Efficient and knowledgeable in cloud technologies.',
+        date: 'Oct 24, 2025, 4:30 PM',
+        yourRating: 5,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg',
+        name: 'Chukwuma Okafor',
+        comment: 'Setup our infrastructure perfectly.',
+        date: 'Oct 25, 2025, 11:15 AM',
+        yourRating: 5,
+      },
+    ],
+    location: { lat: 5.12, lng: 7.369, city: 'Port Harcourt' },
+  },
+  {
+    id: '18',
+    profilePic:
+      'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg',
+    name: 'Zainab Lawal',
+    email: 'zainab.lawal@gmail.com',
+    date: 'Sep 20, 2025, 03:45 PM',
+    startDate: 'Oct 25, 2025',
+    amount: 620000.0,
+    offerStatus: 'Awaiting Acceptance',
+    status: 'Active',
+    jobDescription: 'Mobile app developer for fitness application.',
+    yourComment: 'Strong React Native skills',
+    yourRating: 0,
+    talentComment: 'Considering the offer',
+    talentRating: 0,
+    proximity: '17 Ibrahim Taiwo Road, Ilorin',
+    payRange: '₦550k - ₦750k',
+    aboutTalent:
+      'Mobile app developer specializing in React Native with fitness app experience.',
+    video:
+      'https://videos.pexels.com/video-files/3184331/3184331-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184421/pexels-photo-3184421.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Mobile Developer',
+        skillLevel: 'Intermediate',
+        amount: 650000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg',
+        name: 'Adeola Johnson',
+        comment: 'Created a smooth and responsive mobile app.',
+        date: 'Oct 26, 2025, 2:20 PM',
+        yourRating: 4,
+      },
+    ],
+    location: { lat: 8.5, lng: 4.55, city: 'Ilorin' },
+  },
+  {
+    id: '19',
+    profilePic:
+      'https://images.pexels.com/photos/1181683/pexels-photo-1181683.jpeg',
+    name: 'Tunde Adewale',
+    email: 'tunde.adewale@yahoo.com',
+    date: 'Sep 21, 2025, 09:30 AM',
+    startDate: 'Nov 1, 2025',
+    amount: 920000.0,
+    offerStatus: 'Offer Accepted',
+    status: 'Active',
+    jobDescription: 'Data scientist for analytics platform.',
+    yourComment: 'Excellent statistical analysis skills',
+    yourRating: 5,
+    talentComment: 'Looking forward to the challenge',
+    talentRating: 5,
+    proximity: '12 Marina Road, Calabar',
+    payRange: '₦800k - ₦1.2M',
+    aboutTalent:
+      'Data scientist with expertise in machine learning and statistical analysis.',
+    video:
+      'https://videos.pexels.com/video-files/3184332/3184332-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184422/pexels-photo-3184422.jpeg',
+      'https://images.pexels.com/photos/3184423/pexels-photo-3184423.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'Data Scientist',
+        skillLevel: 'Advanced',
+        amount: 1000000,
+      },
+      {
+        jobTitle: 'Machine Learning Engineer',
+        skillLevel: 'Intermediate',
+        amount: 900000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg',
+        name: 'Kemi Adetola',
+        comment: 'Provided valuable insights from our data.',
+        date: 'Oct 27, 2025, 10:45 AM',
+        yourRating: 5,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
+        name: 'Femi Bello',
+        comment: 'Exceptional analytical skills.',
+        date: 'Oct 28, 2025, 3:30 PM',
+        yourRating: 5,
+      },
+    ],
+    location: { lat: 4.96, lng: 8.33, city: 'Calabar' },
+  },
+  {
+    id: '20',
+    profilePic:
+      'https://images.pexels.com/photos/1181243/pexels-photo-1181243.jpeg',
+    name: 'Ngozi Chukwu',
+    email: 'ngozi.chukwu@gmail.com',
+    date: 'Sep 22, 2025, 01:20 PM',
+    startDate: 'Nov 5, 2025',
+    amount: 580000.0,
+    offerStatus: 'Offer Accepted',
+    status: 'Active',
+    jobDescription: 'QA engineer for mobile applications.',
+    yourComment: 'Detail-oriented and thorough tester',
+    yourRating: 4,
+    talentComment: 'Happy to join the team',
+    talentRating: 5,
+    proximity: '15 Owerri Road, Umuahia',
+    payRange: '₦500k - ₦700k',
+    aboutTalent: 'QA engineer specialized in mobile application testing.',
+    video:
+      'https://videos.pexels.com/video-files/3184333/3184333-hd_1920_1080_30fps.mp4',
+    pictures: [
+      'https://images.pexels.com/photos/3184424/pexels-photo-3184424.jpeg',
+    ],
+    skillSet: [
+      {
+        jobTitle: 'QA Engineer',
+        skillLevel: 'Intermediate',
+        amount: 600000,
+      },
+    ],
+    recentReview: [
+      {
+        profilePic:
+          'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
+        name: 'Segun Adeyemo',
+        comment: 'Found critical bugs that others missed.',
+        date: 'Oct 29, 2025, 9:15 AM',
+        yourRating: 5,
+      },
+      {
+        profilePic:
+          'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg',
+        name: 'Bisi Okon',
+        comment: 'Thorough testing methodology.',
+        date: 'Oct 30, 2025, 2:40 PM',
+        yourRating: 4,
+      },
+    ],
+    location: { lat: 5.533, lng: 7.483, city: 'Umuahia' },
+  },
 ];
-
 export const HireCategories = [
   { title: 'Most Hired Talent', key: 'most' },
   { title: 'Least Hired Talent', key: 'least' },

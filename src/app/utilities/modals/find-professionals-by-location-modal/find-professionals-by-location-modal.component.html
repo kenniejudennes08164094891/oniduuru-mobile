@@ -1,0 +1,105 @@
+<ion-content class="flex flex-col h-full">
+  <!-- HEADER -->
+  <div
+    class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+  >
+    <h2 class="text-lg font-bold text-white">
+      Talents residing around {{ location }}
+    </h2>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="paginatedHires.length > 0; else noDataPage" class="flex flex-col h-full">
+    <!-- Search + Filter Row -->
+    <div
+      class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 mt-6"
+    >
+      <!-- Skill Level Filter -->
+      <select
+        [(ngModel)]="selectedSkillLevel"
+        class="w-full sm:w-1/4 px-3 py-3 border-b-4 border-gray-300 bg-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-gray-900 focus:outline-none text-gray-400"
+      >
+        <option value="" class="text-gray-300">Filter by Skill Level</option>
+        <option value="">All Skill Levels</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Expert">Expert</option>
+      </select>
+
+      <!-- Search Box -->
+      <div class="relative w-full sm:w-1/2">
+        <ion-icon
+          name="search-outline"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        ></ion-icon>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by user"
+          class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-gray-400"
+        />
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="overflow-x-auto mt-auto px-2 flex-grow">
+      <table class="min-w-full text-sm text-left text-gray-700">
+        <thead class="border-b text-xs uppercase text-gray-500">
+          <tr>
+            <th></th>
+            <th class="px-4 py-3">Name</th>
+            <th class="px-4 py-3">Proximity</th>
+            <th class="px-4 py-3">Skill Level</th>
+            <th class="px-4 py-3">Pay Range</th>
+            <th class="px-4 py-3">Status</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            *ngFor="let hire of paginatedHires"
+            class="hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <!-- Table rows here -->
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200 mt-auto"
+    >
+      <!-- pagination buttons -->
+    </div>
+  </div>
+
+  <!-- No Data Full Page -->
+  <ng-template #noDataPage>
+    <div class="flex flex-col items-center justify-center flex-grow px-6 py-10">
+      <img
+        class="w-[232px] h-[246px]"
+        [src]="images.NoDataImage"
+        alt="No Data"
+      />
+      <div class="text-center space-y-2 mt-6">
+        <h3 class="text-[#000000] font-semibold text-[20px]">
+          Oops! No Data Available
+        </h3>
+        <p class="text-[#000000] text-[16px]">
+          No record exists for "{{ location }}"
+        </p>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Close button stays always visible -->
+  <div class="flex justify-end px-5 py-5">
+    <button
+      (click)="closeModal()"
+      class="text-white hover:text-gray-700 bg-[#000000] px-3 py-2 rounded-lg"
+    >
+      Close dialog
+    </button>
+  </div>
+</ion-content>
