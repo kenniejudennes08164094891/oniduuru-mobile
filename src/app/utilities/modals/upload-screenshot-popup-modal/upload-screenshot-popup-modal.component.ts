@@ -47,7 +47,7 @@ export class UploadScreenshotPopupModalComponent {
     if (this.selectedFile) {
       // Convert to base64 already done in onFileSelected
       this.paymentService.setPaymentStatus({
-        isPaid: false,
+        isPaid: true,
         receiptUrl: this.previewUrl as string,
         transactionId: 'INV-2025-0615-013',
       });
