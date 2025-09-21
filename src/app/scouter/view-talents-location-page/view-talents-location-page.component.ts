@@ -15,6 +15,7 @@ import { MockRecentHires, MockPayment } from 'src/app/models/mocks'; // update p
 import { ModalController } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { Router } from '@angular/router';
+import { IonTabs } from '@ionic/angular';
 
 @Component({
   selector: 'app-view-talents-location-page',
@@ -26,6 +27,9 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   overlay!: Overlay;
   popupContent!: HTMLElement; // <-- add this
   hires = MockRecentHires;
+  location = MockRecentHires;
+  showSkillSetTab = false;
+  activeTab: 'location' | 'skill' = 'location';
 
   talents: MockPayment[] = MockRecentHires;
 
@@ -36,15 +40,98 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
 
   currentLocation: string = '';
 
+  allSkills = [
+    'Frontend Developer',
+    'Backend Developer',
+    'UI/UX Designer',
+    'Data Scientist',
+    'Mobile Developer',
+    'DevOps Engineer',
+    'QA Tester',
+  ]; // full skill list
+
+  searchTerm = '';
+  filteredSkills = [...this.allSkills];
+  selectedSkills: string[] = [];
+  dropdownOpen = false;
+
+  toggleDropdown() {
+    this.dropdownOpen = !this.dropdownOpen;
+    this.filteredSkills = this.allSkills.filter(
+      (skill) => !this.selectedSkills.includes(skill)
+    );
+  }
+
+  toggleSkill(skill: string) {
+    if (this.selectedSkills.includes(skill)) {
+      this.selectedSkills = this.selectedSkills.filter((s) => s !== skill);
+    } else {
+      this.selectedSkills.push(skill);
+    }
+
+    // Clear search
+    this.searchTerm = '';
+    this.filterSkills();
+  }
+
+  filterSkills() {
+    this.filteredSkills = this.allSkills.filter((skill) =>
+      skill.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
+  }
+
+
+  get dropdownSkills(): string[] {
+  // Show filtered skills first, then any selected skills not in filtered
+  const selectedNotInFiltered = this.selectedSkills.filter(
+    s => !this.filteredSkills.includes(s)
+  );
+  return [...this.filteredSkills, ...selectedNotInFiltered];
+}
+
+
+  removeSkill(skill: string) {
+    this.selectedSkills = this.selectedSkills.filter((s) => s !== skill);
+    this.filteredSkills = this.allSkills.filter(
+      (s) => !this.selectedSkills.includes(s)
+    );
+  }
   setCurrentLocation(location: string) {
     this.currentLocation = location;
   }
 
   constructor(private modalCtrl: ModalController, private router: Router) {}
 
-  ngOnInit(): void {
-    // For now hardcode; later you can pull from geolocation
-    this.currentLocation = 'Lagos';
+  openSkillSetTab() {
+    this.activeTab = 'skill';
+    this.showSkillSetTab = true;
+  }
+
+  closeSkillSetTab() {
+    this.openLocationTab();
+  }
+
+  openLocationTab() {
+    this.activeTab = 'location';
+    this.showSkillSetTab = false;
+
+    // Map div is now visible, refresh OpenLayers
+    setTimeout(() => {
+      if (this.map) {
+        this.map.updateSize(); // forces redraw
+        const currentZoom = this.map.getView().getZoom() ?? 13;
+        this.map.getView().setZoom(currentZoom); // optional
+      }
+    }, 300); // wait for DOM update
+  }
+
+  ngOnInit() {
+    console.log(
+      'Modal opened with location:',
+      this.location,
+      'hires:',
+      this.hires
+    );
   }
 
   ngAfterViewInit(): void {
@@ -85,6 +172,31 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
       closer.blur();
       return false;
     };
+  }
+
+  // ✅ This MUST be a **class method**, NOT inside initMap**
+  ionViewDidEnter() {
+    const currentZoom = this.map.getView().getZoom() ?? 13; // fallback to 13 if undefined
+
+    if (this.map) {
+      setTimeout(() => {
+        this.map.updateSize(); // forces redraw
+        this.map.getView().setZoom(currentZoom);
+      }, 200);
+    }
+  }
+
+  ionViewWillEnter() {
+    this.refreshMap();
+  }
+
+  refreshMap() {
+    if (!this.map) return;
+    setTimeout(() => {
+      this.map.updateSize();
+      const currentZoom = this.map.getView().getZoom() ?? 13;
+      this.map.getView().setZoom(currentZoom); // optional: force rezoom
+    }, 300); // tweak timing if needed
   }
 
   loadMarkers(filteredTalents: MockPayment[] = this.talents) {
@@ -172,25 +284,25 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   }
 
   get currentLocationHires() {
-    return this.hires.filter(
-      (h) =>
-        h.location.city.toLowerCase() === this.currentLocation.toLowerCase()
+    return this.hires.filter((h) =>
+      h.location.city.toLowerCase().includes(this.currentLocation.toLowerCase())
     );
   }
 
   async openFindProfessionalsByLocationModal(hires: any[], location: string) {
-    console.log('Opening modal with hires:', hires, 'and location:', location);
+    this.activeTab = 'location';
 
     const modal = await this.modalCtrl.create({
       component: FindProfessionalsByLocationModalComponent,
-      componentProps: {
-        hires,
-        location: location || 'Unknown', // fallback to avoid blank header
-      },
+      componentProps: { hires, location: location || 'Unknown' },
       cssClass: 'all-talents-fullscreen-modal',
-      initialBreakpoint: 1,
-      backdropDismiss: true,
     });
+
     await modal.present();
+
+    // After modal dismiss
+    modal.onDidDismiss().then(() => {
+      this.refreshMap(); // map visible again
+    });
   }
 }

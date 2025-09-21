@@ -4,7 +4,7 @@
     class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
   >
     <h2 class="text-lg font-bold text-white">
-      Talents residing around {{ location }}
+      Talents residing around {{ currentLocation }}
     </h2>
   </div>
 
@@ -55,14 +55,73 @@
           </tr>
         </thead>
 
-        <tbody class="divide-y divide-gray-100">
-          <tr
-            *ngFor="let hire of paginatedHires"
-            class="hover:bg-gray-50 transition-colors cursor-pointer"
+     <tbody
+        *ngIf="paginatedHires.length > 0; else noDataPage"
+        class="divide-y divide-gray-100"
+      >
+        <tr
+          *ngFor="let hire of paginatedHires"
+          class="hover:bg-gray-50 transition-colors cursor-pointer"
+        >
+          <!-- Checkbox -->
+          <td class="px- py-3 w-10 text-center">
+            <input type="checkbox" class="accent-indigo-600" />
+          </td>
+
+          <!-- Profile + Name -->
+          <td
+            class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
           >
-            <!-- Table rows here -->
-          </tr>
-        </tbody>
+            <img
+              class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
+              [src]="hire.profilePic"
+              alt="{{ hire.name }}"
+            />
+            <div>
+              <p class="text-sm sm:text-base font-medium text-gray-900">
+                {{ hire.name }}
+              </p>
+              <p class="text-xs sm:text-sm text-gray-500">
+                {{ hire.email }}
+              </p>
+            </div>
+          </td>
+
+          <!-- Proximity -->
+          <td
+            class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+          >
+            {{ hire.proximity }}
+          </td>
+
+          <!-- Skill Level -->
+          <td
+            class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+          >
+            {{ hire.skillSet[0].skillLevel }}
+          </td>
+
+          <!-- Pay Range -->
+          <td
+            class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+          >
+            {{ hire.payRange }}
+          </td>
+
+          <!-- Status -->
+          <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
+            <span
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+            >
+              <span
+                class="h-2 w-2 rounded-full"
+                [style.backgroundColor]="getStatusColor(hire.status)"
+              ></span>
+              <span>{{ hire.status }}</span>
+            </span>
+          </td>
+        </tr>
+      </tbody>
       </table>
     </div>
 

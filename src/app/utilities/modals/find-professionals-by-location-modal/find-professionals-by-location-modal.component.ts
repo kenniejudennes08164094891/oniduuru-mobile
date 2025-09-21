@@ -22,12 +22,14 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
   // Filters
   searchQuery: string = '';
   selectedSkillLevel: string = '';
-
+  currentLocation = 'Lagos';
   constructor(private modalCtrl: ModalController, private router: Router) {}
 
   ngOnInit() {
+    console.log('Modal opened with hires:', this.hires);
     console.log('Modal opened with location:', this.location);
   }
+
   closeModal() {
     this.modalCtrl.dismiss(); // ✅ closes the modal properly
   }

@@ -36,58 +36,151 @@
             currentLocation
           )
         "
-        class="flex justify-between bg-[#FFFFFF] items-center border border-[#D0D5DD] px-8 py-4 rounded-md shadow-lg"
+        [ngClass]="{
+          '': $any(activeTab) === 'skill',
+          '': $any(activeTab) !== 'skill'
+        }"
+        class="flex justify-between bg-[#FFFFFF] items-center px-8 py-4 rounded-md shadow-lg cursor-pointer"
       >
         <p>Find professionals by Location</p>
         <ion-icon name="arrow-forward"></ion-icon>
       </div>
 
       <div
-        class="flex justify-between bg-[#FFFFFF] items-center border border-[#D0D5DD] px-8 py-4 rounded-md shadow-lg"
+        (click)="openSkillSetTab()"
+        class="flex justify-between bg-[#FFFFFF] items-center px-8 py-4 rounded-md shadow-lg cursor-pointer"
+        [ngClass]="{
+          'border-2 border-black': $any(activeTab) === 'skill',
+          'border border-[#D0D5DD]': $any(activeTab) !== 'skill'
+        }"
       >
         <p>Find professionals by skill set</p>
         <ion-icon name="arrow-forward"></ion-icon>
       </div>
     </div>
 
-    <p class="text-[16px] text-[#101828] px-1 mt-6 mb-6">
-      Locate Professionals based on their specialized skill sets. Identify
-      expect proficient in specific fields to match your project or service
-      requirements precisely. Narrow down your search and connect with
-      professionals equipped with the exact expertise you need.
+    <div [class.hidden]="activeTab !== 'location'">
+      <p class="text-[16px] text-[#101828] px-1 mt-6 mb-6">
+        Locate Professionals based on their specialized skill sets. Identify
+        expect proficient in specific fields to match your project or service
+        requirements precisely. Narrow down your search and connect with
+        professionals equipped with the exact expertise you need.
+      </p>
+
+      <form (ngSubmit)="performSearch()" class="w-full mx-auto relative">
+        <!-- Input with search button inside -->
+        <input
+          type="text"
+          placeholder="Type a location or skill..."
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          class="w-full border border-gray-300 rounded-lg pl-10 pr-24 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 placeholder-gray-400"
+        />
+
+        <!-- Search Icon on the left -->
+        <ion-icon
+          name="search"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"
+        ></ion-icon>
+
+        <!-- Search Button on the right -->
+        <button
+          type="submit"
+          [disabled]="!searchQuery.trim()"
+          class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-4 py-2 bg-gray-800 text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+        >
+          Search
+        </button>
+      </form>
+      <div
+        id="talentsMap"
+        class="w-full h-[50vh] mt-6 rounded-lg shadow-lg"
+      ></div>
+
+      <!-- Popup for marker info -->
+      <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill Set Tab Content -->
+  <div
+    *ngIf="activeTab === 'skill'"
+    class="mt-6 bg-[#eef0f6] rounded-lg shadow-md p-6"
+  >
+    <p class="text-gray-600 mb-4">
+      Disover skilled professionals near you effortlessly. Where you're seeking
+      services locally or across regions, easliy pinpoint experts based on their
+      proximity and location.
+    </p>
+    <p class="text-gray-600 mb-4">
+      Narrow down your search and connect with professionals equiped with the
+      exact ecpertise you need.
     </p>
 
-    <form (ngSubmit)="performSearch()" class="w-full mx-auto relative">
-      <!-- Input with search button inside -->
-      <input
-        type="text"
-        placeholder="Type a location or skill..."
-        [(ngModel)]="searchQuery"
-        name="searchQuery"
-        class="w-full border border-gray-300 rounded-lg pl-10 pr-20 py-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-
-      <!-- Search Icon on the left -->
-      <ion-icon
-        name="search"
-        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
-      ></ion-icon>
-
-      <!-- Search Button on the right -->
-      <button
-        type="submit"
-        [disabled]="!searchQuery.trim()"
-        class="absolute right-1 top-1/2 -translate-y-1/2 rounded-md px-4 py-2 bg-[#000000] text-white hover:bg-[#000000] hover:text-white disabled:text-[CDD5DF80] disabled:opacity-50 disabled:cursor-not-allowed focus:border-[#000000]"
+    <!-- HERE -->
+    <div class="relative w-full">
+      <!-- Selected skills input -->
+      <div
+        class="flex flex-wrap gap-2 p-6 border rounded-lg bg-white cursor-pointer"
+        (click)="toggleDropdown()"
       >
-        Search
-      </button>
-    </form>
-  </div>
-  <div id="talentsMap" class="w-full h-[50vh] mt-6 rounded-lg shadow-lg"></div>
+        <span
+          *ngFor="let skill of selectedSkills"
+          class="bg-gray-400 text-white text-[12px] px-2 py-1 rounded-lg flex items-center gap-1"
+        >
+          {{ skill }}
+          <button
+            class="ml-1 text-[24px]"
+            (click)="removeSkill(skill); $event.stopPropagation()"
+          >
+            &times;
+          </button>
+        </span>
+      </div>
 
-  <!-- Popup for marker info -->
-  <div id="popup" class="ol-popup">
-    <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-    <div id="popup-content"></div>
+      <!-- Dropdown list -->
+      <div
+        *ngIf="dropdownOpen"
+        class="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-52 overflow-y-auto"
+      >
+        <!-- Search input -->
+        <div class="p-2 border-b">
+          <input
+            type="text"
+            placeholder="Search skills..."
+            [(ngModel)]="searchTerm"
+            (input)="filterSkills()"
+            class="w-full px-4 py-3 outline-none border-2 border-gray-300 rounded-lg"
+          />
+        </div>
+
+        <!-- Skills list -->
+        <div *ngIf="filteredSkills.length > 0 || selectedSkills.length > 0">
+          <div
+            *ngFor="let skill of dropdownSkills"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 cursor-pointer"
+            (click)="toggleSkill(skill)"
+          >
+            <input type="checkbox" [checked]="selectedSkills.includes(skill)" />
+            <span>{{ skill }}</span>
+          </div>
+        </div>
+
+        <!-- No skills found -->
+        <p
+          *ngIf="filteredSkills.length === 0 && selectedSkills.length === 0"
+          class="p-2 text-gray-400 text-sm"
+        >
+          No skills found.
+        </p>
+      </div>
+    </div>
+
+    <button class="bg-gray-800 px-4 py-2 mt-5 rounded-lg text-white">
+      Proceed
+    </button>
   </div>
 </ion-content>
