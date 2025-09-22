@@ -152,26 +152,24 @@
     <!-- Table -->
     <div *ngIf="paginatedHires.length > 0; else noDataTable">
       <div class="overflow-x-auto">
-        <table class="min-w-[600px] sm:min-w-full divide-y divide-gray-200">
+        <table class="min-w-[700px] sm:min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50 uppercase">
             <tr>
-              <th class="w-[220px] px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th class="w-[220px] px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
                 Talent
               </th>
-
-              <th class=" ml-12 px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                Date of hire
+              <th class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                Date of Hire
               </th>
-
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
                 Start Date
               </th>
-              <!-- <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                Amount
+              <th class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                Agreed Amount
               </th>
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
-                Status
-              </th> -->
+              <th class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+                Hire Status
+              </th>
             </tr>
           </thead>
 
@@ -180,7 +178,7 @@
               class="hover:bg-gray-50 transition-colors cursor-pointer">
 
               <!-- Profile + Name -->
-              <td class="w-[220px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
+              <td class="w-[220px] px-4 sm:px-6 py-3 flex items-center gap-3">
                 <img class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
                   [src]="hire.profilePic" alt="{{ hire.name }}" />
                 <div>
@@ -194,24 +192,33 @@
               </td>
 
               <!-- Hire Date + Time -->
-              <td class="px-3 sm:px-6 py-3 text-sm sm:text-base font-medium text-gray-900">
+              <td class=" min-w-[180px] sm:px-6 py-3 text-sm sm:text-base font-medium text-gray-900">
                 <p>{{ getFormattedDateTime(hire.date).date }}</p>
                 <p class="text-xs text-gray-400">{{ getFormattedDateTime(hire.date).time }}</p>
               </td>
 
               <!-- Start Date -->
-              <td class="px-3 sm:px-6 py-3 text-sm sm:text-base text-gray-700">
+              <td class="min-w-[180px] px-4 sm:px-6 py-3 text-sm sm:text-base text-gray-700">
                 {{ hire.startDate }}
               </td>
 
+              <!-- Amount -->
+              <td class="px-4 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                {{ getFormattedAmount(hire.amount) }}
+              </td>
+
+              <!-- Status -->
+              <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.status)"></span>
+                  {{ hire.status }}
+                </span>
+              </td>
             </tr>
-
-
           </tbody>
-
-          <!-- No Data Template -->
         </table>
       </div>
+
     </div>
 
     <ng-template #noDataTable>
