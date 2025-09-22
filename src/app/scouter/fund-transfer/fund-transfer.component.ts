@@ -4,11 +4,10 @@ import { Component, OnInit } from '@angular/core';
   selector: 'app-fund-transfer',
   templateUrl: './fund-transfer.component.html',
   styleUrls: ['./fund-transfer.component.scss'],
+  standalone: false,
 })
-export class FundTransferComponent  implements OnInit {
-
-  constructor() { }
+export class FundTransferComponent implements OnInit {
+  constructor() {}
 
   ngOnInit() {}
-
 }

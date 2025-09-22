@@ -1,34 +1,45 @@
-<header class="shadow-md px-6 py-4 flex">
-  <!-- <div class="shadow-md"> -->
-  <div class="flex justify-center items-center gap-2 w-full shadow-xl py-3">
-    <img
-      [src]="images.UploadPayment"
-      alt="Upload Payment"
-      class="h-8 w-8 object-contain"
-    />
-    <span class="text-base font-semibold"> Upload Payment Receipt </span>
-    <ion-buttons slot="end" class="">
+<header class="shadow-md px-4 sm:px-6 py-3 sm:py-4 flex">
+  <div
+    class="flex justify-between sm:justify-center items-center gap-2 w-full shadow-sm sm:shadow-xl py-2 sm:py-3"
+  >
+    <!-- Icon + Text -->
+    <div class="flex items-center gap-2">
+      <img
+        [src]="images.UploadPayment"
+        alt="Upload Payment"
+        class="h-6 w-6 sm:h-8 sm:w-8 object-contain"
+      />
+      <span
+        class="text-sm sm:text-base md:text-lg font-semibold truncate max-w-[200px] sm:max-w-none"
+      >
+        Upload Payment Receipt
+      </span>
+    </div>
+
+    <!-- Close Button -->
+    <ion-buttons slot="end" class="flex-shrink-0">
       <ion-button (click)="close()">
-        <ion-icon name="close" class="text-black"></ion-icon>
+        <ion-icon name="close" class="text-black text-lg sm:text-xl"></ion-icon>
       </ion-button>
     </ion-buttons>
   </div>
-  <!-- </div> -->
 </header>
 
-<ion-content class="flex justify-center items-center p-6">
-  <div class="w-full max-w-md bg-white shadow-lg rounded-xl p-6 mx-auto">
-    <!-- Upload Card (hide if previewUrl exists) -->
+<ion-content class="flex justify-center items-center p-4 sm:p-6">
+  <div
+    class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-white shadow-lg rounded-xl p-4 sm:p-6 mx-auto"
+  >
+    <!-- Upload Card -->
     <div
       *ngIf="!previewUrl"
-      class="border-2 border-dashed border-gray-300 rounded-lg h-56 flex flex-col items-center justify-center text-center cursor-pointer"
+      class="border-2 border-dashed border-gray-300 rounded-lg h-48 sm:h-56 flex flex-col items-center justify-center text-center cursor-pointer transition hover:border-gray-400"
       (click)="fileInput.click()"
     >
       <ion-icon
         name="cloud-upload-outline"
-        class="text-3xl text-gray-500"
+        class="text-2xl sm:text-3xl text-gray-500"
       ></ion-icon>
-      <p class="mt-2 font-medium text-gray-700">
+      <p class="mt-2 text-sm sm:text-base font-medium text-gray-700">
         Click to upload <span class="text-gray-500">or drag and drop</span>
       </p>
       <p class="text-xs text-gray-500">SVG, PNG, JPG or GIF (max. 800×400px)</p>
@@ -41,19 +52,22 @@
       />
     </div>
 
-    <!-- Preview with Remove Button -->
+    <!-- Preview -->
     <div *ngIf="previewUrl" class="mt-4 relative">
       <img
         [src]="previewUrl"
         alt="Preview"
-        class="rounded-lg max-h-40 mx-auto"
+        class="rounded-lg max-h-36 sm:max-h-40 md:max-h-56 w-auto mx-auto object-contain"
       />
-      <!-- ❌ Remove Button -->
+      <!-- Remove Button -->
       <button
-        class="absolute top-2 right-2 bg-white rounded-full shadow-md p-1"
+        class="absolute top-2 right-2 bg-white rounded-full shadow-md p-1 sm:p-2"
         (click)="removeScreenshot()"
       >
-        <ion-icon name="close" class="text-red-500 text-lg"></ion-icon>
+        <ion-icon
+          name="close"
+          class="text-red-500 text-base sm:text-lg"
+        ></ion-icon>
       </button>
     </div>
 
@@ -61,7 +75,7 @@
     <button
       [disabled]="!previewUrl"
       (click)="uploadReceipt()"
-      class="mt-4 w-full bg-[#111827] text-white py-2 rounded-md shadow-md hover:bg-[#000000] disabled:bg-gray-400 disabled:cursor-not-allowed"
+      class="mt-4 w-full bg-[#111827] text-white py-2 sm:py-3 rounded-md shadow-md text-sm sm:text-base font-medium hover:bg-[#000000] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
     >
       Upload Receipt
     </button>

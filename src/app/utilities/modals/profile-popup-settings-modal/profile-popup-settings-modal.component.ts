@@ -13,6 +13,7 @@ import { Location } from '@angular/common';
   selector: 'app-profile-popup-settings-modal',
   templateUrl: './profile-popup-settings-modal.component.html',
   styleUrls: ['./profile-popup-settings-modal.component.scss'],
+  standalone: false,
 })
 export class ProfilePopupSettingsModalComponent {
   constructor(
@@ -27,18 +28,15 @@ export class ProfilePopupSettingsModalComponent {
     return this.router.url.includes('/dashboard');
   }
 
-
- 
   dismiss(data?: any) {
     this.popoverCtrl.dismiss(data);
   }
 
-
-/** 🔙 Go back to dashboard */
-async goBack() {
-  await this.popoverCtrl.dismiss();
-  this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
-}
+  /** 🔙 Go back to dashboard */
+  async goBack() {
+    await this.popoverCtrl.dismiss();
+    this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
+  }
 
   async openComplaintModal() {
     await this.popoverCtrl.dismiss();

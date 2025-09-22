@@ -13,6 +13,7 @@ import { FundTransferComponent } from './scouter/fund-transfer/fund-transfer.com
 import { WelcomeToOniduuruMarketplacePageComponent } from './scouter/welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
 import { ViewAllTalentsPageComponent } from './scouter/view-all-talents-page/view-all-talents-page.component';
 import { ViewTalentsLocationPageComponent } from './scouter/view-talents-location-page/view-talents-location-page.component';
+import { ConcludeYourHiringProcessPageComponent } from './scouter/conclude-your-hiring-process-page/conclude-your-hiring-process-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -93,6 +94,10 @@ const routes: Routes = [
   {
     path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location',
     component: ViewTalentsLocationPageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location/conclude-hiring',
+    component: ConcludeYourHiringProcessPageComponent,
   },
 ];
 

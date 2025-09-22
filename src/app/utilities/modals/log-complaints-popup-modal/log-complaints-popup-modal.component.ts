@@ -5,6 +5,7 @@ import { imageIcons } from 'src/app/models/stores';
   selector: 'app-log-complaints-popup-modal',
   templateUrl: './log-complaints-popup-modal.component.html',
   styleUrls: ['./log-complaints-popup-modal.component.scss'],
+  standalone: false,
 })
 export class LogComplaintsPopupModalComponent implements OnInit {
   images = imageIcons;

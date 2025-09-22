@@ -6,6 +6,7 @@ import { imageIcons } from 'src/app/models/stores';
   selector: 'app-update-profile-confirmation-popup-modal',
   templateUrl: './update-profile-confirmation-popup-modal.component.html',
   styleUrls: ['./update-profile-confirmation-popup-modal.component.scss'],
+  standalone: false,
 })
 export class UpdateProfileConfirmationPopupModalComponent implements OnInit {
   images = imageIcons;

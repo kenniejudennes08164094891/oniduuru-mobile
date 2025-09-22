@@ -6,6 +6,7 @@ import { imageIcons } from 'src/app/models/stores';
   selector: 'app-awaiting-payment-verification-modal',
   templateUrl: './awaiting-payment-verification-modal.component.html',
   styleUrls: ['./awaiting-payment-verification-modal.component.scss'],
+  standalone: false,
 })
 export class AwaitingPaymentVerificationModalComponent implements OnInit {
   images = imageIcons;

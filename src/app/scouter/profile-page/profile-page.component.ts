@@ -14,6 +14,7 @@ interface SecurityQA {
   selector: 'app-profile-page',
   templateUrl: './profile-page.component.html',
   styleUrls: ['./profile-page.component.scss'],
+  standalone: false,
 })
 export class ProfilePageComponent implements OnInit {
   currentYear: number = new Date().getFullYear();

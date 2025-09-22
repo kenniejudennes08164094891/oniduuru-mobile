@@ -3,11 +3,13 @@ import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { MockPayment, MockRecentHires, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 
 @Component({
   selector: 'app-find-professionals-by-location-modal',
   templateUrl: './find-professionals-by-location-modal.component.html',
   styleUrls: ['./find-professionals-by-location-modal.component.scss'],
+  standalone: false,
 })
 export class FindProfessionalsByLocationModalComponent implements OnInit {
   @Input() hires: MockPayment[] = []; // 👈 accept hires from parent
@@ -22,12 +24,12 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
   // Filters
   searchQuery: string = '';
   selectedSkillLevel: string = '';
-  currentLocation = 'Lagos';
+  currentLocation = '';
   constructor(private modalCtrl: ModalController, private router: Router) {}
 
   ngOnInit() {
-    console.log('Modal opened with hires:', this.hires);
-    console.log('Modal opened with location:', this.location);
+    this.currentLocation = this.location || 'Unknown'; // ✅ syncs with parent
+    console.log('Modal opened with location:', this.currentLocation);
   }
 
   closeModal() {
@@ -80,5 +82,18 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
       default:
         return '#ffffff';
     }
+  }
+
+  async openTalentModal(hire: MockPayment) {
+    // ✅ First close this modal
+    await this.modalCtrl.dismiss();
+
+    // ✅ Then open the talent popup
+    const modal = await this.modalCtrl.create({
+      component: ViewAllTalentsPopupModalComponent,
+      componentProps: { hire },
+      cssClass: 'all-talents-fullscreen-modal',
+    });
+    await modal.present();
   }
 }

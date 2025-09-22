@@ -9,6 +9,7 @@ import { ChartOptions, ChartData } from 'chart.js';
   selector: 'app-wallet-page',
   templateUrl: './wallet-page.component.html',
   styleUrls: ['./wallet-page.component.scss'],
+  standalone: false,
 })
 export class WalletPageComponent implements OnInit {
   @ViewChild(IonContent) content!: IonContent;

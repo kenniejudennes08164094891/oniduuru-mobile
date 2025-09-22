@@ -5,6 +5,7 @@ import { MockRecentHires, MockPayment } from 'src/app/models/mocks';
   selector: 'app-reels-and-documentation-tab',
   templateUrl: './reels-and-documentation-tab.component.html',
   styleUrls: ['./reels-and-documentation-tab.component.scss'],
+  standalone: false,
 })
 export class ReelsAndDocumentationTabComponent implements OnInit {
   // hire!: MockPayment; // single user

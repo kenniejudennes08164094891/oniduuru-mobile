@@ -22,6 +22,7 @@ import { ProceedToHireTalentPopupModalComponent } from 'src/app/utilities/modals
   selector: 'app-view-talents-location-page',
   templateUrl: './view-talents-location-page.component.html',
   styleUrls: ['./view-talents-location-page.component.scss'],
+  standalone: false,
 })
 export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   map!: Map;
@@ -39,7 +40,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   headerHidden = false;
   images = imageIcons;
 
-  currentLocation: string = '';
+  currentLocation: string = 'Lagos';
 
   searchTerm = '';
   filteredSkills = [...this.allSkills];
@@ -260,12 +261,15 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
 
     this.loadMarkers(filtered);
 
-    // 👇 always open the modal
+    // ✅ set current location so it’s consistent everywhere
+    this.currentLocation = query || 'Unknown';
+
+    // open modal
     const modal = await this.modalCtrl.create({
       component: FindProfessionalsByLocationModalComponent,
       componentProps: {
-        hires: filtered, // could be [] if no result
-        location: query || 'Unknown',
+        hires: filtered,
+        location: this.currentLocation, // pass updated location
       },
       cssClass: 'all-talents-fullscreen-modal',
     });

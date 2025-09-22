@@ -9,6 +9,7 @@ import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-mod
   selector: 'app-proceed-to-hire-talent-popup-modal',
   templateUrl: './proceed-to-hire-talent-popup-modal.component.html',
   styleUrls: ['./proceed-to-hire-talent-popup-modal.component.scss'],
+  standalone: false,
 })
 export class ProceedToHireTalentPopupModalComponent implements OnInit {
   @Input() hires: MockPayment[] = []; // 👈 accept hires from parent
@@ -84,6 +85,8 @@ export class ProceedToHireTalentPopupModalComponent implements OnInit {
   }
 
   async openTalentModal(hire: MockPayment) {
+    await this.modalCtrl.dismiss();
+
     const modal = await this.modalCtrl.create({
       component: ViewAllTalentsPopupModalComponent,
       componentProps: { hire },

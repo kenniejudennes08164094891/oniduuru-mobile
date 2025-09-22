@@ -6,6 +6,7 @@ import { ToastController } from '@ionic/angular';
   selector: 'app-recent-reviews-tab',
   templateUrl: './recent-reviews-tab.component.html',
   styleUrls: ['./recent-reviews-tab.component.scss'],
+  standalone: false,
 })
 export class RecentReviewsTabComponent implements OnInit {
   images = imageIcons;

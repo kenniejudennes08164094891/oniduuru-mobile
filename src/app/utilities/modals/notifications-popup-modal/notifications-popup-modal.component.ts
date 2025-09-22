@@ -7,6 +7,7 @@ import { NotificationsData, Notification } from 'src/app/models/mocks';
   selector: 'app-notifications-popup-modal',
   templateUrl: './notifications-popup-modal.component.html',
   styleUrls: ['./notifications-popup-modal.component.scss'],
+  standalone: false,
 })
 export class NotificationsPopupModalComponent implements OnInit {
   images = imageIcons;

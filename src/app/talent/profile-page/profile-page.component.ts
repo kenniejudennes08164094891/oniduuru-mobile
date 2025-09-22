@@ -12,6 +12,7 @@ interface SecurityQA {
   selector: 'app-profile-page',
   templateUrl: './profile-page.component.html',
   styleUrls: ['./profile-page.component.scss'],
+  standalone: false,
 })
 export class ProfilePageComponent implements OnInit {
   currentYear: number = new Date().getFullYear();
@@ -33,11 +34,10 @@ export class ProfilePageComponent implements OnInit {
     experience: '',
     payRange: '',
   };
-    questions = [
+  questions = [
     { question: '', answer: '' },
-    { question: '', answer: '' }
+    { question: '', answer: '' },
   ];
-  
 
   @ViewChild(IonContent) pageContent!: IonContent;
   @ViewChild('profilePicture') profilePicture!: ElementRef;
@@ -82,7 +82,7 @@ export class ProfilePageComponent implements OnInit {
     console.log('Talent Profile Data:', this.talent, this.securityQuestions);
     // later: call API to save
   }
-   // List of skills
+  // List of skills
   skills: string[] = ['Singing', 'Painting', 'Acting'];
 
   // For binding the input field
@@ -90,7 +90,7 @@ export class ProfilePageComponent implements OnInit {
 
   // Remove a skill
   removeSkill(skill: string) {
-    this.skills = this.skills.filter(s => s !== skill);
+    this.skills = this.skills.filter((s) => s !== skill);
   }
 
   //  Add a new skill
@@ -104,6 +104,4 @@ export class ProfilePageComponent implements OnInit {
     console.log('Saved Questions:', this.questions);
     // You can send this.questions to your backend or service
   }
-
 }
-

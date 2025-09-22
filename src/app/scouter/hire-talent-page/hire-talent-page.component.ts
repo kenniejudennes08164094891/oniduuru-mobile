@@ -7,6 +7,7 @@ import { NavController, AnimationController } from '@ionic/angular';
   selector: 'app-hire-talent-page',
   templateUrl: './hire-talent-page.component.html',
   styleUrls: ['./hire-talent-page.component.scss'],
+  standalone: false,
 })
 export class HireTalentPageComponent implements OnInit {
   headerHidden: boolean = false;
@@ -47,21 +48,18 @@ export class HireTalentPageComponent implements OnInit {
     const enteredOtp = this.otp.join('');
     if (enteredOtp.length === this.otpArray.length && !this.otp.includes('')) {
       this.verifyOtp();
-      this.navCtrl.navigateForward(
-        '/scouter/hire-talent/welcome-to-oniduuru',
-        {
-          animated: true,
-          animation: (baseEl, opts) => {
-            const animation = this.animationCtrl
-              .create()
-              .addElement(baseEl.querySelector('.ion-page'))
-              .duration(400)
-              .fromTo('opacity', '0', '1');
+      this.navCtrl.navigateForward('/scouter/hire-talent/welcome-to-oniduuru', {
+        animated: true,
+        animation: (baseEl, opts) => {
+          const animation = this.animationCtrl
+            .create()
+            .addElement(baseEl.querySelector('.ion-page'))
+            .duration(400)
+            .fromTo('opacity', '0', '1');
 
-            return animation;
-          },
-        }
-      );
+          return animation;
+        },
+      });
     }
   }
 
@@ -96,7 +94,7 @@ export class HireTalentPageComponent implements OnInit {
   // Resend OTP
   resendOtp() {
     console.log('Resend OTP triggered');
-    
+
     this.startCountdown();
   }
 

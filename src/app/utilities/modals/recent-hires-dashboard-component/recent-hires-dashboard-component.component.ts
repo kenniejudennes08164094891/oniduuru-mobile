@@ -7,6 +7,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
   selector: 'app-recent-hires-dashboard',
   templateUrl: './recent-hires-dashboard-component.component.html',
   styleUrls: ['./recent-hires-dashboard-component.component.scss'],
+  standalone: false,
 })
 export class RecentHiresDashboardComponent implements OnInit {
   MockRecentHires: MockPayment[] = MockRecentHires;

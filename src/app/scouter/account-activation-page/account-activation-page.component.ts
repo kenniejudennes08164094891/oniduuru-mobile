@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
   selector: 'app-account-activation-page',
   templateUrl: './account-activation-page.component.html',
   styleUrls: ['./account-activation-page.component.scss'],
+  standalone: false,
 })
 export class AccountActivationPageComponent implements OnInit {
   images = imageIcons;

@@ -7,6 +7,7 @@ import { imageIcons } from 'src/app/models/stores';
   selector: 'app-market-engagement-market-price-preparation',
   templateUrl: './market-engagement-market-price-preparation.component.html',
   styleUrls: ['./market-engagement-market-price-preparation.component.scss'],
+  standalone: false,
 })
 export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   hire: MockPayment | undefined;

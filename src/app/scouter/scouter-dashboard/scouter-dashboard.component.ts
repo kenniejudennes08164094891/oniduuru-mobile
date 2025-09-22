@@ -12,12 +12,12 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-scouter-dashboard',
   templateUrl: './scouter-dashboard.component.html',
   styleUrls: ['./scouter-dashboard.component.scss'],
+  standalone: false,
 })
 export class ScouterDashboardComponent implements OnInit {
   MockRecentHires: MockPayment[] = MockRecentHires; // ✅ now available to template
 
   hire: MockPayment | undefined;
-
   images = imageIcons;
   loading: string = 'Loading...';
   showSpinner: boolean = true;

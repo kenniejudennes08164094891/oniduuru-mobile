@@ -7,11 +7,12 @@ type TabKey = 'skillSet' | 'reelsAndDocumentation' | 'recentReviews';
   selector: 'app-view-all-talents-switch-tab',
   templateUrl: './view-all-talents-switch-tab.component.html',
   styleUrls: ['./view-all-talents-switch-tab.component.scss'],
+  standalone: false,
 })
 export class ViewAllTalentsSwitchTabComponent {
   @Input() hire: any;
-  @Input() selectedSkills: any[] = [];            // ✅ receive from modal
-  @Output() skillSelectionChanged = new EventEmitter<any[]>(); 
+  @Input() selectedSkills: any[] = []; // ✅ receive from modal
+  @Output() skillSelectionChanged = new EventEmitter<any[]>();
 
   activeTab: TabKey = 'skillSet';
   hires: MockPayment[] = MockRecentHires;
@@ -28,6 +29,6 @@ export class ViewAllTalentsSwitchTabComponent {
 
   onSkillSelectionChanged(skills: any[]) {
     this.selectedSkills = skills;
-    this.skillSelectionChanged.emit(skills);      // ✅ bubble up to modal
+    this.skillSelectionChanged.emit(skills); // ✅ bubble up to modal
   }
 }

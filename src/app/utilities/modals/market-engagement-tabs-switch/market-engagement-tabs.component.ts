@@ -5,6 +5,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
   selector: 'app-market-engagement-tabs',
   templateUrl: './market-engagement-tabs.component.html',
   styleUrls: ['./market-engagement-tabs.component.scss'],
+  standalone: false,
 })
 export class MarketEngagementTabsComponent {
   @Output() hireSelected = new EventEmitter<MockPayment>(); // strongly typed event

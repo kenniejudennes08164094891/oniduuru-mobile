@@ -5,6 +5,7 @@ import { ChartConfiguration, ChartOptions } from 'chart.js';
   selector: 'app-recent-market-rating-dashboard-component',
   templateUrl: './recent-market-rating-dashboard-component.component.html',
   styleUrls: ['./recent-market-rating-dashboard-component.component.scss'],
+  standalone: false,
 })
 export class RecentMarketRatingDashboardComponent {
   // Labels (dates from your image)
