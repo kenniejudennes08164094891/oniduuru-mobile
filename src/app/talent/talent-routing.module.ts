@@ -5,7 +5,9 @@ import { LoginCredentialsComponent } from './onboarding/login-credentials/login-
 import { OtherDetailsComponent } from './onboarding/other-details/other-details.component';
 import { TalentDetailsComponent } from './onboarding/talent-details/talent-details.component';
 import { VerifyCredentialsComponent } from './onboarding/verify-credentials/verify-credentials.component';
-import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
+import { TalentDashboardComponent } from "./talent-dashboard/talent-dashboard.component";
+import { LogComplaintsPopupModalComponent } from 'src/app/utilities/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
+
 // Update the import path below to the correct location of TalentProfilePageComponent
 // Example: If the file is actually at './profile-page/profile-page.component'
 import { ProfilePageComponent } from "./profile-page/profile-page.component";
@@ -26,13 +28,16 @@ const routes: Routes = [
     component: TalentDashboardComponent
   },
   {
-  path: 'profile-page',
-  component: ProfilePageComponent
-},
+    path: 'profile-page',
+    component: ProfilePageComponent
+  },
   {
     path: 'view-hires',
-    loadChildren: () => import('./view-hires/view-hires.module').then( m => m.ViewHiresPageModule)
-  }
+    loadChildren: () => import('./view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
+  },
+  { path: 'profile-page', component: ProfilePageComponent },
+  { path: 'log-complaint', component: LogComplaintsPopupModalComponent } // 👈 route to modal component
+
 
 ];
 
