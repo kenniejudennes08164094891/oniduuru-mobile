@@ -15,7 +15,8 @@
       <div class="flex items-center gap-3 mb-6">
         <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
           class="w-10 h-10 inline-block align-middle" />
-        <span class="text-xl font-semibold text-black">Good {{ timeOfDay }}, <span class="text-xl font-light text-black ">{{ userName }}</span></span>
+        <span class="text-xl font-semibold text-black">Good {{ timeOfDay }}, <span
+            class="text-xl font-light text-black ">{{ userName }}</span></span>
       </div>
 
       <!-- Dark Info Card -->
@@ -24,7 +25,7 @@
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
             <!-- <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon> -->
-             <img [src]="myIcon" alt="myIcon" class="h-7 w-7"/>
+            <img [src]="myIcon" alt="myIcon" class="h-7 w-7" />
             <span class="font-semibold text-[20px] leading-tight">
               MODIFY MARKET PROFILE
             </span>
@@ -160,10 +161,12 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold text-gray-900">My Recent Hires</h3>
-          <button class="bg-[#101828] text-white px-4 py-1 rounded-lg text-sm">
+
+          <button (click)="goToViewHires()" class="bg-[#101828] text-white px-4 py-1 rounded-lg text-sm">
             View All Hires
           </button>
         </div>
+
 
         <!-- Hires List -->
         <div *ngFor="let hire of recentHires" class="flex justify-between items-center py-3 border-b last:border-b-0">
@@ -182,14 +185,6 @@
           </div>
         </div>
       </div>
-
-
-      <!-- Fixed Footer -->
-      <footer class="mt-auto py-5">
-        <div class="container mx-auto px-4 text-left text-gray-600">
-          <p>Shoft Africa © {{ currentYear }}</p>
-        </div>
-      </footer>
     </div>
   </div>
 </ion-content>

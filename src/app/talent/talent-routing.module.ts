@@ -28,7 +28,11 @@ const routes: Routes = [
   {
   path: 'profile-page',
   component: ProfilePageComponent
-}
+},
+  {
+    path: 'view-hires',
+    loadChildren: () => import('./view-hires/view-hires.module').then( m => m.ViewHiresPageModule)
+  }
 
 ];
 

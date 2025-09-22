@@ -34,8 +34,13 @@ const routes: Routes = [
   },
   {
     path: 'talent',
+
+    loadChildren: () => import('./talent/talent.module').then(m => m.TalentPageModule),
+  },
+  {
+    path: 'view-hires',
     loadChildren: () =>
-      import('./talent/talent.module').then((m) => m.TalentPageModule),
+      import('./talent/view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
   },
   {
     path: 'utilities',
@@ -102,4 +107,4 @@ const routes: Routes = [
   ],
   exports: [RouterModule],
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }
