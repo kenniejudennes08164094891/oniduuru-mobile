@@ -162,9 +162,10 @@
     <div class="px-6 py-10">
       <button
         class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="securityQuestions.length < 1" (click)="saveProfile()">
+        [disabled]="questions.length < 1" (click)="saveProfile()">
         Save
       </button>
+
       <button
         class="bg-white shadow-md mt-3 rounded-lg p-3 border border-[#101828]  w-full py-2 text-[#101828] font-medium cursor-pointer"
         (click)="goBack()">
@@ -172,9 +173,9 @@
       </button>
     </div>
     <!-- Security Questions -->
- 
+
     <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
-     <div class="absolute inset-0 bg-black/60"></div>
+      <div class="absolute inset-0 bg-black/60"></div>
       <p class="relative text-white text-xl font-bold mt-3 px-5">
         Create Security Questions
       </p>
@@ -187,54 +188,57 @@
         </span>
       </div>
 
-      <div class="px-6">
-        <label class="block text-gray-700 ml-14  font-medium mb-3">Questions</label>
+      <div class="px-6" [formGroup]="securityForm">
+        <label class="block text-gray-700 ml-14 font-medium mb-3">Questions</label>
 
-        <!-- Question 1 -->
-        <div class="flex items-center">
-          <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
-          <img src="assets/icon/question 1.png" alt="Q1 Icon" class="w-5 h-5 mr-2" />
-          <ion-input type="text" placeholder="What is your pet's name" [(ngModel)]="questions[0].question"
-            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        <!-- Questions + Answers Loop -->
+        <div formArrayName="questions">
+          <div *ngFor="let q of questions.controls; let i = index" [formGroupName]="i" class="mb-8">
+            <!-- Question -->
+            <div class="flex items-center">
+              <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
+              <img src="assets/icon/question 1.png" alt="Q Icon" class="w-5 h-5 mr-2" />
+              <ion-input type="text" placeholder="Enter your security question" formControlName="question"
+                class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+            </div>
+
+            <!-- Answer (aligned with question input) -->
+            <div class="flex items-center mt-3 ml-7">
+              <!-- Empty placeholder icons for alignment -->
+              <!-- <div class="w-10"></div> -->
+              <div class="ml-2 w-5"></div>
+              <ion-input type="text" placeholder="Enter answer" formControlName="answer"
+                class="border rounded-lg px-5 py-2 flex-1"></ion-input>
+            </div>
+
+            <!-- Remove button -->
+            <div class="flex justify-end mt-2">
+              <button type="button" class="text-red-500 text-sm hover:underline" (click)="removeQuestion(i)"
+                *ngIf="questions.length > 1">
+                Remove
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Question 2 -->
-        <div class="flex items-center mt-10">
-          <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
-          <img src="assets/icon/question 1.png" alt="Q1 Icon" class="w-5 h-5 mr-2" />
-          <ion-input type="text" placeholder="Where did you meet your spouse" [(ngModel)]="questions[1].question"
-            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+        <!-- Add Question Button -->
+        <div class="flex justify-center mt-6">
+          <button type="button"
+            class="bg-gray-100 text-gray-800 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200"
+            (click)="addQuestion()">
+            + Add Another Question
+          </button>
+        </div>
+
+        <!-- Save Button -->
+        <div class="px-6 py-10 flex justify-center">
+          <button
+            class="bg-[#101828] w-48 rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="securityForm.invalid" (click)="save()">
+            Save
+          </button>
         </div>
       </div>
-
-      <!-- Answers -->
-      <div class="px-6 mt-5">
-        <label class="block text-gray-700 ml-14 font-medium">Answers</label>
-
-        <!-- Answer 1 -->
-        <div class="mt-2  ml-[52px] flex">
-          <ion-input type="text" placeholder="Enter answer" [(ngModel)]="questions[0].answer"
-            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
-        </div>
-
-        <!-- Answer 2 -->
-        <div class="mt-10  ml-[52px] flex">
-          <ion-input type="text" placeholder="Enter answer" [(ngModel)]="questions[1].answer"
-            class="border rounded-lg px-3 py-2 flex-1"></ion-input>
-        </div>
-      </div>
-
-      <!-- Save Button -->
-      <div class="px-6 py-10 w-58 ml-14 flex justify-center">
-        <button
-          class="bg-[#101828] w-48 rounded-lg px-7 pl-3 py-2 flex-1 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="questions.length < 1" (click)="saveProfile()">
-          Save
-        </button>
-      </div>
-    </div>
-
-    <!-- </div> -->
+     </div>
   </div>
-
 </ion-content>

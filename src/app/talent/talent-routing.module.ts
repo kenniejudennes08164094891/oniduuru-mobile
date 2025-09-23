@@ -37,6 +37,7 @@ const routes: Routes = [
   },
   { path: 'profile-page', component: ProfilePageComponent },
   { path: 'log-complaint', component: LogComplaintsPopupModalComponent } // 👈 route to modal component
+ 
 
 
 ];

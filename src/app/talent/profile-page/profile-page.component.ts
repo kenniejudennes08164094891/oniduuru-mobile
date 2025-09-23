@@ -2,11 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { IonContent } from '@ionic/angular';
-
-interface SecurityQA {
-  question: string;
-  answer: string;
-}
+import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-profile-page',
@@ -17,8 +13,7 @@ export class ProfilePageComponent implements OnInit {
   currentYear: number = new Date().getFullYear();
   headerHidden: boolean = false;
 
-  showQuestions: boolean = false;
-  securityQuestions: SecurityQA[] = [];
+  securityForm!: FormGroup;
 
   // Talent profile data model
   talent = {
@@ -33,32 +28,53 @@ export class ProfilePageComponent implements OnInit {
     experience: '',
     payRange: '',
   };
-    questions = [
-    { question: '', answer: '' },
-    { question: '', answer: '' }
-  ];
-  
 
   @ViewChild(IonContent) pageContent!: IonContent;
   @ViewChild('profilePicture') profilePicture!: ElementRef;
   @ViewChild('securityQuestionsSection') securityQuestionsSection!: ElementRef;
 
-  constructor(private router: Router, private location: Location) {}
+  skills: string[] = ['Singing', 'Painting', 'Acting'];
+  newSkill: string = '';
 
-  ngOnInit() {}
+  constructor(private router: Router, private location: Location, private fb: FormBuilder) {}
 
-  goBack() {
-    this.location.back();
+  ngOnInit() {
+    this.securityForm = this.fb.group({
+      questions: this.fb.array([]),
+    });
+
+    // add one default question field
+    this.addQuestion();
   }
 
-  toggleQuestions() {
-    this.showQuestions = !this.showQuestions;
+  // Getter for questions FormArray
+  get questions(): FormArray {
+    return this.securityForm.get('questions') as FormArray;
   }
 
   addQuestion() {
-    if (this.securityQuestions.length < 5) {
-      this.securityQuestions.push({ question: '', answer: '' });
+    const questionGroup = this.fb.group({
+      question: ['', Validators.required],
+      answer: ['', Validators.required],
+    });
+    this.questions.push(questionGroup);
+  }
+
+  removeQuestion(index: number) {
+    this.questions.removeAt(index);
+  }
+
+  save() {
+    if (this.securityForm.valid) {
+      console.log('Saved Questions:', this.securityForm.value.questions);
+      alert('Security questions saved!');
+    } else {
+      alert('Please fill all fields before saving.');
     }
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   formatNumber(event: any) {
@@ -79,31 +95,19 @@ export class ProfilePageComponent implements OnInit {
   }
 
   saveProfile() {
-    console.log('Talent Profile Data:', this.talent, this.securityQuestions);
+    console.log('Talent Profile Data:', this.talent, this.securityForm.value.questions);
     // later: call API to save
   }
-   // List of skills
-  skills: string[] = ['Singing', 'Painting', 'Acting'];
 
-  // For binding the input field
-  newSkill: string = '';
-
-  // Remove a skill
+  // Skills handling
   removeSkill(skill: string) {
-    this.skills = this.skills.filter(s => s !== skill);
+    this.skills = this.skills.filter((s) => s !== skill);
   }
 
-  //  Add a new skill
   addSkill() {
     if (this.newSkill.trim()) {
       this.skills.push(this.newSkill.trim());
-      this.newSkill = ''; // clear input
+      this.newSkill = '';
     }
   }
-  saveQuestions() {
-    console.log('Saved Questions:', this.questions);
-    // You can send this.questions to your backend or service
-  }
-
 }
-

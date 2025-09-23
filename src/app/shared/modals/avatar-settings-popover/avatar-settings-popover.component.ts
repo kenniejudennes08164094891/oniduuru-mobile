@@ -11,7 +11,7 @@ export class AvatarSettingsPopoverComponent {
   constructor(
     private router: Router,
     private popoverCtrl: PopoverController
-  ) {}
+  ) { }
 
   navigateTo(path: string) {
     this.popoverCtrl.dismiss();
@@ -19,9 +19,11 @@ export class AvatarSettingsPopoverComponent {
   }
 
   logout() {
-    this.popoverCtrl.dismiss();
-    // 🔑 Clear token/session
-    localStorage.clear();
-    this.router.navigate(['/login']);
+    // Clear any stored auth data if needed
+    localStorage.removeItem('token');
+    sessionStorage.clear();
+
+    // Navigate to welcome page
+    this.router.navigate(['/auth/welcome-page']);
   }
 }
