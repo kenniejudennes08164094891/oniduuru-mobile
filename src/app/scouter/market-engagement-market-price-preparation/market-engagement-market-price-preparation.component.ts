@@ -13,6 +13,9 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   hire: MockPayment | undefined;
   images = imageIcons;
   userName: string = 'Vikiwest';
+
+  rating: number = 0;
+
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
@@ -20,17 +23,9 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     this.hire = MockRecentHires.find((h) => h.id === id);
   }
 
-  setRating(star: number) {
-    if (!this.hire) return;
-
-    this.hire.yourRating = star;
-
-    // update mock array so it persists if needed
-    const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
-    if (index !== -1) {
-      MockRecentHires[index].yourRating = star;
-    }
-  }
+  // setRating(star: number) {
+  //   this.rating = star;
+  // }
 
   setSelectedHire(hire: MockPayment) {
     this.hire = hire; // ✅ update active hire in dashboard

@@ -4,6 +4,16 @@
   background-repeat: no-repeat;
   background-position: center;
   position: relative;
+  // height: 20%;
 }
 
 
+ion-footer .overflow-x-auto {
+  max-height: 40vh; /* adjust so it doesn’t take the whole screen */
+  overflow-y: auto;
+}
+
+
+ion-content {
+  // --padding-bottom: 120px; /* leave space so content doesn’t overlap footer */
+}

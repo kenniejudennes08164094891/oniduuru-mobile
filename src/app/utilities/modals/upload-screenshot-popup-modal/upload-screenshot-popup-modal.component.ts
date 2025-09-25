@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular';
+import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
+import { BaseModal } from 'src/app/base/base-modal.abstract'; // 👈 adjust path
 
 @Component({
   selector: 'app-upload-screenshot-popup-modal',
@@ -10,19 +11,22 @@ import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-v
   styleUrls: ['./upload-screenshot-popup-modal.component.scss'],
   standalone: false,
 })
-export class UploadScreenshotPopupModalComponent {
+export class UploadScreenshotPopupModalComponent extends BaseModal {
   images = imageIcons;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
 
   constructor(
-    private modalCtrl: ModalController,
-    private toastCtrl: ToastController,
-    private paymentService: PaymentService
-  ) {}
+    modalCtrl: ModalController,
+    platform: Platform,
+    private paymentService: PaymentService,
+    private toastCtrl: ToastController
+  ) {
+    super(modalCtrl, platform); // ✅ gets dismiss + back button
+  }
 
-  close() {
-    this.modalCtrl.dismiss();
+  override dismiss() {
+    super.dismiss();
   }
 
   onFileSelected(event: Event) {
@@ -60,8 +64,10 @@ export class UploadScreenshotPopupModalComponent {
       });
       await toast.present();
 
-      await this.modalCtrl.dismiss();
+      // 👇 using BaseModal's dismiss
+      await this.dismiss();
 
+      // open awaiting verification modal
       const modal = await this.modalCtrl.create({
         component: AwaitingPaymentVerificationModalComponent,
         cssClass: 'awaiting-modal',

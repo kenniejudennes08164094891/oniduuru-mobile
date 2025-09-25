@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
-import { MockPayment, MockRecentHires, SkillSet } from 'src/app/models/mocks';
+import { ModalController, Platform } from '@ionic/angular';
+import { MockPayment, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-proceed-to-hire-talent-popup-modal',
@@ -11,32 +12,34 @@ import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-mod
   styleUrls: ['./proceed-to-hire-talent-popup-modal.component.scss'],
   standalone: false,
 })
-export class ProceedToHireTalentPopupModalComponent implements OnInit {
-  @Input() hires: MockPayment[] = []; // 👈 accept hires from parent
-  @Input() location: string = ''; // 👈 add this
+export class ProceedToHireTalentPopupModalComponent extends BaseModal {
+  @Input() hires: MockPayment[] = [];
+  @Input() location: string = '';
 
   images = imageIcons;
 
   // Pagination
-  currentPage: number = 1;
-  pageSize: number = 5;
+  currentPage = 1;
+  pageSize = 5;
 
   // Filters
-  searchQuery: string = '';
-  selectedSkillLevel: string = '';
+  searchQuery = '';
+  selectedSkillLevel = '';
   currentLocation = 'Lagos';
-  constructor(private modalCtrl: ModalController, private router: Router) {}
 
-  ngOnInit() {
-    console.log('Modal opened with hires:', this.hires);
-    console.log('Modal opened with location:', this.location);
+  constructor(
+    modalCtrl: ModalController,
+    platform: Platform,
+    private router: Router
+  ) {
+    super(modalCtrl, platform); // ✅ gets dismiss + back button
   }
 
-  closeModal() {
+  override dismiss() {
     this.modalCtrl.dismiss(); // ✅ closes the modal properly
   }
 
-  // ✅ Apply search + skill filter
+  // Filtering + pagination
   get filteredAndSearchedHires() {
     return this.hires.filter((hire: MockPayment) => {
       const matchesSearch =
@@ -85,7 +88,7 @@ export class ProceedToHireTalentPopupModalComponent implements OnInit {
   }
 
   async openTalentModal(hire: MockPayment) {
-    await this.modalCtrl.dismiss();
+    await this.dismiss(); // ✅ inherited dismiss
 
     const modal = await this.modalCtrl.create({
       component: ViewAllTalentsPopupModalComponent,

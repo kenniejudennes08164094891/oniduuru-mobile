@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
-import { MockPayment, MockRecentHires, SkillSet } from 'src/app/models/mocks';
+import { ModalController, Platform } from '@ionic/angular';
+import { MockPayment, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-find-professionals-by-location-modal',
@@ -11,9 +12,9 @@ import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-mod
   styleUrls: ['./find-professionals-by-location-modal.component.scss'],
   standalone: false,
 })
-export class FindProfessionalsByLocationModalComponent implements OnInit {
-  @Input() hires: MockPayment[] = []; // 👈 accept hires from parent
-  @Input() location: string = ''; // 👈 add this
+export class FindProfessionalsByLocationModalComponent extends BaseModal {
+  @Input() hires: MockPayment[] = [];
+  @Input() location: string = '';
 
   images = imageIcons;
 
@@ -25,15 +26,23 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
   searchQuery: string = '';
   selectedSkillLevel: string = '';
   currentLocation = '';
-  constructor(private modalCtrl: ModalController, private router: Router) {}
 
-  ngOnInit() {
-    this.currentLocation = this.location || 'Unknown'; // ✅ syncs with parent
+  constructor(
+    modalCtrl: ModalController,
+    platform: Platform,
+    private router: Router
+  ) {
+    super(modalCtrl, platform); // ✅ inherits back-button + dismiss
+  }
+
+  override ngOnInit() {
+    super.ngOnInit(); // keep BaseModal subscription
+    this.currentLocation = this.location || 'Unknown';
     console.log('Modal opened with location:', this.currentLocation);
   }
 
   closeModal() {
-    this.modalCtrl.dismiss(); // ✅ closes the modal properly
+    this.dismiss(); // ✅ dismiss inherited from BaseModal
   }
 
   // ✅ Apply search + skill filter
@@ -86,7 +95,7 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
 
   async openTalentModal(hire: MockPayment) {
     // ✅ First close this modal
-    await this.modalCtrl.dismiss();
+    await this.dismiss();
 
     // ✅ Then open the talent popup
     const modal = await this.modalCtrl.create({

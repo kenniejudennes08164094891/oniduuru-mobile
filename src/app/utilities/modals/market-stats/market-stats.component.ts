@@ -7,6 +7,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
   selector: 'app-market-stats',
   templateUrl: './market-stats.component.html',
   styleUrls: ['./market-stats.component.scss'],
+  standalone: false,
 })
 export class MarketStatsComponent {
   hire: MockPayment | undefined;

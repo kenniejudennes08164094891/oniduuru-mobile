@@ -59,13 +59,12 @@
     <div class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Your Rating:</strong>
-      <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+    <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
         <ion-icon
           name="star"
-          (click)="setRating(star)"
           [class.text-yellow-500]="star <= hire.yourRating"
-          [class.text-gray-400]="star > hire.yourRating"
-          class="cursor-pointer text-2xl"
+          [class.text-gray-400]="star < hire.yourRating"
+          class="text-2xl"
         ></ion-icon>
       </ng-container>
     </div>

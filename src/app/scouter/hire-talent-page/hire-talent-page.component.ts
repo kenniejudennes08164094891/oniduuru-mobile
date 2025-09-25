@@ -19,6 +19,7 @@ export class HireTalentPageComponent implements OnInit {
 
   constructor(
     private router: Router,
+    
     private navCtrl: NavController,
     private toast: ToastController,
     private animationCtrl: AnimationController

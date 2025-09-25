@@ -12,10 +12,9 @@ import { Style, Icon } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import { imageIcons } from 'src/app/models/stores';
 import { MockRecentHires, MockPayment, allSkills } from 'src/app/models/mocks'; // update path
-import { ModalController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { Router } from '@angular/router';
-import { IonTabs } from '@ionic/angular';
 import { ProceedToHireTalentPopupModalComponent } from 'src/app/utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
 
 @Component({
@@ -90,7 +89,11 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
     this.currentLocation = location;
   }
 
-  constructor(private modalCtrl: ModalController, private router: Router) {}
+  constructor(
+    private modalCtrl: ModalController,
+    private router: Router,
+    private platform: Platform
+  ) {}
 
   openSkillSetTab() {
     this.activeTab = 'skill';

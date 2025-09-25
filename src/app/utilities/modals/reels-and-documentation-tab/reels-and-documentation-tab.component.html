@@ -2,7 +2,7 @@
   <!-- 🎥 Video Section -->
   <div *ngIf="hire?.video" class="w-full">
     <video
-      class="w-full rounded-lg shadow-md"
+      class="w-full h-[280px] rounded-lg shadow-md"
       [src]="hire.video"
       controls
       preload="metadata"
@@ -20,7 +20,7 @@
         <img
           *ngFor="let pic of selectedHire.pictures"
           [src]="pic"
-          class="w-full h-40 object-cover rounded-lg shadow-sm"
+          class="w-full h-44 object-cover rounded-lg shadow-sm"
           alt="Portfolio Image"
         />
       </div>

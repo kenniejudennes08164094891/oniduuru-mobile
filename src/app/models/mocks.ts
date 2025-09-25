@@ -1286,6 +1286,68 @@ export const allSkills = [
   'AI Prompt Engineer',
 ];
 
+export const countries: string[] = [
+  'Nigeria',
+  'Ghana',
+  'Kenya',
+  'South Africa',
+  'Egypt',
+  'Ethiopia',
+  'Morocco',
+  'Algeria',
+  'Uganda',
+  'Tanzania',
+  'Cameroon',
+  'Senegal',
+  'Ivory Coast',
+  'Rwanda',
+  'Zimbabwe',
+  'Zambia',
+  'Botswana',
+  'Namibia',
+  'Mali',
+  'Niger',
+  'Chad',
+  'Benin Republic',
+];
+
+export const banks: string[] = [
+  'Access Bank',
+  'GTBank',
+  'UBA',
+  'First Bank',
+  'Zenith Bank',
+  'Union Bank',
+  'Sterling Bank',
+  'Fidelity Bank',
+  'Polaris Bank',
+  'FCMB',
+  'Wema Bank',
+  'Keystone Bank',
+  'Unity Bank',
+  'Opay',
+  'PalmPay',
+  'Kuda Bank',
+  'Moniepoint',
+  'VFD Bank',
+  'Carbon',
+  'Stanbic IBTC',
+  'Heritage Bank',
+  'Globus Bank',
+];
+
+export const title: string[] = ['Mr', 'Mrs', 'Miss', 'Dr'];
+export const gender: string[] = ['Male', 'Female', 'Others'];
+export const maritalStatus: string[] = [
+  'Single',
+  'Married',
+  'Divorced',
+  'Widowed',
+];
+
+
+
+
 export const HireCategories = [
   { title: 'Most Hired Talent', key: 'most' },
   { title: 'Least Hired Talent', key: 'least' },

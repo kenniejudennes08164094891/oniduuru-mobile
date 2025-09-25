@@ -1,31 +1,28 @@
-import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { Component } from '@angular/core';
+import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
+
 @Component({
   selector: 'app-log-complaints-popup-modal',
   templateUrl: './log-complaints-popup-modal.component.html',
   styleUrls: ['./log-complaints-popup-modal.component.scss'],
   standalone: false,
 })
-export class LogComplaintsPopupModalComponent implements OnInit {
+export class LogComplaintsPopupModalComponent extends BaseModal {
   images = imageIcons;
   complaintText = '';
 
-  constructor(private modalCtrl: ModalController) {}
-
-  ngOnInit() {}
-
-  dismiss() {
-    this.modalCtrl.dismiss();
+  constructor(modalCtrl: ModalController, platform: Platform) {
+    super(modalCtrl, platform); // ✅ inherit base logic
   }
 
   submitComplaint() {
     if (this.complaintText.trim().length === 0) {
       return;
     }
-    // Here you could call an API to submit the complaint
     console.log('Complaint submitted:', this.complaintText);
 
-    this.modalCtrl.dismiss({ complaint: this.complaintText });
+    this.modalCtrl.dismiss({ complaint: this.complaintText }, 'confirm');
   }
 }

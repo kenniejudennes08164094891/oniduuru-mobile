@@ -1,8 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-view-all-talents-popup-modal',
@@ -10,16 +11,18 @@ import { imageIcons } from 'src/app/models/stores';
   styleUrls: ['./view-all-talents-popup-modal.component.scss'],
   standalone: false,
 })
-export class ViewAllTalentsPopupModalComponent implements OnInit {
+export class ViewAllTalentsPopupModalComponent extends BaseModal {
   images = imageIcons;
   @Input() hire: MockPayment | any;
   selectedSkills: any[] = []; // ✅ central store
 
-  ngOnInit() {
-    console.log('Hire received in modal:', this.hire);
+  constructor(
+    modalCtrl: ModalController,
+    private router: Router,
+    platform: Platform
+  ) {
+    super(modalCtrl, platform); // ✅ gets dismiss + back button
   }
-  constructor(private modalCtrl: ModalController, private router: Router) {}
-
   onSkillSelectionChanged(skills: any[]) {
     this.selectedSkills = skills; // ✅ update central store
   }
@@ -29,13 +32,18 @@ export class ViewAllTalentsPopupModalComponent implements OnInit {
   }
 
   hireTalent() {
-    // ✅ Close the popup
-    this.modalCtrl.dismiss({ hiredTalent: this.hire });
     this.modalCtrl.dismiss().then(() => {
-      // ✅ Then navigate to the next page
-      this.router.navigate([
-        '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location/conclude-hiring',
-      ]);
+      this.router.navigate(
+        [
+          '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location/conclude-hiring',
+        ],
+        {
+          state: {
+            hire: this.hire,
+            selectedSkills: this.selectedSkills,
+          },
+        }
+      );
     });
   }
 }

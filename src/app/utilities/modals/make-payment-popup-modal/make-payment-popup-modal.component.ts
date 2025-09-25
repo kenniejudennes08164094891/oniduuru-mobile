@@ -1,14 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { ModalController, IonicModule, ToastController } from '@ionic/angular';
+import { Component } from '@angular/core';
+import {
+  ModalController,
+  IonicModule,
+  ToastController,
+  Platform,
+} from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 interface PaymentDetail {
   label: string;
   value: string;
-  isCopy?: boolean; // flag to show copy icon
-  bold?: boolean; // flag for bold text
-  copied?: boolean; // flag for copied state
+  isCopy?: boolean;
+  bold?: boolean;
+  copied?: boolean;
 }
 
 @Component({
@@ -18,7 +24,7 @@ interface PaymentDetail {
   templateUrl: './make-payment-popup-modal.component.html',
   styleUrls: ['./make-payment-popup-modal.component.scss'],
 })
-export class MakePaymentPopupModalComponent implements OnInit {
+export class MakePaymentPopupModalComponent extends BaseModal {
   paymentDetails: PaymentDetail[] = [
     { label: 'Amount Payable', value: '₦ 1,000.00' },
     { label: 'Bank', value: 'Diamond (Access Bank)' },
@@ -27,42 +33,24 @@ export class MakePaymentPopupModalComponent implements OnInit {
   ];
 
   constructor(
+    modalCtrl: ModalController,
+    platform: Platform,
     private router: Router,
-    private modalCtrl: ModalController,
     private toastCtrl: ToastController
-  ) {}
-
-  ngOnInit() {}
-
-  close() {
-    this.modalCtrl.dismiss();
+  ) {
+    super(modalCtrl, platform); // ✅ inherits dismiss + back button
   }
 
   goToActivateAccount() {
-    // close modal first
-    this.modalCtrl.dismiss();
-
+    this.dismiss(); // ✅ inherited from BaseModal
     this.router.navigate(['/scouter/account-activation']);
-  }
-
-  async openMakePaymentPopup() {
-    const modal = await this.modalCtrl.create({
-      component: MakePaymentPopupModalComponent,
-      cssClass: 'make-payment-modal',
-      backdropDismiss: true,
-    });
-    return await modal.present();
   }
 
   async copyToClipboard(item: PaymentDetail) {
     await navigator.clipboard.writeText(item.value);
 
-    item.copied = true; // safe now
-
-    // reset after 2s
-    setTimeout(() => {
-      item.copied = false;
-    }, 2000);
+    item.copied = true;
+    setTimeout(() => (item.copied = false), 2000);
 
     const toast = await this.toastCtrl.create({
       message: `Copied: ${item.value}`,

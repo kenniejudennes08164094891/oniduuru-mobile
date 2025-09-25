@@ -40,7 +40,15 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
 
   // Rating logic
   setRating(star: number) {
-    this.rating = star;
+    if (!this.hire) return;
+
+    this.hire.yourRating = star;
+
+    // update mock array so it persists if needed
+    const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
+    if (index !== -1) {
+      MockRecentHires[index].yourRating = star;
+    }
   }
 
   // File attachment logic
