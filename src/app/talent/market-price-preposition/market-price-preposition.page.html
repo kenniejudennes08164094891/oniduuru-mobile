@@ -1,0 +1,109 @@
+<ion-header>
+  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+  </app-talent-header>
+
+  <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+    <!-- Content on top -->
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
+        <div class="items-center">
+          <span class="font-medium text-[24px] leading-tight">Hi seyiAde</span>
+          <p class="text-gray-200 text-lg leading-relaxed">
+            View your hires with scouters stated above
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-header>
+<div class="bg-white mt-12 px-4">
+    <h2 class="text-left text-gray-900 font-semibold text-lg">
+      Market Price Proposition:
+    </h2>
+  </div>
+
+<ion-content class="ion-padding">
+
+  <!-- Transaction Card -->
+  <div class="bg-gray-100 rounded-lg shadow-md p-4 mb-4">
+    <div class="space-y-4"> <!-- Adds spacing between each block -->
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Job Description:</strong> {{ transaction.jobDescription }}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Amount to Pay:</strong> ₦ {{ transaction.amount }}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Date of Hire:</strong> {{ transaction.dateOfHire }}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Your Comment:</strong> {{ transaction.scouterComment }}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Your Rating:</strong> ⭐⭐⭐⭐⭐</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Talent Side -->
+  <div class="bg-gray-100 rounded-lg shadow-md p-4 mb-4">
+    <div class="space-y-4"> <!-- Adds spacing between each block -->
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Hire Status:</strong> {{transaction.status}}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Talent’s Email:</strong> {{transaction.talentEmail}}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Start Date:</strong> {{transaction.startDate}}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Talent Comment:</strong> {{transaction.talentComment}}</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+        <p><strong>Talent Rating:</strong> ☆☆☆☆</p>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="flex justify-between mt-6">
+    <ion-button fill="outline" color="dark" routerLink="/all-engagements">
+      All Market Engagements
+    </ion-button>
+    <ion-button fill="outline" color="dark" routerLink="/all-stats">
+      All Market Stats
+    </ion-button>
+  </div>
+
+  <!-- Hires Table (beneath transaction card) -->
+   <div class="mt-10">
+    <app-hires-table></app-hires-table>
+  </div>
+</ion-content>

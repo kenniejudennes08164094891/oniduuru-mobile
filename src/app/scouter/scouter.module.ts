@@ -50,7 +50,7 @@ import { ProceedToHireTalentPopupModalComponent } from '../utilities/modals/proc
     FormsModule,
     IonicModule,
     ScouterPageRoutingModule,
-    TalentPageModule,
+    //TalentPageModule,
     NgChartsModule,
     UtilitiesPageModule,
     SpinnerComponent,

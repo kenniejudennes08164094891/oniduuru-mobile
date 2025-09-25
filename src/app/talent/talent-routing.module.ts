@@ -36,8 +36,15 @@ const routes: Routes = [
     loadChildren: () => import('./view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
   },
   { path: 'profile-page', component: ProfilePageComponent },
-  { path: 'log-complaint', component: LogComplaintsPopupModalComponent } // 👈 route to modal component
- 
+  { path: 'log-complaint', component: LogComplaintsPopupModalComponent },
+  {
+    path: 'market-price-preposition/:id',
+    loadChildren: () =>
+      import('./market-price-preposition/market-price-preposition.module')
+        .then(m => m.MarketPricePrepositionPageModule)
+  }
+  // 👈 route to modal component
+
 
 
 ];

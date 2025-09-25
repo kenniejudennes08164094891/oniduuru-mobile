@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 @Component({
-  selector: 'app-view-hires',
-  templateUrl: './view-hires.page.html',
-  styleUrls: ['./view-hires.page.scss'],
+  selector: 'app-hires-table',
+  templateUrl: './hires-table.component.html',
+  styleUrls: ['./hires-table.component.scss'],
 })
-export class ViewHiresPage implements OnInit, OnDestroy {
+export class HiresTableComponent implements OnInit, OnDestroy {
   marketExpenditures: any[] = [];
   currentMonth: string = '';
   currentTime: Date = new Date(); // live clock
@@ -13,10 +13,9 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
 
   constructor(private router: Router) { }
-  goToHireTransaction(hireId: number) {
-    console.log('Clicked hire:', hireId); // 👈 test log
-    this.router.navigate(['/talent/market-price-preposition', hireId]);
-  }
+  goToHireTransaction(hireId: string) {
+  this.router.navigate(['/talent/market-price-preposition', hireId]);
+}
   ngOnInit() {
     // set current month
     const monthNames = [

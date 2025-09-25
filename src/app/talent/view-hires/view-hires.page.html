@@ -1,6 +1,5 @@
 <ion-header>
-  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
-  </app-talent-header>
+   <app-talent-header></app-talent-header>
 </ion-header>
 
 <ion-content class="ion-padding">
@@ -174,7 +173,7 @@
           </thead>
 
           <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
-            <tr *ngFor="let hire of paginatedHires" (click)="viewMarketPricePreposition(hire.id)"
+            <tr *ngFor="let hire of paginatedHires"  (click)="goToHireTransaction(hire.id)"
               class="hover:bg-gray-50 transition-colors cursor-pointer">
 
               <!-- Profile + Name -->
