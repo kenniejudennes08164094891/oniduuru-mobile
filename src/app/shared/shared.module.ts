@@ -6,12 +6,12 @@ import { RouterModule } from '@angular/router';
 // adjust this path to where your header really is
 import { TalentHeaderComponent } from '../talent/talent-header/talent-header.component';
 import { HiresTableComponent } from './hires-table/hires-table.component';
-import { MarketEngagementTabsComponent } from './market-engagement-tabs/market-engagement-tabs.component';
+
 @NgModule({
   declarations: [
     TalentHeaderComponent,
     HiresTableComponent,
-    MarketEngagementTabsComponent
+      // ✅ add it here
   ],
   imports: [
     CommonModule,
@@ -21,7 +21,7 @@ import { MarketEngagementTabsComponent } from './market-engagement-tabs/market-e
   exports: [
     TalentHeaderComponent,
     HiresTableComponent,
-    MarketEngagementTabsComponent
+     // ✅ now this works
   ]
 })
 export class SharedModule {}

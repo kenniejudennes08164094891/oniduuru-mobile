@@ -13,7 +13,7 @@ import { FundTransferComponent } from './scouter/fund-transfer/fund-transfer.com
 import { WelcomeToOniduuruMarketplacePageComponent } from './scouter/welcome-to-oniduuru-marketplace-page/welcome-to-oniduuru-marketplace-page.component';
 import { ViewAllTalentsPageComponent } from './scouter/view-all-talents-page/view-all-talents-page.component';
 import { ViewTalentsLocationPageComponent } from './scouter/view-talents-location-page/view-talents-location-page.component';
-
+import { MarketPricePrepositionPage } from './talent/market-price-preposition/market-price-preposition.page';
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
 
@@ -41,6 +41,13 @@ const routes: Routes = [
     path: 'view-hires',
     loadChildren: () =>
       import('./talent/view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
+  },
+    {
+    path: 'market-price-preposition',
+    loadChildren: () =>
+      import('./talent/market-price-preposition/market-price-preposition.module').then(
+        (m) => m.MarketPricePrepositionPageModule
+      ),
   },
   {
     path: 'utilities',
