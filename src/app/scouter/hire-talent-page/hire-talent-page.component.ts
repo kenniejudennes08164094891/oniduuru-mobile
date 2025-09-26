@@ -19,7 +19,7 @@ export class HireTalentPageComponent implements OnInit {
 
   constructor(
     private router: Router,
-    
+
     private navCtrl: NavController,
     private toast: ToastController,
     private animationCtrl: AnimationController
@@ -94,7 +94,7 @@ export class HireTalentPageComponent implements OnInit {
 
   // Resend OTP
   resendOtp() {
-    console.log('Resend OTP triggered');
+    // console.log('Resend OTP triggered');
 
     this.startCountdown();
   }
@@ -102,11 +102,11 @@ export class HireTalentPageComponent implements OnInit {
   // Verify OTP
   async verifyOtp() {
     const enteredOtp = this.otp.join('');
-    console.log('Entered OTP:', enteredOtp);
+    // console.log('Entered OTP:', enteredOtp);
 
     if (enteredOtp.length === 4) {
       // since your otpArray is 4
-      console.log('OTP Verified ✅');
+      // console.log('OTP Verified ✅');
       const toast = await this.toast.create({
         message: 'OTP Verified ✅',
         duration: 2000,

@@ -226,11 +226,11 @@ export class ScouterDashboardComponent implements OnInit {
     percentage: number,
     circleSize: number
   ): { x: number; y: number } {
-    console.log('Dot position calculation:', {
-      radius,
-      percentage,
-      circleSize,
-    });
+    // console.log('Dot position calculation:', {
+    //   radius,
+    //   percentage,
+    //   circleSize,
+    // });
 
     if (isNaN(percentage)) {
       percentage = 0;

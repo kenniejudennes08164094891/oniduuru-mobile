@@ -38,7 +38,7 @@ export class FindProfessionalsByLocationModalComponent extends BaseModal {
   override ngOnInit() {
     super.ngOnInit(); // keep BaseModal subscription
     this.currentLocation = this.location || 'Unknown';
-    console.log('Modal opened with location:', this.currentLocation);
+    // console.log('Modal opened with location:', this.currentLocation);
   }
 
   closeModal() {

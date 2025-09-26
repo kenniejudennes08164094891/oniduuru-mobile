@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { imageIcons } from 'src/app/models/stores';
 
 @Component({
   selector: 'app-fund-transfer',
@@ -7,6 +8,7 @@ import { Component, OnInit } from '@angular/core';
   standalone: false,
 })
 export class FundTransferComponent implements OnInit {
+  images = imageIcons;
   constructor() {}
 
   ngOnInit() {}

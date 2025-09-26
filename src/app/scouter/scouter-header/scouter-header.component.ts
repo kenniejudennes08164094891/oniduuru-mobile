@@ -85,7 +85,7 @@ export class ScouterHeaderComponent implements OnInit {
 
   openMenu() {
     this.menuCtrl.getMenus().then((menus) => {
-      console.log('Available menus:', menus);
+      // console.log('Available menus:', menus);
     });
     this.menuCtrl.enable(true, 'scouter-menu');
     this.menuCtrl.open('scouter-menu');

@@ -119,12 +119,12 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    console.log(
-      'Modal opened with location:',
-      this.location,
-      'hires:',
-      this.hires
-    );
+    // console.log(
+    //   'Modal opened with location:',
+    //   this.location,
+    //   'hires:',
+    //   this.hires
+    // );
   }
 
   ngAfterViewInit(): void {

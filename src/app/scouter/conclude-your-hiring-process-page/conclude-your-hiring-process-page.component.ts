@@ -75,7 +75,7 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
   }
 
   async hireTalent() {
-    console.log('Hiring talent...', this.formData);
+    // console.log('Hiring talent...', this.formData);
     const toast = await this.toastCtrl.create({
       message: 'Hire offer sent!',
       duration: 2000,
@@ -88,7 +88,7 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
   }
 
   async updateRecord() {
-    console.log('Updating record...', this.formData);
+    // console.log('Updating record...', this.formData);
 
     const toast = await this.toastCtrl.create({
       message: 'Record updated successfully ✅',

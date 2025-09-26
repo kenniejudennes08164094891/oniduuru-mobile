@@ -101,10 +101,25 @@ export const MockRecentHires: MockPayment[] = [
       {
         jobTitle: 'Frontend Developer',
         skillLevel: 'Intermediate',
-        amount: 500000,
+        amount: 5000000,
       },
       {
         jobTitle: 'Backend Developer',
+        skillLevel: 'Intermediate',
+        amount: 6000000,
+      },
+      {
+        jobTitle: 'UI/UX Designer',
+        skillLevel: 'Intermediate',
+        amount: 600000,
+      },
+      {
+        jobTitle: 'Data Analyst',
+        skillLevel: 'Intermediate',
+        amount: 6000000,
+      },
+      {
+        jobTitle: 'Marketing Strategist',
         skillLevel: 'Intermediate',
         amount: 600000,
       },
@@ -1344,9 +1359,6 @@ export const maritalStatus: string[] = [
   'Divorced',
   'Widowed',
 ];
-
-
-
 
 export const HireCategories = [
   { title: 'Most Hired Talent', key: 'most' },

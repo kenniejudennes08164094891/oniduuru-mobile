@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   PopoverController,
   ModalController,
   NavController,
+  Platform,
 } from '@ionic/angular';
 import { LogComplaintsPopupModalComponent } from '../log-complaints-popup-modal/log-complaints-popup-modal.component';
 // import { ProfilePageComponent } from 'src/app/scouter/profile-page/profile-page.component';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { Location } from '@angular/common';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-profile-popup-settings-modal',
@@ -15,21 +17,47 @@ import { Location } from '@angular/common';
   styleUrls: ['./profile-popup-settings-modal.component.scss'],
   standalone: false,
 })
-export class ProfilePopupSettingsModalComponent {
+export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
+  private backButtonSub?: Subscription;
+  private routerEventsSub?: Subscription;
+
   constructor(
     private popoverCtrl: PopoverController,
     private modalCtrl: ModalController,
     private router: Router,
     private navCtrl: NavController,
-    private location: Location
+    private location: Location,
+    private platform: Platform
   ) {}
+
+  ngOnInit(): void {
+    // Hardware back button
+    this.backButtonSub = this.platform.backButton.subscribeWithPriority(
+      9999,
+      async () => {
+        await this.dismiss();
+      }
+    );
+
+    // Browser back/forward
+    this.routerEventsSub = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.dismiss();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.backButtonSub?.unsubscribe();
+    this.routerEventsSub?.unsubscribe();
+  }
 
   get isDashboard(): boolean {
     return this.router.url.includes('/dashboard');
   }
 
-  dismiss(data?: any) {
-    this.popoverCtrl.dismiss(data);
+  async dismiss(data?: any) {
+    await this.popoverCtrl.dismiss(data);
   }
 
   /** 🔙 Go back to dashboard */
