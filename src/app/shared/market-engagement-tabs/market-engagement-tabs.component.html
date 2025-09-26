@@ -1,24 +1,26 @@
 <div class="flex border-b border-gray-300 mb-4">
+  <!-- First button -->
   <button
     class="flex-1 py-5 text-center font-medium text-sm transition relative"
     [ngClass]="
-      activeTab === 'engagements'
+      activeTab === 'market-price-preposition'
         ? 'text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black'
         : 'text-gray-500'
     "
-    (click)="setTab('engagements')"
+    (click)="navigateTo('market-price-preposition')"
   >
     All Market Engagements
   </button>
 
+  <!-- Second button -->
   <button
     class="flex-1 py-5 text-center font-medium text-sm transition relative"
     [ngClass]="
-      activeTab === 'stats'
+      activeTab === 'market-stats'
         ? 'text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black'
         : 'text-gray-500'
     "
-    (click)="setTab('stats')"
+    (click)="navigateTo('market-stats')"
   >
     All Market Stats
   </button>

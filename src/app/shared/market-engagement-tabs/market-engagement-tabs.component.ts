@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
-
+import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-market-engagement-tabs',
   templateUrl: './market-engagement-tabs.component.html',
@@ -9,16 +10,28 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 export class MarketEngagementTabsComponent {
   @Output() hireSelected = new EventEmitter<MockPayment>(); // strongly typed event
 
-  activeTab: 'engagements' | 'stats' = 'engagements';
+  activeTab: string = '';
 
   // mock data (replace with real API later)
   hires: MockPayment[] = MockRecentHires;
 
-  setTab(tab: 'engagements' | 'stats') {
-    this.activeTab = tab;
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    // Set active tab based on current route
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        const url = event.urlAfterRedirects;
+        if (url.includes('market-price-preposition')) {
+          this.activeTab = 'market-price-preposition';
+        } else if (url.includes('market-stats')) {
+          this.activeTab = 'market-stats';
+        }
+      });
   }
 
-  onHireClick(hire: MockPayment) {
-    this.hireSelected.emit(hire);
+  navigateTo(tab: string) {
+    this.router.navigate([tab]);
   }
 }
