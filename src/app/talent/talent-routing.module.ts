@@ -42,6 +42,10 @@ const routes: Routes = [
     loadChildren: () =>
       import('./market-price-preposition/market-price-preposition.module')
         .then(m => m.MarketPricePrepositionPageModule)
+  },
+  {
+    path: 'market-stats',
+    loadChildren: () => import('./market-stats/market-stats.module').then( m => m.MarketStatsPageModule)
   }
   // 👈 route to modal component
 

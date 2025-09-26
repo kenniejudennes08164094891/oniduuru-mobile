@@ -1,0 +1,61 @@
+<div class="mb-6">
+  <h3 class="text-lg font-semibold">Performance Rating by Percentage %</h3>
+  <canvas
+    baseChart
+    [data]="pieChartData"
+    [options]="pieChartOptions"
+    [type]="'pie'"
+    style="height: 50vh; max-width: 100%"
+  ></canvas>
+</div>
+
+<div class="text-sm">
+  <h4 class="font-semibold">My Market Ratings with {{ userName }}</h4>
+  <p class="text-yellow-600 mt-2">
+    ⚠️ Note!: A blank bar indicates no ratings have been submitted yet.
+  </p>
+  <div class="flex gap-6 mt-2 items-center">
+    <span class="flex items-center gap-2 text-blue-600">
+      <span class="w-4 h-2 bg-blue-500 inline-block"></span> Your rating
+    </span>
+    <span class="flex items-center gap-2 text-gray-800">
+      <span class="w-4 h-2 bg-gray-500 inline-block"></span> {{ userName }}’s
+      rating
+    </span>
+  </div>
+
+  <!-- SCROLLABLE BAR CHART -->
+  <div class="overflow-x-auto mt-4">
+    <div class="min-w-[1200px]">
+      <canvas
+        baseChart
+        [data]="barChartData"
+        [options]="barChartOptions"
+        [type]="'bar'"
+        style="height: 60vh"
+      ></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Letter list with check + arrow + date -->
+<div class="mt-6 space-y-2">
+  <div *ngFor="let item of ratingList" class="flex items-center gap-3 text-sm">
+    <!-- gray circle check button -->
+    <!-- Checked circle -->
+    <span
+      class="w-4 h-4 flex items-center justify-center rounded-full border border-gray-400 flex-shrink-0 text-xs text-green-600"
+    >
+      ✓
+    </span>
+
+    <!-- Letter -->
+    <span class="font-semibold">{{ item.letter }}</span>
+
+    <!-- Arrow -->
+    <span>➡️</span>
+
+    <!-- Date -->
+    <span class="text-gray-500">{{ item.date }}</span>
+  </div>
+</div>
