@@ -36,166 +36,283 @@
     </button>
   </div>
 
-  <!-- Dropdowns -->
-  <div class="space-y-6 mt-6">
-    <!-- Dropdown input for Year -->
-    <div
-      class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center w-[40%]"
-    >
-      <span class="text-[#C1C1C5] text-[14px]">Select a Year</span>
-      <ion-icon name="chevron-down-outline"></ion-icon>
+  <!-- Dropdown -->
+  <!-- Filters -->
+  <div class="space-y-4 mt-6">
+    <!-- Year Dropdown -->
+    <div class="relative w-[40%]">
+      <div
+        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+        (click)="toggleYearDropdown()"
+      >
+        <span class="text-[#101828] text-[14px]">
+          {{ selectedYear || "Select a Year" }}
+        </span>
+        <ion-icon
+          [name]="
+            isYearDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+          "
+        ></ion-icon>
+      </div>
+      <div
+        *ngIf="isYearDropdownOpen"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+      >
+        <p
+          *ngFor="let year of years"
+          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          (click)="selectYear(year)"
+        >
+          {{ year }}
+        </p>
+      </div>
     </div>
 
-    <!-- Dropdown input  Month-->
-    <div
-      class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center w-[40%]"
-    >
-      <span class="text-[#C1C1C5] text-[14px]">Select a Month</span>
-      <!-- arrow down  -->
-      <!-- IF DROPDOWN IS ACTIVE -->
-      <ion-icon name="chevron-down-outline"></ion-icon>
-      <!--  ELSE -->
-      <!-- arrow up -->
-      <!-- <ion-icon name="chevron-up-outline"></ion-icon> -->
+    <!-- Month Dropdown -->
+    <div class="relative w-[40%]">
+      <div
+        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+        (click)="toggleMonthDropdown()"
+      >
+        <span class="text-[#101828] text-[14px]">
+          {{ selectedMonth || "Select a Month" }}
+        </span>
+        <ion-icon
+          [name]="
+            isMonthDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+          "
+        ></ion-icon>
+      </div>
+      <div
+        *ngIf="isMonthDropdownOpen"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 max-h-60 overflow-y-auto"
+      >
+        <p
+          *ngFor="let month of months"
+          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          (click)="selectMonth(month)"
+        >
+          {{ month }}
+        </p>
+      </div>
     </div>
+
+    <!-- Status Dropdown -->
+    <!-- <div class="relative w-[40%]">
+      <div
+        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+        (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
+      >
+        <span class="text-[#101828] text-[14px]">
+          {{ selectedStatus || "Select Status" }}
+        </span>
+        <ion-icon
+          [name]="
+            isStatusDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+          "
+        ></ion-icon>
+      </div>
+      <div
+        *ngIf="isStatusDropdownOpen"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+      >
+        <p
+          *ngFor="let status of statuses"
+          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          (click)="selectStatus(status)"
+        >
+          {{ status }}
+        </p>
+      </div>
+    </div> -->
+
+    <!-- Identifier Dropdown -->
+    <!-- <div class="relative w-[40%]">
+      <div
+        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+        (click)="isIdentifierDropdownOpen = !isIdentifierDropdownOpen"
+      >
+        <span class="text-[#101828] text-[14px]">
+          {{ selectedIdentifier || "Select Identifier" }}
+        </span>
+        <ion-icon
+          [name]="
+            isIdentifierDropdownOpen
+              ? 'chevron-up-outline'
+              : 'chevron-down-outline'
+          "
+        ></ion-icon>
+      </div>
+      <div
+        *ngIf="isIdentifierDropdownOpen"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+      >
+        <p
+          *ngFor="let id of identifiers"
+          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+          (click)="selectIdentifier(id)"
+        >
+          {{ id }}
+        </p>
+      </div>
+    </div> -->
+
+    <!-- Wallet Name Search -->
+    <!-- <div class="w-[60%]">
+      <input
+        type="text"
+        [(ngModel)]="searchWalletName"
+        placeholder="Search by wallet name"
+        class="border border-[#D9DCE5] rounded-md px-4 py-3 w-full bg-[#F6F6F6] text-sm"
+      />
+    </div> -->
   </div>
 
-  <div class="flex items-center justify-between gap-3 mt-10">
+  <div class="overflow-x-auto mt-10">
     <div
-      class="text-[#057A55] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] py-4 rounded-sm"
+      class="flex space-x-4 bg-white py-3 md:space-x-6 md:justify-between md:flex-wrap"
     >
-      <p>70</p>
-      <p>Successful</p>
-    </div>
-    <div
-      class="text-[#EB0B00] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] px-6 py-4 rounded-sm"
-    >
-      <p>25</p>
-      <p>Invalid</p>
-    </div>
-    <div
-      class="text-[#0033FF] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] px-6 py-4 rounded-sm"
-    >
-      <p>32</p>
-      <p>Reversed</p>
+      <!-- Successful -->
+      <div
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      >
+        <p class="text-lg font-semibold">70</p>
+        <p>Successful</p>
+      </div>
+
+      <!-- Invalid -->
+      <div
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      >
+        <p class="text-lg font-semibold">25</p>
+        <p>Invalid</p>
+      </div>
+
+      <!-- Reversed -->
+      <div
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      >
+        <p class="text-lg font-semibold">32</p>
+        <p>Reversed</p>
+      </div>
+
+      <!-- Failed -->
+      <div
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      >
+        <p class="text-lg font-semibold">45</p>
+        <p>Failed</p>
+      </div>
+
+      <!-- Fetched all -->
+      <div
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      >
+        <p class="text-lg font-semibold">23453</p>
+        <p>Fetched all</p>
+      </div>
     </div>
   </div>
 
   <!-- TABLE + Pagination -->
-  <div class="mt-10">
+  <div class="mt-[10%]">
     <div class="overflow-x-auto bg-white shadow-sm">
-      <table class="min-w-full text-sm text-left text-gray-700">
+      <table
+        *ngIf="paginatedDeposit.length > 0; else noDataTable"
+        class="min-w-full text-sm text-left text-gray-700"
+      >
         <thead
           class="border-b text-xs uppercase h-16 bg-[#E5E7EB] text-gray-500"
         >
           <tr>
             <th></th>
-            <th class="px-4 py-3">Amount</th>
-            <th class="px-4 py-3">DESIGNATED WALLER NAME</th>
-            <!-- <th class="px-4 py-3">Skill Level</th> -->
-            <!-- <th class="px-4 py-3">Pay Range</th> -->
-            <!-- <th class="px-4 py-3">Status</th> -->
+            <th class="pr-4 pl-1 py-3">Amount</th>
+            <th class="px-4 py-3">DESIGNATED WALLET NAME</th>
+            <th class="px-4 py-3">DESIGNATED WALLER ACCT NO.</th>
+            <th class="px-4 py-3">IDENTIFIER</th>
+            <th class="px-4 py-3">STATUS</th>
+            <th class="px-4 py-3">Date of Deposit</th>
           </tr>
         </thead>
 
+        <!-- ✅ Normal tbody if we have data -->
         <tbody class="divide-y divide-gray-100">
-          <tr class="hover:bg-gray-50 transition-colors h-16 cursor-pointer">
-            <td class="px-3 py-3 w-10 text-center">
+          <tr
+            *ngFor="let deposit of paginatedDeposit"
+            class="hover:bg-gray-50 transition-colors h-16 cursor-pointer"
+          >
+            <td class="px-3 py-3 text-center">
               <input
                 type="checkbox"
                 class="accent-indigo-600 rounded-sm bg-[#E5E7EB]"
               />
             </td>
-            <td class="px-3 sm:px-6 py-3 gap-2 sm:gap-3">
-              <div>
-                <p class="text-xs sm:text-sm text-gray-500">₦ 653,655.00</p>
-              </div>
+            <td class="pr-4 pl-1 sm:px-6 py-3 gap-2 sm:gap-3">
+              <p
+                class="text-xs sm:text-sm text-gray-500 flex gap-[2px] items-center w-full"
+              >
+                <span>₦</span> {{ deposit.amount | number }}
+              </p>
             </td>
             <td
               class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
             >
-              Omoseyin Kehinde Jude
-            </td>
-            <!-- <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.skillSet[0].skillLevel }}
-            </td> -->
-            <!-- <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.payRange }}
-            </td> -->
-            <!-- <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
-              <span
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [style.backgroundColor]="getStatusColor(hire.status)"
-                ></span>
-                <span>{{ hire.status }}</span>
-              </span>
-            </td> -->
-          </tr>
-          <tr class="hover:bg-gray-50 transition-colors h-16 cursor-pointer">
-            <td class="px-3 py-3 w-10 text-center">
-              <input
-                type="checkbox"
-                class="accent-indigo-600 rounded-sm bg-[#E5E7EB]"
-              />
-            </td>
-            <td class="px-3 sm:px-6 py-3 gap-2 sm:gap-3">
-              <div>
-                <p class="text-xs sm:text-sm text-gray-500">₦ 653,655.00</p>
-              </div>
+              {{ deposit.walletName }}
             </td>
             <td
-              class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
             >
-              Omoseyin Kehinde Jude
+              {{ deposit.walletAcctNo }}
             </td>
-            <!-- <td
+            <td
               class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
             >
-              {{ hire.skillSet[0].skillLevel }}
-            </td> -->
-            <!-- <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+              {{ deposit.identifier }}
+            </td>
+            <td
+              class="px-3 sm:px-6 py-3 font-semibold text-sm sm:text-base whitespace-nowrap"
             >
-              {{ hire.payRange }}
-            </td> -->
-            <!-- <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
               <span
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [style.backgroundColor]="getStatusColor(hire.status)"
-                ></span>
-                <span>{{ hire.status }}</span>
-              </span>
-            </td> -->
+                [ngClass]="[
+                  'rounded-full h-2 w-2 inline-block',
+                  deposit.status === 'Successful' ? 'bg-[#057A55]' : '',
+                  deposit.status === 'Invalid' ? 'bg-[#EB0B00]' : '',
+                  deposit.status === 'Failed' ? 'bg-[#EB0B00]' : '',
+                  deposit.status === 'Reversed' ? 'bg-[#0033FF]' : ''
+                ]"
+              ></span>
+              {{ deposit.status }}
+            </td>
+            <td
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+            >
+              {{ deposit.date | date : "MMM d, y h:mma" }}
+            </td>
           </tr>
         </tbody>
       </table>
-
-      <ng-template #noDataTable>
-        <tbody>
-          <tr>
-            <td colspan="6" class="text-center text-gray-500 py-6">
-              No hires found
-            </td>
-          </tr>
-        </tbody>
-      </ng-template>
     </div>
+
+    <!-- ✅ Empty state tbody -->
+    <ng-template #noDataTable>
+      <tbody class="flex justify-center">
+        <tr>
+          <td class="text-center text-gray-500 py-6">
+            <img [src]="images.NoDataImage" alt="No Data" class="" />
+            <p class="text-lg font-medium">No transfers found</p>
+            <p class="text-sm text-gray-400">Try adjusting your filters</p>
+          </td>
+        </tr>
+      </tbody>
+    </ng-template>
 
     <!-- Pagination -->
     <div
       class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200"
     >
       <button
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
         class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         <ion-icon name="chevron-back-outline"></ion-icon>
@@ -206,14 +323,16 @@
         <span
           class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
         >
-          <!-- {{ currentPage }} -->
+          {{ currentPage }}
         </span>
         <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
-          <!-- {{ totalPages }} -->
+          {{ totalPages }}
         </span>
       </span>
 
       <button
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
         class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
         Next <ion-icon name="chevron-forward-outline"></ion-icon>
