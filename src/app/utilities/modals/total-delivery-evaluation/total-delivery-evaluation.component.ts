@@ -6,6 +6,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
   selector: 'app-total-delivery-evaluation',
   templateUrl: './total-delivery-evaluation.component.html',
   styleUrls: ['./total-delivery-evaluation.component.scss'],
+  standalone: false,
 })
 export class TotalDeliveryEvaluationComponent implements OnInit {
   @Input() hire: any;
@@ -23,7 +24,6 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
 
   ngOnInit() {}
 
-
   async showToast(message: string) {
     const toast = await this.toastController.create({
       message,
@@ -40,7 +40,15 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
 
   // Rating logic
   setRating(star: number) {
-    this.rating = star;
+    if (!this.hire) return;
+
+    this.hire.yourRating = star;
+
+    // update mock array so it persists if needed
+    const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
+    if (index !== -1) {
+      MockRecentHires[index].yourRating = star;
+    }
   }
 
   // File attachment logic

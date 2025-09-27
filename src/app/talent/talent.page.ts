@@ -6,13 +6,11 @@ import { TabItems } from '../models/mocks';
   selector: 'app-talent',
   templateUrl: './talent.page.html',
   styleUrls: ['./talent.page.scss'],
+  standalone: false,
 })
 export class TalentPage implements OnInit {
-
   tabItems: TabItems[] = talentOnboardingTabItems;
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }

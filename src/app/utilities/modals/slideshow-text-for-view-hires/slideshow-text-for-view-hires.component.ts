@@ -4,6 +4,7 @@ import { Component, Input, OnInit } from '@angular/core';
   selector: 'app-slideshow-text-for-view-hires',
   templateUrl: './slideshow-text-for-view-hires.component.html',
   styleUrls: ['./slideshow-text-for-view-hires.component.scss'],
+  standalone: false,
 })
 export class SlideshowTextForViewHiresComponent implements OnInit {
   /**

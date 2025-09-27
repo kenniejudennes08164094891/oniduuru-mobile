@@ -1,17 +1,20 @@
-import { Component, Input, OnInit, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
-import { MockPayment, MockRecentHires, SkillSet } from 'src/app/models/mocks';
+import { ModalController, Platform } from '@ionic/angular';
+import { MockPayment, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-find-professionals-by-location-modal',
   templateUrl: './find-professionals-by-location-modal.component.html',
   styleUrls: ['./find-professionals-by-location-modal.component.scss'],
+  standalone: false,
 })
-export class FindProfessionalsByLocationModalComponent implements OnInit {
-  @Input() hires: MockPayment[] = []; // 👈 accept hires from parent
-  @Input() location: string = ''; // 👈 add this
+export class FindProfessionalsByLocationModalComponent extends BaseModal {
+  @Input() hires: MockPayment[] = [];
+  @Input() location: string = '';
 
   images = imageIcons;
 
@@ -22,16 +25,24 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
   // Filters
   searchQuery: string = '';
   selectedSkillLevel: string = '';
-  currentLocation = 'Lagos';
-  constructor(private modalCtrl: ModalController, private router: Router) {}
+  currentLocation = '';
 
-  ngOnInit() {
-    console.log('Modal opened with hires:', this.hires);
-    console.log('Modal opened with location:', this.location);
+  constructor(
+    modalCtrl: ModalController,
+    platform: Platform,
+    private router: Router
+  ) {
+    super(modalCtrl, platform); // ✅ inherits back-button + dismiss
+  }
+
+  override ngOnInit() {
+    super.ngOnInit(); // keep BaseModal subscription
+    this.currentLocation = this.location || 'Unknown';
+    // console.log('Modal opened with location:', this.currentLocation);
   }
 
   closeModal() {
-    this.modalCtrl.dismiss(); // ✅ closes the modal properly
+    this.dismiss(); // ✅ dismiss inherited from BaseModal
   }
 
   // ✅ Apply search + skill filter
@@ -80,5 +91,18 @@ export class FindProfessionalsByLocationModalComponent implements OnInit {
       default:
         return '#ffffff';
     }
+  }
+
+  async openTalentModal(hire: MockPayment) {
+    // ✅ First close this modal
+    await this.dismiss();
+
+    // ✅ Then open the talent popup
+    const modal = await this.modalCtrl.create({
+      component: ViewAllTalentsPopupModalComponent,
+      componentProps: { hire },
+      cssClass: 'all-talents-fullscreen-modal',
+    });
+    await modal.present();
   }
 }

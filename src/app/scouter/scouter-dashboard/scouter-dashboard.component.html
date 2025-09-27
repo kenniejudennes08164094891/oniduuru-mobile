@@ -248,10 +248,25 @@
       </div>
     </ng-container>
 
+
+
+    
     <!-- 🚨 Show if paid -->
     <ng-template #paidDashboard>
       <!-- Paid Dashboard -->
       <div class="container mx-auto px-4 py-6 flex-1">
+        <!-- Greeting section -->
+        <div class="flex items-center gap-3 mb-6">
+          <img
+            *ngIf="timeIcon"
+            [src]="timeIcon"
+            [alt]="timeOfDay + ' icon'"
+            class="w-10 h-10 inline-block align-middle"
+          />
+          <span class="text-xl font-semibold text-gray-800"
+            >Good {{ timeOfDay }}, {{ userName }}</span
+          >
+        </div>
         <!-- Make Payment Info Card -->
         <div
           class="paid-dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
@@ -282,10 +297,10 @@
           <ion-button
             expand="block"
             fill="clear"
-            class="ion- bg-white rounded-xl px-6 py-5 w-[250px] mt-6 space-y-2 text-left shadow cursor-pointer"
+            class="ion- bg-white rounded-xl px-6 py-5 w-[90%] mt-6 space-y-2 text-left shadow cursor-pointer"
             (click)="goToWalletPage()"
           >
-            <div class="space-y-2">
+            <div class="space-y-2 items-left">
               <h3 class="text-[16px] font-normal text-[#364152]">
                 WALLET BALANCE
               </h3>

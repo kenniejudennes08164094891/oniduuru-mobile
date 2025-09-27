@@ -2,4 +2,222 @@
   <app-scouter-header></app-scouter-header>
 </ion-header>
 
-<ion-content class="ion-padding"> <p>fund-wallet works!</p></ion-content>
+<ion-content class="ion-padding">
+  <!-- Top card -->
+  <div
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+  >
+    <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="images.ViewHireFolderIcon" alt="" />
+        <div class="items-center">
+          <span class="font-medium text-[24px] leading-tight"
+            >Hi Vikiwest,</span
+          >
+          <p class="text-gray-200 text-lg leading-relaxed">
+            Deposit funds into your account or another individual’s account.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fund wallet button -->
+  <div
+    class="shadow-xl bg-white rounded-xl px-6 py-10 w-full flex justify-between items-center"
+  >
+    <p class="text-[16px] text-[#101828]">Recent fund deposit</p>
+
+    <button
+      class="bg-[#101828] px-8 py-3 rounded-md text-white font-semibold text-[16px]"
+    >
+      Fund Wallet
+    </button>
+  </div>
+
+  <!-- Dropdowns -->
+  <div class="space-y-6 mt-6">
+    <!-- Dropdown input for Year -->
+    <div
+      class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center w-[40%]"
+    >
+      <span class="text-[#C1C1C5] text-[14px]">Select a Year</span>
+      <ion-icon name="chevron-down-outline"></ion-icon>
+    </div>
+
+    <!-- Dropdown input  Month-->
+    <div
+      class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center w-[40%]"
+    >
+      <span class="text-[#C1C1C5] text-[14px]">Select a Month</span>
+      <!-- arrow down  -->
+      <!-- IF DROPDOWN IS ACTIVE -->
+      <ion-icon name="chevron-down-outline"></ion-icon>
+      <!--  ELSE -->
+      <!-- arrow up -->
+      <!-- <ion-icon name="chevron-up-outline"></ion-icon> -->
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 mt-10">
+    <div
+      class="text-[#057A55] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] py-4 rounded-sm"
+    >
+      <p>70</p>
+      <p>Successful</p>
+    </div>
+    <div
+      class="text-[#EB0B00] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] px-6 py-4 rounded-sm"
+    >
+      <p>25</p>
+      <p>Invalid</p>
+    </div>
+    <div
+      class="text-[#0033FF] text-[16px] flex flex-col items-center text-center bg-[#E5E7EB] w-[32%] px-6 py-4 rounded-sm"
+    >
+      <p>32</p>
+      <p>Reversed</p>
+    </div>
+  </div>
+
+  <!-- TABLE + Pagination -->
+  <div class="mt-10">
+    <div class="overflow-x-auto bg-white shadow-sm">
+      <table class="min-w-full text-sm text-left text-gray-700">
+        <thead
+          class="border-b text-xs uppercase h-16 bg-[#E5E7EB] text-gray-500"
+        >
+          <tr>
+            <th></th>
+            <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">DESIGNATED WALLER NAME</th>
+            <!-- <th class="px-4 py-3">Skill Level</th> -->
+            <!-- <th class="px-4 py-3">Pay Range</th> -->
+            <!-- <th class="px-4 py-3">Status</th> -->
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50 transition-colors h-16 cursor-pointer">
+            <td class="px-3 py-3 w-10 text-center">
+              <input
+                type="checkbox"
+                class="accent-indigo-600 rounded-sm bg-[#E5E7EB]"
+              />
+            </td>
+            <td class="px-3 sm:px-6 py-3 gap-2 sm:gap-3">
+              <div>
+                <p class="text-xs sm:text-sm text-gray-500">₦ 653,655.00</p>
+              </div>
+            </td>
+            <td
+              class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+            >
+              Omoseyin Kehinde Jude
+            </td>
+            <!-- <td
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+            >
+              {{ hire.skillSet[0].skillLevel }}
+            </td> -->
+            <!-- <td
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+            >
+              {{ hire.payRange }}
+            </td> -->
+            <!-- <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
+              <span
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+              >
+                <span
+                  class="h-2 w-2 rounded-full"
+                  [style.backgroundColor]="getStatusColor(hire.status)"
+                ></span>
+                <span>{{ hire.status }}</span>
+              </span>
+            </td> -->
+          </tr>
+          <tr class="hover:bg-gray-50 transition-colors h-16 cursor-pointer">
+            <td class="px-3 py-3 w-10 text-center">
+              <input
+                type="checkbox"
+                class="accent-indigo-600 rounded-sm bg-[#E5E7EB]"
+              />
+            </td>
+            <td class="px-3 sm:px-6 py-3 gap-2 sm:gap-3">
+              <div>
+                <p class="text-xs sm:text-sm text-gray-500">₦ 653,655.00</p>
+              </div>
+            </td>
+            <td
+              class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+            >
+              Omoseyin Kehinde Jude
+            </td>
+            <!-- <td
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+            >
+              {{ hire.skillSet[0].skillLevel }}
+            </td> -->
+            <!-- <td
+              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+            >
+              {{ hire.payRange }}
+            </td> -->
+            <!-- <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
+              <span
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+              >
+                <span
+                  class="h-2 w-2 rounded-full"
+                  [style.backgroundColor]="getStatusColor(hire.status)"
+                ></span>
+                <span>{{ hire.status }}</span>
+              </span>
+            </td> -->
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noDataTable>
+        <tbody>
+          <tr>
+            <td colspan="6" class="text-center text-gray-500 py-6">
+              No hires found
+            </td>
+          </tr>
+        </tbody>
+      </ng-template>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200"
+    >
+      <button
+        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <ion-icon name="chevron-back-outline"></ion-icon>
+        Previous
+      </button>
+
+      <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
+        <span
+          class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
+        >
+          <!-- {{ currentPage }} -->
+        </span>
+        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
+          <!-- {{ totalPages }} -->
+        </span>
+      </span>
+
+      <button
+        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        Next <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+</ion-content>

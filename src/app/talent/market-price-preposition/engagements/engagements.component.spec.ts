@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { FundWalletComponent } from './fund-wallet.component';
+import { EngagementsComponent } from './engagements.component';
 
-describe('FundWalletComponent', () => {
-  let component: FundWalletComponent;
-  let fixture: ComponentFixture<FundWalletComponent>;
+describe('EngagementsComponent', () => {
+  let component: EngagementsComponent;
+  let fixture: ComponentFixture<EngagementsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ FundWalletComponent ],
+      declarations: [ EngagementsComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(FundWalletComponent);
+    fixture = TestBed.createComponent(EngagementsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

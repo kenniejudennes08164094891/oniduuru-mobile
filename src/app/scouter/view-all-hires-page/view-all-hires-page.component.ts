@@ -30,6 +30,7 @@ interface MockPayment {
   selector: 'app-view-all-hires-page',
   templateUrl: './view-all-hires-page.component.html',
   styleUrls: ['./view-all-hires-page.component.scss'],
+  standalone: false,
 })
 export class ViewAllHiresPageComponent implements OnInit {
   @ViewChild('categoryDisplaySection') categoryDisplaySection!: ElementRef;

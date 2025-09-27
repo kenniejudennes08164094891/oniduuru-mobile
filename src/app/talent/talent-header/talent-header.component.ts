@@ -9,6 +9,7 @@ import { AvatarSettingsPopoverComponent } from 'src/app/shared/modals/avatar-set
   selector: 'app-talent-header',
   templateUrl: './talent-header.component.html',
   styleUrls: ['./talent-header.component.scss'],
+  standalone: false,
 })
 export class TalentHeaderComponent implements OnInit {
   @Input() role: 'talent' | 'scouter' = 'talent';
@@ -16,11 +17,9 @@ export class TalentHeaderComponent implements OnInit {
   images = imageIcons;
   notificationCount = 21;
 
+  constructor(private popoverCtrl: PopoverController, private router: Router) {}
 
-
-  constructor(private popoverCtrl: PopoverController,private router: Router) { }
-
-  ngOnInit() { }
+  ngOnInit() {}
 
   async openProfilePopover(ev: any) {
     const popover = await this.popoverCtrl.create({

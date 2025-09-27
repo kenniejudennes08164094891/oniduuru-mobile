@@ -13,7 +13,7 @@ interface PaymentStatus {
 export class PaymentService {
   // private BehaviorSubject to hold the state
   private paymentStatusSubject = new BehaviorSubject<PaymentStatus>({
-    isPaid: false,
+    isPaid: true,
   });
 
   // expose as observable so components can subscribe

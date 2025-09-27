@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { WithdrawFundComponent } from './withdraw-fund.component';
+import { StatsComponent } from './stats.component';
 
-describe('WithdrawFundComponent', () => {
-  let component: WithdrawFundComponent;
-  let fixture: ComponentFixture<WithdrawFundComponent>;
+describe('StatsComponent', () => {
+  let component: StatsComponent;
+  let fixture: ComponentFixture<StatsComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WithdrawFundComponent ],
+      declarations: [ StatsComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(WithdrawFundComponent);
+    fixture = TestBed.createComponent(StatsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

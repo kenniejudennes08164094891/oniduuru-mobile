@@ -12,9 +12,14 @@ export class MarketPricePrepositionPage implements OnInit {
   hire: MockPayment | undefined;
   images = imageIcons;
   userName: string = 'SeyiAde';
+  headerHidden: boolean = false;
+  rating: number = 0;
 
-  constructor(private route: ActivatedRoute) { }
-  headerHidden: boolean = false
+  // ✅ for tab switching
+  // activeTab: 'engagements' | 'stats' = 'engagements';
+
+  constructor(private route: ActivatedRoute) {}
+
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     this.hire = MockRecentHires.find((h) => h.id === id);
@@ -35,6 +40,11 @@ export class MarketPricePrepositionPage implements OnInit {
   setSelectedHire(hire: MockPayment) {
     this.hire = hire; // ✅ update active hire in dashboard
   }
+
+  // ✅ switch between tabs
+  // setTab(tab: 'engagements' | 'stats') {
+  //   this.activeTab = tab;
+  // }
 
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {

@@ -9,7 +9,7 @@ import { AnimationController } from '@ionic/angular';
   selector: 'app-welcome-to-oniduuru-marketplace-page',
   templateUrl: './welcome-to-oniduuru-marketplace-page.component.html',
   styleUrls: ['./welcome-to-oniduuru-marketplace-page.component.scss'],
-  // imports: [IonicModule],
+  standalone: false,
 })
 export class WelcomeToOniduuruMarketplacePageComponent implements OnInit {
   constructor(

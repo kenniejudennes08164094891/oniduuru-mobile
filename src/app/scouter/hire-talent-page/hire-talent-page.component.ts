@@ -7,6 +7,7 @@ import { NavController, AnimationController } from '@ionic/angular';
   selector: 'app-hire-talent-page',
   templateUrl: './hire-talent-page.component.html',
   styleUrls: ['./hire-talent-page.component.scss'],
+  standalone: false,
 })
 export class HireTalentPageComponent implements OnInit {
   headerHidden: boolean = false;
@@ -18,6 +19,7 @@ export class HireTalentPageComponent implements OnInit {
 
   constructor(
     private router: Router,
+
     private navCtrl: NavController,
     private toast: ToastController,
     private animationCtrl: AnimationController
@@ -47,21 +49,18 @@ export class HireTalentPageComponent implements OnInit {
     const enteredOtp = this.otp.join('');
     if (enteredOtp.length === this.otpArray.length && !this.otp.includes('')) {
       this.verifyOtp();
-      this.navCtrl.navigateForward(
-        '/scouter/hire-talent/welcome-to-oniduuru',
-        {
-          animated: true,
-          animation: (baseEl, opts) => {
-            const animation = this.animationCtrl
-              .create()
-              .addElement(baseEl.querySelector('.ion-page'))
-              .duration(400)
-              .fromTo('opacity', '0', '1');
+      this.navCtrl.navigateForward('/scouter/hire-talent/welcome-to-oniduuru', {
+        animated: true,
+        animation: (baseEl, opts) => {
+          const animation = this.animationCtrl
+            .create()
+            .addElement(baseEl.querySelector('.ion-page'))
+            .duration(400)
+            .fromTo('opacity', '0', '1');
 
-            return animation;
-          },
-        }
-      );
+          return animation;
+        },
+      });
     }
   }
 
@@ -95,19 +94,19 @@ export class HireTalentPageComponent implements OnInit {
 
   // Resend OTP
   resendOtp() {
-    console.log('Resend OTP triggered');
-    
+    // console.log('Resend OTP triggered');
+
     this.startCountdown();
   }
 
   // Verify OTP
   async verifyOtp() {
     const enteredOtp = this.otp.join('');
-    console.log('Entered OTP:', enteredOtp);
+    // console.log('Entered OTP:', enteredOtp);
 
     if (enteredOtp.length === 4) {
       // since your otpArray is 4
-      console.log('OTP Verified ✅');
+      // console.log('OTP Verified ✅');
       const toast = await this.toast.create({
         message: 'OTP Verified ✅',
         duration: 2000,

@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
   selector: 'app-view-all-talents-page',
   templateUrl: './view-all-talents-page.component.html',
   styleUrls: ['./view-all-talents-page.component.scss'],
+  standalone: false,
 })
 export class ViewAllTalentsPageComponent implements OnInit {
   headerHidden: boolean = false;

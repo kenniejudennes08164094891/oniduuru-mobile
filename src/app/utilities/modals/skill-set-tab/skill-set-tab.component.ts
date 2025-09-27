@@ -5,6 +5,7 @@ import { imageIcons } from 'src/app/models/stores';
   selector: 'app-skill-set-tab',
   templateUrl: './skill-set-tab.component.html',
   styleUrls: ['./skill-set-tab.component.scss'],
+  standalone: false,
 })
 export class SkillSetTabComponent {
   @Input() hire: any;

@@ -4,12 +4,10 @@ import { Component, OnInit } from '@angular/core';
   selector: 'app-scouter',
   templateUrl: './scouter.page.html',
   styleUrls: ['./scouter.page.scss'],
+  standalone: false,
 })
 export class ScouterPage implements OnInit {
+  constructor() {}
 
-  constructor() { }
-
-  ngOnInit() {
-  }
-
+  ngOnInit() {}
 }

@@ -6,6 +6,7 @@ import { ToastController } from '@ionic/angular';
   selector: 'app-market-engagements-table',
   templateUrl: './market-engagements-table.component.html',
   styleUrls: ['./market-engagements-table.component.scss'],
+  standalone: false,
 })
 export class MarketEngagementsTableComponent {
   hires = MockRecentHires;

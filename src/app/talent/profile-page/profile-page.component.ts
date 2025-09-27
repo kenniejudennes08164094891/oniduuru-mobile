@@ -8,6 +8,7 @@ import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
   selector: 'app-profile-page',
   templateUrl: './profile-page.component.html',
   styleUrls: ['./profile-page.component.scss'],
+  standalone: false,
 })
 export class ProfilePageComponent implements OnInit {
   currentYear: number = new Date().getFullYear();
@@ -28,6 +29,10 @@ export class ProfilePageComponent implements OnInit {
     experience: '',
     payRange: '',
   };
+  // questions = [
+  //   { question: '', answer: '' },
+  //   { question: '', answer: '' },
+  // ];
 
   @ViewChild(IonContent) pageContent!: IonContent;
   @ViewChild('profilePicture') profilePicture!: ElementRef;

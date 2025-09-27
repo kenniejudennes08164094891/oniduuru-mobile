@@ -1,19 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-awaiting-payment-verification-modal',
   templateUrl: './awaiting-payment-verification-modal.component.html',
   styleUrls: ['./awaiting-payment-verification-modal.component.scss'],
+  standalone: false,
 })
-export class AwaitingPaymentVerificationModalComponent implements OnInit {
+export class AwaitingPaymentVerificationModalComponent extends BaseModal {
   images = imageIcons;
 
-  constructor(private modalCtrl: ModalController) {}
-
-  dismiss(role: 'cancel' | 'confirm') {
-    this.modalCtrl.dismiss(null, role);
+  constructor(modalCtrl: ModalController, platform: Platform) {
+    super(modalCtrl, platform); // ✅ gives you back-button + dismiss
   }
-  ngOnInit() {}
+  // Optional: override dismiss to add role support
+  override dismiss(role: 'cancel' | 'confirm' = 'cancel') {
+    super.dismiss(null, role);
+  }
 }

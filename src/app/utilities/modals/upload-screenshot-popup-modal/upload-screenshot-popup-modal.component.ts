@@ -1,38 +1,43 @@
 import { Component } from '@angular/core';
-import { ModalController, ToastController } from '@ionic/angular';
-import { ImageConfig } from '@angular/common';
+import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
+import { BaseModal } from 'src/app/base/base-modal.abstract'; // 👈 adjust path
+
 @Component({
   selector: 'app-upload-screenshot-popup-modal',
   templateUrl: './upload-screenshot-popup-modal.component.html',
   styleUrls: ['./upload-screenshot-popup-modal.component.scss'],
+  standalone: false,
 })
-export class UploadScreenshotPopupModalComponent {
+export class UploadScreenshotPopupModalComponent extends BaseModal {
   images = imageIcons;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
 
   constructor(
-    private modalCtrl: ModalController,
-    private toastCtrl: ToastController,
-    private paymentService: PaymentService
-  ) {}
-
-  close() {
-    this.modalCtrl.dismiss();
+    modalCtrl: ModalController,
+    platform: Platform,
+    private paymentService: PaymentService,
+    private toastCtrl: ToastController
+  ) {
+    super(modalCtrl, platform); // ✅ gets dismiss + back button
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
+  override dismiss() {
+    super.dismiss();
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       this.selectedFile = file;
 
-      // Convert to base64
       const reader = new FileReader();
       reader.onload = () => {
-        this.previewUrl = reader.result as string; // base64 string
+        this.previewUrl = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -45,14 +50,12 @@ export class UploadScreenshotPopupModalComponent {
 
   async uploadReceipt() {
     if (this.selectedFile) {
-      // Convert to base64 already done in onFileSelected
       this.paymentService.setPaymentStatus({
         isPaid: true,
         receiptUrl: this.previewUrl as string,
         transactionId: 'INV-2025-0615-013',
       });
 
-      // Success toast
       const toast = await this.toastCtrl.create({
         message: 'Receipt uploaded successfully ✅',
         duration: 2000,
@@ -61,13 +64,13 @@ export class UploadScreenshotPopupModalComponent {
       });
       await toast.present();
 
-      // 1. Close the upload screenshot modal
-      await this.modalCtrl.dismiss();
+      // 👇 using BaseModal's dismiss
+      await this.dismiss();
 
-      // 2. Immediately open awaiting verification modal
+      // open awaiting verification modal
       const modal = await this.modalCtrl.create({
         component: AwaitingPaymentVerificationModalComponent,
-        cssClass: 'awaiting-modal', // optional custom class
+        cssClass: 'awaiting-modal',
       });
       await modal.present();
     }

@@ -9,6 +9,11 @@ import { MarketPricePrepositionPage } from './market-price-preposition.page';
 // ✅ Correct import path (adjust if yours is nested differently)
 
 import { SharedModule } from 'src/app/shared/shared.module';
+import { UtilitiesPageModule } from '../../utilities/utilities.module';
+import { StatsComponent } from './stats/stats.component';
+import { EngagementsComponent } from './engagements/engagements.component';
+import { NgChartsModule } from 'ng2-charts';
+
 
 @NgModule({
   imports: [
@@ -16,10 +21,13 @@ import { SharedModule } from 'src/app/shared/shared.module';
     FormsModule,
     IonicModule,
     MarketPricePrepositionPageRoutingModule,
-    SharedModule   // ✅ keep this (it's an NgModule)
+    SharedModule  ,
+    UtilitiesPageModule,
+    NgChartsModule// ✅ keep this (it's an NgModule)
   ],
   declarations: [
-    MarketPricePrepositionPage,]
+    MarketPricePrepositionPage, StatsComponent, EngagementsComponent
+  ]
 
 })
 export class MarketPricePrepositionPageModule {}

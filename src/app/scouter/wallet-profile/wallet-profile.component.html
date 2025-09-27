@@ -2,4 +2,309 @@
   <app-scouter-header></app-scouter-header>
 </ion-header>
 
-<ion-content class="ion-padding"> <p>wallet-profile works!</p></ion-content>
+<ion-content class="ion-padding space-y-10">
+  <!-- Top card -->
+  <div
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+  >
+    <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="images.ViewHireFolderIcon" alt="" />
+        <div class="items-center">
+          <span class="font-medium text-[24px] leading-tight"> Vikiwest,</span>
+          <p class="text-gray-200 text-lg leading-relaxed">
+            Quickly Create or View Your Wallet Profile
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title (Dropdown) -->
+  <div class="relative dropdown-title">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+    >
+      Title
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="selectedTitle"
+      (focus)="showTitleDropdown = true; showCountryDropdown = false"
+      (input)="filterTitle($event)"
+      placeholder="Mr"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+    />
+    <ul
+      *ngIf="showTitleDropdown"
+      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+    >
+      <li
+        *ngFor="let title of filteredTitle"
+        (click)="selectTitle(title)"
+        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      >
+        {{ title }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- Full Name -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Full Name</label
+    >
+    <input
+      type="text"
+      placeholder="Victory Olorunda"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Gender (Dropdown) -->
+  <div class="relative dropdown-gender">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+    >
+      Gender
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="selectedGender"
+      (focus)="showGenderDropdown = true; showCountryDropdown = false"
+      (input)="filterGender($event)"
+      placeholder="Mr"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+    />
+    <ul
+      *ngIf="showGenderDropdown"
+      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+    >
+      <li
+        *ngFor="let gender of filteredGender"
+        (click)="selectGender(gender)"
+        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      >
+        {{ gender }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- BVN -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >BVN</label
+    >
+    <input
+      type="number"
+      placeholder="22224567891"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- NIN -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >NIN</label
+    >
+    <input
+      type="text"
+      placeholder="Input your National Identification Number"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-[#79797B] placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Occupation -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Occupation</label
+    >
+    <input
+      type="text"
+      placeholder="Product Designer"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Marital Status (Dropdown) -->
+  <div class="relative dropdown-maritalStatus">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+    >
+      Marital Status
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="selectedMaritalStatus"
+      (focus)="showMaritalStatusDropdown = true; showCountryDropdown = false"
+      (input)="filterMaritalStatus($event)"
+      placeholder="Single"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+    />
+    <ul
+      *ngIf="showMaritalStatusDropdown"
+      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+    >
+      <li
+        *ngFor="let maritalStatus of filteredMaritalStatus"
+        (click)="selectMaritalStatus(maritalStatus)"
+        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      >
+        {{ maritalStatus }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- Country of Residence -->
+  <div class="relative dropdown-country">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+    >
+      Country of Residence
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="selectedCountry"
+      (focus)="showCountryDropdown = true; showBankDropdown = false"
+      (input)="filterCountries($event)"
+      placeholder="Select or search country"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+    />
+    <ul
+      *ngIf="showCountryDropdown"
+      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+    >
+      <li
+        *ngFor="let country of filteredCountries"
+        (click)="selectCountry(country)"
+        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      >
+        {{ country }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- Bank -->
+  <div class="relative dropdown-bank mt-6">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+    >
+      Bank
+    </label>
+    <input
+      type="text"
+      [(ngModel)]="selectedBank"
+      (focus)="showBankDropdown = true; showCountryDropdown = false"
+      (input)="filterBanks($event)"
+      placeholder="Select or search bank"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+    />
+    <ul
+      *ngIf="showBankDropdown"
+      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+    >
+      <li
+        *ngFor="let bank of filteredBanks"
+        (click)="selectBank(bank)"
+        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      >
+        {{ bank }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- Email -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Email</label
+    >
+    <input
+      type="email"
+      placeholder="vikiwest@gmail.com"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Savings Account Number -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Savings Account Number</label
+    >
+    <input
+      type="number"
+      placeholder="8987659012"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Phone Number -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Phone Number</label
+    >
+    <input
+      type="tel"
+      placeholder="09021334559"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Role (Dropdown) -->
+  <div class="relative">
+    <label
+      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+      >Role</label
+    >
+    <input
+      placeholder="Scouter"
+      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+    />
+  </div>
+
+  <!-- Date of Birth (Date Input) -->
+  <div class="relative w-full">
+    <label
+      class="bg-white absolute -top-2 p-1 left-3 text-[10px] text-[#717E95]"
+    >
+      Date of Birth
+    </label>
+    <div
+      class="flex items-center border border-[#D9DCE5] w-full shadow-lg rounded-md bg-white px-2 sm:px-3 md:px-4 py-3 md:py-4"
+    >
+      <ion-icon
+        name="calendar-clear-outline"
+        class="text-gray-400 mr-2"
+      ></ion-icon>
+      <input
+        type="date"
+        [(ngModel)]="dob"
+        (change)="formatDob()"
+        class="flex-1 focus:outline-none text-[14px] bg-transparent border-none"
+      />
+    </div>
+    <p *ngIf="dobFormatted" class="text-sm text-gray-500 mt-1">
+      {{ dobFormatted }}
+    </p>
+  </div>
+
+  <!-- Buttons -->
+  <div class="space-y-3 mt-10">
+    <button class="w-full mx-auto bg-[#101828] text-white rounded-md py-2">
+      Save
+    </button>
+    <div
+      (click)="goBack()"
+      class="w-full text-center mx-auto border border-[#101828] text-black rounded-md py-2"
+    >
+      Return
+    </div>
+  </div>
+</ion-content>

@@ -28,5 +28,4 @@ import { ReactiveFormsModule } from '@angular/forms';
     AvatarSettingsPopoverComponent  // optional: if you want to reuse elsewhere
   ]
 })
-export class TalentPageModule { }
-
+export class TalentPageModule {}

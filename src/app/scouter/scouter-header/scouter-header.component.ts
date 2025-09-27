@@ -10,13 +10,13 @@ import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/pro
 import { NotificationsPopupModalComponent } from 'src/app/utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
 import { Router } from '@angular/router';
 import { Notification, NotificationsData } from 'src/app/models/mocks';
+
 @Component({
   selector: 'app-scouter-header',
   templateUrl: './scouter-header.component.html',
   styleUrls: ['./scouter-header.component.scss'],
+  standalone: false,
 })
-
-
 
 export class ScouterHeaderComponent implements OnInit {
   images = imageIcons;
@@ -85,7 +85,7 @@ export class ScouterHeaderComponent implements OnInit {
 
   openMenu() {
     this.menuCtrl.getMenus().then((menus) => {
-      console.log('Available menus:', menus);
+      // console.log('Available menus:', menus);
     });
     this.menuCtrl.enable(true, 'scouter-menu');
     this.menuCtrl.open('scouter-menu');

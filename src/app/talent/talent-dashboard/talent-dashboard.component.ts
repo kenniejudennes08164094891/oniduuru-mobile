@@ -8,21 +8,14 @@ Chart.register(...registerables);
   selector: 'app-talent-dashboard',
   templateUrl: './talent-dashboard.component.html',
   styleUrls: ['./talent-dashboard.component.scss'],
+  standalone: false,
 })
 export class TalentDashboardComponent implements OnInit {
   // Spinner
   loading: string = 'Loading...';
   showSpinner: boolean = true;
   currentYear: number = new Date().getFullYear();
-  
 
-
-   constructor(private router: Router) {}
-
-  goToViewHires() {
-    this.router.navigate(['/view-hires']);
-  }
-  // Greeting
   userName: string = 'Samuel';
   timeOfDay: string = '';
   timeIcon: string = '';
@@ -35,6 +28,14 @@ export class TalentDashboardComponent implements OnInit {
   // Wallet
   walletBalance: number = 30000.0;
 
+  constructor(private router: Router) { }
+
+  goToViewHires() {
+    this.router.navigate(['/view-hires']);
+  }
+  // Greeting
+
+
   // Dashboard stats (numbers only)
   dashboardCards = [
     { title: 'Total Market Engagement', value: 21, status: '' },
@@ -45,7 +46,12 @@ export class TalentDashboardComponent implements OnInit {
 
   // For donut chart
   dashboardStatCards: { title: string; value: number; status: string }[] = [];
-  percentageCircles: { size: number; color: string; percentage: number; title: string }[] = [];
+  percentageCircles: {
+    size: number;
+    color: string;
+    percentage: number;
+    title: string;
+  }[] = [];
 
   // Ratings chart data
   ratingsData = [
@@ -56,8 +62,16 @@ export class TalentDashboardComponent implements OnInit {
   ];
 
   // Recent hires data
-  recentHires: { name: string; date: string; amount: number; avatar: string }[] = [];
+  recentHires: {
+    name: string;
+    date: string;
+    amount: number;
+    avatar: string;
+  }[] = [];
 
+  routeToWallet() {
+    this.router.navigate(['/scouter/wallet-page']);
+  }
   ngOnInit(): void {
     this.setTimeOfDay();
 
@@ -135,7 +149,6 @@ export class TalentDashboardComponent implements OnInit {
             data: this.ratingsData.map((r) => r.scouterRating),
             backgroundColor: '#7C3AED', // purple
           },
-
         ],
       },
       options: {
@@ -158,7 +171,10 @@ export class TalentDashboardComponent implements OnInit {
   // Scroll toggle for header
   onContentScroll(event: any) {
     this.scrollPosition = event.detail.scrollTop;
-    if (this.scrollPosition > this.previousScrollPosition && this.scrollPosition > 100) {
+    if (
+      this.scrollPosition > this.previousScrollPosition &&
+      this.scrollPosition > 100
+    ) {
       this.headerHidden = true;
     } else if (this.scrollPosition < this.previousScrollPosition) {
       this.headerHidden = false;
@@ -181,7 +197,11 @@ export class TalentDashboardComponent implements OnInit {
     return circumference - (percentage / 100) * circumference;
   }
 
-  getProgressDotPosition(radius: number, percentage: number, circleSize: number) {
+  getProgressDotPosition(
+    radius: number,
+    percentage: number,
+    circleSize: number
+  ) {
     if (isNaN(percentage)) percentage = 0;
     const center = circleSize / 2;
     const angleInRadians = ((percentage / 100) * 360 - 90) * (Math.PI / 180);

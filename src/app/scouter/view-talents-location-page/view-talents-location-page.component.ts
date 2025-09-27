@@ -12,16 +12,16 @@ import { Style, Icon } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import { imageIcons } from 'src/app/models/stores';
 import { MockRecentHires, MockPayment, allSkills } from 'src/app/models/mocks'; // update path
-import { ModalController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { Router } from '@angular/router';
-import { IonTabs } from '@ionic/angular';
 import { ProceedToHireTalentPopupModalComponent } from 'src/app/utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
 
 @Component({
   selector: 'app-view-talents-location-page',
   templateUrl: './view-talents-location-page.component.html',
   styleUrls: ['./view-talents-location-page.component.scss'],
+  standalone: false,
 })
 export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   map!: Map;
@@ -39,7 +39,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   headerHidden = false;
   images = imageIcons;
 
-  currentLocation: string = '';
+  currentLocation: string = 'Lagos';
 
   searchTerm = '';
   filteredSkills = [...this.allSkills];
@@ -89,7 +89,11 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
     this.currentLocation = location;
   }
 
-  constructor(private modalCtrl: ModalController, private router: Router) {}
+  constructor(
+    private modalCtrl: ModalController,
+    private router: Router,
+    private platform: Platform
+  ) {}
 
   openSkillSetTab() {
     this.activeTab = 'skill';
@@ -115,12 +119,12 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    console.log(
-      'Modal opened with location:',
-      this.location,
-      'hires:',
-      this.hires
-    );
+    // console.log(
+    //   'Modal opened with location:',
+    //   this.location,
+    //   'hires:',
+    //   this.hires
+    // );
   }
 
   ngAfterViewInit(): void {
@@ -260,12 +264,15 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit {
 
     this.loadMarkers(filtered);
 
-    // 👇 always open the modal
+    // ✅ set current location so it’s consistent everywhere
+    this.currentLocation = query || 'Unknown';
+
+    // open modal
     const modal = await this.modalCtrl.create({
       component: FindProfessionalsByLocationModalComponent,
       componentProps: {
-        hires: filtered, // could be [] if no result
-        location: query || 'Unknown',
+        hires: filtered,
+        location: this.currentLocation, // pass updated location
       },
       cssClass: 'all-talents-fullscreen-modal',
     });
