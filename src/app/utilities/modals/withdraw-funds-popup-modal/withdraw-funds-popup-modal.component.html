@@ -1,0 +1,141 @@
+<ion-header>
+  <!-- HEADER -->
+  <div
+    class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+  >
+    <h2 class="text-lg font-bold text-white">Fund Withdrawal Form</h2>
+    <button (click)="closeModal()" class="text-white hover:text-gray-700">
+      ✕
+    </button>
+  </div>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form action="">
+    <!-- Info Note -->
+    <div
+      class="flex items-center gap-3 mb-3 bg-[#CDD5DF33] border border-[#33333333] rounded-xl py-4 px-6 mt-[10%]"
+    >
+      <ion-icon class="h-7 w-" name="information-circle-outline"></ion-icon>
+      <span class="font-normal text-[16px] leading-tight text-[#444444]">
+        <span class="text-[#10182880]"
+          >Send a fund deposit to the account:</span
+        >
+        <br />
+        333345457 (MoniePoint MFB) <ion-icon name="copy-outline"></ion-icon>
+        <br />
+        Account Name:(Oniduuru admin wallet account)
+      </span>
+    </div>
+
+    <!-- Amount -->
+    <div class="space-y-2 mt-8">
+      <label for="" class="text-[#344054] text-[14px]">Amount</label>
+      <input
+        type="number"
+        placeholder="₦ 45,000"
+        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+      />
+    </div>
+
+    <!-- UPLOAD CONTAINER -->
+    <div class="w-full mt-8">
+      <!-- Upload Card -->
+      <div
+        *ngIf="!previewUrl"
+        class="border-2 border-dashed border-gray-300 rounded-lg h-48 sm:h-56 flex flex-col items-center justify-center text-center cursor-pointer transition hover:border-gray-400"
+        (click)="fileInput.click()"
+      >
+        <ion-icon
+          name="cloud-upload-outline"
+          class="text-2xl sm:text-3xl text-gray-500"
+        ></ion-icon>
+        <p class="mt-2 text-sm sm:text-base font-medium text-gray-700">
+          Click to upload <span class="text-gray-500">or drag and drop</span>
+        </p>
+        <p class="text-xs text-gray-500">
+          SVG, PNG, JPG or GIF (max. 800×400px)
+        </p>
+        <input
+          type="file"
+          #fileInput
+          class="hidden"
+          accept=".png,.jpg,.jpeg,.gif,.svg"
+          (change)="onFileSelected($event)"
+        />
+      </div>
+
+      <!-- Preview -->
+      <div *ngIf="previewUrl" class="mt-4 relative">
+        <img
+          [src]="previewUrl"
+          alt="Preview"
+          class="rounded-lg max-h-56 w-full object-contain"
+        />
+
+        <!-- Remove Button -->
+        <button
+          class="absolute top-2 right-2 bg-white rounded-full shadow-md p-1 sm:p-2"
+          (click)="removeScreenshot()"
+        >
+          <ion-icon
+            name="close"
+            class="text-red-500 text-base sm:text-lg"
+          ></ion-icon>
+        </button>
+      </div>
+    </div>
+    <!-- END-->
+
+    <!-- Wallet Acc -->
+    <div class="space-y-2 mt-8">
+      <label for="" class="text-[#344054] text-[14px]"
+        >Designated Wallet Account</label
+      >
+      <input
+        type="number"
+        placeholder="3056578914"
+        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+      />
+    </div>
+
+    <!-- Wallet Name -->
+    <div class="space-y-2 mt-8">
+      <label for="" class="text-[#344054] text-[14px]"
+        >Designated Wallet Name</label
+      >
+      <input
+        type="text"
+        placeholder="Viki West "
+        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+      />
+    </div>
+
+    <!-- Reason -->
+    <div class="space-y-2 mt-8">
+      <label for="" class="text-[#344054] text-[14px]">Reason (Optional)</label>
+      <textarea
+        type="text"
+        placeholder="Write Your thoughts here..."
+        class="border border-[#D9DCE5] px-3 pt-2 pb-10 w-full rounded-lg bg-white placeholder:text-gray-300"
+      ></textarea>
+    </div>
+
+    <div class="flex items-center gap-4 text-[#101828] mt-8">
+      <input type="checkbox" />
+
+      <div>
+        I agree with
+        <span href="" class="text-[#0033FF]">terms and conditions </span>
+      </div>
+    </div>
+  </form>
+
+  <div class="bg-white mt-10 pt-2 pb-16 flex justify-end">
+    <button
+      class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+    >
+      Create Fund Deposit
+    </button>
+  </div>
+</ion-content>

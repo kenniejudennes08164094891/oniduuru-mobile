@@ -21,290 +21,470 @@
     </div>
   </div>
 
-  <!-- Title (Dropdown) -->
-  <div class="relative dropdown-title">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-    >
-      Title
-    </label>
-    <input
-      type="text"
-      [(ngModel)]="selectedTitle"
-      (focus)="showTitleDropdown = true; showCountryDropdown = false"
-      (input)="filterTitle($event)"
-      placeholder="Mr"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
-    />
-    <ul
-      *ngIf="showTitleDropdown"
-      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
-    >
-      <li
-        *ngFor="let title of filteredTitle"
-        (click)="selectTitle(title)"
-        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+  <form #profileForm="ngForm" (ngSubmit)="onSubmit(profileForm)">
+    <fieldset [disabled]="isFormLocked" class="space-y-6">
+      <!-- Title (Dropdown) -->
+      <div class="relative dropdown-title">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Title
+        </label>
+        <input
+          type="text"
+          name="selectedTitle"
+          required
+          [(ngModel)]="selectedTitle"
+          (focus)="showTitleDropdown = true; showCountryDropdown = false"
+          (input)="filterTitle($event)"
+          placeholder="Mr"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showTitleDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let title of filteredTitle"
+            (click)="selectTitle(title)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ title }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Full Name -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+          >Full Name</label
+        >
+        <input
+          type="text"
+          name="fullName"
+          [(ngModel)]="fullName"
+          required
+          minlength="3"
+          placeholder="Victory Olorunda"
+          #fullNameCtrl="ngModel"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <p
+          *ngIf="fullNameCtrl.invalid && fullNameCtrl.touched"
+          class="text-red-500 text-sm mt-1"
+        >
+          Full name is required (min 3 chars).
+        </p>
+      </div>
+
+      <!-- Gender (Dropdown) -->
+      <div class="relative dropdown-gender">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Gender
+        </label>
+        <input
+          type="text"
+          name="gender"
+          required
+          [(ngModel)]="selectedGender"
+          (focus)="showGenderDropdown = true; showCountryDropdown = false"
+          (input)="filterGender($event)"
+          placeholder="Male"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showGenderDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let gender of filteredGender"
+            (click)="selectGender(gender)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ gender }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- BVN -->
+      <div class="relative dropdown-gender">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          BVN
+        </label>
+
+        <input
+          type="text"
+          name="bvn"
+          [(ngModel)]="bvn"
+          #bvnCtrl="ngModel"
+          required
+          maxlength="11"
+          pattern="^[0-9]{11}$"
+          (input)="onBvnInput($event)"
+          placeholder="Enter your BVN"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+
+        <p
+          *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
+          class="text-red-500 text-sm mt-1"
+        >
+          BVN must be exactly 11 digits only.
+        </p>
+      </div>
+
+      <!-- NIN -->
+      <div class="relative dropdown-gender">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          NIN
+        </label>
+
+        <input
+          type="text"
+          name="nin"
+          [(ngModel)]="nin"
+          #ninCtrl="ngModel"
+          required
+          maxlength="11"
+          pattern="^[0-9]{11}$"
+          (input)="onNinInput($event)"
+          placeholder="Enter your NIN"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+
+        <p
+          *ngIf="ninCtrl.invalid && ninCtrl.touched"
+          class="text-red-500 text-sm mt-1"
+        >
+          NIN must be exactly 11 digits only.
+        </p>
+      </div>
+
+      <!-- Occupation -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+          >Occupation</label
+        >
+        <input
+          type="text"
+          name="occupation"
+          required
+          placeholder="Product Designer"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+        />
+      </div>
+
+      <!-- Marital Status (Dropdown) -->
+      <div class="relative dropdown-maritalStatus">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Marital Status
+        </label>
+        <input
+          type="text"
+          name="maritalStatus"
+          required
+          [(ngModel)]="selectedMaritalStatus"
+          (focus)="
+            showMaritalStatusDropdown = true; showCountryDropdown = false
+          "
+          (input)="filterMaritalStatus($event)"
+          placeholder="Single"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showMaritalStatusDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let maritalStatus of filteredMaritalStatus"
+            (click)="selectMaritalStatus(maritalStatus)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ maritalStatus }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Country of Residence -->
+      <div class="relative dropdown-country">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Country of Residence
+        </label>
+        <input
+          type="text"
+          name="country"
+          required
+          [(ngModel)]="selectedCountry"
+          (focus)="showCountryDropdown = true; showBankDropdown = false"
+          (input)="filterCountries($event)"
+          placeholder="Select or search country"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showCountryDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let country of filteredCountries"
+            (click)="selectCountry(country)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ country }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Bank -->
+      <div class="relative dropdown-bank mt-6">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Bank
+        </label>
+        <input
+          type="text"
+          name="bank"
+          required
+          [(ngModel)]="selectedBank"
+          (focus)="showBankDropdown = true; showCountryDropdown = false"
+          (input)="filterBanks($event)"
+          placeholder="Select or search bank"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showBankDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let bank of filteredBanks"
+            (click)="selectBank(bank)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ bank }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Email -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+          >Email</label
+        >
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          email
+          #emailCtrl="ngModel"
+          placeholder="vikiwest@gmail.com"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <p
+          *ngIf="emailCtrl.invalid && emailCtrl.touched"
+          class="text-red-500 text-sm mt-1"
+        >
+          Please enter a valid email.
+        </p>
+      </div>
+
+      <!-- Savings Account Number -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Savings Account Number
+        </label>
+        <input
+          type="text"
+          name="savingsAcc"
+          [(ngModel)]="savingsAcc"
+          required
+          maxlength="10"
+          pattern="^[0-9]{10}$"
+          #savingsAccCtrl="ngModel"
+          (input)="onSavingsAccInput($event)"
+          (blur)="validateSavingsAcc()"
+          placeholder="8987659012"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+        />
+        <p
+          *ngIf="
+            (savingsAccCtrl.invalid && savingsAccCtrl.touched) ||
+            savingsAccError
+          "
+          class="text-red-500 text-sm mt-1"
+        >
+          {{ savingsAccError || "Account number must be exactly 10 digits." }}
+        </p>
+      </div>
+
+      <!-- Phone Number -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+          >Phone Number</label
+        >
+        <input
+          type="tel"
+          name="number"
+          [(ngModel)]="number"
+          required
+          maxlength="11"
+          placeholder="09021334559"
+          (input)="onNumberInput($event)"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white"
+        />
+        <p
+          *ngIf="numberCtrl.invalid && numberCtrl.touched"
+          class="text-red-500 text-sm mt-1"
+        >
+          Phone number must be 11 digits starting with 0.
+        </p>
+      </div>
+
+      <!-- Role (Dropdown) -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+          >Role</label
+        >
+        <div
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white text-[14px] text-[#717E95]"
+        >
+          {{ role }}
+        </div>
+      </div>
+
+      <!-- Date of Birth (Date Input) -->
+      <div class="relative w-full">
+        <label
+          class="bg-white absolute -top-2 p-1 left-3 text-[10px] text-[#717E95]"
+        >
+          Date of Birth
+        </label>
+        <div
+          class="flex items-center border border-[#D9DCE5] w-full shadow-lg rounded-md bg-white px-2 sm:px-3 md:px-4 py-3 md:py-4"
+        >
+          <ion-icon
+            name="calendar-clear-outline"
+            class="text-gray-400 mr-2"
+          ></ion-icon>
+          <input
+            type="date"
+            name="dob"
+            required
+            [(ngModel)]="dob"
+            (change)="formatDob()"
+            class="flex-1 focus:outline-none text-[14px] bg-transparent border-none placeholder:text-gray-300"
+          />
+          <p *ngIf="dobFormatted" class="text-sm text-gray-500 mt-1">
+            {{ dobFormatted }}
+          </p>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Buttons -->
+    <div class="space-y-3 mt-10">
+      <!-- Save only visible before lock -->
+      <button
+        *ngIf="!isFormLocked"
+        type="submit"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
+        [disabled]="!profileForm.valid || savingsAccError"
       >
-        {{ title }}
-      </li>
-    </ul>
-  </div>
+        Save
+      </button>
 
-  <!-- Full Name -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Full Name</label
-    >
-    <input
-      type="text"
-      placeholder="Victory Olorunda"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Gender (Dropdown) -->
-  <div class="relative dropdown-gender">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-    >
-      Gender
-    </label>
-    <input
-      type="text"
-      [(ngModel)]="selectedGender"
-      (focus)="showGenderDropdown = true; showCountryDropdown = false"
-      (input)="filterGender($event)"
-      placeholder="Male"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
-    />
-    <ul
-      *ngIf="showGenderDropdown"
-      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
-    >
-      <li
-        *ngFor="let gender of filteredGender"
-        (click)="selectGender(gender)"
-        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      <!-- Always show Return -->
+      <div
+        (click)="goBack()"
+        class="w-full text-center mx-auto border border-[#101828] text-black rounded-md py-2"
       >
-        {{ gender }}
-      </li>
-    </ul>
-  </div>
+        Return
+      </div>
 
-  <!-- BVN -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >BVN</label
-    >
-    <input
-      type="number"
-      placeholder="22224567891"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- NIN -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >NIN</label
-    >
-    <input
-      type="text"
-      placeholder="Input your National Identification Number"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-[#79797B] placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Occupation -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Occupation</label
-    >
-    <input
-      type="text"
-      placeholder="Product Designer"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Marital Status (Dropdown) -->
-  <div class="relative dropdown-maritalStatus">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-    >
-      Marital Status
-    </label>
-    <input
-      type="text"
-      [(ngModel)]="selectedMaritalStatus"
-      (focus)="showMaritalStatusDropdown = true; showCountryDropdown = false"
-      (input)="filterMaritalStatus($event)"
-      placeholder="Single"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
-    />
-    <ul
-      *ngIf="showMaritalStatusDropdown"
-      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
-    >
-      <li
-        *ngFor="let maritalStatus of filteredMaritalStatus"
-        (click)="selectMaritalStatus(maritalStatus)"
-        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+      <!-- Update Record (Unlock button) only after save -->
+      <button
+        *ngIf="isFormLocked"
+        type="button"
+        (click)="triggerOtpStep()"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
       >
-        {{ maritalStatus }}
-      </li>
-    </ul>
-  </div>
-
-  <!-- Country of Residence -->
-  <div class="relative dropdown-country">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-    >
-      Country of Residence
-    </label>
-    <input
-      type="text"
-      [(ngModel)]="selectedCountry"
-      (focus)="showCountryDropdown = true; showBankDropdown = false"
-      (input)="filterCountries($event)"
-      placeholder="Select or search country"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
-    />
-    <ul
-      *ngIf="showCountryDropdown"
-      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
-    >
-      <li
-        *ngFor="let country of filteredCountries"
-        (click)="selectCountry(country)"
-        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-      >
-        {{ country }}
-      </li>
-    </ul>
-  </div>
-
-  <!-- Bank -->
-  <div class="relative dropdown-bank mt-6">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-    >
-      Bank
-    </label>
-    <input
-      type="text"
-      [(ngModel)]="selectedBank"
-      (focus)="showBankDropdown = true; showCountryDropdown = false"
-      (input)="filterBanks($event)"
-      placeholder="Select or search bank"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
-    />
-    <ul
-      *ngIf="showBankDropdown"
-      class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
-    >
-      <li
-        *ngFor="let bank of filteredBanks"
-        (click)="selectBank(bank)"
-        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
-      >
-        {{ bank }}
-      </li>
-    </ul>
-  </div>
-
-  <!-- Email -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Email</label
-    >
-    <input
-      type="email"
-      placeholder="vikiwest@gmail.com"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Savings Account Number -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Savings Account Number</label
-    >
-    <input
-      type="number"
-      placeholder="8987659012"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Phone Number -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Phone Number</label
-    >
-    <input
-      type="tel"
-      placeholder="09021334559"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Role (Dropdown) -->
-  <div class="relative">
-    <label
-      class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-      >Role</label
-    >
-    <input
-      placeholder="Scouter"
-      class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
-    />
-  </div>
-
-  <!-- Date of Birth (Date Input) -->
-  <div class="relative w-full">
-    <label
-      class="bg-white absolute -top-2 p-1 left-3 text-[10px] text-[#717E95]"
-    >
-      Date of Birth
-    </label>
-    <div
-      class="flex items-center border border-[#D9DCE5] w-full shadow-lg rounded-md bg-white px-2 sm:px-3 md:px-4 py-3 md:py-4"
-    >
-      <ion-icon
-        name="calendar-clear-outline"
-        class="text-gray-400 mr-2"
-      ></ion-icon>
-      <input
-        type="date"
-        [(ngModel)]="dob"
-        (change)="formatDob()"
-        class="flex-1 focus:outline-none text-[14px] bg-transparent border-none"
-      />
+        Update Record
+      </button>
     </div>
-    <p *ngIf="dobFormatted" class="text-sm text-gray-500 mt-1">
-      {{ dobFormatted }}
-    </p>
-  </div>
-
-  <!-- Buttons -->
-  <div class="space-y-3 mt-10">
-    <button class="w-full mx-auto bg-[#101828] text-white rounded-md py-2">
-      Save
-    </button>
-    <div
-      (click)="goBack()"
-      class="w-full text-center mx-auto border border-[#101828] text-black rounded-md py-2"
-    >
-      Return
-    </div>
-  </div>
+  </form>
 </ion-content>
+
+<!-- OTP TEMPLATE -->
+<ion-modal [isOpen]="isOtpStep" (didDismiss)="isOtpStep = false">
+  <ng-template>
+    <ion-content class="ion-padding">
+      <div class="bg-[#EDF0F4] py-6 text-center rounded-lg mt-3 space-y-1">
+        <h2 class="text-[20px] text-[#101828] font-semibold">Unlock Form</h2>
+        <p class="text-[16px] text-[#101828]">OTP Verification</p>
+      </div>
+
+      <p class="py-6 text-[#101828] text-[16px]">
+        Enter the OTP sent to your email/phone to unlock the form.
+      </p>
+
+      <div class="flex justify-center gap-3 my-6">
+        <input
+          *ngFor="let digit of otpArray; let i = index"
+          type="text"
+          maxlength="1"
+          class="w-12 h-12 text-[24px] text-center border border-[#D0D5DD] rounded-lg"
+          [(ngModel)]="otp[i]"
+          name="otp{{ i }}"
+          (input)="moveToNext($event, i)"
+        />
+      </div>
+
+      <p class="text-center text-sm text-[#101828]">
+        Didn’t receive a code?
+        <span *ngIf="countdown > 0">
+          Retry in <strong>{{ countdown }}</strong
+          >s
+        </span>
+        <a
+          *ngIf="countdown === 0"
+          href="#"
+          (click)="triggerOtpStep()"
+          class="text-blue-600 underline"
+          >Resend OTP</a
+        >
+      </p>
+
+      <div class="mt-6 space-y-3">
+        <button
+          class="w-full bg-[#101828] text-white rounded-md py-2"
+          (click)="verifyOtp()"
+        >
+          Verify & Unlock
+        </button>
+        <button
+          class="w-full border border-[#101828] rounded-md py-2"
+          (click)="isOtpStep = false"
+        >
+          Cancel
+        </button>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

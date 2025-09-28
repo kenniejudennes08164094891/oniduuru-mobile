@@ -80,6 +80,7 @@
         class="w-full resize-none placeholder:text-gray-400 text-[18px] font-medium border border-gray-300 bg-gray-50 rounded-md p-3"
         placeholder="Write the job description here.."
         required
+        [disabled]="isFormDisabled"
       ></textarea>
     </div>
 
@@ -93,6 +94,7 @@
         class="py-2 px-2 w-full placeholder:text-gray-400 text-[18px] font-medium border border-gray-300 bg-gray-50 rounded-md"
         type="text"
         required
+        [disabled]="isFormDisabled"
       />
     </div>
 
@@ -104,6 +106,7 @@
         class="py-2 px-2 w-full placeholder:text-gray-400 text-[18px] font-medium border border-gray-300 bg-gray-50 rounded-md"
         type="date"
         required
+        [disabled]="isFormDisabled"
       />
     </div>
 
@@ -113,10 +116,10 @@
         *ngIf="!previewConfirmed"
         type="button"
         class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white disabled:bg-gray-400"
-        [disabled]="!isFormValid"
+        [disabled]="!isFormValid || isFormDisabled"
         (click)="previewData()"
       >
-        Preview Data
+        Proceed
       </button>
 
       <!-- After preview clicked -->
@@ -134,6 +137,7 @@
           type="button"
           class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white"
           (click)="updateRecord()"
+          [disabled]="isFormDisabled"
         >
           Update Record
         </button>
@@ -144,37 +148,55 @@
   <!-- Preview Modal -->
   <ion-modal [isOpen]="isPreviewOpen" (didDismiss)="closePreview()">
     <ng-template>
-      <ion-header>
+      <!-- <ion-header>
         <ion-toolbar>
           <ion-title>Preview Hiring Details</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="closePreview()">Close</ion-button>
           </ion-buttons>
         </ion-toolbar>
-      </ion-header>
+      </ion-header> -->
 
       <ion-content class="ion-padding">
-        <p><strong>Purpose:</strong> {{ formData.purpose }}</p>
-        <p><strong>Amount:</strong> ₦{{ formData.amount | number }}</p>
-        <p><strong>Start Date:</strong> {{ formData.startDate }}</p>
+        <!-- <ion-content class="ion-padding bg-white"> -->
+        <!-- Modal Container -->
+        <div class="bg-white rounded-xl overflow-hidden shadow-md">
+          <!-- Modal Header -->
+          <div class="bg-white px-6 py-5 flex flex-col justify items-center">
+            <img [src]="images.VerifiedIconUpdateProfile" alt="" />
+            <h2 class="text-lg font-semibold text-[#383a3e]">Hire Talent</h2>
+          </div>
 
-        <ion-list>
-          <ion-list-header>Selected Skills</ion-list-header>
-          <ion-item *ngFor="let skill of selectedSkills">
-            <ion-label>
-              {{ skill.jobTitle }} - {{ skill.skillLevel }}
-            </ion-label>
-            <ion-note slot="end">₦{{ skill.amount | number }}</ion-note>
-          </ion-item>
-        </ion-list>
+          <!-- Modal Body -->
+          <div class="px-6 py-5 text-center">
+            <p class="text-[#383a3e] font-medium mb-2">
+              Are you sure you want to hire this talent?
+            </p>
+            <p class="text-sm text-gray-500 mb-4">
+              Some actions are irreversible
+            </p>
+          </div>
 
-        <div class="text-right py-4 font-semibold">
-          Σ Total: {{ totalPrice | currency : "₦" }}
+          <!-- Modal Footer -->
+          <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
+            <ion-button
+              fill="solid"
+              class="ion-btn--successgreen rounded-md"
+              (click)="confirmPreview()"
+            >
+              Yes
+            </ion-button>
+
+            <ion-button
+              class="rounded-md shadow-lg w-full text-black"
+              fill="clear"
+              (click)="dismiss('cancel')"
+            >
+              No
+            </ion-button>
+          </div>
         </div>
-
-        <ion-button expand="block" color="dark" (click)="confirmPreview()">
-          Confirm Preview
-        </ion-button>
+        <!-- </ion-content> -->
       </ion-content>
     </ng-template>
   </ion-modal>

@@ -6,6 +6,14 @@
   position: relative;
 }
 
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}
+
 .check-icon {
   --ion-icon-width: 20px;
   --ion-icon-height: 20px;

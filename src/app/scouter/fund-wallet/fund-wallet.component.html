@@ -7,14 +7,13 @@
   <div
     class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
   >
-    <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
     <div class="relative z-10 text-white">
       <div class="flex items-start gap-3">
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight"
-            >Hi Vikiwest,</span
-          >
+          <span class="font-medium text-[24px] leading-tight">
+            Hi Vikiwest,
+          </span>
           <p class="text-gray-200 text-lg leading-relaxed">
             Deposit funds into your account or another individual’s account.
           </p>
@@ -31,6 +30,7 @@
 
     <button
       class="bg-[#101828] px-8 py-3 rounded-md text-white font-semibold text-[16px]"
+      (click)="openFundWalletPopup()"
     >
       Fund Wallet
     </button>

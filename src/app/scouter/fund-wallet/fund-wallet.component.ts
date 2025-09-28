@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { FundWalletPopupModalComponent } from 'src/app/utilities/modals/fund-wallet-popup-modal/fund-wallet-popup-modal.component';
 
 interface Deposit {
   amount: number;
@@ -234,7 +236,7 @@ export class FundWalletComponent implements OnInit {
     }
   }
 
-  constructor() {}
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}
 
@@ -262,4 +264,16 @@ export class FundWalletComponent implements OnInit {
   //   this.isIdentifierDropdownOpen = false;
   //   this.currentPage = 1;
   // }
+
+  // 👇 function to open modal
+  async openFundWalletPopup() {
+    const modal = await this.modalCtrl.create({
+      component: FundWalletPopupModalComponent,
+      // componentProps: { hire }, // ✅ pass the hire data
+      cssClass: 'fund-wallet-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: true,
+    });
+    await modal.present();
+  }
 }

@@ -5,6 +5,13 @@
   background-position: center;
   position: relative;
 }
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}
 
 .pagination-button {
   border: 1px solid #d0d5dd !important; /* gray-400 */

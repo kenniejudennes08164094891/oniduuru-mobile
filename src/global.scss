@@ -74,7 +74,6 @@ ion-input input {
   margin: auto; /* centers modal both vertically and horizontally */
 }
 
-
 body,
 div,
 p,
@@ -89,4 +88,17 @@ a {
   font-family: "Euclid Circular A";
 }
 
+.fund-wallet-modal {
+  --width: 90%;
+  --height: 90%;
+  // --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
 
+  margin: auto;
+}
+
+.fund-wallet-modal .modal-wrapper {
+  background: transparent !important; /* ensure backdrop is transparent */
+  box-shadow: none !important;
+}

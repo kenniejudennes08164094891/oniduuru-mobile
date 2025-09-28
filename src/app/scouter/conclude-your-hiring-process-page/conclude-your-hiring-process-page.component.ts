@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { imageIcons } from 'src/app/models/stores';
-import { ToastController } from '@ionic/angular';
+import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { Location } from '@angular/common';
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-conclude-your-hiring-process-page',
@@ -10,7 +11,10 @@ import { Location } from '@angular/common';
   styleUrls: ['./conclude-your-hiring-process-page.component.scss'],
   standalone: false,
 })
-export class ConcludeYourHiringProcessPageComponent implements OnInit {
+export class ConcludeYourHiringProcessPageComponent
+  extends BaseModal
+  implements OnInit
+{
   headerHidden: boolean = false;
   @Input() hire: any;
   @Input() selectedSkills: any[] = [];
@@ -18,6 +22,8 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
 
   images = imageIcons;
   isUpdated = false; // ✅ controls Update button visibility
+
+  isFormDisabled = false;
 
   // ✅ form data
   formData = {
@@ -32,10 +38,14 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
   constructor(
     private router: Router,
     private toastCtrl: ToastController,
-    private location: Location
-  ) {}
+    private location: Location,
+    modalCtrl: ModalController,
+    platform: Platform
+  ) {
+    super(modalCtrl, platform); // ✅ gets dismiss + back button
+  }
 
-  ngOnInit() {
+  override ngOnInit() {
     const nav = this.router.getCurrentNavigation();
     if (nav?.extras.state) {
       this.hire = nav.extras.state['hire'];
@@ -71,6 +81,7 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
 
   confirmPreview() {
     this.previewConfirmed = true;
+    this.isFormDisabled = true; // ✅ disable form
     this.closePreview();
   }
 
@@ -101,5 +112,13 @@ export class ConcludeYourHiringProcessPageComponent implements OnInit {
 
     // ✅ hide the button
     this.isUpdated = true;
+  }
+
+  onCancel() {
+    this.dismiss(null, 'cancel');
+  }
+
+  onConfirm() {
+    this.dismiss(null, 'confirm');
   }
 }

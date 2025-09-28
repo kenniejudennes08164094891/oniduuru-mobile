@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { TransferFundsPopupModalComponent } from 'src/app/utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
 
 interface Deposit {
   amount: number;
@@ -161,7 +163,7 @@ export class FundTransferComponent implements OnInit {
     }
   }
 
-  constructor() {}
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}
 
@@ -183,5 +185,17 @@ export class FundTransferComponent implements OnInit {
   selectMonth(month: string) {
     this.selectedMonth = month;
     this.isMonthDropdownOpen = false;
+  }
+
+  // 👇 function to open modal
+  async openTransferFundsPopup() {
+    const modal = await this.modalCtrl.create({
+      component: TransferFundsPopupModalComponent,
+      // componentProps: { hire }, // ✅ pass the hire data
+      cssClass: 'fund-wallet-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: true,
+    });
+    await modal.present();
   }
 }

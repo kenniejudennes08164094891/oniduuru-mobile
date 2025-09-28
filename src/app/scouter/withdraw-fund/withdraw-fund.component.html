@@ -30,6 +30,7 @@
     <p class="text-[16px] text-[#101828]">Recent fund Withdrawals</p>
 
     <button
+      (click)="openWithdrawFundsPopup()"
       class="bg-[#101828] px-8 py-3 rounded-md text-white font-semibold text-[16px]"
     >
       Withdraw Fund
@@ -299,7 +300,7 @@
     <ng-template #noDataTable>
       <tbody class="flex justify-center">
         <tr>
-          <td  class="text-center text-gray-500 py-6">
+          <td class="text-center text-gray-500 py-6">
             <img [src]="images.NoDataImage" class="mx-auto" alt="No Data" />
             <p class="text-lg font-medium">No withdrawals found</p>
             <p class="text-sm text-gray-400">Try adjusting your filters</p>

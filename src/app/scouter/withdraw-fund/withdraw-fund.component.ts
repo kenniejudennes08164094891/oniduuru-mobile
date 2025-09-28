@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
+import { WithdrawFundsPopupModalComponent } from 'src/app/utilities/modals/withdraw-funds-popup-modal/withdraw-funds-popup-modal.component';
 
 interface Deposit {
   amount: number;
@@ -101,7 +103,7 @@ export class WithdrawFundComponent implements OnInit {
   pageSize = 4;
   currentPage = 1;
 
-get filteredWithdrawal(): Deposit[] {
+  get filteredWithdrawal(): Deposit[] {
     return this.withdrawal.filter((d) => {
       let matchesYear = true;
       let matchesMonth = true;
@@ -161,7 +163,7 @@ get filteredWithdrawal(): Deposit[] {
     }
   }
 
-  constructor() {}
+  constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}
 
@@ -183,5 +185,17 @@ get filteredWithdrawal(): Deposit[] {
   selectMonth(month: string) {
     this.selectedMonth = month;
     this.isMonthDropdownOpen = false;
+  }
+
+  // 👇 function to open modal
+  async openWithdrawFundsPopup() {
+    const modal = await this.modalCtrl.create({
+      component: WithdrawFundsPopupModalComponent,
+      // componentProps: { hire }, // ✅ pass the hire data
+      cssClass: 'fund-wallet-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: true,
+    });
+    await modal.present();
   }
 }

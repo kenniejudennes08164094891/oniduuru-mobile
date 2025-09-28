@@ -13,3 +13,10 @@
 //   opacity: 0;
 //   z-index: 0;
 // }
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}

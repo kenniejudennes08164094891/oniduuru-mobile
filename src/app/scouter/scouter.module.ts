@@ -44,6 +44,9 @@ import { ViewTalentsLocationPageComponent } from './view-talents-location-page/v
 import { FindProfessionalsByLocationModalComponent } from '../utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
 import { ProceedToHireTalentPopupModalComponent } from '../utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
 import { ConcludeYourHiringProcessPageComponent } from './conclude-your-hiring-process-page/conclude-your-hiring-process-page.component';
+import { FundWalletPopupModalComponent } from '../utilities/modals/fund-wallet-popup-modal/fund-wallet-popup-modal.component';
+import { WithdrawFundsPopupModalComponent } from '../utilities/modals/withdraw-funds-popup-modal/withdraw-funds-popup-modal.component';
+import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
 
 @NgModule({
   imports: [
@@ -95,6 +98,9 @@ import { ConcludeYourHiringProcessPageComponent } from './conclude-your-hiring-p
     FindProfessionalsByLocationModalComponent,
     ProceedToHireTalentPopupModalComponent,
     ConcludeYourHiringProcessPageComponent,
+    FundWalletPopupModalComponent,
+    WithdrawFundsPopupModalComponent,
+    TransferFundsPopupModalComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })
