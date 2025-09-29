@@ -3,6 +3,7 @@ import { ModalController } from '@ionic/angular';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { TransferFundsPopupModalComponent } from 'src/app/utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
+import { TransferFundsReceiptModalComponent } from 'src/app/utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
 
 interface Deposit {
   amount: number;
@@ -191,11 +192,38 @@ export class FundTransferComponent implements OnInit {
   async openTransferFundsPopup() {
     const modal = await this.modalCtrl.create({
       component: TransferFundsPopupModalComponent,
-      // componentProps: { hire }, // ✅ pass the hire data
       cssClass: 'fund-wallet-modal',
       initialBreakpoint: 1,
       backdropDismiss: true,
     });
+
     await modal.present();
+
+    const { data, role } = await modal.onDidDismiss();
+
+    if (role === 'transferSuccess' && data) {
+      // ✅ push into your table array
+      this.transfer.unshift({
+        amount: data.amount,
+        walletName: data.toName,
+        walletAcctNo: data.toWalletId,
+        identifier: 'Fund Others',
+        status: data.status,
+        date: new Date(data.date),
+        bank: data.bank,
+        nubamAccNo: data.nubamAccNo,
+        walletId: data.walletId,
+      });
+
+      // ✅ show receipt
+      const receiptModal = await this.modalCtrl.create({
+        component: TransferFundsReceiptModalComponent,
+        componentProps: data,
+        cssClass: 'fund-wallet-modal',
+        initialBreakpoint: 1,
+        backdropDismiss: false,
+      });
+      await receiptModal.present();
+    }
   }
 }

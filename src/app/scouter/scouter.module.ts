@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { ScouterPageRoutingModule } from './scouter-routing.module';
 import { ScouterPage } from './scouter.page';
@@ -47,6 +47,9 @@ import { ConcludeYourHiringProcessPageComponent } from './conclude-your-hiring-p
 import { FundWalletPopupModalComponent } from '../utilities/modals/fund-wallet-popup-modal/fund-wallet-popup-modal.component';
 import { WithdrawFundsPopupModalComponent } from '../utilities/modals/withdraw-funds-popup-modal/withdraw-funds-popup-modal.component';
 import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
+import { FundWalletReceiptModalComponent } from '../utilities/modals/fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
+import { WithdrawReceiptModalComponent } from '../utilities/modals/withdraw-receipt-modal/withdraw-receipt-modal.component';
+import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
 
 @NgModule({
   imports: [
@@ -58,6 +61,7 @@ import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-f
     NgChartsModule,
     UtilitiesPageModule,
     SpinnerComponent,
+    ReactiveFormsModule,
   ],
   declarations: [
     ScouterHeaderComponent,
@@ -101,6 +105,9 @@ import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-f
     FundWalletPopupModalComponent,
     WithdrawFundsPopupModalComponent,
     TransferFundsPopupModalComponent,
+    FundWalletReceiptModalComponent,
+    WithdrawReceiptModalComponent,
+    TransferFundsReceiptModalComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

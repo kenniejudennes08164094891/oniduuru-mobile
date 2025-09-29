@@ -1,0 +1,71 @@
+<ion-header>
+  <div
+    class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b bg-[#1A1A1A]"
+  >
+    <h2 class="text-lg font-bold text-white">Fund Transfer Receipt</h2>
+    <button (click)="closeReceipt()" class="text-white hover:text-gray-400">
+      ✕
+    </button>
+  </div>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Powered by -->
+  <h3 class="w-full mx-auto p-3 text-[#49536E] text-[16px] text-center">
+    Powered by Shoft Africa ❤️
+  </h3>
+
+  <!-- Gradient Bar -->
+  <div
+    class="w-full h-2 rounded-full my-4"
+    style="background: linear-gradient(to right, #daa21f, #cc0000, #057a55)"
+  ></div>
+
+  <!-- Parties -->
+  <div class="space-y-2">
+    <div class="flex justify-between items-center text-[#49536E] text-[12px]">
+      <span>From(Wallet)</span>
+      <span>To (Bank)</span>
+    </div>
+    <div
+      class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
+    >
+      <span>{{ fromName || "Omosehin Kehinde Jude" }}</span>
+      <span>{{ toName || "Olorunda Victory Chidi" }}</span>
+    </div>
+    <div class="flex justify-between items-center text-[12px] text-[#49536E]">
+      <span>Wallet ID: {{ fromWalletId || " Oniduuru Admin Wallet" }}</span>
+      <span>Wallet ID: {{ toWalletId || "0325062797" }}</span>
+    </div>
+  </div>
+
+  <div
+    class="space-y-4 mt-6 bg-[#F3F4F6] px-4 py-2 rounded-lg text-[#49536E] text-[12px]"
+  >
+    <p class="flex justify-between items-center">
+      <span>Amount Withdrawn</span
+      ><span class="text-[13px] text-[#057A55] font-semibold"
+        >₦{{ amount | number }}</span
+      >
+    </p>
+    <p class="flex justify-between items-center">
+      <span>Transaction ID</span><span>{{ transactionId }}</span>
+    </p>
+    <p class="flex justify-between items-center">
+      <span>Date</span><span>{{ formattedDate }}</span>
+    </p>
+    <!-- <p class="flex justify-between items-center">
+      <span>Wallet ID</span><span>{{ walletId }}</span>
+    </p> -->
+    <p class="flex justify-between items-center">
+      <span>Status</span><span>{{ status }}</span>
+    </p>
+  </div>
+  <!-- Footer -->
+  <div class="w-full mx-auto mt-6 text-center">
+    <p class="p-3 text-[#49536E] text-[16px]">Thanks for trusting Oniduuru ∯</p>
+    <p class="text-[#968A64] text-[12px]">
+      <span>#Secure.</span><span>#Fast.</span><span>#ProudlyAfrican</span>
+    </p>
+  </div>
+</ion-content>

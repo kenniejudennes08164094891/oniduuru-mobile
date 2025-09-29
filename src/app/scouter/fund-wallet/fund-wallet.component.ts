@@ -269,11 +269,19 @@ export class FundWalletComponent implements OnInit {
   async openFundWalletPopup() {
     const modal = await this.modalCtrl.create({
       component: FundWalletPopupModalComponent,
-      // componentProps: { hire }, // ✅ pass the hire data
       cssClass: 'fund-wallet-modal',
-      initialBreakpoint: 1,
-      backdropDismiss: true,
     });
+
+    modal.onDidDismiss().then((result) => {
+      if (result.role === 'submitted' && result.data) {
+        // 🔹 Push into the main deposit array
+        this.deposit = [result.data, ...this.deposit];
+
+        // 🔹 Reset to first page (optional, so user sees new deposit on top)
+        this.currentPage = 1;
+      }
+    });
+
     await modal.present();
   }
 }

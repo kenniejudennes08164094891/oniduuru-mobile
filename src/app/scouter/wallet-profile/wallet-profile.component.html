@@ -419,20 +419,20 @@
       </div>
 
       <!-- Update Record (Unlock button) only after save -->
-      <button
+      <!-- <button
         *ngIf="isFormLocked"
         type="button"
         (click)="triggerOtpStep()"
         class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
       >
         Update Record
-      </button>
+      </button> -->
     </div>
   </form>
 </ion-content>
 
 <!-- OTP TEMPLATE -->
-<ion-modal [isOpen]="isOtpStep" (didDismiss)="isOtpStep = false">
+<!-- <ion-modal [isOpen]="isOtpStep" (didDismiss)="isOtpStep = false">
   <ng-template>
     <ion-content class="ion-padding">
       <div class="bg-[#EDF0F4] py-6 text-center rounded-lg mt-3 space-y-1">
@@ -487,4 +487,4 @@
       </div>
     </ion-content>
   </ng-template>
-</ion-modal>
+</ion-modal> -->

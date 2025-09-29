@@ -102,3 +102,23 @@ a {
   background: transparent !important; /* ensure backdrop is transparent */
   box-shadow: none !important;
 }
+
+.fund-wallet-receipt-modal {
+  --width: 85%;
+  --height: 85%;
+  --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
+
+  margin: auto; /* centers modal both vertically and horizontally */
+}
+
+.withdraw-receipt-modal {
+  --width: 85%;
+  --height: 85%;
+  --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
+
+  margin: auto; /* centers modal both vertically and horizontally */
+}

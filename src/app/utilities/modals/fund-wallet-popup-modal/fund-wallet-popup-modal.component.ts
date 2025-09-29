@@ -1,14 +1,8 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  NgZone,
-} from '@angular/core';
+import { Component, Input, NgZone } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { PaymentService } from 'src/app/services/payment.service';
+import { FundWalletReceiptModalComponent } from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 
 @Component({
   selector: 'app-fund-wallet-popup-modal',
@@ -16,8 +10,27 @@ import { PaymentService } from 'src/app/services/payment.service';
   styleUrls: ['./fund-wallet-popup-modal.component.scss'],
   standalone: false,
 })
-export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
+export class FundWalletPopupModalComponent extends BaseModal {
   @Input() isModalOpen: boolean = false;
+
+  // 🔹 Form model
+  fundType: 'Fund Self' | 'Fund Others' | null = null;
+
+  walletAccNo: string = '';
+  walletName: string = '';
+  reason: string = '';
+  agreed: boolean = false;
+
+  copied: boolean = false;
+
+  formSubmitted = false;
+
+  // 🔹 Upload state
+  selectedFile: File | null = null;
+  previewUrl: string | ArrayBuffer | null = null;
+
+  amount: number | null = null;
+  formattedAmount: string = '';
 
   constructor(
     modalCtrl: ModalController,
@@ -29,26 +42,60 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     super(modalCtrl, platform);
   }
 
-  // ngOnInit() {}
-
   closeModal() {
     this.modalCtrl.dismiss();
   }
 
-  //   images = imageIcons;
-  selectedFile: File | null = null;
-  previewUrl: string | ArrayBuffer | null = null;
+  onAmountChange(value: string) {
+    // remove non-digits
+    const numericValue = value.replace(/\D/g, '');
 
-  override dismiss() {
-    super.dismiss();
+    // convert to number
+    this.amount = numericValue ? parseInt(numericValue, 10) : null;
+
+    // format with commas & ₦
+    this.formattedAmount = this.amount
+      ? '₦ ' + this.amount.toLocaleString()
+      : '';
   }
 
+  // Upload handlers with validation
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+
     if (file) {
+      // ✅ Validate file type
+      const allowedTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/gif',
+        'image/svg+xml',
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        this.showToast(
+          'Invalid file type. Please upload an image (PNG, JPG, JPEG, GIF, SVG).',
+          'danger'
+        );
+        this.removeScreenshot();
+        return;
+      }
+
+      // ✅ Validate file size (e.g., max 2MB)
+      const maxSizeInMB = 2;
+      if (file.size > maxSizeInMB * 1024 * 1024) {
+        this.showToast(
+          `File is too large. Max size is ${maxSizeInMB}MB.`,
+          'danger'
+        );
+        this.removeScreenshot();
+        return;
+      }
+
       this.selectedFile = file;
 
+      // ✅ Preview using Base64
       const reader = new FileReader();
       reader.onload = () => {
         this.ngZone.run(() => {
@@ -58,36 +105,110 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       reader.readAsDataURL(file);
     }
   }
+
+  // Extra input validation (for walletAcc & walletName)
+  private validateForm(): boolean {
+    if (!this.amount || this.amount <= 0) {
+      this.showToast('Enter a valid amount greater than zero.', 'danger');
+      return false;
+    }
+
+    if (!this.walletAccNo || !/^\d{10,11}$/.test(this.walletAccNo)) {
+      this.showToast(
+        'Enter a valid wallet account number (10–11 digits).',
+        'danger'
+      );
+      return false;
+    }
+
+    if (!this.walletName || !/^[A-Za-z ]+$/.test(this.walletName)) {
+      this.showToast(
+        'Wallet name is required and must contain only letters.',
+        'danger'
+      );
+      return false;
+    }
+
+    if (!this.selectedFile) {
+      this.showToast('Please upload a valid receipt screenshot.', 'danger');
+      return false;
+    }
+
+    if (!this.agreed) {
+      this.showToast('You must agree to terms & conditions.', 'warning');
+      return false;
+    }
+
+    return true;
+  }
+
+  // Submit form with validation check
+  async submitDeposit() {
+    this.formSubmitted = true;
+    if (!this.validateForm()) return;
+
+    const transactionId = 'INV-' + Date.now();
+
+    const depositData = {
+      amount: this.amount,
+      transactionId,
+      status: 'Successful',
+      date: new Date(),
+      fromName: 'Omosehin Kehinde Jude',
+      toName: this.walletName,
+      fromWalletId: 'Oniduuru Admin Wallet',
+      toWalletId: this.walletAccNo,
+      walletName: this.walletName,
+      walletAcctNo: this.walletAccNo, // ✅ renamed to match interface
+      identifier: this.fundType || 'N/A',
+      receiptUrl: this.previewUrl as string,
+    };
+
+    // 🔹 Push to parent table (emit or service)
+    this.modalCtrl.dismiss(depositData, 'submitted');
+
+    // 🔹 Open receipt modal
+    const receiptModal = await this.modalCtrl.create({
+      component: FundWalletReceiptModalComponent,
+      componentProps: {
+        ...depositData,
+        date: depositData.date.toISOString(),
+      },
+      cssClass: 'fund-wallet-receipt-modal',
+      initialBreakpoint: 1,
+      backdropDismiss: false,
+    });
+    await receiptModal.present();
+  }
+
   removeScreenshot() {
     this.selectedFile = null;
     this.previewUrl = null;
   }
-// THIS SHOULD BE PART OFTHE FORM SUBMIT
-  // async uploadReceipt() {
-  //   if (this.selectedFile) {
-  //     this.paymentService.setPaymentStatus({
-  //       isPaid: true,
-  //       receiptUrl: this.previewUrl as string,
-  //       transactionId: 'INV-2025-0615-013',
-  //     });
 
-  //     const toast = await this.toastCtrl.create({
-  //       message: 'Receipt uploaded successfully ✅',
-  //       duration: 2000,
-  //       position: 'bottom',
-  //       color: 'success',
-  //     });
-  //     await toast.present();
+  async copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copied = true;
 
-  //     // 👇 using BaseModal's dismiss
-  //     // await this.dismiss();
+      this.showToast('Copied to clipboard ✅', 'success');
 
-  //     // open awaiting verification modal
-  //     // const modal = await this.modalCtrl.create({
-  //     //   component: AwaitingPaymentVerificationModalComponent,
-  //     //   cssClass: 'awaiting-modal',
-  //     // });
-  //     // await modal.present();
-  //   }
-  // }
+      // Reset icon back to copy after 2s
+      setTimeout(() => {
+        this.copied = false;
+      }, 2000);
+    } catch (err) {
+      this.showToast('Failed to copy ❌', 'danger');
+    }
+  }
+
+  private async showToast(message: string, color: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 2000,
+      position: 'bottom',
+      color,
+    });
+    await toast.present();
+  }
 }

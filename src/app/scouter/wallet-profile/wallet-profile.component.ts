@@ -47,7 +47,6 @@ export class WalletProfileComponent implements OnInit {
   nin = '';
   number = '';
 
-
   filteredTitle: string[] = [];
   filteredGender: string[] = [];
   filteredMaritalStatus: string[] = [];
@@ -68,31 +67,6 @@ export class WalletProfileComponent implements OnInit {
 
   constructor(private location: Location) {}
 
-  triggerOtpStep() {
-    this.isOtpStep = true;
-    this.startCountdown();
-  }
-
-  startCountdown() {
-    this.countdown = 60;
-    const interval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown === 0) clearInterval(interval);
-    }, 1000);
-  }
-
-  verifyOtp() {
-    const enteredOtp = this.otp.join('');
-    if (enteredOtp === '1234') {
-      // Replace with backend check
-      this.isFormLocked = false;
-      this.isOtpStep = false;
-      this.otp = ['', '', '', '', '', ''];
-    } else {
-      alert('Invalid OTP, try again!');
-    }
-  }
-
   bvnCtrl = new FormControl('', [
     Validators.required,
     Validators.pattern(/^[0-9]{11}$/),
@@ -106,28 +80,6 @@ export class WalletProfileComponent implements OnInit {
     Validators.required,
     Validators.pattern(/^[0-9]{11}$/),
   ]);
-
-  moveToNext(event: any, index: number) {
-    const input = event.target as HTMLInputElement;
-
-    if (input.value && index < this.otpArray.length - 1) {
-      const nextInput = input.parentElement?.querySelectorAll('input')[
-        index + 1
-      ] as HTMLInputElement;
-      if (nextInput) nextInput.focus();
-    }
-
-    if (
-      !input.value &&
-      index > 0 &&
-      event.inputType === 'deleteContentBackward'
-    ) {
-      const prevInput = input.parentElement?.querySelectorAll('input')[
-        index - 1
-      ] as HTMLInputElement;
-      if (prevInput) prevInput.focus();
-    }
-  }
 
   ngOnInit() {
     this.filteredTitle = [...this.title];

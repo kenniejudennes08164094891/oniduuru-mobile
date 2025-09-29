@@ -11,14 +11,29 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <form action="">
-    <div class="flex justify-between items-center px-10">
-      <div class="flex items-center gap-3">
-        <input type="radio" /> <span>Fund My Wallet</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <input type="radio" /> <span>Fund Others</span>
-      </div>
+  <form>
+
+ 
+    <div class="flex justify-between items-center gap-4 mt-6 px-10">
+      <label class="flex items-center space-x-2">
+        <input
+          type="radio"
+          name="fundType"
+          value="Fund Self"
+          [(ngModel)]="fundType"
+        />
+        <span>Fund Self</span>
+      </label>
+
+      <label class="flex items-center space-x-2">
+        <input
+          type="radio"
+          name="fundType"
+          value="Fund Others"
+          [(ngModel)]="fundType"
+        />
+        <span>Fund Others</span>
+      </label>
     </div>
 
     <!-- Info Note -->
@@ -31,20 +46,35 @@
           >Send a fund deposit to the account:</span
         >
         <br />
-        333345457 (MoniePoint MFB) <ion-icon name="copy-outline"></ion-icon>
+        333345457 (MoniePoint MFB)
+        <ion-icon
+          [name]="copied ? 'checkmark-outline' : 'copy-outline'"
+          class="cursor-pointer"
+          [ngClass]="copied ? 'text-green-500' : 'text-[#0033FF]'"
+          (click)="copyToClipboard('333345457 (MoniePoint MFB)')"
+        ></ion-icon>
+
         <br />
-        Account Name:(Oniduuru admin wallet account)
+        Account Name: (Oniduuru admin wallet account)
       </span>
     </div>
 
     <!-- Amount -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]">Amount</label>
+      <label class="text-[#344054] text-[14px]">Amount</label>
       <input
-        type="number"
+        type="text"
+        [ngModel]="formattedAmount"
+        (ngModelChange)="onAmountChange($event)"
+        name="amount"
         placeholder="₦ 45,000"
+        required
+        pattern="^[0-9,]+$"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
       />
+      <p *ngIf="!amount && formSubmitted" class="text-red-500 text-sm">
+        Amount is required.
+      </p>
     </div>
 
     <!-- UPLOAD CONTAINER -->
@@ -98,44 +128,63 @@
 
     <!-- Wallet Acc -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]"
+      <label class="text-[#344054] text-[14px]"
         >Designated Wallet Account</label
       >
       <input
         type="number"
+        [(ngModel)]="walletAccNo"
+        name="walletAcc"
         placeholder="3056578914"
+        required
+        pattern="^[0-9]{10,11}$"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
       />
+      <p
+        *ngIf="
+          formSubmitted && (!walletAccNo || walletAccNo.toString().length < 10)
+        "
+        class="text-red-500 text-sm"
+      >
+        Enter a valid wallet account number (10–11 digits).
+      </p>
     </div>
 
     <!-- Wallet Name -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]"
-        >Designated Wallet Name</label
-      >
+      <label class="text-[#344054] text-[14px]">Designated Wallet Name</label>
       <input
         type="text"
-        placeholder="Viki West "
+        [(ngModel)]="walletName"
+        name="walletName"
+        placeholder="Viki West"
+        required
+        pattern="^[A-Za-z ]+$"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
       />
+      <p *ngIf="formSubmitted && !walletName" class="text-red-500 text-sm">
+        Wallet name is required and must contain only letters.
+      </p>
     </div>
 
     <!-- Reason -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]">Reason (Optional)</label>
+      <label class="text-[#344054] text-[14px]">Reason (Optional)</label>
       <textarea
-        type="text"
-        placeholder="Write Your thoughts here..."
+        [(ngModel)]="reason"
+        name="reason"
+        placeholder="Write your thoughts here..."
+        pattern="^[A-Za-z0-9 .,!?-]*$"
         class="border border-[#D9DCE5] px-3 pt-2 pb-10 w-full rounded-lg bg-white placeholder:text-gray-300"
       ></textarea>
     </div>
 
+    <!-- Terms -->
     <div class="flex items-center gap-4 text-[#101828] mt-8">
-      <input type="checkbox" />
-
+      <input type="checkbox" [(ngModel)]="agreed" name="agreed" />
       <div>
         I agree with
-        <span href="" class="text-[#0033FF]">terms and conditions </span>
+        <span href="" class="text-[#0033FF]">terms and conditions</span>
       </div>
     </div>
   </form>
@@ -143,6 +192,7 @@
   <div class="bg-white mt-10 pt-2 pb-16 flex justify-end">
     <button
       class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+      (click)="submitDeposit()"
     >
       Create Fund Deposit
     </button>

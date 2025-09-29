@@ -191,11 +191,19 @@ export class WithdrawFundComponent implements OnInit {
   async openWithdrawFundsPopup() {
     const modal = await this.modalCtrl.create({
       component: WithdrawFundsPopupModalComponent,
-      // componentProps: { hire }, // ✅ pass the hire data
       cssClass: 'fund-wallet-modal',
       initialBreakpoint: 1,
       backdropDismiss: true,
     });
+
+    modal.onDidDismiss().then((result) => {
+      if (result.role === 'submitted' && result.data) {
+        // push the new withdrawal at the top
+        this.withdrawal = [result.data, ...this.withdrawal];
+        this.currentPage = 1;
+      }
+    });
+
     await modal.present();
   }
 }
