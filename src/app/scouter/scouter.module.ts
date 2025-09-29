@@ -57,7 +57,7 @@ import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer
     FormsModule,
     IonicModule,
     ScouterPageRoutingModule,
-    TalentPageModule,
+    //TalentPageModule,
     NgChartsModule,
     UtilitiesPageModule,
     SpinnerComponent,

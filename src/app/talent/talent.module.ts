@@ -9,13 +9,11 @@ import { TalentDashboardComponent } from './talent-dashboard/talent-dashboard.co
 import { TalentHeaderComponent } from './talent-header/talent-header.component';
 import { SpinnerComponent } from '../utilities/spinner/spinner.component';
 import { ProfilePageComponent } from './profile-page/profile-page.component';
+import { SharedModule } from '../shared/shared.module';
+import { AvatarSettingsPopoverComponent } from '../shared/modals/avatar-settings-popover/avatar-settings-popover.component';
+import { ReactiveFormsModule } from '@angular/forms';
 @NgModule({
-  declarations: [
-    TalentPage,
-    TalentDashboardComponent,
-    TalentHeaderComponent,
-    ProfilePageComponent,
-  ],
+  declarations: [TalentPage,TalentDashboardComponent,ProfilePageComponent,AvatarSettingsPopoverComponent ],
   imports: [
     CommonModule,
     FormsModule,
@@ -23,6 +21,11 @@ import { ProfilePageComponent } from './profile-page/profile-page.component';
     TalentPageRoutingModule,
     UtilitiesPageModule,
     SpinnerComponent,
-  ],
+    SharedModule,
+    ReactiveFormsModule
+  ],exports: [
+    TalentHeaderComponent,
+    AvatarSettingsPopoverComponent  // optional: if you want to reuse elsewhere
+  ]
 })
 export class TalentPageModule {}

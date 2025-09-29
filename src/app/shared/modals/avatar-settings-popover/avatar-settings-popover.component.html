@@ -1,23 +1,45 @@
-<div class="flex flex-col w-48 p-2 bg-white">
-  <div class="flex items-center mb-4">
-    <img src="/assets/icon/profile.png" alt="profile"/>
-    <button class="text-left px-4 py-2 hover:bg-gray-100 rounded" (click)="navigateTo('/talent/profile-page')">
+<div class="flex flex-col w-56 p-4 bg-white rounded-2xl shadow-md space-y-4">
+  <!-- Profile -->
+  <div class="flex items-center space-x-3">
+    <img src="/assets/icon/profile.png" alt="profile" class="w-5 h-5" />
+    <button
+      class="flex-1 text-left px-3 py-2 hover:bg-gray-100 rounded"
+      (click)="navigateTo('/talent/profile-page')"
+    >
       Profile
     </button>
   </div>
 
-  <div class="flex items-center mb-4 bg-transparent">
-    <img src="/assets/icon/complaint.png" alt="complaint" />
-    <button class="text-left px-4 py-2 hover:bg-gray-100 rounded" (click)="navigateTo('/talent/log-complaint')">
+  <!-- Log Complaint -->
+  <div class="flex items-center space-x-3">
+    <img src="/assets/icon/complaint.png" alt="complaint" class="w-5 h-5" />
+    <button
+      class="flex-1 text-left px-3 py-2 hover:bg-gray-100 rounded"
+      (click)="navigateTo('/talent/log-complaint')"
+    >
       Log Complaint
     </button>
   </div>
 
-  <div class=" flex items-center mt-2 bg-transparent">
-    <img src="/assets/icon/logout.png" alt="logout"/>
-    <button class="text-left px-4 py-2  hover:bg-gray-100 rounded" (click)="logout()">
-      Logout
+  <!-- Route Back -->
+  <div class="flex items-center space-x-3">
+    <img src="/assets/icon/v-icon.png" alt="back" class="w-5 h-5" />
+    <button
+      class="flex-1 text-left px-3 py-2 hover:bg-gray-100 rounded"
+      (click)="navigateTo('/talent/dashboard')"
+    >
+      Route Back
     </button>
   </div>
 
+  <!-- Logout -->
+  <div class="flex items-center space-x-3">
+    <img src="/assets/icon/logout.png" alt="logout" class="w-5 h-5 text-red-600 filter invert-[32%] sepia-[98%] saturate-[7480%] hue-rotate-[347deg] brightness-[91%] contrast-[98%]" />
+    <button
+      class="flex-1 text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded font-semibold"
+      (click)="logout()"
+    >
+      Logout
+    </button>
+  </div>
 </div>

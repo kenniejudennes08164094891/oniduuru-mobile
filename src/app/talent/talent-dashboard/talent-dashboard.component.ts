@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
+import { Router } from '@angular/router';
 Chart.register(...registerables);
 
 @Component({
@@ -15,7 +16,6 @@ export class TalentDashboardComponent implements OnInit {
   showSpinner: boolean = true;
   currentYear: number = new Date().getFullYear();
 
-  // Greeting
   userName: string = 'Samuel';
   timeOfDay: string = '';
   timeIcon: string = '';
@@ -27,6 +27,14 @@ export class TalentDashboardComponent implements OnInit {
 
   // Wallet
   walletBalance: number = 30000.0;
+
+  constructor(private router: Router) { }
+
+  goToViewHires() {
+    this.router.navigate(['/view-hires']);
+  }
+  // Greeting
+
 
   // Dashboard stats (numbers only)
   dashboardCards = [
@@ -61,6 +69,9 @@ export class TalentDashboardComponent implements OnInit {
     avatar: string;
   }[] = [];
 
+  routeToWallet() {
+    this.router.navigate(['/scouter/wallet-page']);
+  }
   ngOnInit(): void {
     this.setTimeOfDay();
 

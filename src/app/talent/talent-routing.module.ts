@@ -5,16 +5,16 @@ import { LoginCredentialsComponent } from './onboarding/login-credentials/login-
 import { OtherDetailsComponent } from './onboarding/other-details/other-details.component';
 import { TalentDetailsComponent } from './onboarding/talent-details/talent-details.component';
 import { VerifyCredentialsComponent } from './onboarding/verify-credentials/verify-credentials.component';
-import {TalentDashboardComponent} from "./talent-dashboard/talent-dashboard.component";
-// Update the import path below to the correct location of TalentProfilePageComponent
-// Example: If the file is actually at './profile-page/profile-page.component'
+import { TalentDashboardComponent } from "./talent-dashboard/talent-dashboard.component";
+import { LogComplaintsPopupModalComponent } from 'src/app/utilities/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
 import { ProfilePageComponent } from "./profile-page/profile-page.component";
+
 const routes: Routes = [
   {
     path: 'create-account',
     component: TalentPage,
     children: [
-      { path: '', redirectTo: 'talent-details', pathMatch: 'full' }, // default tab
+      { path: '', redirectTo: 'talent-details', pathMatch: 'full' },
       { path: 'talent-details', component: TalentDetailsComponent },
       { path: 'talent-other-details', component: OtherDetailsComponent },
       { path: 'talent-login-credentials', component: LoginCredentialsComponent },
@@ -26,14 +26,27 @@ const routes: Routes = [
     component: TalentDashboardComponent
   },
   {
-  path: 'profile-page',
-  component: ProfilePageComponent
-}
+    path: 'profile-page',
+    component: ProfilePageComponent
+  },
+  {
+    path: 'view-hires',
+    loadChildren: () => import('./view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
+  },
+  { path: 'profile-page', component: ProfilePageComponent },
+  { path: 'log-complaint', component: LogComplaintsPopupModalComponent },
 
+  // ✅ engagement details (requires id)
+  {
+    path: 'market-price-preposition/:id',
+    loadChildren: () =>
+      import('./market-price-preposition/market-price-preposition.module')
+        .then(m => m.MarketPricePrepositionPageModule)
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class TalentPageRoutingModule { }
+export class TalentPageRoutingModule {}
