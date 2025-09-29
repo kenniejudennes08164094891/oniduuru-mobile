@@ -20,7 +20,7 @@ export class AuthPage implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private toast: ToastsService
+    private toast: ToastsService,
   ) {
   }
 
@@ -45,20 +45,24 @@ export class AuthPage implements OnInit {
     this.loginText = "signing in...";
    setTimeout(async ():Promise<void> => {
      try {
-       const loginResponse = await firstValueFrom(this.authService.authenticateUser(this.loginForm.value));
-       if (loginResponse.isAuthenticated === true) {
-         await this.router.navigateByUrl(loginResponse.route);
-         this.toast.openSnackBar(loginResponse.message, 'success');
-       }else{
-         this.toast.openSnackBar('Oops!...Invalid login credential!', 'error');
+       const res = await firstValueFrom(this.authService.loginUser(this.loginForm.value));
+       if (res) {
+         let role = res?.details?.user?.role;
+         this.authService.setUserCredential(res);
+         this.toast.openSnackBar(`${res?.message}`, 'success');
+         await this.router.navigateByUrl(
+           role === 'scouter' ? '/scouter/dashboard' :
+              role === 'talent' ? '/talent/dashboard' : '/auth/login'
+         );
        }
      } catch (err: Error | any) {
        console.error("error from login>>", err);
        this.loginText = "Login";
-       this.toast.openSnackBar(err ?? 'Oops!...a login error occurred!', 'error');
+       this.toast.openSnackBar(err?.error?.message ?? 'Oops!...a login error occurred!', 'error');
      }
    },1200)
   }
+
 
 
   ngOnInit() {

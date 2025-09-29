@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { PopoverController } from '@ionic/angular';
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-avatar-settings-popover',
@@ -10,20 +11,17 @@ import { PopoverController } from '@ionic/angular';
 export class AvatarSettingsPopoverComponent {
   constructor(
     private router: Router,
-    private popoverCtrl: PopoverController
+    private popoverCtrl: PopoverController,
+    private authService: AuthService
   ) { }
 
-  navigateTo(path: string) {
-    this.popoverCtrl.dismiss();
-    this.router.navigate([path]);
+ async navigateTo(path: string):Promise<void> {
+   await this.popoverCtrl.dismiss();
+   await this.router.navigate([path]);
   }
 
-  logout() {
+  async logout():Promise<void> {
     // Clear any stored auth data if needed
-    localStorage.removeItem('token');
-    sessionStorage.clear();
-
-    // Navigate to welcome page
-    this.router.navigate(['/auth/welcome-page']);
+    await this.authService.logoutUser()
   }
 }

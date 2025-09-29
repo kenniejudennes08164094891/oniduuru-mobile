@@ -10,6 +10,7 @@ import { LogComplaintsPopupModalComponent } from '../log-complaints-popup-modal/
 import { Router, NavigationStart } from '@angular/router';
 import { Location } from '@angular/common';
 import { Subscription } from 'rxjs';
+import {AuthService} from "../../../services/auth.service";
 
 @Component({
   selector: 'app-profile-popup-settings-modal',
@@ -27,7 +28,8 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     private router: Router,
     private navCtrl: NavController,
     private location: Location,
-    private platform: Platform
+    private platform: Platform,
+    private authService:AuthService
   ) {}
 
   ngOnInit(): void {
@@ -40,9 +42,9 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     );
 
     // Browser back/forward
-    this.routerEventsSub = this.router.events.subscribe((event) => {
+    this.routerEventsSub =  this.router.events.subscribe(async(event) => {
       if (event instanceof NavigationStart) {
-        this.dismiss();
+       await this.dismiss();
       }
     });
   }
@@ -61,9 +63,9 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
   }
 
   /** 🔙 Go back to dashboard */
-  async goBack() {
+  async goBack():Promise<void> {
     await this.popoverCtrl.dismiss();
-    this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
+   await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
   }
 
   async openComplaintModal() {
@@ -74,19 +76,17 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  async openProfilePage() {
+  async openProfilePage():Promise<void> {
     await this.popoverCtrl.dismiss();
-    this.router.navigate(['scouter/profile']);
+   await this.router.navigate(['scouter/profile']);
   }
 
-  async openActivationPage() {
+  async openActivationPage():Promise<void> {
     await this.popoverCtrl.dismiss();
-    this.router.navigate(['scouter/account-activation']);
+   await this.router.navigate(['scouter/account-activation']);
   }
 
-  logoutUser() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    window.location.href = '/auth/login';
+  async logoutUser():Promise<any> {
+   await this.authService.logoutUser();
   }
 }

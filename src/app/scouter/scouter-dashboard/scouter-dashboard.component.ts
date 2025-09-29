@@ -7,6 +7,7 @@ import { PaymentService } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
+import {AuthService} from "../../services/auth.service";
 
 @Component({
   selector: 'app-scouter-dashboard',
@@ -50,22 +51,29 @@ export class ScouterDashboardComponent implements OnInit {
     private modalCtrl: ModalController,
     private paymentService: PaymentService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
-
-  goToViewHires() {
-    this.router.navigate(['/scouter/view-hires']);
-  }
-  goToHireTalent() {
-    this.router.navigate(['/scouter/hire-talent']);
+    private route: ActivatedRoute,
+    private authService: AuthService
+  ) {
+    this.getScouterDetails();
   }
 
-  goToWalletPage() {
-    this.router.navigate(['/scouter/wallet-page']);
+  getScouterDetails(){
+   const scouterDetails = this.authService.decodeScouterDetails();
+   console.log("scouter details>>", scouterDetails?.details?.user?.role);
+  }
+ async goToViewHires():Promise<void> {
+   await this.router.navigate(['/scouter/view-hires']);
+  }
+  async goToHireTalent():Promise<void>  {
+   await this.router.navigate(['/scouter/hire-talent']);
   }
 
-  goToHireDetails(hireId: string) {
-    this.router.navigate([
+ async goToWalletPage():Promise<void>  {
+   await this.router.navigate(['/scouter/wallet-page']);
+  }
+
+  async goToHireDetails(hireId: string) {
+   await this.router.navigate([
       `/market-engagement-market-price-preparation`,
       hireId,
     ]);

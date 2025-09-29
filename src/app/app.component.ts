@@ -3,6 +3,7 @@ import { Router, NavigationStart } from '@angular/router';
 import { MenuController, Platform } from '@ionic/angular';
 import { App as CapacitorApp } from '@capacitor/app';
 import { initFlowbite } from 'flowbite';
+import {AuthService} from "./services/auth.service";
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,8 @@ export class AppComponent implements OnInit {
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
-    private platform: Platform
+    private platform: Platform,
+    private authService: AuthService
   ) {
     document.body.classList.remove('dark');
   }
@@ -40,10 +42,10 @@ export class AppComponent implements OnInit {
         await this.menuCtrl.close('scouter-menu');
       } else if (this.router.url !== '/scouter/dashboard') {
         // Navigate back to main dashboard
-        this.router.navigate(['/scouter/dashboard']);
+       await this.router.navigate(['/scouter/dashboard']);
       } else {
         // Exit app from main page
-        CapacitorApp.exitApp();
+       await CapacitorApp.exitApp();
       }
     });
   }
@@ -53,7 +55,21 @@ export class AppComponent implements OnInit {
   }
 
   async navigateAndCloseMenu(route: string) {
-    await this.menuCtrl.close('scouter-menu');
-    this.router.navigate([route]);
+    if(route === "/scouter/dashboard"){
+      const isScouter = this.authService.decodeScouterDetails()?.details?.user?.role ?? null;
+      const isTalent = this.authService.decodeTalentDetails()?.details?.user?.role ?? null;
+      console.log({isScouter, isTalent});
+      await this.menuCtrl.close('scouter-menu');
+      await this.router.navigate(
+        isScouter === 'scouter' ? [route] :
+          isTalent === 'talent' ? ['/talent/dashboard'] : ['/auth/login']
+      );
+
+    }else{
+      await this.menuCtrl.close('scouter-menu');
+      await this.router.navigate([route]);
+    }
+
   }
+
 }

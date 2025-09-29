@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
 import { Router } from '@angular/router';
+import {AuthService} from "../../services/auth.service";
 Chart.register(...registerables);
 
 @Component({
@@ -28,10 +29,20 @@ export class TalentDashboardComponent implements OnInit {
   // Wallet
   walletBalance: number = 30000.0;
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {
+    this.getTalentDetails();
+  }
 
-  goToViewHires() {
-    this.router.navigate(['/view-hires']);
+  getTalentDetails(){
+    const talentDetails = this.authService.decodeTalentDetails();
+    console.log("talent details>>", talentDetails?.details?.user?.role);
+  }
+
+ async goToViewHires():Promise<void>  {
+   await this.router.navigate(['/view-hires']);
   }
   // Greeting
 
@@ -69,8 +80,8 @@ export class TalentDashboardComponent implements OnInit {
     avatar: string;
   }[] = [];
 
-  routeToWallet() {
-    this.router.navigate(['/scouter/wallet-page']);
+  async routeToWallet():Promise<void> {
+   await this.router.navigate(['/scouter/wallet-page']);
   }
   ngOnInit(): void {
     this.setTimeOfDay();

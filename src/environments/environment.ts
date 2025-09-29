@@ -3,7 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  baseUrl: "https://oniduuru-staging.shoftafrica.com",
+  oniduuruLandingPage: "https://shoft-africa-apps-catalogue.vercel.app/landing-pages/oniduuru-marketplace"
 };
 
 /*
