@@ -1,13 +1,23 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>scouter</ion-title>
-  </ion-toolbar>
+<ion-header class="bg-white">
+  <div class="w-full flex justify-between items-center px-4 py-2">
+    <!-- App Logo/Title -->
+
+    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+
+    <div class="flex items-center gap-4">
+      <!-- Notification Icon with Badge -->
+      <button
+        (click)="goBack()"
+        class="shadow-2xl px-5 py-2 rounded-xl border border-white bg-[#CDD5DF80] text-white"
+      >
+        Back
+      </button>
+    </div>
+  </div>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">scouter</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <!-- <ion-header> -->
+  <div class="py-6 px-4 bg-gray-100">Create an account</div>
+  <!-- </ion-header> -->
 </ion-content>

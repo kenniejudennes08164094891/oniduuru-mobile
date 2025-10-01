@@ -50,6 +50,9 @@ import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-f
 import { FundWalletReceiptModalComponent } from '../utilities/modals/fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 import { WithdrawReceiptModalComponent } from '../utilities/modals/withdraw-receipt-modal/withdraw-receipt-modal.component';
 import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
+import { FundWalletRequestPageComponent } from './fund-wallet-request-page/fund-wallet-request-page.component';
+import { WithdrawFundsRequestPageComponent } from './withdraw-funds-request-page/withdraw-funds-request-page.component';
+import { TransferFundsRequestPageComponent } from './transfer-funds-request-page/transfer-funds-request-page.component';
 
 @NgModule({
   imports: [
@@ -108,6 +111,9 @@ import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer
     FundWalletReceiptModalComponent,
     WithdrawReceiptModalComponent,
     TransferFundsReceiptModalComponent,
+    FundWalletRequestPageComponent,
+    WithdrawFundsRequestPageComponent,
+    TransferFundsRequestPageComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
 })

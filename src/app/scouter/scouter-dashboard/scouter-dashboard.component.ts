@@ -22,7 +22,7 @@ export class ScouterDashboardComponent implements OnInit {
   images = imageIcons;
   loading: string = 'Loading...';
   showSpinner: boolean = true;
-  userName: string = 'Vikiwest';
+  userName: string = 'Viki West';
   balance: number = 50220.1;
   timeOfDay: string = '';
   timeIcon: string = '';
@@ -387,30 +387,5 @@ export class ScouterDashboardComponent implements OnInit {
     });
   }
 
-  // MockRecentHires: MockPayment[] = [
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
-  //     name: 'John Doe',
-  //     date: 'Sep 10, 2025, 11:45 AM',
-  //     amount: 123120.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
-  //     name: 'Jane Smith',
-  //     date: 'Sep 9, 2025, 03:15 PM',
-  //     amount: 123250.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
-  //     name: 'Michael Johnson',
-  //     date: 'Sep 8, 2025, 09:30 AM',
-  //     amount: 23475.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
-  //     name: 'Emily Davis',
-  //     date: 'Sep 7, 2025, 07:50 PM',
-  //     amount: 234599.99,
-  //   },
-  // ];
+
 }

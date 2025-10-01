@@ -1,4 +1,4 @@
-import { Component, Input, NgZone } from '@angular/core';
+import { Component, Input, NgZone, OnInit } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { PaymentService } from 'src/app/services/payment.service';
@@ -10,7 +10,7 @@ import { FundWalletReceiptModalComponent } from '../fund-wallet-receipt-modal/fu
   styleUrls: ['./fund-wallet-popup-modal.component.scss'],
   standalone: false,
 })
-export class FundWalletPopupModalComponent extends BaseModal {
+export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   @Input() isModalOpen: boolean = false;
 
   // 🔹 Form model
@@ -139,6 +139,11 @@ export class FundWalletPopupModalComponent extends BaseModal {
       return false;
     }
 
+    if (!this.reason || this.reason.trim().length < 3) {
+      this.showToast('Enter a valid reason for deposit.', 'danger');
+      return false;
+    }
+
     return true;
   }
 
@@ -162,6 +167,7 @@ export class FundWalletPopupModalComponent extends BaseModal {
       walletAcctNo: this.walletAccNo, // ✅ renamed to match interface
       identifier: this.fundType || 'N/A',
       receiptUrl: this.previewUrl as string,
+      reason: this.reason, // ✅ add this line
     };
 
     // 🔹 Push to parent table (emit or service)

@@ -21,37 +21,13 @@
       </span>
     </div>
 
-    <!-- Bank Dropdown (use select for simplicity) -->
-    <div class="relative w-full">
-      <label>Select a Bank</label>
-      <div class="mt-2">
-        <select
-          formControlName="bank"
-          name="bank"
-          class="border border-[#D9DCE5] rounded-md px-4 py-3 w-full bg-[#F6F6F6]"
-        >
-          <option [ngValue]="null">Choose a bank</option>
-          <option *ngFor="let b of banks" [value]="b">{{ b }}</option>
-        </select>
-        <div
-          *ngIf="
-            transferForm.get('bank')?.touched &&
-            transferForm.get('bank')?.invalid
-          "
-          class="text-red-500 text-sm"
-        >
-          Bank is required
-        </div>
-      </div>
-    </div>
-
-    <!--  Acc -->
+    <!-- Account Number -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]"
-        >Designated Wallet Acc Number</label
+      <label class="text-[#344054] text-[14px]"
+        >Designated Wallet Acct Number</label
       >
       <input
-        type="number"
+        type="text"
         formControlName="accountNumber"
         placeholder="3056578914"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
@@ -63,34 +39,58 @@
         "
         class="text-red-500 text-sm"
       >
-        Valid account number required
+        <span *ngIf="transferForm.get('accountNumber')?.errors?.['required']">
+          Account number is required.
+        </span>
+        <span *ngIf="transferForm.get('accountNumber')?.errors?.['pattern']">
+          Must be 11 digits only.
+        </span>
       </div>
     </div>
 
     <!-- Wallet Name -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]"
-        >Designated Wallet Name</label
-      >
+      <label class="text-[#344054] text-[14px]">Designated Wallet Name</label>
       <input
         type="text"
         formControlName="walletName"
         placeholder="Viki West"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
       />
+      <div
+        *ngIf="
+          transferForm.get('walletName')?.touched &&
+          transferForm.get('walletName')?.invalid
+        "
+        class="text-red-500 text-sm"
+      >
+        Wallet name is required (min 3 characters).
+      </div>
     </div>
 
     <!-- Amount -->
     <div class="space-y-2 mt-8">
-      <label for="" class="text-[#344054] text-[14px]"
-        >Input Amount to transfer</label
-      >
+      <label class="text-[#344054] text-[14px]">Input Amount to transfer</label>
       <input
         type="number"
         formControlName="amount"
         placeholder="₦ 700,000"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
       />
+      <div
+        *ngIf="
+          transferForm.get('amount')?.touched &&
+          transferForm.get('amount')?.invalid
+        "
+        class="text-red-500 text-sm"
+      >
+        <span *ngIf="transferForm.get('amount')?.errors?.['required']">
+          Amount is required.
+        </span>
+        <span *ngIf="transferForm.get('amount')?.errors?.['min']">
+          Amount must be at least ₦100.
+        </span>
+      </div>
     </div>
 
     <!-- Info Note -->
@@ -114,6 +114,15 @@
         >I agree with
         <span class="text-blue-500">terms and conditions</span></span
       >
+    </div>
+    <div
+      *ngIf="
+        transferForm.get('agreeTerms')?.touched &&
+        transferForm.get('agreeTerms')?.invalid
+      "
+      class="text-red-500 text-sm"
+    >
+      You must accept the terms before continuing.
     </div>
   </form>
 

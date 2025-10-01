@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
-import { MockRecentHires } from 'src/app/models/mocks';
+import { banks, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { WithdrawReceiptModalComponent } from '../withdraw-receipt-modal/withdraw-receipt-modal.component'; // <-- added
@@ -28,24 +28,14 @@ export class WithdrawFundsPopupModalComponent
   images = imageIcons;
   hires = MockRecentHires;
 
-  banks: String[] = [
-    'Access Bank Nigeria Plc',
-    'Citibank Nigeria Limited',
-    'Access Diamond Bank Plc',
-    'Ecobank Nigeria',
-    'Zenith Bank International',
-    'Fidelity Bank Plc',
-    'First Bank of Nigeria Plc',
-    'First City Monument Bank',
-    'Guaranty Trust Bank Plc',
-    'Heritage Bank',
-    'Providus Bank',
-    'Polaris Bank',
-    'Stanbic IBTC Bank Plc',
-    'Standard Chattered Bank',
-    'Sterling Bank Plc',
-    'Union Bank Nigeria Plc',
-  ];
+  formSubmitted = false;
+
+  
+  walletAccNo: string = '';
+  walletName: string = '';
+  agreed: boolean = false;
+
+  banks = banks;
 
   // User’s chosen bank (single value)
   bank: string | null = null;
@@ -58,7 +48,7 @@ export class WithdrawFundsPopupModalComponent
   accountNumber: string = '';
   amount: number | null = null;
   walletId: string = '0033392845'; // default (can be replaced)
-  agreed: boolean = false;
+  // agreed: boolean = false;
 
   // file preview
   selectedFile: File | null = null;
@@ -134,49 +124,51 @@ export class WithdrawFundsPopupModalComponent
       this.presentToast('Enter a valid amount greater than zero');
       return false;
     }
-    if (!this.agreed) {
-      this.presentToast('You must agree to terms & conditions', 'warning');
-      return false;
-    }
+    // if (!this.agreed) {
+    //   this.presentToast('You must agree to terms & conditions', 'warning');
+    //   return false;
+    // }
     return true;
   }
 
-async submitWithdrawal() {
-  if (!this.validateInputs()) return;
+  async submitWithdrawal() {
+    if (!this.validateInputs()) return;
 
-  const transactionId = 'WD-' + Date.now();
-  const now = new Date();
+    const transactionId = 'WD-' + Date.now();
+    const now = new Date();
 
-  const newWithdrawal = {
-    amount: this.amount!,
-    walletName: 'Current User',
-    walletAcctNo: this.accountNumber,
-    identifier: 'Withdraw',
-    status: 'Pending' as const,
-    date: now,
-    bank: this.bank,   // ✅ already string
-    nubamAccNo: this.accountNumber,
-    walletId: this.walletId,
-    transactionId,
-    receiptUrl: this.previewUrl as string | null,
-  };
+    const newWithdrawal = {
+      amount: this.amount!,
+      walletName: 'Current User',
+      walletAcctNo: this.accountNumber,
+      identifier: 'Withdraw',
+      status: 'Pending' as const,
+      date: now,
+      bank: this.bank!,
+      nubamAccNo: this.accountNumber,
+      walletId: this.walletId,
+      transactionId,
+      receiptUrl: this.previewUrl as string | null,
+      reason: 'Personal withdrawal', // 👈 you can capture reason here too
+    };
 
-  this.modalCtrl.dismiss(newWithdrawal, 'submitted');
+    // Pass data back to parent
+    this.modalCtrl.dismiss(newWithdrawal, 'submitted');
 
-  const receiptModal = await this.modalCtrl.create({
-    component: WithdrawReceiptModalComponent,
-    componentProps: {
-      ...newWithdrawal,
-      date: now.toISOString(),
-      fromName: 'Omosehin Kehinde Jude',
-      toName: 'Olorunda Victory Chidi',
-      fromWalletId: 'OniduuruAdmin Wallet',
-      toWalletId: newWithdrawal.nubamAccNo,
-    },
-    cssClass: 'withdraw-receipt-modal',
-    backdropDismiss: false,
-    initialBreakpoint: 1,
-  });
-  await receiptModal.present();
-}
+    // Also open receipt modal with same data
+    const receiptModal = await this.modalCtrl.create({
+      component: WithdrawReceiptModalComponent,
+      componentProps: {
+        ...newWithdrawal,
+        date: now.toISOString(),
+        fromName: 'Omosehin Kehinde Jude',
+        toName: 'Olorunda Victory Chidi',
+        fromWalletId: 'OniduuruAdmin Wallet',
+        toWalletId: newWithdrawal.nubamAccNo,
+      },
+      cssClass: 'withdraw-receipt-modal',
+      backdropDismiss: false,
+    });
+    await receiptModal.present();
+  }
 }

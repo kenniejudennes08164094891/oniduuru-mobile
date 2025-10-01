@@ -11,7 +11,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 })
 export class MarketStatsComponent {
   hire: MockPayment | undefined;
-  userName: string = 'Vikiwest'; // default name
+  userName: string = 'Viki West'; // default name
   // --- PIE CHART ---
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,

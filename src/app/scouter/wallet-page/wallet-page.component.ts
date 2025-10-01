@@ -17,7 +17,7 @@ export class WalletPageComponent implements OnInit {
 
   headerHidden: boolean = false;
   images = imageIcons;
-  userName = 'Vikiwest';
+  userName = 'Viki West';
   walletBalance: number = 170000;
   accountNumber: string = '0447429947';
   balanceHidden: boolean = false;

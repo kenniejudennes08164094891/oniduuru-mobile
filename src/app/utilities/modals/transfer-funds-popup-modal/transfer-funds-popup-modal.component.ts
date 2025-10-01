@@ -28,29 +28,32 @@ export class TransferFundsPopupModalComponent
 
   images = imageIcons;
   hires = MockRecentHires;
-  banks: string[] = [
-    'Access Bank Nigeria Plc',
-    'Citibank Nigeria Limited',
-    'Access Diamond Bank Plc',
-    'Ecobank Nigeria',
-    'Zenith Bank International',
-    'Fidelity Bank Plc',
-    'First Bank of Nigeria Plc',
-    'First City Monument Bank',
-    'Guaranty Trust Bank Plc',
-    'Heritage Bank',
-    'Providus Bank',
-    'Polaris Bank',
-    'Stanbic IBTC Bank Plc',
-    'Standard Chattered Bank',
-    'Sterling Bank Plc',
-    'Union Bank Nigeria Plc',
-  ];
 
-  selectedBank: string | null = null;
+  formSubmitted = false;
+
+  walletAccNo: string = '';
+  walletName: string = '';
+  agreed: boolean = false;
+
+  // banks = banks;
+
+  // User’s chosen bank (single value)
   bank: string | null = null;
 
+  selectedBank: string | null = null;
   isBankDropdownOpen = false;
+
+  // form fields
+  // bank: string | null = null;
+  accountNumber: string = '';
+  amount: number | null = null;
+  walletId: string = '0033392845'; // default (can be replaced)
+  // agreed: boolean = false;
+
+  // file preview
+  selectedFile: File | null = null;
+  previewUrl: string | ArrayBuffer | null = null;
+
 
   transferForm!: FormGroup;
 
@@ -67,11 +70,20 @@ export class TransferFundsPopupModalComponent
 
   override ngOnInit() {
     this.transferForm = this.fb.group({
-      bank: [null, Validators.required],
-      accountNumber: ['', [Validators.required, Validators.minLength(10)]],
-      walletName: ['', Validators.required],
-      amount: [null, [Validators.required, Validators.min(100)]],
-      agreeTerms: [false, Validators.requiredTrue],
+      // bank: [null, Validators.required],  // uncomment if you want bank dropdown back
+      accountNumber: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^\d{10,11}$/), // ✅ only 10–11 digits allowed
+        ],
+      ],
+      walletName: ['', [Validators.required, Validators.minLength(3)]],
+      amount: [
+        null,
+        [Validators.required, Validators.min(100)], // must be ≥ 100
+      ],
+      agreeTerms: [false, Validators.requiredTrue], // ✅ must tick checkbox
     });
   }
 
@@ -96,7 +108,7 @@ export class TransferFundsPopupModalComponent
       bank: formData.bank,
       nubamAccNo: formData.accountNumber,
       walletId: '0033392845',
-      fromName: 'Viki West',
+      fromName: 'Omosehin Kehinde Jude',
       toName: formData.walletName,
       fromWalletId: '0325062797',
       toWalletId: formData.accountNumber,
@@ -110,11 +122,11 @@ export class TransferFundsPopupModalComponent
     this.isBankDropdownOpen = !this.isBankDropdownOpen;
   }
 
-  selectBank(bank: string) {
-    this.selectedBank = bank;
-    this.isBankDropdownOpen = false;
-    this.bank = bank; // ✅ keep it as string
-  }
+  // selectBank(bank: string) {
+  //   this.selectedBank = bank;
+  //   this.isBankDropdownOpen = false;
+  //   this.bank = bank; // ✅ keep it as string
+  // }
   // ngOnInit() {}
 
   closeModal() {
@@ -122,8 +134,8 @@ export class TransferFundsPopupModalComponent
   }
 
   //   images = imageIcons;
-  selectedFile: File | null = null;
-  previewUrl: string | ArrayBuffer | null = null;
+  // selectedFile: File | null = null;
+  // previewUrl: string | ArrayBuffer | null = null;
 
   override dismiss() {
     super.dismiss();

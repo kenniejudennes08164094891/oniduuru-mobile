@@ -18,6 +18,8 @@ export class FundWalletReceiptModalComponent implements OnInit {
   @Input() receiptUrl!: string;
   @Input() walletAcc!: string;
 
+  
+
   constructor(private modalCtrl: ModalController) {}
 
   ngOnInit() {}

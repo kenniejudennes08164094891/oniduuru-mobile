@@ -1,0 +1,259 @@
+<ion-header>
+  <app-scouter-header></app-scouter-header>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Top card -->
+  <div
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+  >
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="images.ViewHireFolderIcon" alt="" />
+        <div class="items-center">
+          <span class="font-medium text-[24px] leading-tight">
+            Hi Viki West,
+          </span>
+          <p class="text-gray-200 text-lg leading-relaxed">
+            View specific details of your fund withdrawal request.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <!-- Designated NUBAN Bank -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Designated NUBAN Bank
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ withdrawal?.bank }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Designated NUBAN Acct Number -->
+    <div
+      class="bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Designated NUBAN Acct Number
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ withdrawal?.nubamAccNo }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Amount Withdrawn -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Amount Withdrawn
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          ₦{{ withdrawal?.amount | number }}
+        </p>
+      </div>
+    </div>
+
+    <!-- My Wallet ID -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">My Wallet ID</h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ withdrawal?.walletId }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Designated NUBAN Acct Name -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Designated NUBAN Acct Name
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ withdrawal?.bank }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Withdrawal Status -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Withdrawal Status
+        </h4>
+
+        <span *ngIf="withdrawal as w">
+          <span
+            [ngClass]="[
+              'rounded-full h-2 w-2 inline-block',
+              w.status === 'Successful' ? 'bg-[#057A55]' : '',
+              w.status === 'Pending' ? 'bg-[#EB0B00]' : '',
+              w.status === 'Reversed' ? 'bg-[#0033FF]' : '',
+              w.status === 'Declined' ? 'bg-[#EB0B00]' : ''
+            ]"
+          ></span>
+          {{ w.status }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Date of Withdrawa Request -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Date of Withdrawa Request
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ withdrawal?.date | date : "MMM d, y h:mma" }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Withdrawal Reference ID -->
+    <div
+      class="space-y-5 bg-[#F8FAFC] border-[1px] border-[#E3E5EA] text-center py-6 rounded-lg shadow-lg"
+    >
+      <div class="">
+        <h4 class="text-[20px] text-[#101828] font-semibold">
+          Withdrawal Reference ID
+        </h4>
+        <p class="text-[16px] text-[#919194] font-normal">
+          {{ referenceId }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEN A VERSION OF THE RECIEPT GENERATED GOES HERE -->
+  <div class="p-4 mt-10">
+    <div
+      id="receipt"
+      class="bg-white w-full h-full mx-auto shadow-md rounded-md"
+    >
+        <div
+          class="logcomplainModalBG flex justify-center items-center px-4 py-3 border-b rounded-t-xl bg-[#1A1A1A]"
+        >
+          <h2 class="text-lg font-bold text-white">Withdrawal Receipt</h2>
+        </div>
+
+      <div class="px-4 py-6">
+        <!-- Powered by -->
+        <h3 class="w-full mx-auto p-3 text-[#49536E] text-[16px] text-center">
+          Powered by Shoft Africa ❤️
+        </h3>
+
+        <!-- Gradient Bar -->
+        <div
+          class="w-full h-2 rounded-full my-4"
+          style="
+            background: linear-gradient(to right, #daa21f, #cc0000, #057a55);
+          "
+        ></div>
+
+        <!-- Parties -->
+        <div class="space-y-2">
+          <div
+            class="flex justify-between items-center text-[#49536E] text-[12px]"
+          >
+            <span>From(Wallet)</span>
+            <span>To (Bank)</span>
+          </div>
+          <div
+            class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
+          >
+            <!-- From Name: your platform wallet user -->
+            <span>{{ withdrawal?.fromName || "Omosehin Kehinde Jude" }}</span>
+            <!-- To Name: actual bank account name -->
+            <span>{{ withdrawal?.acctName || "Olorunda Victory Chidi" }}</span>
+          </div>
+          <div
+            class="flex justify-between items-center text-[12px] text-[#49536E]"
+          >
+            <span
+              >Wallet ID: {{ withdrawal?.walletAcctNo || "0325062797" }}</span
+            >
+            <!-- <span>Wallet ID: {{ toWalletId || "" }}</span> -->
+          </div>
+        </div>
+
+        <div
+          class="space-y-4 mt-6 bg-[#F3F4F6] px-4 py-2 rounded-lg text-[#49536E] text-[12px]"
+        >
+          <p class="flex justify-between items-center">
+            <span>Amount Withdrawn</span
+            ><span class="text-[13px] text-[#057A55] font-semibold"
+              >₦{{ withdrawal?.amount | number }}
+            </span>
+          </p>
+          <p class="flex justify-between items-center">
+            <span>Transaction ID</span>
+            <span>{{ referenceId }}</span>
+          </p>
+          <p class="flex justify-between items-center">
+            <span>Bank Name</span> <span>{{ withdrawal?.bank }}</span>
+          </p>
+          <p class="flex justify-between items-center">
+            <span>Account Number</span>
+            <span>{{ withdrawal?.nubamAccNo }}</span>
+          </p>
+          <p class="flex justify-between items-center">
+            <span>Date</span>
+            <span>{{ withdrawal?.date | date : "MMM d, y h:mma" }}</span>
+          </p>
+          <p class="flex justify-between items-center">
+            <span>Status</span>
+            <span *ngIf="withdrawal as w">
+              <span
+                [ngClass]="[
+                  '',
+                  w.status === 'Successful' ? 'text-[#057A55]' : '',
+                  w.status === 'Pending' ? 'text-[#EB0B00]' : '',
+                  w.status === 'Reversed' ? 'text-[#0033FF]' : '',
+                  w.status === 'Declined' ? 'text-[#EB0B00]' : ''
+                ]"
+              >
+                <!-- {{ w.status }} -->
+                {{ withdrawal?.status }}
+              </span>
+            </span>
+          </p>
+        </div>
+        <!-- Footer -->
+        <div class="w-full mx-auto mt-6 text-center">
+          <p class="p-3 text-[#49536E] text-[16px]">
+            Thanks for trusting Oniduuru ∯
+          </p>
+          <p class="text-[#968A64] text-[12px]">
+            <span>#Secure.</span><span>#Fast.</span><span>#ProudlyAfrican</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <button
+      (click)="downloadReceipt()"
+      class="bg-[#101828] text-white px-6 py-2 text-[20px] font-medium rounded-lg mt-10"
+    >
+      Download Receipt
+    </button>
+  </div>
+</ion-content>

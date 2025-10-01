@@ -15,6 +15,9 @@ import { ViewAllTalentsPageComponent } from './scouter/view-all-talents-page/vie
 import { ViewTalentsLocationPageComponent } from './scouter/view-talents-location-page/view-talents-location-page.component';
 import { ConcludeYourHiringProcessPageComponent } from './scouter/conclude-your-hiring-process-page/conclude-your-hiring-process-page.component';
 import { MarketPricePrepositionPage } from './talent/market-price-preposition/market-price-preposition.page';
+import { FundWalletRequestPageComponent } from './scouter/fund-wallet-request-page/fund-wallet-request-page.component';
+import { WithdrawFundsRequestPageComponent } from './scouter/withdraw-funds-request-page/withdraw-funds-request-page.component';
+import { TransferFundsRequestPageComponent } from './scouter/transfer-funds-request-page/transfer-funds-request-page.component';
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
 
@@ -36,27 +39,30 @@ const routes: Routes = [
   {
     path: 'talent',
 
-    loadChildren: () => import('./talent/talent.module').then(m => m.TalentPageModule),
+    loadChildren: () =>
+      import('./talent/talent.module').then((m) => m.TalentPageModule),
   },
   {
     path: 'view-hires',
     loadChildren: () =>
-      import('./talent/view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
+      import('./talent/view-hires/view-hires.module').then(
+        (m) => m.ViewHiresPageModule
+      ),
   },
-    {
+  {
     path: 'market-price-preposition',
     loadChildren: () =>
-      import('./talent/market-price-preposition/market-price-preposition.module').then(
-        (m) => m.MarketPricePrepositionPageModule
-      ),
+      import(
+        './talent/market-price-preposition/market-price-preposition.module'
+      ).then((m) => m.MarketPricePrepositionPageModule),
   },
   { path: '', redirectTo: 'market-price-preposition', pathMatch: 'full' },
-    {
+  {
     path: 'market-price-preposition',
     loadChildren: () =>
-      import('./talent/market-price-preposition/market-price-preposition.module').then(
-        (m) => m.MarketPricePrepositionPageModule
-      ),
+      import(
+        './talent/market-price-preposition/market-price-preposition.module'
+      ).then((m) => m.MarketPricePrepositionPageModule),
   },
   {
     path: 'utilities',
@@ -96,12 +102,24 @@ const routes: Routes = [
     component: FundWalletComponent,
   },
   {
+    path: 'scouter/wallet-page/fund-wallet/fund-wallet-request/:id',
+    component: FundWalletRequestPageComponent,
+  },
+  {
     path: 'scouter/wallet-page/withdraw-funds',
     component: WithdrawFundComponent,
   },
   {
+    path: 'scouter/wallet-page/withdraw-funds/withdraw-funds-request/:id',
+    component: WithdrawFundsRequestPageComponent,
+  },
+  {
     path: 'scouter/wallet-page/fund-transfer',
     component: FundTransferComponent,
+  },
+  {
+    path: 'scouter/wallet-page/fund-transfer/fund-transfer-request',
+    component: TransferFundsRequestPageComponent,
   },
   {
     path: 'scouter/hire-talent/welcome-to-oniduuru',
@@ -127,4 +145,4 @@ const routes: Routes = [
   ],
   exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

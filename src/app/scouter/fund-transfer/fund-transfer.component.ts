@@ -1,21 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { MockRecentHires } from 'src/app/models/mocks';
+import { MockRecentHires, transfer } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { TransferFundsPopupModalComponent } from 'src/app/utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
 import { TransferFundsReceiptModalComponent } from 'src/app/utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
-
-interface Deposit {
-  amount: number;
-  walletName: string;
-  walletAcctNo: string;
-  identifier: string;
-  status: 'Successful' | 'Pending' | 'Declined' | 'Reversed';
-  bank: string;
-  nubamAccNo: string;
-  walletId: string;
-  date: Date; // 👈 use Date instead of string
-}
+import { WithdrawFundsPopupModalComponent } from 'src/app/utilities/modals/withdraw-funds-popup-modal/withdraw-funds-popup-modal.component';
 
 @Component({
   selector: 'app-fund-transfer',
@@ -53,58 +43,13 @@ export class FundTransferComponent implements OnInit {
   isMonthDropdownOpen = false;
 
   // Mock data for table
-  transfer: Deposit[] = [
-    {
-      amount: 653655,
-      walletName: 'Omoseyin Kehinde Jude',
-      walletAcctNo: '1234211234',
-      identifier: 'Fund Others',
-      status: 'Successful',
-      date: new Date(2025, 3, 17, 10, 57), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 450000,
-      walletName: 'Adeola Michael',
-      walletAcctNo: '9988776655',
-      identifier: 'Fund Self',
-      status: 'Pending',
-      date: new Date(2025, 4, 4, 10, 7), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 320500,
-      walletName: 'Chukwuemeka Nnamdi',
-      walletAcctNo: '5566778899',
-      identifier: 'Fund Others',
-      status: 'Declined',
-      date: new Date(2025, 4, 24, 10, 8), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 450000,
-      walletName: 'Adeola Michael',
-      walletAcctNo: '9988776655',
-      identifier: 'Fund Self',
-      status: 'Reversed',
-      date: new Date(2021, 9, 24, 9, 57), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-  ];
+  transfer = transfer;
 
   // ✅ Pagination setup
   pageSize = 4;
   currentPage = 1;
 
-  get filteredTransfer(): Deposit[] {
+  get filteredTransfer(): any[] {
     return this.transfer.filter((d) => {
       let matchesYear = true;
       let matchesMonth = true;
@@ -153,7 +98,7 @@ export class FundTransferComponent implements OnInit {
     return Math.ceil(this.filteredTransfer.length / this.pageSize);
   }
 
-  get paginatedTransfer(): Deposit[] {
+  get paginatedTransfer(): any[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredTransfer.slice(start, start + this.pageSize);
   }
@@ -164,7 +109,17 @@ export class FundTransferComponent implements OnInit {
     }
   }
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(private modalCtrl: ModalController, private router: Router) {}
+
+  async goToRequest(transfer: any): Promise<void> {
+    await this.router.navigate(
+      [
+        'scouter/wallet-page/withdraw-funds/transfer-funds-request/:id',
+        transfer.id,
+      ],
+      { state: { transfer } }
+    );
+  }
 
   ngOnInit() {}
 
@@ -188,42 +143,46 @@ export class FundTransferComponent implements OnInit {
     this.isMonthDropdownOpen = false;
   }
 
+  get successfulCount(): number {
+    return this.transfer.filter((t) => t.status === 'Successful').length;
+  }
+
+  get pendingCount(): number {
+    return this.transfer.filter((t) => t.status === 'Pending').length;
+  }
+
+  get reversedCount(): number {
+    return this.transfer.filter((t) => t.status === 'Reversed').length;
+  }
+
+  get declinedCount(): number {
+    return this.transfer.filter((t) => t.status === 'Declined').length;
+  }
+
+  get totalCount(): number {
+    return this.transfer.length;
+  }
+
   // 👇 function to open modal
   async openTransferFundsPopup() {
     const modal = await this.modalCtrl.create({
-      component: TransferFundsPopupModalComponent,
+      component: WithdrawFundsPopupModalComponent,
       cssClass: 'fund-wallet-modal',
       initialBreakpoint: 1,
       backdropDismiss: true,
     });
 
+    modal.onDidDismiss().then((result) => {
+      if (result.role === 'submitted' && result.data) {
+        // assign a unique id if not already present
+        result.data.id = Date.now(); // simple unique id
+
+        // push the new withdrawal at the top
+        this.transfer = [result.data, ...this.transfer];
+        this.currentPage = 1;
+      }
+    });
+
     await modal.present();
-
-    const { data, role } = await modal.onDidDismiss();
-
-    if (role === 'transferSuccess' && data) {
-      // ✅ push into your table array
-      this.transfer.unshift({
-        amount: data.amount,
-        walletName: data.toName,
-        walletAcctNo: data.toWalletId,
-        identifier: 'Fund Others',
-        status: data.status,
-        date: new Date(data.date),
-        bank: data.bank,
-        nubamAccNo: data.nubamAccNo,
-        walletId: data.walletId,
-      });
-
-      // ✅ show receipt
-      const receiptModal = await this.modalCtrl.create({
-        component: TransferFundsReceiptModalComponent,
-        componentProps: data,
-        cssClass: 'fund-wallet-modal',
-        initialBreakpoint: 1,
-        backdropDismiss: false,
-      });
-      await receiptModal.present();
-    }
   }
 }
