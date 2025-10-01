@@ -34,6 +34,29 @@ export class ProfilePageComponent implements OnInit {
     private modalCtrl: ModalController, // 👈 add this
     public userService: UserService
   ) {}
+
+  organizationTypes: string[] = [
+    'Individual',
+    'Corporate',
+    'Small Business',
+    'NGO',
+    'Startup',
+    'Government',
+  ];
+  selectedOrgTypes: string[] = [];
+
+  addOrgType(event: any) {
+    const value = event.target.value;
+    if (value && !this.selectedOrgTypes.includes(value)) {
+      this.selectedOrgTypes.unshift(value); // add to top
+    }
+    event.target.value = ''; // reset dropdown
+  }
+
+  removeOrgType(index: number) {
+    this.selectedOrgTypes.splice(index, 1);
+  }
+
   ngOnInit() {}
 
   goToProfile() {

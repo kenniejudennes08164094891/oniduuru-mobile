@@ -164,12 +164,14 @@
         </div>
 
         <!-- Password -->
+        <!-- Password -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Password</label>
           <input
             type="password"
             placeholder="********************"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            readonly
           />
         </div>
 
@@ -194,28 +196,38 @@
     </div>
 
     <div class="mt-6 px-6">
-      <!-- Phone Number -->
+      <!-- Organization Type -->
       <div class="mb-4">
-        <div class="flex gap-3 items-center">
-          <label class="block text-gray-600 text-sm mb-2"
-            >Your Organization Type(s):</label
-          >
+        <div class="flex gap-3 items-center flex-wrap">
+          <label class="block text-gray-600 text-sm mb-2 w-full">
+            Your Organization Type(s):
+          </label>
+
+          <!-- Selected Tags -->
           <span
+            *ngFor="let org of selectedOrgTypes; let i = index"
             class="bg-[#CAD2DF] rounded-lg px-2 py-1 mb-2 flex items-center gap-1 w-fit"
           >
-            Individual
+            {{ org }}
             <button
               class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
+              (click)="removeOrgType(i)"
             >
               ×
             </button>
           </span>
         </div>
-        <input
-          type="text"
-          placeholder="e.g  Corporate, Small business, Individual...etc"
-          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
-        />
+
+        <!-- Dropdown -->
+        <select
+          class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          (change)="addOrgType($event)"
+        >
+          <option value="" disabled selected>Select organization type</option>
+          <option *ngFor="let type of organizationTypes" [value]="type">
+            {{ type }}
+          </option>
+        </select>
       </div>
 
       <div class="mb-4">
