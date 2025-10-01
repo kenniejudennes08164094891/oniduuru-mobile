@@ -32,7 +32,7 @@
           Designated Wallet Name
         </h4>
         <p class="text-[16px] text-[#919194] font-normal">
-          <!-- {{ transfer?.accName || "Olorunda Victory Chidi" }} -->
+          {{ transfer?.walletName }}
         </p>
       </div>
     </div>
@@ -76,7 +76,7 @@
           Source Wallet Name
         </h4>
         <p class="text-[16px] text-[#919194] font-normal">
-          <!-- {{ transfer?.fromName || "Omosehin Kehinde Jude" }} -->
+          {{ transfer?.walletName }}
         </p>
       </div>
     </div>
@@ -185,9 +185,9 @@
             class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
           >
             <!-- From Name: your platform wallet user -->
-            <!-- <span>{{ transfer?.fromName || "Omosehin Kehinde Jude" }}</span> -->
+            <span>{{ transfer?.fromName || "Omosehin Kehinde Jude" }}</span>
             <!-- To Name: actual bank account name -->
-            <!-- <span>{{ transfer?.acctName || "Olorunda Victory Chidi" }}</span> -->
+            <span>{{ transfer?.toName || "Olorunda Victory Chidi" }}</span>
           </div>
           <div
             class="flex justify-between items-center text-[12px] text-[#49536E]"
@@ -233,8 +233,7 @@
                   t.status === 'Declined' ? 'text-[#EB0B00]' : ''
                 ]"
               >
-                <!-- {{ w.status }} -->
-                {{ transfer?.status }}
+                {{ t.status }}
               </span>
             </span>
           </p>

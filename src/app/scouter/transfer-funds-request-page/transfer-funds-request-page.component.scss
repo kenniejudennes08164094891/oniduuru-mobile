@@ -1,8 +1,23 @@
-
-.logcomplainModalBG {
-  background-image: url("/assets/images/Log-complaint-background.png");
+.paid-dark-card-background {
+  background-image: url("/assets/images/PainDashboardBG.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  --background: transparent; // override Ionic default background
+  position: relative;
 }
+
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}
+
+  .logcomplainModalBG {
+    background-image: url("/assets/images/Log-complaint-background.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    --background: transparent; // override Ionic default background
+  }

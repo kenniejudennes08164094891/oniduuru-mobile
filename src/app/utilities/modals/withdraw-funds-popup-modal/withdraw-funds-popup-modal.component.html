@@ -23,7 +23,7 @@
     </div>
 
     <!-- Bank Dropdown (use select for simplicity) -->
-    <div class="relative w-full">
+    <!-- <div class="relative w-full">
       <label>Select NUBAN Bank</label>
       <div class="mt-2">
         <select
@@ -34,6 +34,37 @@
           <option [ngValue]="null">Choose a bank</option>
           <option *ngFor="let b of banks" [value]="b">{{ b }}</option>
         </select>
+      </div>
+    </div> -->
+
+    <div class="space-y-4 mt-6">
+      <!-- Year Dropdown -->
+      <div class="relative w-[]">
+        <div
+          class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+          (click)="toggleBankDropdown()"
+        >
+          <span class="text-[#101828] text-[14px]">
+            {{ selectedBank || "Select NUBAN Bank" }}
+          </span>
+          <ion-icon
+            [name]="
+              isBankDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+            "
+          ></ion-icon>
+        </div>
+        <div
+          *ngIf="isBankDropdownOpen"
+          class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 overflow-y-auto max-h-60"
+        >
+          <p
+            *ngFor="let bank of banks"
+            class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+            (click)="selectBank(bank)"
+          >
+            {{ bank }}
+          </p>
+        </div>
       </div>
     </div>
 

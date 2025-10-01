@@ -150,11 +150,11 @@
       id="receipt"
       class="bg-white w-full h-full mx-auto shadow-md rounded-md"
     >
-        <div
-          class="logcomplainModalBG flex justify-center items-center px-4 py-3 border-b rounded-t-xl bg-[#1A1A1A]"
-        >
-          <h2 class="text-lg font-bold text-white">Withdrawal Receipt</h2>
-        </div>
+      <div
+        class="logcomplainModalBG flex justify-center items-center px-4 py-3 border-b rounded-t-xl bg-[#1A1A1A]"
+      >
+        <h2 class="text-lg font-bold text-white">Withdrawal Receipt</h2>
+      </div>
 
       <div class="px-4 py-6">
         <!-- Powered by -->
@@ -232,8 +232,7 @@
                   w.status === 'Declined' ? 'text-[#EB0B00]' : ''
                 ]"
               >
-                <!-- {{ w.status }} -->
-                {{ withdrawal?.status }}
+                {{ w.status }}
               </span>
             </span>
           </p>

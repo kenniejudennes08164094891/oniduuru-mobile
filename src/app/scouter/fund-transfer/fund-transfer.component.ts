@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { MockRecentHires, transfer } from 'src/app/models/mocks';
+import { MockRecentHires, Transfer, transfer } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { TransferFundsPopupModalComponent } from 'src/app/utilities/modals/transfer-funds-popup-modal/transfer-funds-popup-modal.component';
 import { TransferFundsReceiptModalComponent } from 'src/app/utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
@@ -111,13 +111,13 @@ export class FundTransferComponent implements OnInit {
 
   constructor(private modalCtrl: ModalController, private router: Router) {}
 
-  async goToRequest(transfer: any): Promise<void> {
-    await this.router.navigate(
+  openTransfer(transfer: Transfer) {
+    this.router.navigate(
       [
-        'scouter/wallet-page/withdraw-funds/transfer-funds-request/:id',
+        '/scouter/wallet-page/fund-transfer/fund-transfer-request/',
         transfer.id,
       ],
-      { state: { transfer } }
+      { state: { transfer } } // 👈 pass the transfer object
     );
   }
 

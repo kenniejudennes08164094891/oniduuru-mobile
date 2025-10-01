@@ -118,7 +118,7 @@ const routes: Routes = [
     component: FundTransferComponent,
   },
   {
-    path: 'scouter/wallet-page/fund-transfer/fund-transfer-request',
+    path: 'scouter/wallet-page/fund-transfer/fund-transfer-request/:id',
     component: TransferFundsRequestPageComponent,
   },
   {

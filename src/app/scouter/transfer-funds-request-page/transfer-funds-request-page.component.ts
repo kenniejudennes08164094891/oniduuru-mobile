@@ -31,10 +31,8 @@ export class TransferFundsRequestPageComponent implements OnInit {
     } else {
       const transferId = this.route.snapshot.paramMap.get('id');
       if (transferId) {
-        console.warn(
-          'Transfer not found in state. Fetching by ID:',
-          transferId
-        );
+        const numericId = Number(transferId); // 👈 cast to number
+        this.transfer = this.transfers.find((t) => t.id === numericId);
       }
     }
   }

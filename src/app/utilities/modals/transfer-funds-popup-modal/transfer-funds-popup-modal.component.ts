@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
-import { MockRecentHires } from 'src/app/models/mocks';
+import { banks, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { TransferFundsReceiptModalComponent } from '../transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
@@ -53,7 +53,6 @@ export class TransferFundsPopupModalComponent
   // file preview
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
-
 
   transferForm!: FormGroup;
 
@@ -100,7 +99,7 @@ export class TransferFundsPopupModalComponent
 
     const formData = this.transferForm.value;
 
-    const transfer = {
+    const newTransfer = {
       amount: formData.amount,
       transactionId: 'TX-' + Date.now(),
       status: 'Successful',
@@ -114,8 +113,23 @@ export class TransferFundsPopupModalComponent
       toWalletId: formData.accountNumber,
     };
 
-    // ✅ Close this form modal
-    await this.modalCtrl.dismiss(transfer, 'transferSuccess');
+    // Pass data back to parent
+    this.modalCtrl.dismiss(newTransfer, 'submitted');
+
+    const receiptModal = await this.modalCtrl.create({
+      component: TransferFundsReceiptModalComponent,
+      componentProps: {
+        ...newTransfer,
+        date: new Date().toISOString(),
+        fromName: 'Omosehin Kehinde Jude',
+        toName: 'Olorunda Victory Chidi',
+        fromWalletId: 'OniduuruAdmin Wallet',
+        toWalletId: newTransfer.nubamAccNo,
+      },
+      cssClass: 'transfer-receipt-modal',
+      backdropDismiss: false,
+    });
+    await receiptModal.present();
   }
 
   toggleBankDropdown() {

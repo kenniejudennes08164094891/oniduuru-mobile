@@ -1537,6 +1537,7 @@ export const withdrawal: Withdrawal[] = [
 ];
 
 export interface Transfer {
+  id: number;
   amount: number;
   walletName: string;
   walletAcctNo: string;
@@ -1546,13 +1547,23 @@ export interface Transfer {
   nubamAccNo: string;
   walletId: string;
   date: Date; // 👈 use Date instead of string
+
+  // 👇 add these optional fields to fix your errors
+  acctName?: string;
+  fromName?: string;
+  toName?: string;
+  fromWalletId?: string;
 }
 
 export const transfer: Transfer[] = [
   {
+    id: 1,
     amount: 653655,
     walletName: 'Omoseyin Kehinde Jude',
     walletAcctNo: '1234211234',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
     identifier: 'Fund Others',
     status: 'Successful',
     date: new Date(2025, 3, 17, 10, 57), // May is month 4 (0-indexed)
@@ -1561,9 +1572,13 @@ export const transfer: Transfer[] = [
     walletId: '0033392845',
   },
   {
+    id: 2,
     amount: 450000,
     walletName: 'Adeola Michael',
     walletAcctNo: '9988776655',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
     identifier: 'Fund Self',
     status: 'Pending',
     date: new Date(2025, 4, 4, 10, 7), // May is month 4 (0-indexed)
@@ -1572,9 +1587,13 @@ export const transfer: Transfer[] = [
     walletId: '0033392845',
   },
   {
+    id: 3,
     amount: 320500,
     walletName: 'Chukwuemeka Nnamdi',
     walletAcctNo: '5566778899',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
     identifier: 'Fund Others',
     status: 'Declined',
     date: new Date(2025, 4, 24, 10, 8), // May is month 4 (0-indexed)
@@ -1583,9 +1602,13 @@ export const transfer: Transfer[] = [
     walletId: '0033392845',
   },
   {
+    id: 4,
     amount: 450000,
     walletName: 'Adeola Michael',
     walletAcctNo: '9988776655',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
     identifier: 'Fund Self',
     status: 'Reversed',
     date: new Date(2021, 9, 24, 9, 57), // May is month 4 (0-indexed)

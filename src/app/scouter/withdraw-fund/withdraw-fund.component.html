@@ -57,7 +57,7 @@
       </div>
       <div
         *ngIf="isYearDropdownOpen"
-        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 overflow-y-auto max-h-60"
       >
         <p
           *ngFor="let year of years"
