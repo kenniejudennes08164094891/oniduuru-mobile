@@ -7,12 +7,17 @@
   // height: 20%;
 }
 
-
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}
 ion-footer .overflow-x-auto {
   max-height: 40vh; /* adjust so it doesn’t take the whole screen */
   overflow-y: auto;
 }
-
 
 ion-content {
   // --padding-bottom: 120px; /* leave space so content doesn’t overlap footer */

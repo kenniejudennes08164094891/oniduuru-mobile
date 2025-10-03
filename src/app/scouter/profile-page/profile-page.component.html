@@ -134,7 +134,8 @@
           <label class="block text-gray-600 text-sm mb-2">Full Name</label>
           <input
             type="text"
-            placeholder="Viki West"
+            [(ngModel)]="profileData.fullName"
+            placeholder="Full Name"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
           />
         </div>
@@ -146,6 +147,8 @@
           >
           <input
             type="number"
+            [(ngModel)]="profileData.phoneNumber"
+            placeholder="Phone"
             placeholder="e.g 0908123456"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
           />
@@ -158,6 +161,8 @@
           >
           <input
             type="email"
+            [(ngModel)]="profileData.email"
+            placeholder="Email"
             placeholder="baba.saala@gmail.com"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
           />
@@ -182,6 +187,8 @@
           >
           <input
             type="text"
+            [(ngModel)]="profileData.location"
+            placeholder="Location"
             placeholder="e.g Ikeja, Lagos"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
           />
@@ -196,17 +203,17 @@
     </div>
 
     <div class="mt-6 px-6">
-      <!-- Organization Type -->
-      <div class="mb-4">
-        <div class="flex gap-3 items-center flex-wrap">
-          <label class="block text-gray-600 text-sm mb-2 w-full">
-            Your Organization Type(s):
-          </label>
+      <!-- Organisation Type -->
+      <div class="mb-4 relative">
+        <label class="block text-gray-600 text-sm mb-2 w-full">
+          Your Organization Type(s):
+        </label>
 
-          <!-- Selected Tags -->
+        <!-- Selected Tags -->
+        <div class="flex flex-wrap gap-2 mb-2">
           <span
             *ngFor="let org of selectedOrgTypes; let i = index"
-            class="bg-[#CAD2DF] rounded-lg px-2 py-1 mb-2 flex items-center gap-1 w-fit"
+            class="bg-[#CAD2DF] rounded-lg px-2 py-1 flex items-center gap-1 w-fit"
           >
             {{ org }}
             <button
@@ -218,16 +225,39 @@
           </span>
         </div>
 
-        <!-- Dropdown -->
-        <select
-          class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          (change)="addOrgType($event)"
-        >
-          <option value="" disabled selected>Select organization type</option>
-          <option *ngFor="let type of organizationTypes" [value]="type">
-            {{ type }}
-          </option>
-        </select>
+        <!-- Custom Dropdown -->
+        <div class="relative">
+          <!-- Trigger -->
+          <div
+            class="border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
+            (click)="toggleOrganisationDropdown()"
+          >
+            <span class="text-[#101828] text-[14px]">
+              Select Organisation Type
+            </span>
+            <ion-icon
+              [name]="
+                isOrganisationDropdownOpen
+                  ? 'chevron-up-outline'
+                  : 'chevron-down-outline'
+              "
+            ></ion-icon>
+          </div>
+
+          <!-- Dropdown list -->
+          <div
+            *ngIf="isOrganisationDropdownOpen"
+            class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 max-h-60 overflow-y-auto"
+          >
+            <p
+              *ngFor="let type of organizationTypes"
+              class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              (click)="addOrgTypeFromDropdown(type)"
+            >
+              {{ type }}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="mb-4">
@@ -236,6 +266,7 @@
         >
         <input
           type="text"
+          [(ngModel)]="profileData.scoutingPurpose"
           placeholder="Painting"
           class="w-full border-none rounded-md px-4 pb-32 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
         />
@@ -244,6 +275,7 @@
         <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
         <input
           type="text"
+          [(ngModel)]="profileData.payRange"
           placeholder="30,000"
           class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
           (input)="formatNumber($event)"

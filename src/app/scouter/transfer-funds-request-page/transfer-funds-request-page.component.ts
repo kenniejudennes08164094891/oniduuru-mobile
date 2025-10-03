@@ -16,6 +16,7 @@ export class TransferFundsRequestPageComponent implements OnInit {
   images = imageIcons;
   transfers: Transfer[] = transferMocks; // full list
   transfer?: Transfer; // selected withdrawal
+  referenceId!: string; // store as a property
 
   constructor(private router: Router, private route: ActivatedRoute) {
     const nav = this.router.getCurrentNavigation();
@@ -31,17 +32,17 @@ export class TransferFundsRequestPageComponent implements OnInit {
     } else {
       const transferId = this.route.snapshot.paramMap.get('id');
       if (transferId) {
-        const numericId = Number(transferId); // 👈 cast to number
+        const numericId = Number(transferId);
         this.transfer = this.transfers.find((t) => t.id === numericId);
       }
     }
-  }
 
-  get referenceId(): string {
-    if (!this.transfer) return '';
-    const timestamp = new Date(this.transfer.date).getTime();
-    const rand = Math.floor(100000 + Math.random() * 900000);
-    return `${this.transfer.walletAcctNo}-${timestamp}-${rand}`;
+    // 👇 generate referenceId once, not on every change detection
+    if (this.transfer) {
+      const timestamp = new Date(this.transfer.date).getTime();
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      this.referenceId = `${this.transfer.walletAcctNo}-${timestamp}-${rand}`;
+    }
   }
 
   async downloadReceipt() {

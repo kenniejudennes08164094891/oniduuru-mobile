@@ -36,7 +36,5 @@ export class NotificationsPopupModalComponent extends BaseModal {
 
     // Hardware back button already handled by BaseModal
   }
-  override dismiss() {
-    super.dismiss();
-  }
+
 }

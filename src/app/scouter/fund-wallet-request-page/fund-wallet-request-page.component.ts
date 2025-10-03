@@ -16,6 +16,7 @@ export class FundWalletRequestPageComponent implements OnInit {
   images = imageIcons;
   deposits: Deposit[] = depositMocks; // full list
   deposit?: Deposit; // selected deposit
+  referenceId: string = '';
 
   constructor(private router: Router, private route: ActivatedRoute) {
     const nav = this.router.getCurrentNavigation();
@@ -25,25 +26,21 @@ export class FundWalletRequestPageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // First try to get deposit from navigation state
     const navState = history.state;
     if (navState && navState.deposit) {
       this.deposit = navState.deposit;
     } else {
-      // Fallback: fetch by ID from route params if user refreshes or comes directly
       const depositId = this.route.snapshot.paramMap.get('id');
       if (depositId) {
-        // TODO: fetch from backend or local store using depositId
         console.warn('Deposit not found in state. Fetching by ID:', depositId);
       }
     }
-  }
 
-  get referenceId(): string {
-    if (!this.deposit) return '';
-    const timestamp = new Date(this.deposit.date).getTime();
-    const rand = Math.floor(100000 + Math.random() * 900000);
-    return `${this.deposit.walletAcctNo}-${timestamp}-${rand}`;
+    if (this.deposit) {
+      const timestamp = new Date(this.deposit.date).getTime();
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      this.referenceId = `${this.deposit.walletAcctNo}-${timestamp}-${rand}`;
+    }
   }
 
   async downloadReceipt() {

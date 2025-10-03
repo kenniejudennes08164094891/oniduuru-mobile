@@ -6,12 +6,31 @@
   background-position: center;
   position: relative;
 }
+
+/* ensure the parent has a predictable stacking context */
 .paid-dark-card-background {
   background-image: url("/assets/images/PainDashboardBG.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   position: relative;
+  // overflow: visible; /* allow children to overflow if needed */
+}
+
+/* the dark overlay */
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1; /* overlay sits above the background but below children */
+  pointer-events: none; /* overlay shouldn't block clicks on children */
+}
+
+/* make all direct children render above the overlay */
+.paid-dark-card-background > * {
+  position: relative;
+  z-index: 2; /* children (including your ion-button) will sit above overlay */
 }
 
 .circle-chart {

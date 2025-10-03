@@ -16,6 +16,7 @@ export class WithdrawFundsRequestPageComponent implements OnInit {
   images = imageIcons;
   withdrawals: Withdrawal[] = withdrawalMocks; // full list
   withdrawal?: Withdrawal; // selected withdrawal
+  referenceId: string = '';
 
   constructor(private router: Router, private route: ActivatedRoute) {
     const nav = this.router.getCurrentNavigation();
@@ -37,13 +38,13 @@ export class WithdrawFundsRequestPageComponent implements OnInit {
         );
       }
     }
-  }
 
-  get referenceId(): string {
-    if (!this.withdrawal) return '';
-    const timestamp = new Date(this.withdrawal.date).getTime();
-    const rand = Math.floor(100000 + Math.random() * 900000);
-    return `${this.withdrawal.walletAcctNo}-${timestamp}-${rand}`;
+    // 🔥 Generate referenceId only once here
+    if (this.withdrawal) {
+      const timestamp = new Date(this.withdrawal.date).getTime();
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      this.referenceId = `${this.withdrawal.walletAcctNo}-${timestamp}-${rand}`;
+    }
   }
 
   async downloadReceipt() {

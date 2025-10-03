@@ -39,9 +39,44 @@ export interface RecentReview {
 }
 
 export interface Location {
-  lat: number;
-  lng: number;
+  lat: any;
+  lng: any;
   city: string;
+}
+
+export interface InactiveUsersParam {
+  role: string;
+  durationInMonths: number;
+}
+
+export interface FilterScouterParam {
+  key: string;
+  param: string;
+}
+
+export interface ComplaintStatus {
+  status: string;
+}
+
+export interface BulkNotificationParams {
+  senderId: string;
+  receiverId: string[];
+  message: string;
+}
+
+export interface WalletProfileParams {
+  wallet_id?: string | undefined | any;
+  uniqueId?: string | undefined | any;
+}
+
+export interface PaginationParams {
+  skillset?: string[] | any;
+  location?: string | any;
+  skillLevel?: string | any;
+  search?: string | any;
+  limit: number;
+  pageNo: number;
+  statusParams?: string | any;
 }
 
 export interface MockPayment {

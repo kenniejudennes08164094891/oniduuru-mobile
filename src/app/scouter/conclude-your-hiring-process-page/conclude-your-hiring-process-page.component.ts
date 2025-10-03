@@ -116,9 +116,18 @@ export class ConcludeYourHiringProcessPageComponent
 
   onCancel() {
     this.dismiss(null, 'cancel');
+    this.router.navigate([
+      '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+    ]);
   }
 
   onConfirm() {
     this.dismiss(null, 'confirm');
   }
+
+  // goBack() {
+  //   this.router.navigate([
+  //     '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+  //   ]);
+  // }
 }
