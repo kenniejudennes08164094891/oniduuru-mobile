@@ -113,6 +113,16 @@ a {
   margin: auto; /* centers modal both vertically and horizontally */
 }
 
+.confirmation-modal {
+  --width: 90%;
+  --height: 80%;
+  --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
+
+  margin: auto; /* centers modal both vertically and horizontally */
+}
+
 .withdraw-receipt-modal {
   --width: 85%;
   --height: 85%;

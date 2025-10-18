@@ -10,7 +10,7 @@ import { LogComplaintsPopupModalComponent } from '../log-complaints-popup-modal/
 import { Router, NavigationStart } from '@angular/router';
 import { Location } from '@angular/common';
 import { Subscription } from 'rxjs';
-import {AuthService} from "../../../services/auth.service";
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-profile-popup-settings-modal',
@@ -29,7 +29,7 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private location: Location,
     private platform: Platform,
-    private authService:AuthService
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -42,9 +42,9 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     );
 
     // Browser back/forward
-    this.routerEventsSub =  this.router.events.subscribe(async(event) => {
+    this.routerEventsSub = this.router.events.subscribe(async (event) => {
       if (event instanceof NavigationStart) {
-       await this.dismiss();
+        await this.dismiss();
       }
     });
   }
@@ -63,9 +63,9 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
   }
 
   /** 🔙 Go back to dashboard */
-  async goBack():Promise<void> {
+  async goBack(): Promise<void> {
     await this.popoverCtrl.dismiss();
-   await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
+    await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
   }
 
   async openComplaintModal() {
@@ -76,17 +76,50 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  async openProfilePage():Promise<void> {
+  async openProfilePage(): Promise<void> {
     await this.popoverCtrl.dismiss();
-   await this.router.navigate(['scouter/profile']);
+    await this.router.navigate(['/scouter/profile']);
   }
 
-  async openActivationPage():Promise<void> {
+  async openActivationPage(): Promise<void> {
     await this.popoverCtrl.dismiss();
-   await this.router.navigate(['scouter/account-activation']);
+    await this.router.navigate(['/scouter/account-activation']);
   }
 
-  async logoutUser():Promise<any> {
-   await this.authService.logoutUser();
+  async logoutUser(): Promise<void> {
+    try {
+      // Subscribe to the logout observable to ensure the HTTP call executes
+      this.authService.logoutUser().subscribe({
+        next: () => {
+          console.log('✅ Logout successful');
+          // The redirect happens in the service, so we just close the popover
+          this.dismiss();
+          this.forceLogout();
+        },
+        error: (err) => {
+          console.error('❌ Logout failed:', err);
+          // Even if the API call fails, clear local data and redirect
+          this.forceLogout();
+        },
+      });
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Fallback: force logout even if something goes wrong
+      this.forceLogout();
+    }
+  }
+
+  // Fallback method to ensure logout happens
+  private forceLogout(): void {
+    // Manually clear auth data
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('eniyan');
+    localStorage.removeItem('registration_email');
+    localStorage.removeItem('profile_image');
+
+    // Close popover and redirect to login
+    this.dismiss();
+    this.router.navigate(['/auth/login']);
   }
 }

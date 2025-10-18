@@ -3,7 +3,9 @@ import { Router, NavigationStart } from '@angular/router';
 import { MenuController, Platform } from '@ionic/angular';
 import { App as CapacitorApp } from '@capacitor/app';
 import { initFlowbite } from 'flowbite';
-import {AuthService} from "./services/auth.service";
+import { AuthService } from './services/auth.service';
+import { UserService } from './services/user.service';
+import { AppInitService } from './services/app-init.service';
 
 @Component({
   selector: 'app-root',
@@ -15,12 +17,19 @@ export class AppComponent implements OnInit {
     private menuCtrl: MenuController,
     private router: Router,
     private platform: Platform,
-    private authService: AuthService
+    private authService: AuthService,
+    private userService: UserService,
+    private appInitService: AppInitService
   ) {
     document.body.classList.remove('dark');
   }
 
   ngOnInit(): void {
+    // Initialize app data
+    this.appInitService.initializeApp();
+
+    this.userService.initializeProfileImage();
+
     initFlowbite();
     document.body.classList.remove('dark');
 
@@ -42,10 +51,20 @@ export class AppComponent implements OnInit {
         await this.menuCtrl.close('scouter-menu');
       } else if (this.router.url !== '/scouter/dashboard') {
         // Navigate back to main dashboard
-       await this.router.navigate(['/scouter/dashboard']);
+        await this.router.navigate(['/scouter/dashboard']);
       } else {
         // Exit app from main page
-       await CapacitorApp.exitApp();
+        await CapacitorApp.exitApp();
+      }
+    });
+
+    // ✅ NEW: Listen for login events to re-initialize app data
+    this.authService.userLoggedIn$.subscribe((loggedIn) => {
+      if (loggedIn) {
+        console.log('🔄 App: User logged in, re-initializing app data');
+        setTimeout(() => {
+          this.appInitService.onUserLogin();
+        }, 1000); // Give time for data to be stored
       }
     });
   }
@@ -55,21 +74,48 @@ export class AppComponent implements OnInit {
   }
 
   async navigateAndCloseMenu(route: string) {
-    if(route === "/scouter/dashboard"){
-      const isScouter = this.authService.decodeScouterDetails()?.details?.user?.role ?? null;
-      const isTalent = this.authService.decodeTalentDetails()?.details?.user?.role ?? null;
-      console.log({isScouter, isTalent});
-      await this.menuCtrl.close('scouter-menu');
-      await this.router.navigate(
-        isScouter === 'scouter' ? [route] :
-          isTalent === 'talent' ? ['/talent/dashboard'] : ['/auth/login']
-      );
+    await this.menuCtrl.close('scouter-menu');
 
-    }else{
-      await this.menuCtrl.close('scouter-menu');
+    if (route === '/scouter/dashboard') {
+      // ✅ Use the enhanced token validation
+      if (!this.authService.validateStoredToken()) {
+        console.log('❌ Invalid token, redirecting to login');
+        await this.router.navigate(['/auth/login']);
+        return;
+      }
+
+      // ✅ Get role from stored user data
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          const role = user.role || user.details?.user?.role;
+
+          console.log('🎯 Navigating by role:', role);
+
+          switch (role) {
+            case 'scouter':
+              await this.router.navigate(['/scouter/dashboard']);
+              break;
+            case 'talent':
+              await this.router.navigate(['/talent/dashboard']);
+              break;
+            case 'admin':
+              await this.router.navigate(['/admin/dashboard']);
+              break;
+            default:
+              console.warn('⚠️ Unknown role, redirecting to login');
+              await this.router.navigate(['/auth/login']);
+          }
+        } catch (error) {
+          console.error('❌ Error parsing user data:', error);
+          await this.router.navigate(['/auth/login']);
+        }
+      } else {
+        await this.router.navigate(['/auth/login']);
+      }
+    } else {
       await this.router.navigate([route]);
     }
-
   }
-
 }

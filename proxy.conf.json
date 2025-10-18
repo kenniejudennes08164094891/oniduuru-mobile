@@ -1,0 +1,20 @@
+{
+  "/scouters": {
+    "target": "https://oniduuru-staging.shoftafrica.com",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/login": {
+    "target": "https://oniduuru-staging.shoftafrica.com",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/talent": {
+    "target": "https://oniduuru-staging.shoftafrica.com",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

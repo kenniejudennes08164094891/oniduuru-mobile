@@ -12,7 +12,16 @@ ion-button {
   font-size: 14px;
 }
 .ion-btn--successgreen {
-  --background: #057A55;
+  --background: #057a55;
   --background-activated: #046b48;
   --color: #fff;
+}
+
+:host {
+  .confirmation-modal {
+    --width: 100%;
+    --max-width: 400px;
+    --height: fit-content;
+    --border-radius: 16px;
+  }
 }

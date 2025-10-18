@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -54,11 +54,14 @@ import { FundWalletRequestPageComponent } from './fund-wallet-request-page/fund-
 import { WithdrawFundsRequestPageComponent } from './withdraw-funds-request-page/withdraw-funds-request-page.component';
 import { TransferFundsRequestPageComponent } from './transfer-funds-request-page/transfer-funds-request-page.component';
 
+import { RouterModule } from '@angular/router';
+
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
+    RouterModule.forChild([{ path: '', component: ScouterPage }]),
     ScouterPageRoutingModule,
     //TalentPageModule,
     NgChartsModule,
@@ -116,5 +119,6 @@ import { TransferFundsRequestPageComponent } from './transfer-funds-request-page
     TransferFundsRequestPageComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], // 👈 ADD THIS LINE HERE TOO
 })
 export class ScouterPageModule {}

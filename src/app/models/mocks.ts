@@ -1652,6 +1652,32 @@ export const transfer: Transfer[] = [
     walletId: '0033392845',
   },
 ];
+
+// MARKET
+// models/market-engagement.model.ts
+export interface MarketEngagement {
+  id: string;
+  talentName: string;
+  talentEmail: string;
+  profilePic: string;
+  dateOfHire: string; // or Date
+  startDate: string; // or Date
+  agreedAmount: number;
+  hireStatus: 'awaiting-acceptance' | 'offer-accepted' | 'offer-declined';
+  talentId?: string;
+  scouterId?: string;
+  // Add other fields as needed from API response
+}
+
+export interface MarketEngagementResponse {
+  data: MarketEngagement[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
 export const title: string[] = ['Mr', 'Mrs', 'Miss', 'Dr'];
 export const gender: string[] = ['Male', 'Female', 'Others'];
 export const maritalStatus: string[] = [

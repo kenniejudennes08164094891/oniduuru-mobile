@@ -1,12 +1,24 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  OnDestroy,
+  ChangeDetectorRef,
+} from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
-import { IonContent, ModalController } from '@ionic/angular'; // 👈 add this
+import { IonContent, ModalController } from '@ionic/angular';
 import { UpdateProfileConfirmationPopupModalComponent } from 'src/app/utilities/modals/update-profile-confirmation-popup-modal/update-profile-confirmation-popup-modal.component';
-import { UserService } from 'src/app/services/user.service'; // adjust path
+import { UserService } from 'src/app/services/user.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { AuthService } from 'src/app/services/auth.service';
+import { ToastsService } from 'src/app/services/toasts.service';
+import { Subject, Subscription } from 'rxjs';
+import * as bcrypt from 'bcryptjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
-interface SecurityQA {
+interface SecurityQuestion {
   question: string;
   answer: string;
 }
@@ -17,264 +29,1483 @@ interface SecurityQA {
   styleUrls: ['./profile-page.component.scss'],
   standalone: false,
 })
-export class ProfilePageComponent implements OnInit {
+export class ProfilePageComponent implements OnInit, OnDestroy {
+  @ViewChild('orgInput') orgInput!: ElementRef<HTMLInputElement>;
+  @ViewChild(IonContent) pageContent!: IonContent;
+  @ViewChild('fileInput') fileInput!: ElementRef;
+  @ViewChild('profilePicture', { read: ElementRef })
+  profilePicture!: ElementRef;
+  @ViewChild('securityQuestionsSection', { read: ElementRef })
+  securityQuestionsSection!: ElementRef;
+
+  // Component State - SIMPLIFIED like working component
+  isEditingSecurityQuestions = false;
+  tempSecurityQuestions: SecurityQuestion[] = [{ question: '', answer: '' }];
   currentYear: number = new Date().getFullYear();
-  headerHidden: boolean = false;
+  headerHidden = false;
+
   profileImage: string | null = null;
-  profileData: any = {
+  selectedFile: File | null = null;
+  scouterId: string = ''; // CHANGED: Use string like working component
+  isEditing = false; // CHANGED: Default to false (view mode)
+  saveButtonText = 'Update Profile'; // CHANGED: Default to Update
+  hasExistingProfilePicture = false;
+  isLoadingSecurityQuestions = false;
+  editingQuestionIndex: number | null = null;
+  orgTypeInput = '';
+  selectedOrgTypes: string[] = [];
+  securityQuestions: SecurityQuestion[] = [];
+  showQuestions = false;
+  isLoadingProfile = false;
+  isSavingProfile = false;
+
+  // Profile Data - SIMPLIFIED like working component
+  profileData = {
     fullName: '',
     phoneNumber: '',
     email: '',
     location: '',
     scoutingPurpose: '',
-    organizationType: [],
     payRange: '',
+    organizationTypes: [] as string[],
+    profileImage: '',
   };
-  scouterId: string | null = null;
-  showQuestions: boolean = false;
-  securityQuestions: SecurityQA[] = [];
 
-  @ViewChild(IonContent) pageContent!: IonContent; // 👈 ion-content reference
-  @ViewChild('profilePicture') profilePicture!: ElementRef;
-  @ViewChild('securityQuestionsSection') securityQuestionsSection!: ElementRef;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
     private location: Location,
-    private modalCtrl: ModalController, // 👈 add this
+    private modalCtrl: ModalController,
+    private toastService: ToastsService,
     public userService: UserService,
-    private endpointService: ScouterEndpointsService
+    private endpointService: ScouterEndpointsService,
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  isOrganisationDropdownOpen = false;
-
-  organizationTypes: string[] = [
-    'Individual',
-    'Corporate',
-    'Small Business',
-    'NGO',
-    'Startup',
-    'Government',
-  ];
-  selectedOrgTypes: string[] = [];
-
-  toggleOrganisationDropdown() {
-    this.isOrganisationDropdownOpen = !this.isOrganisationDropdownOpen;
-  }
-
-  addOrgTypeFromDropdown(type: string) {
-    if (!this.selectedOrgTypes.includes(type)) {
-      this.selectedOrgTypes.push(type);
-    }
-    this.isOrganisationDropdownOpen = false; // close dropdown after selection
-  }
-
-  removeOrgType(index: number) {
-    this.selectedOrgTypes.splice(index, 1);
-  }
   ngOnInit() {
-    // First, check BehaviorSubject
-    this.scouterId = this.userService.getScouterId();
+    console.log('🔄 ProfilePageComponent initializing...');
 
-    // If not in memory, try localStorage (already handled in service constructor)
-    if (!this.scouterId) {
-      console.warn('No scouter ID in memory, checking localStorage...');
-      this.scouterId = this.userService.getScouterId();
-    }
+    // Simple debug first
+    this.simpleDebug();
 
-    // if (this.scouterId) {
-    //   console.log('Scouter ID found:', this.scouterId);
-    //   this.loadProfile();
-    // } else {
-    //   console.error(
-    //     'No scouter ID found anywhere, redirecting to login or onboarding'
-    //   );
-    //   this.router.navigate(['/auth/login']); // or your onboarding route
-    // }
+    // Get scouterId FIRST like working component
+    this.initializeScouterId();
 
-    this.showQuestions = false; // default state
-  }
+    // Debug profile picture state
+    this.debugProfilePicture();
 
-  ngAfterViewInit() {
-    // safe to scroll
-    this.scrollToTop();
-  }
+    // Load data immediately after getting scouterId
+    this.loadInitialData();
 
-  // ✅ Load profile
-  loadProfile() {
-    if (!this.scouterId) {
-      console.error('Cannot fetch profile: scouter ID is missing');
-      return;
-    }
-
-    console.log('Fetching profile for scouter ID:', this.scouterId);
-
-    this.endpointService.fetchScouterProfile(this.scouterId).subscribe({
-      next: (res) => {
-        console.log('Profile fetched successfully', res);
-
-        this.profileData = {
-          fullName: res.fullName || '',
-          phoneNumber: res.phoneNumber || '',
-          email: res.email || '',
-          location: res.location || '',
-          scoutingPurpose: res.scoutingPurpose || '',
-          payRange: res.payRange || '',
-        };
-
-        this.selectedOrgTypes = res.organizationType || [];
-        this.securityQuestions = res.securityQuestions || [];
-
-        if (!this.scouterId) {
-          console.error('No scouter ID found, cannot call API');
-          return;
+    // Subscribe to profile data updates
+    this.userService.profileData$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((profile) => {
+        if (profile) {
+          this.bindUserProfile(profile);
         }
-        // Fetch profile image
-        this.endpointService.getProfilePic(this.scouterId).subscribe({
-          next: (imgRes) => {
-            this.profileImage = imgRes?.url || null;
-            console.log('Profile image loaded', this.profileImage);
-          },
-          error: (err) => {
-            this.profileImage = null;
-            console.error('Failed to fetch profile image', err);
-          },
-        });
-      },
-      error: (err) => console.error('Failed to fetch profile', err),
+      });
+  }
+
+  // Add this method to debug the actual backend response
+  private debugBackendResponse(apiResponse: any): void {
+    console.log('🔍 DEBUG BACKEND RESPONSE STRUCTURE:');
+    console.log('Full response:', apiResponse);
+    console.log('Response keys:', Object.keys(apiResponse || {}));
+    console.log('Has data:', !!apiResponse?.data);
+    console.log('Has details:', !!apiResponse?.details);
+    console.log('Has organizationType:', !!apiResponse?.organizationType);
+    console.log('organizationType value:', apiResponse?.organizationType);
+    console.log('organizationType type:', typeof apiResponse?.organizationType);
+
+    if (apiResponse?.data) {
+      console.log('Data keys:', Object.keys(apiResponse.data));
+      console.log('Data organizationType:', apiResponse.data?.organizationType);
+    }
+
+    if (apiResponse?.details) {
+      console.log('Details keys:', Object.keys(apiResponse.details));
+      console.log(
+        'Details organizationType:',
+        apiResponse.details?.organizationType
+      );
+    }
+  }
+
+  // Add this method to debug current form state
+  debugFormState(): void {
+    console.log('🐛 CURRENT FORM STATE:');
+    console.log('profileData:', this.profileData);
+    console.log('selectedOrgTypes:', this.selectedOrgTypes);
+    console.log('isEditing:', this.isEditing);
+    console.log('isSavingProfile:', this.isSavingProfile);
+
+    // Check if form fields have the right values
+    const formFields = [
+      'fullName',
+      'phoneNumber',
+      'email',
+      'location',
+      'scoutingPurpose',
+      'payRange',
+      'organizationTypes',
+    ];
+
+    formFields.forEach((field) => {
+      console.log(
+        `📝 ${field}:`,
+        this.profileData[field as keyof typeof this.profileData]
+      );
     });
   }
 
-  goToProfile() {
-    this.router.navigate(['/profile']);
+  // Debug profile picture state
+  private debugProfilePicture(): void {
+    console.log('🐛 PROFILE PICTURE DEBUG:');
+
+    // Check localStorage
+    const cachedImage = localStorage.getItem('profile_image');
+    console.log('📦 Cached image in localStorage:', !!cachedImage);
+    if (cachedImage) {
+      console.log('📦 Cached image length:', cachedImage.length);
+      console.log(
+        '📦 Cached image starts with:',
+        cachedImage.substring(0, 50) + '...'
+      );
+    }
+
+    // Check current state
+    console.log('🖼️ Current profileImage:', !!this.profileImage);
+    console.log(
+      '📸 hasExistingProfilePicture:',
+      this.hasExistingProfilePicture
+    );
+    console.log('🆔 scouterId:', this.scouterId);
+
+    // Check UserService state
+    console.log(
+      '👤 UserService profile image:',
+      !!this.userService.getProfileImage()
+    );
   }
 
+  // Simple debug without JSON parsing issues
+  private simpleDebug(): void {
+    console.log('🔍 SIMPLE AUTH DEBUG:');
+
+    // Check user_data only
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        console.log('💾 user_data found:', {
+          email: parsed?.email,
+          'details.email': parsed?.details?.email,
+          'details.user.email': parsed?.details?.user?.email,
+          'details.session.email': parsed?.details?.session?.email,
+        });
+      } catch (e) {
+        console.log('💾 user_data (raw):', userData);
+      }
+    } else {
+      console.log('💾 user_data: Not found');
+    }
+
+    // Check auth service
+    const userDetails = this.authService.decodeScouterDetails();
+    console.log('🔐 Auth Service:', {
+      email: userDetails?.email,
+      'details.email': userDetails?.details?.email,
+      'details.user.email': userDetails?.details?.user?.email,
+      'details.session.email': userDetails?.details?.session?.email,
+    });
+
+    // Check registration email
+    const regEmail = localStorage.getItem('registration_email');
+    console.log('📧 Registration email:', regEmail);
+  }
+
+  // Direct method to get email - no debugging
+  private getEmailDirectly(): string {
+    // 1. Try localStorage user_data first
+    const userDataStr = localStorage.getItem('user_data');
+    if (userDataStr) {
+      try {
+        const userData = JSON.parse(userDataStr);
+        const email =
+          userData?.email ||
+          userData?.details?.email ||
+          userData?.details?.user?.email ||
+          userData?.details?.session?.email;
+        if (email) {
+          console.log('✅ Email found in localStorage:', email);
+          return email;
+        }
+      } catch (e) {
+        console.log('❌ Could not parse user_data');
+      }
+    }
+
+    // 2. Try auth service
+    const userDetails = this.authService.decodeScouterDetails();
+    if (userDetails) {
+      const email =
+        userDetails?.email ||
+        userDetails?.details?.email ||
+        userDetails?.details?.user?.email ||
+        userDetails?.details?.session?.email;
+      if (email) {
+        console.log('✅ Email found in auth service:', email);
+        return email;
+      }
+    }
+
+    // 3. Try registration email
+    const regEmail = localStorage.getItem('registration_email');
+    if (regEmail) {
+      console.log('✅ Email found in registration:', regEmail);
+      return regEmail;
+    }
+
+    console.log('❌ No email found in any source');
+    return '';
+  }
+
+  // Test the update endpoint
+  testEndpoint(): void {
+    if (!this.scouterId) {
+      console.error('❌ No scouterId for testing');
+      return;
+    }
+
+    const testPayload = {
+      fullName: 'Test User ' + Date.now(),
+      phoneNumber: '08012345678',
+      email: this.profileData.email || 'test@example.com',
+      location: 'Test Location',
+      scoutingPurpose: 'Testing',
+      organizationType: JSON.stringify(['TEST']),
+      payRange: '50k',
+    };
+
+    console.log('🧪 TESTING ENDPOINT WITH:', testPayload);
+
+    this.endpointService
+      .updateScouterProfile(this.scouterId, testPayload)
+      .subscribe({
+        next: (res) => {
+          console.log('✅ TEST SUCCESS:', res);
+          this.toastService.openSnackBar(
+            'Endpoint test successful!',
+            'success'
+          );
+        },
+        error: (err) => {
+          console.error('❌ TEST FAILED:', err);
+          this.toastService.openSnackBar(
+            'Endpoint test failed: ' + err.message,
+            'error'
+          );
+        },
+      });
+  }
+
+  // Add this method to test the backend directly
+  testBackendEndpointDirectly(): void {
+    if (!this.scouterId) return;
+
+    const testPayload = {
+      fullName: 'TEST USER ' + Date.now(),
+      phoneNumber: '08000000000',
+      email: this.profileData.email,
+      location: 'Test Location',
+      scoutingPurpose: 'Testing',
+      organizationType: JSON.stringify(['TEST']),
+      payRange: '100k',
+    };
+
+    console.log('🧪 DIRECT BACKEND TEST:', testPayload);
+
+    // Use fetch API to see raw response
+    fetch(
+      `https://oniduuru-staging.shoftafrica.com/scouters/v1/edit-scouter-profile/${encodeURIComponent(
+        this.scouterId
+      )}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(testPayload),
+      }
+    )
+      .then((response) => {
+        console.log('🔍 RAW RESPONSE STATUS:', response.status);
+        console.log('🔍 RAW RESPONSE HEADERS:', response.headers);
+        return response.text(); // Get raw text to see what's actually returned
+      })
+      .then((text) => {
+        console.log('🔍 RAW RESPONSE BODY:', text);
+        try {
+          const json = JSON.parse(text);
+          console.log('🔍 PARSED RESPONSE:', json);
+        } catch (e) {
+          console.log('🔍 RESPONSE IS NOT JSON:', text);
+        }
+      })
+      .catch((error) => {
+        console.error('🔍 FETCH ERROR:', error);
+      });
+  }
+
+  
+  // ==================== CORE METHODS - MATCHING WORKING FLOW ====================
+
+  private initializeScouterId(): void {
+    // MATCHING: Use the same approach as working component
+    const userDetails = this.authService.decodeScouterDetails();
+    this.scouterId =
+      userDetails?.details?.user?.scouterId || userDetails?.scouterId || '';
+
+    console.log('✅ ScouterId initialized:', this.scouterId);
+
+    if (!this.scouterId) {
+      console.error('❌ No scouterId found');
+      this.redirectToLogin();
+      return;
+    }
+  }
+
+  private loadInitialData(): void {
+    if (!this.scouterId) {
+      console.error('❌ Cannot load data: No scouterId');
+      return;
+    }
+
+    this.isLoadingProfile = true;
+
+    // Load all data in parallel like working component
+    this.loadUserProfileData();
+    this.loadProfilePicture();
+    this.loadSecurityQuestions();
+  }
+
+  private loadUserProfileData(): void {
+    this.endpointService.fetchScouterProfile(this.scouterId).subscribe({
+      next: (res: any) => {
+        this.isLoadingProfile = false;
+        console.log('📥 Profile response:', res);
+
+        // MATCHING: Extract data like working component
+        const userData = res?.details || res?.data?.details || res?.data || res;
+
+        if (userData) {
+          // If backend doesn't return email, inject it from auth sources
+          if (!userData.email) {
+            const authEmail = this.extractEmailFromAllSources();
+            userData.email = authEmail;
+            console.log('📧 Injected email from auth sources:', authEmail);
+          }
+
+          this.bindUserProfile(userData);
+          this.updateEditStateBasedOnProfile(userData);
+        } else {
+          this.initializeWithUserProfileData();
+        }
+      },
+      error: (err) => {
+        this.isLoadingProfile = false;
+        console.error('❌ Profile load error:', err);
+        this.initializeWithUserProfileData();
+
+        if (err.status === 401) {
+          this.toastService.openSnackBar(
+            'Session expired. Please login again.',
+            'error'
+          );
+          this.redirectToLogin();
+        }
+      },
+    });
+  }
+
+  // Helper method to extract email from all possible sources
+  private extractEmailFromAllSources(): string {
+    // 1. localStorage user_data
+    const storedUserData = localStorage.getItem('user_data');
+    if (storedUserData) {
+      try {
+        const parsed = JSON.parse(storedUserData);
+        const email =
+          parsed?.email ||
+          parsed?.details?.email ||
+          parsed?.details?.user?.email ||
+          parsed?.details?.session?.email;
+        if (email) return email;
+      } catch (e) {
+        console.error('❌ Error parsing user_data:', e);
+      }
+    }
+
+    // 2. Auth Service
+    const userDetails = this.authService.decodeScouterDetails();
+    if (userDetails) {
+      const email =
+        userDetails?.email ||
+        userDetails?.details?.email ||
+        userDetails?.details?.user?.email ||
+        userDetails?.details?.session?.email;
+      if (email) return email;
+    }
+
+    // 3. User Service
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.email) return currentUser.email;
+
+    // 4. Registration email
+    const regEmail = localStorage.getItem('registration_email');
+    if (regEmail) return regEmail;
+
+    return '';
+  }
+
+  // ==================== FIXED EMAIL EXTRACTION ====================
+
+  // Add this method to test email extraction
+  testEmailExtraction(): void {
+    console.log('🧪 TESTING EMAIL EXTRACTION FROM ALL SOURCES:');
+
+    // 1. localStorage user_data
+    const storedUserData = localStorage.getItem('user_data');
+    if (storedUserData) {
+      try {
+        const parsed = JSON.parse(storedUserData);
+        console.log('📧 From localStorage user_data:');
+        console.log('- Direct email:', parsed?.email);
+        console.log('- details.email:', parsed?.details?.email);
+        console.log('- details.user.email:', parsed?.details?.user?.email);
+        console.log(
+          '- details.session.email:',
+          parsed?.details?.session?.email
+        );
+      } catch (e) {
+        console.error('❌ Error parsing user_data:', e);
+      }
+    }
+
+    // 2. Auth Service
+    const userDetails = this.authService.decodeScouterDetails();
+    console.log('📧 From Auth Service:');
+    console.log('- Direct email:', userDetails?.email);
+    console.log('- details.email:', userDetails?.details?.email);
+    console.log('- details.user.email:', userDetails?.details?.user?.email);
+    console.log(
+      '- details.session.email:',
+      userDetails?.details?.session?.email
+    );
+
+    // 3. User Service
+    const currentUser = this.authService.getCurrentUser();
+    console.log('📧 From User Service:', currentUser?.email);
+
+    // 4. Registration email
+    const regEmail = localStorage.getItem('registration_email');
+    console.log('📧 Registration email:', regEmail);
+  }
+
+  // MATCHING: Initialize with user profile data like working component
+  private initializeWithUserProfileData(): void {
+    console.log('🔄 Initializing with user profile data...');
+
+    // Use direct email extraction
+    const email = this.getEmailDirectly();
+    console.log('📧 FINAL EXTRACTED EMAIL:', email);
+
+    // Try to get user data structure
+    let userData = null;
+    const userDataStr = localStorage.getItem('user_data');
+    if (userDataStr) {
+      try {
+        userData = JSON.parse(userDataStr);
+      } catch (e) {
+        console.log('❌ Could not parse user_data for profile');
+      }
+    }
+
+    // If no userData from localStorage, try auth service
+    if (!userData) {
+      userData = this.authService.decodeScouterDetails();
+    }
+
+    const profile = {
+      fullName: userData?.fullName || userData?.details?.user?.fullName || '',
+      phoneNumber:
+        userData?.phoneNumber || userData?.details?.user?.phoneNumber || '',
+      email: email,
+      location: userData?.location || userData?.details?.user?.location || '',
+      organizationType:
+        userData?.organizationType ||
+        userData?.details?.user?.organizationType ||
+        '[]',
+      scoutingPurpose:
+        userData?.scoutingPurpose ||
+        userData?.details?.user?.scoutingPurpose ||
+        '',
+      payRange: userData?.payRange || userData?.details?.user?.payRange || '',
+    };
+
+    this.bindUserProfile(profile);
+  }
+
+  // Add this to your component as a fallback
+  private getEmailFromUserService(): string {
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser?.email || '';
+  }
+
+  private bindUserProfile(user: any): void {
+    console.log('🔍 Binding user profile:', user);
+
+    // Parse organization types exactly like working component
+    const orgTypes = this.parseOrganizationTypes(user.organizationType);
+
+    // Extract email from multiple possible locations
+    const email =
+      user?.email ||
+      user?.details?.email ||
+      user?.details?.session?.email ||
+      user?.details?.user?.email ||
+      this.getEmailFromUserService() ||
+      '';
+
+    console.log('📧 FINAL Email extraction:', email);
+
+    // CRITICAL FIX: Update ALL profile data fields, not just some
+    this.profileData = {
+      fullName:
+        user.fullName ||
+        user.details?.user?.fullName ||
+        this.profileData.fullName,
+      phoneNumber:
+        user.phoneNumber ||
+        user.details?.user?.phoneNumber ||
+        this.profileData.phoneNumber,
+      email: email || this.profileData.email,
+      location:
+        user.location ||
+        user.details?.user?.location ||
+        this.profileData.location,
+      scoutingPurpose:
+        user.scoutingPurpose ||
+        user.details?.user?.scoutingPurpose ||
+        this.profileData.scoutingPurpose,
+      payRange:
+        user.payRange ||
+        user.details?.user?.payRange ||
+        this.profileData.payRange,
+      organizationTypes:
+        orgTypes.length > 0 ? orgTypes : this.profileData.organizationTypes,
+      profileImage:
+        user.profileImage ||
+        user.profilePicture ||
+        this.profileData.profileImage,
+    };
+
+    // Update selectedOrgTypes only if we have valid new data
+    if (orgTypes.length > 0) {
+      this.selectedOrgTypes = [...orgTypes];
+    }
+
+    console.log('✅ Profile data bound:', this.profileData);
+    console.log('✅ Selected org types:', this.selectedOrgTypes);
+    this.cdr.detectChanges();
+  }
+
+  private parseOrganizationTypes(orgType: any): string[] {
+    console.log('🔍 PARSING ORGANIZATION TYPES - RAW INPUT:', orgType);
+
+    if (!orgType) return [];
+
+    try {
+      // If it's a string that looks like JSON, parse it
+      if (typeof orgType === 'string') {
+        // Remove any extra quotes or escaping
+        const cleanString = orgType.replace(/\\"/g, '"');
+
+        if (
+          cleanString.trim().startsWith('[') &&
+          cleanString.trim().endsWith(']')
+        ) {
+          const parsed = JSON.parse(cleanString);
+          if (Array.isArray(parsed)) {
+            return parsed.filter(
+              (item) => item && typeof item === 'string' && item.trim() !== ''
+            );
+          }
+        }
+
+        // Handle comma-separated string
+        if (cleanString.includes(',')) {
+          return cleanString
+            .split(',')
+            .map((item) => item.trim())
+            .filter((item) => item !== '');
+        }
+
+        // Single value
+        return cleanString.trim() ? [cleanString.trim()] : [];
+      }
+
+      // If it's already an array
+      if (Array.isArray(orgType)) {
+        return orgType.filter(
+          (item) => item && typeof item === 'string' && item.trim() !== ''
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error parsing organization types:', error);
+    }
+
+    return [];
+  }
+
+  private tryDecodeString(str: string): string {
+    try {
+      // Try URL decoding first
+      return decodeURIComponent(escape(atob(str)));
+    } catch {
+      return str;
+    }
+  }
+
+  private updateEditStateBasedOnProfile(profile: any): void {
+    // MATCHING: Determine edit state based on profile completeness
+    const hasCompleteProfile =
+      profile.fullName && profile.phoneNumber && profile.email;
+
+    // Default to view mode if profile is complete, edit mode if incomplete
+    this.isEditing = !hasCompleteProfile;
+    this.saveButtonText = this.isEditing ? 'Save Profile' : 'Update Profile';
+
+    console.log('🔄 Edit state:', {
+      isEditing: this.isEditing,
+      hasCompleteProfile,
+    });
+  }
+
+  // ==================== PROFILE OPERATIONS - MATCHING WORKING FLOW ====================
+
+  public saveProfile(): void {
+    if (!this.scouterId) {
+      this.toastService.openSnackBar('User not authenticated', 'error');
+      return;
+    }
+
+    const validation = this.validateProfileData();
+    if (!validation.isValid) {
+      this.toastService.openSnackBar(validation.message!, 'warning');
+      return;
+    }
+
+    this.isSavingProfile = true;
+    this.saveButtonText = 'Saving...';
+
+    // FIX: Ensure organizationType is properly formatted as JSON string
+    const organizationTypeJson = JSON.stringify(this.selectedOrgTypes);
+    console.log('📦 Organization Type JSON to send:', organizationTypeJson);
+
+    const payload = {
+      fullName: this.profileData.fullName.trim(),
+      phoneNumber: this.profileData.phoneNumber.trim(),
+      email: this.profileData.email.trim(),
+      location: this.profileData.location?.trim() || '',
+      scoutingPurpose: this.profileData.scoutingPurpose?.trim() || '',
+      payRange: this.profileData.payRange?.trim() || '',
+      organizationType: organizationTypeJson, // This should be a JSON string
+    };
+
+    console.log('🚀 FINAL UPDATE PAYLOAD:', payload);
+
+    console.log('🔍 FORM STATE BEFORE SAVE:');
+    this.debugFormState();
+
+    this.endpointService
+      .updateScouterProfile(this.scouterId, payload)
+      .subscribe({
+        next: (res: any) => {
+          console.log('✅ BACKEND RESPONSE:', res);
+          this.handleSuccessfulSave(payload, res);
+
+          console.log('🔍 FORM STATE AFTER SAVE:');
+          this.debugFormState();
+
+          // Verify the update worked
+          setTimeout(() => {
+            this.verifyBackendUpdate();
+          }, 1000);
+        },
+        error: (err: any) => {
+          console.error('❌ SAVE ERROR:', err);
+          this.isSavingProfile = false;
+          this.saveButtonText = this.isEditing
+            ? 'Save Profile'
+            : 'Update Profile';
+
+          let errorMessage = 'Failed to save profile';
+          if (err?.error?.message) errorMessage = err.error.message;
+          else if (err?.message) errorMessage = err.message;
+
+          this.toastService.openSnackBar(errorMessage, 'error');
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  // Debug method for save state
+  debugSaveState(): void {
+    console.log('🐛 SAVE STATE DEBUG:');
+    console.log('- selectedOrgTypes:', this.selectedOrgTypes);
+    console.log(
+      '- profileData.organizationTypes:',
+      this.profileData.organizationTypes
+    );
+    console.log('- isSavingProfile:', this.isSavingProfile);
+    console.log('- isEditing:', this.isEditing);
+    console.log('- scouterId:', this.scouterId);
+
+    const savedData = localStorage.getItem('user_profile_data');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        console.log(
+          '- localStorage organizationTypes:',
+          parsed.organizationTypes
+        );
+      } catch (e) {
+        console.error('Error parsing saved data:', e);
+      }
+    }
+  }
+
+  // Force refresh method
+  forceRefresh(): void {
+    console.log('🔄 Forcing data refresh...');
+    this.loadUserProfileData();
+  }
+
+  private handleSuccessfulSave(savedPayload: any, apiResponse: any): void {
+    console.log('🎯 HANDLING SUCCESSFUL SAVE');
+
+    // DEBUG: See what the backend actually returned
+    this.debugBackendResponse(apiResponse);
+
+    // CRITICAL FIX: Always preserve the organization types we just sent
+    const preservedOrganizationTypes = this.selectedOrgTypes;
+
+    let updatedProfile;
+
+    if (
+      apiResponse &&
+      (apiResponse.data || apiResponse.details || apiResponse.success)
+    ) {
+      // Use the data from backend response
+      const responseData =
+        apiResponse.data || apiResponse.details || apiResponse;
+
+      // Parse organization types from response, but fallback to what we sent
+      const responseOrgTypes = this.parseOrganizationTypes(
+        responseData.organizationType
+      );
+      const finalOrgTypes =
+        responseOrgTypes.length > 0
+          ? responseOrgTypes
+          : preservedOrganizationTypes;
+
+      // CRITICAL FIX: Properly merge ALL data including organization types
+      updatedProfile = {
+        ...this.profileData, // Keep existing profile data
+        fullName:
+          responseData.fullName ||
+          savedPayload.fullName ||
+          this.profileData.fullName,
+        phoneNumber:
+          responseData.phoneNumber ||
+          savedPayload.phoneNumber ||
+          this.profileData.phoneNumber,
+        email:
+          responseData.email || savedPayload.email || this.profileData.email,
+        location:
+          responseData.location ||
+          savedPayload.location ||
+          this.profileData.location,
+        scoutingPurpose:
+          responseData.scoutingPurpose ||
+          savedPayload.scoutingPurpose ||
+          this.profileData.scoutingPurpose,
+        payRange:
+          responseData.payRange ||
+          savedPayload.payRange ||
+          this.profileData.payRange,
+        organizationTypes: finalOrgTypes, // USE THE PRESERVED TYPES
+        profileImage: this.profileData.profileImage, // Preserve profile image
+        scouterId: this.scouterId,
+      };
+    } else {
+      // Fallback to payload data if no response, but PRESERVE ALL DATA
+      console.warn(
+        '⚠️ No response data from backend, using local data with preserved org types'
+      );
+      updatedProfile = {
+        ...this.profileData, // Keep ALL existing profile data
+        ...savedPayload, // Add the saved payload
+        organizationTypes: preservedOrganizationTypes, // CRITICAL: Use the types we just sent
+      };
+    }
+
+    console.log('✅ UPDATED PROFILE DATA FROM BACKEND:', updatedProfile);
+    console.log('✅ PRESERVED ORGANIZATION TYPES:', preservedOrganizationTypes);
+
+    // Update services
+    this.userService.updateFullProfile(updatedProfile);
+    this.authService.updateCurrentUser(updatedProfile);
+
+    // Cache the updated profile data
+    this.cacheProfileData(updatedProfile);
+
+    // CRITICAL FIX: Update ALL local state including form fields
+    this.profileData = { ...updatedProfile };
+    this.selectedOrgTypes = [...preservedOrganizationTypes]; // Ensure UI reflects the saved types
+
+    // Switch to view mode
+    this.isEditing = false;
+    this.saveButtonText = 'Update Profile';
+    this.isSavingProfile = false;
+
+    this.toastService.openSnackBar('Profile updated successfully!', 'success');
+    this.cdr.detectChanges();
+
+    // Force reload from backend to ensure sync
+    setTimeout(() => {
+      this.loadUserProfileData();
+    }, 1000);
+  }
+
+  // Add this method to your component
+  verifyBackendUpdate(): void {
+    if (!this.scouterId) return;
+
+    console.log('🔍 VERIFYING BACKEND STATE');
+
+    // Fetch fresh data from backend to see current state
+    this.endpointService.fetchScouterProfile(this.scouterId).subscribe({
+      next: (currentData: any) => {
+        console.log('📊 CURRENT BACKEND DATA:', currentData);
+        console.log('📊 CURRENT LOCAL DATA:', this.profileData);
+
+        const backendOrgTypes = this.parseOrganizationTypes(
+          currentData?.organizationType
+        );
+        console.log('🔄 ORGANIZATION TYPES COMPARISON:');
+        console.log(' - Backend:', backendOrgTypes);
+        console.log(' - Local:', this.selectedOrgTypes);
+      },
+      error: (err) => {
+        console.error('❌ Failed to verify backend state:', err);
+      },
+    });
+  }
+
+  private cacheProfileData(profileData: any): void {
+    try {
+      localStorage.setItem('user_profile_data', JSON.stringify(profileData));
+      console.log('💾 Profile data cached locally');
+    } catch (err) {
+      console.warn('Could not cache profile data:', err);
+    }
+  }
+
+  // ==================== PROFILE PICTURE OPERATIONS - MATCHING WORKING FLOW ====================
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // MATCHING: Validate file type like working component
+    const fileType = file.type.split('/')[1];
+    if (!['jpeg', 'png'].includes(fileType)) {
+      this.toastService.openSnackBar(
+        'Only jpeg or png file format is acceptable',
+        'error'
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.toastService.openSnackBar(
+        'Image size should be less than 5MB',
+        'warning'
+      );
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const imageData = e.target.result;
+      this.setProfilePicture(imageData);
+      this.uploadProfilePicture(file);
+    };
+    reader.onerror = (error) => {
+      console.error('📷 Error reading file:', error);
+      this.toastService.openSnackBar('Error reading image file', 'error');
+    };
+    reader.readAsDataURL(file);
+
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+
+  private uploadProfilePicture(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const base64Image = e.target.result.split(',')[1]; // Get base64 string only
+      const payload = {
+        scouterId: this.scouterId,
+        base64Picture: base64Image,
+      };
+
+      console.log('📷 Uploading profile picture...');
+
+      // MATCHING: Upload logic like working component
+      if (this.hasExistingProfilePicture) {
+        // Replace existing picture
+        console.log('📷 Replacing existing profile picture');
+        this.endpointService.replaceScouterPicture(payload).subscribe({
+          next: (res: any) => {
+            console.log('✅ Profile picture replaced successfully:', res);
+            this.handleSuccessfulUpload(e.target.result); // Pass the full data URL
+          },
+          error: (err) => {
+            console.error('❌ Replace picture failed:', err);
+            this.toastService.openSnackBar(
+              'Failed to update profile picture',
+              'error'
+            );
+            // Still show the image locally even if upload fails
+            this.setProfilePicture(e.target.result);
+          },
+        });
+      } else {
+        // Upload new picture
+        console.log('📷 Uploading new profile picture');
+        this.endpointService.uploadScouterPicture(payload).subscribe({
+          next: (res: any) => {
+            console.log('✅ Profile picture uploaded successfully:', res);
+            this.handleSuccessfulUpload(e.target.result); // Pass the full data URL
+          },
+          error: (err) => {
+            console.error('❌ Upload picture failed:', err);
+            this.toastService.openSnackBar(
+              'Failed to upload profile picture',
+              'error'
+            );
+            // Still show the image locally even if upload fails
+            this.setProfilePicture(e.target.result);
+          },
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private handleSuccessfulUpload(fullImageData: string): void {
+    this.hasExistingProfilePicture = true;
+    this.setProfilePicture(fullImageData);
+    this.storeProfileImage(fullImageData);
+    this.toastService.openSnackBar(
+      'Profile picture updated successfully!',
+      'success'
+    );
+    this.cdr.detectChanges();
+  }
+
+  // Update setProfilePicture to handle both full data URLs and base64 strings
+  private setProfilePicture(imageData: string): void {
+    // Ensure we have the full data URL format
+    if (imageData.startsWith('data:image/')) {
+      this.profileImage = imageData;
+    } else {
+      // If it's just base64, convert to data URL
+      this.profileImage = `data:image/jpeg;base64,${imageData}`;
+    }
+
+    this.profileData.profileImage = this.profileImage;
+    this.hasExistingProfilePicture = true;
+    this.userService.setProfileImage(this.profileImage);
+    this.cdr.detectChanges();
+
+    console.log('✅ Profile picture set successfully');
+  }
+
+  removeProfilePicture(): void {
+    if (!this.hasExistingProfilePicture) return;
+
+    const confirmDelete = confirm(
+      'Are you sure you want to remove your profile picture?'
+    );
+    if (!confirmDelete) return;
+
+    this.endpointService.removeProfilePicture(this.scouterId).subscribe({
+      next: (res: any) => {
+        this.setDefaultAvatar();
+        localStorage.removeItem('profile_image');
+        this.toastService.openSnackBar('Profile picture removed', 'success');
+      },
+      error: (err) => {
+        console.error('❌ Failed to remove profile picture:', err);
+        this.toastService.openSnackBar(
+          'Failed to remove profile picture',
+          'warning'
+        );
+      },
+    });
+  }
+
+  // ==================== SECURITY QUESTIONS - MATCHING WORKING FLOW ====================
+
+  private loadSecurityQuestions(): void {
+    if (!this.scouterId) return;
+
+    this.isLoadingSecurityQuestions = true;
+    this.authService.getMySecurityQuestions(this.scouterId).subscribe({
+      next: (res: any) => {
+        this.isLoadingSecurityQuestions = false;
+
+        // MATCHING: Handle security questions response
+        let loadedQuestions: SecurityQuestion[] = [];
+
+        if (res?.data?.questions) {
+          loadedQuestions = res.data.questions.map((q: any) => ({
+            question: q.question || '',
+            answer: q.answer || '••••••••',
+          }));
+        }
+
+        this.securityQuestions = loadedQuestions;
+        this.updateSecurityQuestionsState();
+      },
+      error: (err) => {
+        this.isLoadingSecurityQuestions = false;
+        console.error('❌ Failed to load security questions:', err);
+      },
+    });
+  }
+
+  async saveSecurityQuestions(): Promise<void> {
+    if (!this.canSaveSecurityQuestions()) {
+      this.toastService.openSnackBar(
+        'Please fill in all questions and answers',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.scouterId) {
+      this.toastService.openSnackBar('User not authenticated', 'error');
+      return;
+    }
+
+    this.isLoadingSecurityQuestions = true;
+
+    try {
+      // MATCHING: Hash answers like working component
+      const hashedQuestions = await Promise.all(
+        this.tempSecurityQuestions.map(async (qa) => ({
+          question: qa.question.trim().toLowerCase(), // MATCHING: Lowercase like working component
+          answer: await bcrypt.hash(qa.answer.trim().toLowerCase(), 10), // MATCHING: Lowercase + hash
+        }))
+      );
+
+      const payload = {
+        uniqueId: this.scouterId, // MATCHING: Use uniqueId like working component
+        securityQuestions: hashedQuestions,
+      };
+
+      this.authService.createScouterSecurityQuestion(payload).subscribe({
+        next: (res: any) => {
+          this.isLoadingSecurityQuestions = false;
+
+          // Update local state
+          const savedQuestions = this.tempSecurityQuestions.map((qa) => ({
+            question: qa.question.trim(),
+            answer: '••••••••',
+          }));
+
+          this.securityQuestions = savedQuestions;
+          this.isEditingSecurityQuestions = false;
+          this.editingQuestionIndex = null;
+
+          this.toastService.openSnackBar(
+            'Security questions saved successfully!',
+            'success'
+          );
+
+          // MATCHING: Reload after success like working component
+          setTimeout(() => {
+            this.loadSecurityQuestions();
+          }, 1000);
+        },
+        error: (err) => {
+          this.isLoadingSecurityQuestions = false;
+          console.error('❌ Failed to save security questions:', err);
+          this.toastService.openSnackBar(
+            err?.error?.message || 'Failed to save security questions',
+            'error'
+          );
+        },
+      });
+    } catch (err) {
+      this.isLoadingSecurityQuestions = false;
+      console.error('❌ Hashing error:', err);
+      this.toastService.openSnackBar('Error securing your data', 'error');
+    }
+  }
+
+  // ==================== MISSING TEMPLATE METHODS ====================
+
+  handleImageError(event: any): void {
+    console.error('📷 Error loading profile image');
+    this.hasExistingProfilePicture = false;
+    this.profileImage = null;
+    this.cdr.detectChanges();
+  }
+
+  triggerFileInput(): void {
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  focusOrgInput(): void {
+    if (!this.isEditing) return;
+    if (this.orgInput && this.orgInput.nativeElement) {
+      this.orgInput.nativeElement.focus();
+    }
+  }
+
+  trackByOrgType(index: number, org: string): string {
+    return `${org}_${index}`;
+  }
+
+  onOrgTypeTyping(event: any): void {
+    this.orgTypeInput = event.target.value;
+  }
+
+  async openConfirmationPopup(): Promise<void> {
+    if (this.isEditing) {
+      const confirmed = await this.showSaveConfirmation();
+      if (confirmed) {
+        this.saveProfile();
+      }
+    } else {
+      this.toggleEdit();
+    }
+  }
+
+  editQuestion(index: number): void {
+    this.editingQuestionIndex = index;
+    this.isEditingSecurityQuestions = true;
+    this.tempSecurityQuestions = JSON.parse(
+      JSON.stringify(this.securityQuestions)
+    );
+  }
+
+  async deleteQuestion(index: number): Promise<void> {
+    const questionToDelete = this.securityQuestions[index];
+    const confirmed = await this.showDeleteConfirmation(
+      questionToDelete.question
+    );
+    if (!confirmed) return;
+
+    this.securityQuestions.splice(index, 1);
+    this.updateSecurityQuestionsOnBackend();
+    this.toastService.openSnackBar('Question deleted successfully', 'success');
+  }
+
+  addMoreQuestions(): void {
+    this.addNewQuestion();
+  }
+
+  // ==================== UI INTERACTIONS - SIMPLIFIED ====================
+
+  toggleEdit(): void {
+    this.isEditing = !this.isEditing;
+    this.saveButtonText = this.isEditing ? 'Save Profile' : 'Update Profile';
+    this.cdr.detectChanges();
+  }
+
+  addOrgTypeFromInput(event: any): void {
+    event.preventDefault();
+    if (!this.isEditing) return;
+
+    const newType = this.orgTypeInput.trim();
+    if (newType && !this.selectedOrgTypes.includes(newType)) {
+      this.selectedOrgTypes.push(newType);
+      this.orgTypeInput = '';
+      this.cdr.detectChanges();
+    }
+  }
+
+  removeOrgType(index: number): void {
+    if (!this.isEditing) return;
+    this.selectedOrgTypes.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
+  // ==================== UTILITY METHODS ====================
+
+  private validateProfileData(): { isValid: boolean; message?: string } {
+    if (!this.profileData.fullName?.trim()) {
+      return { isValid: false, message: 'Full name is required' };
+    }
+    if (!this.profileData.phoneNumber?.trim()) {
+      return { isValid: false, message: 'Phone number is required' };
+    }
+    if (!this.profileData.email?.trim()) {
+      return { isValid: false, message: 'Email is required' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.profileData.email.trim())) {
+      return { isValid: false, message: 'Please enter a valid email address' };
+    }
+    return { isValid: true };
+  }
+
+  private setDefaultAvatar(): void {
+    this.profileImage = null;
+    this.profileData.profileImage = '';
+    this.hasExistingProfilePicture = false;
+    this.userService.setProfileImage('');
+    this.cdr.detectChanges();
+  }
+
+  private loadProfilePicture(): void {
+    console.log('📷 Loading profile picture for scouterId:', this.scouterId);
+
+    // First check if we have a cached image in localStorage
+    const cachedImage = localStorage.getItem('profile_image');
+    if (cachedImage && this.isValidImageData(cachedImage)) {
+      console.log('✅ Using cached profile image from localStorage');
+      this.profileImage = cachedImage;
+      this.hasExistingProfilePicture = true;
+      this.userService.setProfileImage(cachedImage);
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // If no cached image, fetch from backend
+    this.endpointService.getScouterPicture(this.scouterId).subscribe({
+      next: (res: any) => {
+        console.log('📷 Profile picture API response:', res);
+
+        if (res?.data?.base64Picture) {
+          const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
+          console.log('✅ Profile picture loaded from backend');
+
+          this.profileImage = base64Image;
+          this.hasExistingProfilePicture = true;
+          this.userService.setProfileImage(base64Image);
+
+          // Cache the image in localStorage
+          this.storeProfileImage(base64Image);
+
+          this.cdr.detectChanges();
+        } else {
+          console.log('📷 No profile picture data in response');
+          this.setDefaultAvatar();
+        }
+      },
+      error: (err) => {
+        console.log('📷 Profile picture load error:', err);
+
+        // Check if it's a 404 (no picture) or other error
+        if (err.status === 404) {
+          console.log('📷 No profile picture exists for this user');
+        } else if (err.status === 401) {
+          console.log('📷 Unauthorized - might need to refresh token');
+        } else {
+          console.log('📷 Other error loading profile picture:', err.message);
+        }
+
+        this.setDefaultAvatar();
+      },
+    });
+  }
+
+  // Add this helper method to validate image data
+  private isValidImageData(data: string): boolean {
+    if (!data) return false;
+
+    // Check if it's a data URL
+    if (data.startsWith('data:image/')) return true;
+
+    // Check if it's a base64 string
+    if (data.length > 100 && /[a-zA-Z0-9+/=]/.test(data)) return true;
+
+    // Check if it's a URL
+    if (data.startsWith('http')) return true;
+
+    return false;
+  }
+
+  private storeProfileImage(imageData: string): void {
+    try {
+      localStorage.setItem('profile_image', imageData);
+    } catch (err) {
+      console.warn('Could not store profile image:', err);
+    }
+  }
+
+  private updateSecurityQuestionsState(): void {
+    if (this.securityQuestions.length === 0) {
+      this.isEditingSecurityQuestions = true;
+    }
+    this.tempSecurityQuestions =
+      this.securityQuestions.length > 0
+        ? JSON.parse(JSON.stringify(this.securityQuestions))
+        : [{ question: '', answer: '' }];
+  }
+
+  private redirectToLogin(): void {
+    this.router.navigate(['/auth/login'], {
+      replaceUrl: true,
+      queryParams: {
+        redirectReason: 'session_expired',
+        returnUrl: this.router.url,
+      },
+    });
+  }
+
+  // Security Questions UI Methods
+  toggleEditSecurityQuestions(): void {
+    this.isEditingSecurityQuestions = !this.isEditingSecurityQuestions;
+    this.editingQuestionIndex = null;
+    if (this.isEditingSecurityQuestions) {
+      this.tempSecurityQuestions =
+        this.securityQuestions.length > 0
+          ? JSON.parse(JSON.stringify(this.securityQuestions))
+          : [{ question: '', answer: '' }];
+    }
+  }
+
+  addNewQuestion(): void {
+    if (this.tempSecurityQuestions.length < 5) {
+      this.tempSecurityQuestions.push({ question: '', answer: '' });
+    } else {
+      this.toastService.openSnackBar(
+        'Maximum of 5 security questions allowed',
+        'warning'
+      );
+    }
+  }
+
+  removeQuestion(index: number): void {
+    if (this.tempSecurityQuestions.length > 1) {
+      this.tempSecurityQuestions.splice(index, 1);
+    } else {
+      this.toastService.openSnackBar(
+        'At least one security question is required',
+        'warning'
+      );
+    }
+  }
+
+  canSaveSecurityQuestions(): boolean {
+    return (
+      this.tempSecurityQuestions.length > 0 &&
+      this.tempSecurityQuestions.every(
+        (q) => q.question?.trim() !== '' && q.answer?.trim() !== ''
+      )
+    );
+  }
+
+  // ==================== SUPPORTING PRIVATE METHODS ====================
+
+  private async showSaveConfirmation(): Promise<boolean> {
+    return new Promise(async (resolve) => {
+      const modal = await this.modalCtrl.create({
+        component: UpdateProfileConfirmationPopupModalComponent,
+        cssClass: 'confirmation-modal',
+        backdropDismiss: true,
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      resolve(role === 'confirm');
+    });
+  }
+
+  private async showDeleteConfirmation(question: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const confirmed = confirm(
+        `Are you sure you want to delete this question?\n\n"${question}"`
+      );
+      resolve(confirmed);
+    });
+  }
+
+  private updateSecurityQuestionsOnBackend(): void {
+    if (!this.scouterId) return;
+
+    const payload = this.securityQuestions
+      .filter((q) => q.question.trim() !== '')
+      .map((q) => ({ question: q.question, answer: q.answer }));
+
+    this.authService
+      .updateScouterSecurityQuestions(this.scouterId, payload)
+      .subscribe({
+        next: (res: any) => {
+          this.tempSecurityQuestions = [...this.securityQuestions];
+          this.toastService.openSnackBar(
+            'Security questions updated successfully',
+            'success'
+          );
+        },
+        error: (err) => {
+          console.error('❌ Failed to update security questions:', err);
+          this.toastService.openSnackBar(
+            'Failed to update security questions',
+            'error'
+          );
+          this.loadSecurityQuestions();
+        },
+      });
+  }
+
+  // Navigation
   goBack() {
     this.location.back();
   }
 
-  toggleQuestions() {
-    this.showQuestions = !this.showQuestions;
-  }
-
-  addQuestion() {
-    if (this.securityQuestions.length < 5) {
-      this.securityQuestions.push({ question: '', answer: '' });
-    }
-  }
-
-  formatNumber(event: any) {
-    let input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, '');
-    input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
-
+  // Scroll methods
   scrollToProfilePicture() {
-    const y = this.profilePicture.nativeElement.offsetTop;
-    this.pageContent.scrollToPoint(0, y, 600); // 👈 smooth scroll inside ion-content
+    if (this.profilePicture?.nativeElement) {
+      const y = this.profilePicture.nativeElement.offsetTop - 20;
+      this.pageContent.scrollToPoint(0, y, 600);
+    }
   }
 
   scrollToSecurityQuestions() {
-    //this.showQuestions = true; // open inputs
-    const y = this.securityQuestionsSection.nativeElement.offsetTop;
-    this.pageContent.scrollToPoint(0, y, 600);
-  }
-
-  // ✅ Handle file upload
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const base64Picture = reader.result as string;
-
-        if (!this.scouterId) {
-          console.error('No scouter ID found, cannot call API');
-          return;
-        }
-
-        this.endpointService
-          .uploadProfilePic(this.scouterId, base64Picture)
-          .subscribe(() => {
-            this.profileImage = base64Picture;
-            this.userService.setProfileImage(base64Picture);
-          });
-      };
-      reader.readAsDataURL(file);
+    if (this.securityQuestionsSection?.nativeElement) {
+      const y = this.securityQuestionsSection.nativeElement.offsetTop;
+      this.pageContent.scrollToPoint(0, y, 600);
     }
   }
 
-  async saveProfile() {
-    if (!this.scouterId) {
-      console.error('No scouter ID found, cannot call API');
-      return;
-    }
-
-    const body = {
-      ...this.profileData,
-      organizationType: this.selectedOrgTypes,
-    };
-
-    // Call API to update profile
-    this.endpointService.updateScouterProfile(this.scouterId, body).subscribe({
-      next: (res) => {
-        // Use backend response if available, otherwise fallback to body
-        const profileToStore = res || body;
-
-        // Update service & localStorage
-        this.userService.setProfileData(profileToStore);
-        localStorage.setItem('profile', JSON.stringify(profileToStore));
-
-        console.log('Profile updated successfully');
-
-        // Open confirmation modal
-        this.openConfirmationPopup();
-      },
-      error: (err) => {
-        console.error('Failed to update profile', err);
-      },
-    });
-  }
-
-  // Call this when security questions are saved
-  saveSecurityQuestions() {
-    if (!this.scouterId) {
-      console.error('No scouter ID found, cannot call API');
-      return;
-    }
-
-    this.endpointService
-      .updateScouterSecurityQuestions(this.scouterId, this.securityQuestions)
-      .subscribe({
-        next: () => {
-          console.log('Security questions saved');
-          this.showQuestions = false;
-          this.scrollToTop();
-        },
-        error: (err) => console.error('Failed to save security questions', err),
-      });
-    // Close question inputs
-    // this.showQuestions = false;
-
-    // Scroll to top after saving
-    // this.scrollToTop();
-  }
-
-  // Reusable scroll-to-top function
-  scrollToTop() {
-    if (this.pageContent) {
-      this.pageContent.scrollToTop(600);
-    }
-  }
-
-  // ✅ Modal helper
-  async openConfirmationPopup() {
-    const modal = await this.modalCtrl.create({
-      component: UpdateProfileConfirmationPopupModalComponent,
-      cssClass: 'update-profile-modal',
-    });
-    await modal.present();
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
