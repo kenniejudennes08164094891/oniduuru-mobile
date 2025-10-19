@@ -5,22 +5,48 @@
 
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
-
-    <!-- Reminder Cards -->
     <div class="space-y-4 mt-10">
+      <!-- Security Question Banner -->
+
       <div
-        class="relative rounded-lg p-6 mb-6 overflow-hidden bg-[url('/assets/images/dark-card-background.jpg')] bg-cover bg-center">
-        <div class="absolute inset-0 bg-black bg-opacity-70 "></div>
+        class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden bg-[url('/assets/images/dark-card-background.jpg')] bg-cover bg-center"
+        *ngIf="securityQuestions.length === 0"
+        style="background-image: url('/assets/images/dark-card-background.jpg');">
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+        <!-- Content -->
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
             <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-            <span class="font-normal text-[16px] leading-tight">
-              Why haven’t created your security question yet?
-            </span>
+            <span class="font-normal text-[16px] leading-tight">Why haven’t you created your security questions
+              yet?</span>
           </div>
-          <ion-button fill="clear" class="bg-transparent border border-white rounded-lg text-white"
-            (click)="scrollToProfilePicture()">
+          <ion-button fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+            (click)="scrollToSecurityQuestions()">
             Create Security Questions
+          </ion-button>
+        </div>
+      </div>
+      <div class="dark-card-background bg-cover bg-center relative rounded-lg p-6 mb-6 overflow-hidden"
+        *ngIf="profileImage !=='assets/images/talentprofile.png'"
+        style="background-image: url('/assets/images/dark-card-background.jpg');">
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+        <!-- Content -->
+        <div class="relative z-10 text-white ">
+          <div class="flex items-center gap-3 mb-3">
+            <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
+            <span class="font-normal text-[16px] leading-tight">Why haven’t you uploaded your profile picture
+              yet?</span>
+          </div>
+
+          <ion-button fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+            (click)="scrollToProfilePicture()">
+            Upload picture
           </ion-button>
         </div>
       </div>
@@ -28,29 +54,18 @@
 
     <!-- Personal Information -->
     <div class="mt-12">
-
       <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
-        <!-- Dark Overlay -->
         <div class="absolute inset-0 bg-black/60"></div>
-
-        <!-- Text -->
-        <p class="relative text-white text-xl font-bold mt-3 px-5">
-          Personal Information
-        </p>
+        <p class="relative text-white text-xl font-bold mt-3 px-5">Personal Information</p>
       </div>
-
 
       <div class="p-6">
         <!-- Profile Picture -->
-        <!-- Profile Picture -->
         <p class="mt-3 pb-3 text-gray-600" #profilePicture>Profile Picture</p>
-
         <div class="flex items-center mb-6">
-          <!-- Profile Image -->
           <img src="assets/images/talentprofile.png" alt="Profile Picture"
             class="w-28 h-28 rounded-full object-cover border-4 border-gray shadow-md" />
         </div>
-
 
         <!-- Full Name -->
         <div class="mb-4">
@@ -61,28 +76,29 @@
 
         <!-- Phone Number -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2">Enter Your Phone Number</label>
+          <label class="block text-gray-600 text-sm mb-2">Phone Number</label>
           <input type="number" [(ngModel)]="talent.phone" placeholder="e.g. 0908123456"
             class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <!-- Email -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2">Enter Your Email Address</label>
-          <input type="email" [(ngModel)]="talent.email" placeholder="adedijiSamuel@email.com"
+
+          <label class="block text-gray-600 text-sm mb-2">Email</label>
+          <input type="email" [(ngModel)]="talent.email" placeholder="adedijiSamuel@email.com" readonly
             class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
-        <!-- Password -->
+        <!-- Password (Read-only) -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Password</label>
-          <input type="password" [(ngModel)]="talent.password" placeholder="****************"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="password" [(ngModel)]="talent.password" placeholder="************" readonly
+            class="w-full border-none rounded-md px-4 py-2 shadow-md bg-gray-100 text-gray-500 cursor-not-allowed" />
         </div>
 
         <!-- Location -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2">Enter Your Location</label>
+          <label class="block text-gray-600 text-sm mb-2">Location</label>
           <input type="text" [(ngModel)]="talent.location" placeholder="e.g. Ikeja, Lagos"
             class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
@@ -91,154 +107,160 @@
 
     <!-- Other Details -->
     <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
-      <!-- Dark Overlay -->
       <div class="absolute inset-0 bg-black/60"></div>
-
-      <!-- Text -->
-      <p class="relative text-white text-xl font-bold mt-3 px-5">
-        Other Details
-      </p>
+      <p class="relative text-white text-xl font-bold mt-3 px-5">Other Details</p>
     </div>
 
-
-    <!-- Skill Set -->
-    <div class="mb-4 mt-3">
-      <label class="block text-gray-600 text-sm mb-2"> Your skill set(s):</label>
+    <!-- Skills -->
+    <div class="mb-4 mt-3 px-6">
+      <label class="block text-gray-600 text-sm mb-2">Your Skill Set(s):</label>
       <div class="flex flex-wrap gap-2 mb-2">
         <span *ngFor="let skill of skills" class="bg-[#CAD2DF] rounded-lg px-2 py-1 flex items-center gap-1">
           {{ skill }}
-          <button
-            class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
-            (click)="removeSkill(skill)">
-            ×
-          </button>
+          <button class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500"
+            (click)="removeSkill(skill)">×</button>
         </span>
       </div>
-      <input type="text" placeholder="e.g Singing, Painting, Acting..." [(ngModel)]="newSkill"
+      <input type="text" placeholder="e.g Singing, Painting, Acting..." [(ngModel)]="newSkill" name="newSkill"
         (keyup.enter)="addSkill()"
-        class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md" />
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
     </div>
 
-    <!-- Skill Level -->
-    <div class="mb-4">
+    <!-- Skill Level Dropdown -->
+    <div class="mb-4 px-6">
       <label class="block text-gray-600 text-sm mb-2">Skill Level</label>
-      <input type="text" [(ngModel)]="talent.skillLevel" placeholder="Intermediate"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <select [(ngModel)]="talent.skillLevel"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+       <option [value]="talent.skillLevel" disabled>{{talent.skillLevel}}</option>
+        <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
+      </select>
     </div>
 
-    <!-- Eduactional Background -->
-    <div class="mb-4">
-      <label class="block text-gray-600 text-sm mb-2">Eduactional Background</label>
-      <input type="text" [(ngModel)]="talent.educationalBackground" placeholder="Masters Degree"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <!-- Educational Background Dropdown -->
+    <div class="mb-4 px-6">
+      <label class="block text-gray-600 text-sm mb-2">Educational Background</label>
+      <select [(ngModel)]="talent.educationalBackground"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option *ngFor="let edu of educationalBackgrounds" [value]="edu">{{ edu }}</option>
+      </select>
     </div>
 
-    <div class="mb-4">
+    <!-- Pay Range Dropdown -->
+    <div class="mb-4 px-6">
       <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
-      <input type="text" [(ngModel)]="talent.payRange" placeholder="e.g $200 - $500"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <select [(ngModel)]="talent.payRange"
+        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option *ngFor="let range of payRanges" [value]="range">{{ range }}</option>
+      </select>
     </div>
 
-    <!--Reels Upload  -->
+    <!-- Save & Return Buttons -->
+    <!-- <div class="px-6 py-10">
+      <button
+        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        (click)="saveProfile()">
+        Save
+      </button>
+      <button
+        class="bg-white shadow-md mt-3 rounded-lg p-3 border border-[#101828] w-full py-2 text-[#101828] font-medium cursor-pointer"
+        (click)="goBack()">
+        Return
+      </button>
+    </div> -->
+
+    <!--Reels Upload -->
     <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
       <!-- Dark Overlay -->
       <div class="absolute inset-0 bg-black/60"></div>
-
       <!-- Text -->
       <p class="relative text-white text-xl font-bold mt-3 px-5">
-        Reels upload
-      </p>
+        Reels upload </p>
     </div>
-
     <!-- Upload Video -->
     <div class="mb-6">
       <label class="block text-gray-600 text-sm mb-2">Upload Video</label>
+
       <div
-        class="w-full border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer hover:border-blue-500 transition">
+        class="w-full border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer hover:border-blue-500 transition relative">
+        <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer"
+          (change)="onVideoSelected($event)" />
         <ion-icon name="cloud-upload-outline" class="text-3xl text-gray-500 mb-2"></ion-icon>
-        <p class="text-gray-500">Drag & drop or click to upload</p>
+        <p class="text-gray-500">
+          {{ selectedVideoFile ? selectedVideoFile.name : 'Drag & drop or click to upload' }}
+        </p>
       </div>
     </div>
-    <div class="px-6 py-10">
+
+    <!-- Upload Button -->
+    <div class="px-6 py-6 flex flex-col items-center">
+      <!-- Save Button -->
       <button
-        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="questions.length < 1" (click)="saveProfile()">
+        class="bg-[#101828] w-full rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="isLoading" (click)="uploadVideo()">
         Save
+        <span *ngIf="isLoading"> Uploading...</span>
       </button>
 
+      <!-- Return Button -->
       <button
-        class="bg-white shadow-md mt-3 rounded-lg p-3 border border-[#101828]  w-full py-2 text-[#101828] font-medium cursor-pointer"
+        class="bg-[#101828] shadow-md mt-3 rounded-lg border border-[#101828] w-full py-2 text-white font-medium cursor-pointer"
         (click)="goBack()">
         Return
       </button>
     </div>
-    <!-- Security Questions -->
 
-    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
-      <div class="absolute inset-0 bg-black/60"></div>
-      <p class="relative text-white text-xl font-bold mt-3 px-5">
-        Create Security Questions
-      </p>
+    <!-- Security Questions -->
+    <div #securityQuestionsSection
+      class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+      <div class="absolute inset-0 bg-black/60">
+
+      </div>
+      <p class="relative text-white text-xl font-bold mt-3 px-5"> Create Security Questions </p>
     </div>
     <div class="mb-4 px-6 py-6">
       <div class="flex items-center bg-white shadow-md rounded-lg p-3 gap-3 mb-3">
         <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-        <span class="block text-gray-600 font-normal text-[16px]   mb-2">
-          Please note! Update your security questions
+        <span class="block text-gray-600 font-normal text-[16px] mb-2"> Please note! Update your security questions
         </span>
       </div>
-
-      <div class="px-6" [formGroup]="securityForm">
-        <label class="block text-gray-700 ml-14 font-medium mb-3">Questions</label>
-
+      <div class="px-6" [formGroup]="securityForm"> <label
+          class="block text-gray-700 ml-14 font-medium mb-3">Questions</label>
         <!-- Questions + Answers Loop -->
         <div formArrayName="questions">
           <div *ngFor="let q of questions.controls; let i = index" [formGroupName]="i" class="mb-8">
             <!-- Question -->
-            <div class="flex items-center">
-              <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
-              <img src="assets/icon/question 1.png" alt="Q Icon" class="w-5 h-5 mr-2" />
+            <div class="flex items-center"> <img src="assets/icon/Vector (1).png" alt="Answer Icon"
+                class="w-5 h-5 mr-2" /> <img src="assets/icon/question 1.png" alt="Q Icon" class="w-5 h-5 mr-2" />
               <ion-input type="text" placeholder="Enter your security question" formControlName="question"
                 class="border rounded-lg px-3 py-2 flex-1"></ion-input>
             </div>
-
             <!-- Answer (aligned with question input) -->
             <div class="flex items-center mt-3 ml-7">
-              <!-- Empty placeholder icons for alignment -->
-              <!-- <div class="w-10"></div> -->
-              <div class="ml-2 w-5"></div>
-              <ion-input type="text" placeholder="Enter answer" formControlName="answer"
+              <!-- Empty placeholder icons for alignment --> <!-- <div class="w-10"></div> -->
+              <div class="ml-2 w-5"></div> <ion-input type="text" placeholder="Enter answer" formControlName="answer"
                 class="border rounded-lg px-5 py-2 flex-1"></ion-input>
-            </div>
-
-            <!-- Remove button -->
-            <div class="flex justify-end mt-2">
-              <button type="button" class="text-red-500 text-sm hover:underline" (click)="removeQuestion(i)"
-                *ngIf="questions.length > 1">
-                Remove
-              </button>
-            </div>
+            </div> <!-- Remove button -->
+            <div class="flex justify-end mt-2"> <button type="button" class="text-red-500 text-sm hover:underline"
+                (click)="removeQuestion(i)" *ngIf="questions.length > 1"> Remove </button> </div>
           </div>
         </div>
-
         <!-- Add Question Button -->
         <div class="flex justify-center mt-6">
           <button type="button"
             class="bg-gray-100 text-gray-800 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200"
-            (click)="addQuestion()">
-            + Add Another Question
+            (click)="addQuestion()"> + Add Another Question
+
           </button>
         </div>
-
         <!-- Save Button -->
         <div class="px-6 py-10 flex justify-center">
           <button
             class="bg-[#101828] w-48 rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="securityForm.invalid" (click)="save()">
-            Save
+            [disabled]="isLoading" (click)="saveProfile()"> {{saveText}}
+
           </button>
         </div>
       </div>
-     </div>
+    </div>
   </div>
 </ion-content>

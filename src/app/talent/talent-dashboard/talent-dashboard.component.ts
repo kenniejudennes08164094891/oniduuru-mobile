@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
 import { Router } from '@angular/router';
-import {AuthService} from "../../services/auth.service";
+import { AuthService } from "../../services/auth.service";
 Chart.register(...registerables);
 
 @Component({
@@ -17,10 +17,11 @@ export class TalentDashboardComponent implements OnInit {
   showSpinner: boolean = true;
   currentYear: number = new Date().getFullYear();
 
-  userName: string = 'Samuel';
+  userName: string = 'User';
   timeOfDay: string = '';
   timeIcon: string = '';
   myIcon: string = imageIcons.infoIcon;
+
   // Header scroll state
   headerHidden: boolean = false;
   scrollPosition: number = 0;
@@ -32,22 +33,57 @@ export class TalentDashboardComponent implements OnInit {
   constructor(
     private router: Router,
     private authService: AuthService
-  ) {
-    this.getTalentDetails();
-  }
+  ) {}
 
-  getTalentDetails(){
+  // ✅ Get user details (name) from localStorage or decoded auth data
+  getTalentDetails() {
+  try {
+    // 1️⃣ Try to get saved profile first
+    const savedProfile = localStorage.getItem('talentProfile');
+    if (savedProfile) {
+      const parsedProfile = JSON.parse(savedProfile);
+      console.log('Loaded talent profile from localStorage:', parsedProfile);
+
+      this.userName =
+        parsedProfile.fullName ||
+        parsedProfile.details?.user?.fullName ||
+        'User';
+
+      if (this.userName !== 'User') return; // ✅ Found name, stop here
+    }
+
+    // 2️⃣ Otherwise, decode from token as fallback
     const talentDetails = this.authService.decodeTalentDetails();
-    console.log("talent details>>", talentDetails?.details?.user?.role);
+    console.log('Decoded Talent Details (fallback):', talentDetails);
+
+    this.userName =
+      talentDetails?.fullName ||
+      talentDetails?.details?.user?.fullName ||
+      'User';
+  } catch (error) {
+    console.error('Error loading talent details:', error);
+    this.userName = 'User';
+  }
+}
+
+
+
+  proceedToMarketProfile(): void {
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+
+    if (!talentId) {
+      alert('Talent ID not found. Please log in again.');
+      return;
+    }
+
+    this.router.navigate(['/create-record', talentId]);
   }
 
- async goToViewHires():Promise<void>  {
-   await this.router.navigate(['/view-hires']);
+  async goToViewHires(): Promise<void> {
+    await this.router.navigate(['/view-hires']);
   }
-  // Greeting
 
-
-  // Dashboard stats (numbers only)
+  // Dashboard stats
   dashboardCards = [
     { title: 'Total Market Engagement', value: 21, status: '' },
     { title: 'Total Offer Accepted', value: 18, status: 'active' },
@@ -55,7 +91,6 @@ export class TalentDashboardComponent implements OnInit {
     { title: 'Total Offer Awaiting Acceptance', value: 2, status: 'inactive' },
   ];
 
-  // For donut chart
   dashboardStatCards: { title: string; value: number; status: string }[] = [];
   percentageCircles: {
     size: number;
@@ -80,11 +115,13 @@ export class TalentDashboardComponent implements OnInit {
     avatar: string;
   }[] = [];
 
-  async routeToWallet():Promise<void> {
-   await this.router.navigate(['/scouter/wallet-page']);
+  async routeToWallet(): Promise<void> {
+    await this.router.navigate(['/scouter/wallet-page']);
   }
+
   ngOnInit(): void {
     this.setTimeOfDay();
+    this.getTalentDetails();
 
     // Simulate spinner
     setTimeout(() => (this.showSpinner = false), 1500);
@@ -138,7 +175,6 @@ export class TalentDashboardComponent implements OnInit {
       },
     ];
 
-    // Ratings chart
     this.initRatingsChart();
   }
 
@@ -163,29 +199,19 @@ export class TalentDashboardComponent implements OnInit {
         ],
       },
       options: {
-        indexAxis: 'y', // horizontal bars
+        indexAxis: 'y',
         responsive: true,
-        plugins: {
-          legend: { display: false },
-        },
+        plugins: { legend: { display: false } },
         scales: {
-          x: {
-            min: 0,
-            max: 6,
-            ticks: { stepSize: 2 },
-          },
+          x: { min: 0, max: 6, ticks: { stepSize: 2 } },
         },
       },
     });
   }
 
-  // Scroll toggle for header
   onContentScroll(event: any) {
     this.scrollPosition = event.detail.scrollTop;
-    if (
-      this.scrollPosition > this.previousScrollPosition &&
-      this.scrollPosition > 100
-    ) {
+    if (this.scrollPosition > this.previousScrollPosition && this.scrollPosition > 100) {
       this.headerHidden = true;
     } else if (this.scrollPosition < this.previousScrollPosition) {
       this.headerHidden = false;
@@ -197,7 +223,6 @@ export class TalentDashboardComponent implements OnInit {
     return index;
   }
 
-  // Helpers
   getCircumference(radius: number): number {
     return 2 * Math.PI * radius;
   }
@@ -208,11 +233,7 @@ export class TalentDashboardComponent implements OnInit {
     return circumference - (percentage / 100) * circumference;
   }
 
-  getProgressDotPosition(
-    radius: number,
-    percentage: number,
-    circleSize: number
-  ) {
+  getProgressDotPosition(radius: number, percentage: number, circleSize: number) {
     if (isNaN(percentage)) percentage = 0;
     const center = circleSize / 2;
     const angleInRadians = ((percentage / 100) * 360 - 90) * (Math.PI / 180);
@@ -244,14 +265,10 @@ export class TalentDashboardComponent implements OnInit {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'active':
-        return '#189537';
-      case 'pending':
-        return '#FFA086';
-      case 'inactive':
-        return '#CC0000';
-      default:
-        return '#79797B';
+      case 'active': return '#189537';
+      case 'pending': return '#FFA086';
+      case 'inactive': return '#CC0000';
+      default: return '#79797B';
     }
   }
 
