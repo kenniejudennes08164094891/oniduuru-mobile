@@ -35,33 +35,45 @@ export class AuthPage implements OnInit {
     await this.router.navigate(['/auth/signup-select'], {relativeTo: this.route});
   }
 
-  async routeToLoginScreen(): Promise<any> {
-    await this.router.navigate(['/auth/login'], {
-      relativeTo: this.route
-    })
-  }
-
   async submitForm(): Promise<any> {
-    this.loginText = "signing in...";
-   setTimeout(async ():Promise<void> => {
-     try {
-       const res = await firstValueFrom(this.authService.loginUser(this.loginForm.value));
-       if (res) {
-         let role = res?.details?.user?.role;
-         this.authService.setUserCredential(res);
-         this.toast.openSnackBar(`${res?.message}`, 'success');
-         await this.router.navigateByUrl(
-           role === 'scouter' ? '/scouter/dashboard' :
-              role === 'talent' ? '/talent/dashboard' : '/auth/login'
-         );
-       }
-     } catch (err: Error | any) {
-       console.error("error from login>>", err);
-       this.loginText = "Login";
-       this.toast.openSnackBar(err?.error?.message ?? 'Oops!...a login error occurred!', 'error');
-     }
-   },1200)
-  }
+  this.loginText = "signing in...";
+
+  setTimeout(async (): Promise<void> => {
+    try {
+      const res = await firstValueFrom(this.authService.loginUser(this.loginForm.value));
+      console.log(' Login response:', res); 
+      if (res) {
+        const role = res?.details?.user?.role;
+        const talentId = res?.details?.user?.talentId;
+
+        // ✅ Store full user credential (as before)
+        this.authService.setUserCredential(res);
+        
+
+        // ✅ NEW: Store talentId separately for profile page use
+        if (talentId) {
+          localStorage.setItem('talentId', talentId);
+        }
+
+        this.toast.openSnackBar(`${res?.message}`, 'success');
+
+        // ✅ Redirect based on role
+        await this.router.navigateByUrl(
+          role === 'scouter'
+            ? '/scouter/dashboard'
+            : role === 'talent'
+            ? '/talent/dashboard'
+            : '/auth/login'
+        );
+      }
+    } catch (err: Error | any) {
+      console.error('error from login >>', err);
+      this.loginText = 'Login';
+      this.toast.openSnackBar(err?.error?.message ?? 'Oops!...a login error occurred!', 'error');
+    }
+  }, 1200);
+}
+
 
 
 

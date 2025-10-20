@@ -1,0 +1,225 @@
+<ion-header>
+  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+  </app-talent-header>
+
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="relative rounded-lg px-4 py-10 overflow-hidden"
+    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center; height: 180px;">
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+    <!-- Title text -->
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
+        <div class="items-center">
+          <span class="font-semibold text-[24px] leading-tight">
+            Create Market Profile
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Profile Card -->
+  <div class="bg-white rounded-lg shadow-md p-4 relative -mt-12 mx-4" style="z-index: 20;">
+    <div class="flex items-start gap-4">
+      <!-- Profile Picture -->
+      <!-- Profile Picture -->
+      <div class="relative">
+        <!-- Clickable image -->
+        <label for="profileUpload" class="cursor-pointer">
+          <img [src]="profile.photo || '/assets/images/portrait-african-american-man.jpg'" alt="Profile"
+            class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md" />
+        </label>
+
+        <!-- Hidden input -->
+        <input id="profileUpload" type="file" accept=".png,.jpg,.jpeg" class="hidden"
+          (change)="onFileSelected($event)" />
+      </div>
+
+
+      <!-- Profile Details -->
+      <div class="flex-1">
+        <!-- Name -->
+        <h2 class="font-semibold text-lg">{{ profile.name }}</h2>
+        <!-- Address -->
+        <p class="text-sm text-gray-500">{{ profile.address }}</p>
+
+        <!-- Rating (static for now) -->
+        <p class="text-yellow-500">★★★★★</p>
+        <div class="flex items-center gap-2">
+          <!-- Bio text -->
+          <div class="flex items-center gap-2">
+            <!-- Bio text -->
+            <p class="text-gray-700">{{ bio }}</p>
+
+            <!-- Pencil Icon -->
+            <img src="assets/icon/pink-pencil.png" alt="Edit Bio" class="w-5 h-5 cursor-pointer"
+              (click)="openBioEditor()" />
+
+            <!-- Bio textarea (edit mode) -->
+            <!-- Bio Editor Modal -->
+            <ion-modal [isOpen]="isBioEditorOpen" (didDismiss)="closeBioEditor()"
+              style="--height: auto; --min-height: unset; --max-height: fit-content; --padding-bottom: 0;">
+              <ng-template>
+                <div class="p-4 bg-white flex flex-col">
+                  <!-- Header -->
+                  <div class="bg-gray-200 p-4 rounded-t">
+                    <div class="flex items-center gap-2 mb-4">
+                      <lucide-icon name="pencil" class="w-5 h-5 text-[#101828]"></lucide-icon>
+                      <h2 class="text-lg font-semibold text-[#101828]">Value Proposition</h2>
+                    </div>
+                  </div>
+
+                  <!-- Textarea -->
+                  <textarea [(ngModel)]="editedBio" rows="5"
+                    class="border border-gray-400 rounded p-4 w-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"></textarea>
+
+                  <!-- Button -->
+                  <div class="flex justify-start mt-3 mb-0">
+                    <button class="px-4 py-2 bg-[#101828] text-white rounded" (click)="saveBio()">
+                      Post Comment
+                    </button>
+                  </div>
+                </div>
+              </ng-template>
+            </ion-modal>
+
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- Phone -->
+      <p class="text-sm text-gray-700">{{ profile.phone }}</p>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="flex border-b border-gray-300 mt-6">
+    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-800" [ngClass]="activeTab === 'skills'
+      ? 'text-purple-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-purple-600'
+      : 'text-gray-600'" (click)="setActiveTab('skills')">
+      Skill Set
+    </button>
+
+    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-800" [ngClass]="activeTab === 'docs'
+      ? 'text-purple-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-purple-600'
+      : 'text-gray-600'" (click)="setActiveTab('docs')">
+      Pics & Document
+    </button>
+  </div>
+
+  <!-- Tab Content with Slide Transition -->
+  <div class="relative overflow-hidden h-auto">
+    <!-- Skill Set Tab -->
+    <div class="transition-all duration-200 ease-in-out"
+      [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'skills', '-translate-x-full opacity-0 absolute': activeTab !== 'skills' }">
+      <div *ngIf="activeTab === 'skills'" class="mt-4">
+        <div *ngFor="let skill of marketProfile.skillSets; let i = index"
+          class="flex items-center justify-between mb-3 gap-3">
+
+          <div class="flex flex-col gap-2  mb-4">
+            <!-- Skill name on top -->
+            <p class="text-sm font-medium ml-16 text-gray-800 capitalize">
+              {{ skill.skill }}
+            </p>
+
+            <!-- Skill details and pricing on same row -->
+            <div class="flex items-center mr-8 gap-3 w-full">
+              <!-- Check and Skill Set Icons -->
+              <img src="assets/icon/check.png" alt="Check Icon" class="w-5 h-5 object-contain" />
+              <img src="assets/icon/SkillSetIcon.svg" alt="Skill Set Icon" class="w-5 h-5 object-contain" />
+
+              <!-- Floating label select -->
+              <div class="relative flex-1">
+                <label
+                  class="absolute text-gray-500 text-sm left-3 top-2 transition-all duration-200 pointer-events-none"
+                  [class.text-xs]="skill.skillLevel" [class.-top-2]="skill.skillLevel"
+                  [class.bg-white]="skill.skillLevel" [class.px-1]="skill.skillLevel">
+                  Skill level*
+                </label>
+
+                <select [(ngModel)]="skill.skillLevel"
+                  class="border border-gray-400 rounded px-3 pt-5 pb-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-transparent">
+                  <option value="" disabled selected hidden></option>
+                  <option value="intermediate">Intermediate Performer</option>
+                  <option value="mid">Mid-level Experienced</option>
+                  <option value="professional">Professional Experienced</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+
+              <!-- Pricing input (moved inside the same row) -->
+              <div class="relative w-1/3">
+                <label
+                  class="absolute text-gray-500 text-sm left-3 top-2 transition-all duration-200 pointer-events-none"
+                  [class.text-xs]="skill.pricing" [class.-top-2]="skill.pricing" [class.bg-white]="skill.pricing"
+                  [class.px-1]="skill.pricing">
+                  Pricing in ₦*
+                </label>
+
+                <input type="number" [(ngModel)]="skill.pricing"
+                  class="border border-gray-400 rounded px-3 pt-5 pb-2 text-right w-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 bg-transparent" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Pics & Document Tab -->
+    <div class="transition-all duration-200 ease-in-out"
+      [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'docs', 'translate-x-full opacity-0 absolute': activeTab !== 'docs' }">
+      <div *ngIf="activeTab === 'docs'" class="mt-4">
+        <div class="bg-gray-100 text-sm text-gray-600 p-3 rounded mb-3">
+          <span><img src="assets/icon/warning-icon.png" alt=""><strong>Important Note!:</strong> Upload images in PNG,
+            JPG, JPEG format with a width of 828 pixels and a
+            height of 640 pixels <b>...with grey backgrounds click here</b>.<br />
+          </span>
+
+        </div>
+      </div>
+      <!-- Upload -->
+      <label
+        class="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-6 cursor-pointer">
+        <ion-icon name="cloud-upload-outline" class="text-3xl mb-2 text-gray-500"></ion-icon>
+        <span class="text-gray-500">Click to upload picture</span>
+        <input type="file" hidden (change)="onFileSelected($event)" accept=".png,.jpg,.jpeg,.mp4" />
+      </label>
+    </div>
+  </div>
+
+
+
+  <!-- Uploaded files preview -->
+  <div class="grid grid-cols-3 gap-2 mt-4">
+    <div *ngFor="let file of uploadedFiles; let i = index" class="relative">
+      <img *ngIf="file.type.startsWith('image')" [src]="file.base64" class="w-full h-24 object-cover rounded" />
+      <video *ngIf="file.type.includes('mp4')" controls class="w-full h-24 rounded"></video>
+      <button (click)="removeFile(i)" class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded">
+        <ion-icon name="trash"></ion-icon>
+      </button>
+    </div>
+  </div>
+
+
+
+  <!-- Skill Set Tab -->
+
+
+
+  <!-- Pics & Document Tab -->
+
+
+  <!-- Update Button -->
+  <button class="w-full bg-[#101828] text-white py-3 rounded mt-6" (click)="updateRecord()">
+    Create Record
+  </button>
+
+
+</ion-content>

@@ -39,11 +39,18 @@ const routes: Routes = [
     loadChildren: () => import('./talent/talent.module').then(m => m.TalentPageModule),
   },
   {
+    path: 'create-record/:talentId',
+    loadChildren: () =>
+      import('./talent/create-record/create-record.module').then(
+        (m) => m.CreateRecordPageModule
+      ),
+  },
+  {
     path: 'view-hires',
     loadChildren: () =>
       import('./talent/view-hires/view-hires.module').then(m => m.ViewHiresPageModule)
   },
-    {
+  {
     path: 'market-price-preposition',
     loadChildren: () =>
       import('./talent/market-price-preposition/market-price-preposition.module').then(
@@ -51,7 +58,7 @@ const routes: Routes = [
       ),
   },
   { path: '', redirectTo: 'market-price-preposition', pathMatch: 'full' },
-    {
+  {
     path: 'market-price-preposition',
     loadChildren: () =>
       import('./talent/market-price-preposition/market-price-preposition.module').then(

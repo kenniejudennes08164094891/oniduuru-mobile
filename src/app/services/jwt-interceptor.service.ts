@@ -7,48 +7,62 @@ import { Observable } from 'rxjs';
 })
 export class JwtInterceptorService {
 
-  constructor() {
-    this.getUserData();
-  }
+  constructor() {}
 
-  getUserData(): any {
+  // ✅ Always fetch the latest stored token
+  getUserData(): string | null {
     let user: any = localStorage.getItem('eniyan');
-    if (user !== null) {
-      let parseUser = JSON.parse(atob(user));
-      let accessToken = parseUser?.access_token;
-      return accessToken;
+    if (user) {
+      try {
+        let parseUser = JSON.parse(atob(user));
+        // ✅ match your actual response key: access_token
+        let accessToken = parseUser?.access_token;
+        return accessToken || null;
+      } catch (error) {
+        console.error('Error parsing token from localStorage:', error);
+        return null;
+      }
     }
+    return null;
   }
 
+  // ✅ Automatically attach Authorization header to requests
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (req.headers.get('Skip-Interceptor') === 'true') {
       return next.handle(req);
     }
-    let token: any = this.getUserData();
-    let jwToken = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    })
+
+    const token = this.getUserData();
+
+    const jwToken = req.clone({
+      setHeaders: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+
     return next.handle(jwToken);
   }
 
-  public customNoAuthHttpHeaders: any = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'accept': '*/*',
-  })
+  // ✅ Use getter methods so the latest token is always used
+  public get customNoAuthHttpHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'accept': '*/*',
+    });
+  }
 
+  public get customHttpHeaders(): HttpHeaders {
+    const token = this.getUserData();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'accept': '*/*',
+      'Authorization': token ? `Bearer ${token}` : '',
+    });
+  }
 
-  public customHttpHeaders: any = new HttpHeaders({
-    'Content-Type': 'application/json',
-    'accept': '*/*',
-    'Authorization': `Bearer ${this.getUserData()}`,
-  })
-
-  public customFormDataHttpHeaders = new HttpHeaders({
-    // 'Content-Type': 'multipart/form-data',
-    'accept': '*/*',
-    'Authorization': `Bearer ${this.getUserData()}`,
-  })
-
+  public get customFormDataHttpHeaders(): HttpHeaders {
+    const token = this.getUserData();
+    return new HttpHeaders({
+      'accept': '*/*',
+      'Authorization': token ? `Bearer ${token}` : '',
+    });
+  }
 }

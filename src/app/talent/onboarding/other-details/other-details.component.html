@@ -1,3 +1,64 @@
-<p>
-  other-details works!
-</p>
+<!-- <body>
+
+    <div class="login-container p-8 ml-4 ">
+        <h2 class="font-semibold hidden lg:block">
+            Other details
+        </h2>
+        <form [formGroup]="otherDetailsForm">
+            <div class="mb-2 text-xs">
+                <label for="username" class="block mb-2">Skill Level</label>
+                <select formControlName="skillLevel"
+                    class="bg-white cursor-pointer border text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option *ngFor="let item of skillLevel">
+                        <span>{{item}}</span>
+                    </option>
+                </select>
+            </div>
+
+            <div class="text-xs">
+                <label for="username" class="block mb-2">Skill sets</label>
+                <mat-form-field class="example-chip-list" appearance="outline">
+                    <mat-chip-grid class="text-xs" #chipGrid aria-label="Enter skill set">
+                        <div *ngFor="let skill of skillset">
+                            <mat-chip-row (removed)="remove(skill)" [editable]="true" (edited)="edit(skill, $event)"
+                                [aria-description]="'press enter to edit ' + skill?.name">
+                                {{skill.name}}
+                                <button matChipRemove [attr.aria-label]="'remove ' + skill?.name">
+                                    <mat-icon>cancel</mat-icon>
+                                </button>
+                            </mat-chip-row>
+                        </div>
+
+                        <input placeholder="Add a skill, then press enter..." [matChipInputFor]="chipGrid"
+                            [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="addOnBlur"
+                            (matChipInputTokenEnd)="add($event)" />
+                    </mat-chip-grid>
+                </mat-form-field>
+            </div>
+
+            <div class="mb-2 text-xs">
+                <label class="block mb-2">Pay range</label>
+                <select formControlName="payRange"
+                    class="bg-white cursor-pointer border text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option *ngFor="let item of payrange">
+                        <span>{{item}}</span>
+                    </option>
+                </select>
+            </div>
+            <br>
+            <div class="mb-2 text-xs">
+                <div class="flex space-x-4">
+                    <button (click)="cancelClicked($event)"
+                        class="bg-white hover:bg-[#101323] text-[#101323] hover:text-white font-bold py-2 px-4 rounded">Previous</button>
+                    <button (click)="nextClicked($event)" [disabled]="!this.otherDetailsForm.valid" [ngStyle]="{ 'background-color': !this.otherDetailsForm.valid ? '#CDD5DF' : '#101323' }"
+                        class="bg-[#101323] hover:bg-[#101323] text-white font-bold py-2 px-4 rounded" id="nextBtn">Next</button>
+                </div>
+
+            </div>
+
+
+        </form>
+    </div>
+
+
+</body> -->

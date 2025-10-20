@@ -1325,6 +1325,23 @@ export const countries: string[] = [
   'Chad',
   'Benin Republic',
 ];
+export const skillLevel: string[] = ["-- select a skill level --", "Intermediate-Performer", "Mid-level-Experienced", "Professional-Experienced", "Expert"];
+export const educationalBackground: string[] = ["-- select an educational background --", "School drop-out", "SSCE", "Bachelors degree", "Masters degree", "PhD", "Others...please specify"];
+export const payRange: string[] = ["-- select an pay range --", "less than 20k", "20k-50k", "50k-100k", "100k-200k", "200k-500k", "500k-1Million", "above 1Million"];
+export const talentSelectOptions: any[] = [{
+  option: "Find professionals by Location",
+  desciption: "Discover skilled professionals near you effortlessly. Whether you're seeking services locally or across regions, easily pinpoint experts based on their proximity and location. Streamline your search and connect with professionals who understand your local needs.",
+  radioId: "hosting-small",
+  type: 'location'
+},
+{
+  option: "Find professionals by skill set",
+  desciption: "Locate professionals based on their specialized skill sets. Identify experts proficient in specific fields to match your project or service requirements precisely. Narrow down your search and connect with professionals equipped with the exact expertise you need",
+  radioId: "hosting-big",
+  type: 'skillset'
+}
+]
+
 
 export const banks: string[] = [
   'Access Bank',
@@ -1350,6 +1367,16 @@ export const banks: string[] = [
   'Heritage Bank',
   'Globus Bank',
 ];
+export interface verifyOTP {
+  otp: number,
+  email?: string | null,
+  phoneNumber?: string | null
+}
+
+export interface resendOTP {
+  email?: string | null,
+  phoneNumber?: string | null
+}
 
 export const title: string[] = ['Mr', 'Mrs', 'Miss', 'Dr'];
 export const gender: string[] = ['Male', 'Female', 'Others'];

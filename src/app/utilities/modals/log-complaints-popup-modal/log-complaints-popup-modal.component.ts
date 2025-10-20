@@ -16,7 +16,9 @@ export class LogComplaintsPopupModalComponent extends BaseModal {
   constructor(modalCtrl: ModalController, platform: Platform) {
     super(modalCtrl, platform); // ✅ inherit base logic
   }
-
+  override dismiss() {
+    this.modalCtrl.dismiss(null, 'cancel');
+  }
   submitComplaint() {
     if (this.complaintText.trim().length === 0) {
       return;
