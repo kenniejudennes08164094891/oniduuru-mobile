@@ -21,4 +21,5 @@ export class EndpointService {
     let url: string = `${environment?.baseUrl}/${endpoints?.getAllCountryFlags}`;
     return this.http.get<any>(url);
   }
+
 }

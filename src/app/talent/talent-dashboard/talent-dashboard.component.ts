@@ -38,7 +38,7 @@ export class TalentDashboardComponent implements OnInit {
 
   getTalentDetails(){
     const talentDetails = this.authService.decodeTalentDetails();
-    console.log("talent details>>", talentDetails?.details?.user?.role);
+    console.log("talent details>>", talentDetails);
   }
 
  async goToViewHires():Promise<void>  {
