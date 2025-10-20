@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
+// import { ToastController } from '@ionic/angular';
 import { NavController, AnimationController } from '@ionic/angular';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-hire-talent-page',
@@ -21,7 +22,7 @@ export class HireTalentPageComponent implements OnInit {
     private router: Router,
 
     private navCtrl: NavController,
-    private toast: ToastController,
+    private toastService: ToastsService,
     private animationCtrl: AnimationController
   ) {}
 
@@ -107,23 +108,25 @@ export class HireTalentPageComponent implements OnInit {
     if (enteredOtp.length === 4) {
       // since your otpArray is 4
       // console.log('OTP Verified ✅');
-      const toast = await this.toast.create({
-        message: 'OTP Verified ✅',
-        duration: 2000,
-        color: 'success',
-        position: 'bottom',
-      });
-      await toast.present();
+      // const toast = await this.toast.create({
+      //   message: 'OTP Verified ✅',
+      //   duration: 2000,
+      //   color: 'success',
+      //   position: 'bottom',
+      // });
+      // await toast.present();
+      this.toastService.openSnackBar('OTP Verified ✅', 'success');
 
       // this.router.navigate(['/scouter/view-hires']);
     } else {
-      const toast = await this.toast.create({
-        message: 'Incomplete OTP ❌',
-        duration: 2000,
-        color: 'danger',
-        position: 'bottom',
-      });
-      await toast.present();
+      // const toast = await this.toast.create({
+      //   message: 'Incomplete OTP ❌',
+      //   duration: 2000,
+      //   color: 'danger',
+      //   position: 'bottom',
+      // });
+      // await toast.present();
+      this.toastService.openSnackBar('Incomplete OTP ❌', 'danger');
     }
   }
 }

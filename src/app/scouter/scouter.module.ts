@@ -55,6 +55,7 @@ import { WithdrawFundsRequestPageComponent } from './withdraw-funds-request-page
 import { TransferFundsRequestPageComponent } from './transfer-funds-request-page/transfer-funds-request-page.component';
 
 import { RouterModule } from '@angular/router';
+import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 
 @NgModule({
   imports: [
@@ -117,6 +118,7 @@ import { RouterModule } from '@angular/router';
     FundWalletRequestPageComponent,
     WithdrawFundsRequestPageComponent,
     TransferFundsRequestPageComponent,
+    VerifyOtpComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA], // 👈 ADD THIS LINE HERE TOO

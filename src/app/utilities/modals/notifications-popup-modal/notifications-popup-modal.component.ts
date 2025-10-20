@@ -6,6 +6,7 @@ import { Router, NavigationStart } from '@angular/router';
 
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { ToastController } from '@ionic/angular';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-notifications-popup-modal',
@@ -48,7 +49,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
     protected override platform: Platform,
     private router: Router,
     private scouterService: ScouterEndpointsService,
-    private toast: ToastController
+    private toastService: ToastsService
   ) {
     super(modalCtrl, platform);
   }
@@ -134,12 +135,10 @@ export class NotificationsPopupModalComponent extends BaseModal {
       },
       error: async (err) => {
         console.error('❌ Error fetching notifications:', err);
-        const toast = await this.toast.create({
-          message: 'Failed to load notifications',
-          duration: 2000,
-          color: 'danger',
-        });
-        toast.present();
+        this.toastService.openSnackBar(
+          'Failed to load notifications',
+          'danger'
+        );
         // Store 0 count on error
         this.storeNotificationCount(0);
       },
@@ -152,17 +151,16 @@ export class NotificationsPopupModalComponent extends BaseModal {
     // Validate that we have a valid ID
     if (!loggedInUniqueId || loggedInUniqueId === '') {
       console.error('❌ No valid loggedInUniqueId found');
-      const toast = await this.toast.create({
-        message: 'Unable to identify user. Please log in again.',
-        duration: 3000,
-        color: 'danger',
-      });
+      this.toastService.openSnackBar(
+        'Unable to identify user. Please log in again.',
+        'danger'
+      );
+
       // After clearing, update the global count
       this.storeNotificationCount(0);
       this.emitNotificationsCleared();
 
       console.log('✅ Notifications cleared, count updated globally');
-      toast.present();
       return;
     }
 
@@ -174,12 +172,11 @@ export class NotificationsPopupModalComponent extends BaseModal {
     this.scouterService.clearMyNotifications(payload).subscribe({
       next: async (res) => {
         this.notifications = [];
-        const toast = await this.toast.create({
-          message: res?.message || 'Notifications cleared successfully!',
-          duration: 1500,
-          color: 'success',
-        });
-        toast.present();
+
+        this.toastService.openSnackBar(
+          res?.message || 'Notifications cleared successfully!',
+          'success'
+        );
 
         // Store 0 count after clearing
         this.storeNotificationCount(0);
@@ -196,12 +193,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
           errorMessage = 'Please log in again.';
         }
 
-        const toast = await this.toast.create({
-          message: errorMessage,
-          duration: 3000,
-          color: 'danger',
-        });
-        toast.present();
+        this.toastService.openSnackBar(errorMessage, 'danger');
       },
     });
   }

@@ -4,6 +4,8 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { firstValueFrom } from 'rxjs';
 import { ToastsService } from '../services/toasts.service';
+import { environment } from 'src/environments/environment';
+import { endpoints } from '../models/endpoint';
 
 @Component({
   selector: 'app-auth',
@@ -105,7 +107,13 @@ export class AuthPage implements OnInit {
 
     try {
       const loginData = this.loginForm.value;
-      console.log('📤 Sending login request for:', loginData.email);
+
+      // ✅ DEBUG: Log the exact payload being sent
+      console.log('📤 Login payload:', JSON.stringify(loginData, null, 2));
+      console.log(
+        '🔗 API URL:',
+        `${environment.baseUrl}/${endpoints.userLogin}`
+      );
 
       const res = await firstValueFrom(this.authService.loginUser(loginData));
       // console.log('🛰️ Login request triggered:', loginData);
@@ -131,6 +139,16 @@ export class AuthPage implements OnInit {
           throw new Error('Unable to determine user role');
         }
 
+        // ✅ NEW: Check if OTP is verified and account is active
+        const isVerified = this.checkAccountVerificationStatus(res);
+        console.log('🔍 Account verification status:', isVerified);
+
+        if (!isVerified) {
+          console.log('⚠️ Account not verified, redirecting to OTP page');
+          this.navigateToOtpVerification(res, email);
+          return;
+        }
+
         // this.toast.openSnackBar('Login successful!', 'success');
         this.toast.openSnackBar(`${res?.message}`, 'success');
 
@@ -149,6 +167,81 @@ export class AuthPage implements OnInit {
       this.loginText = 'Login';
       this.loginForm.enable();
     }
+  }
+
+  // ✅ NEW: Check if account is verified and OTP is confirmed
+  private checkAccountVerificationStatus(loginResponse: any): boolean {
+    // Check multiple possible locations for verification status
+    const verificationSources = [
+      loginResponse.details?.user?.isVerified,
+      loginResponse.details?.user?.verified,
+      loginResponse.details?.user?.emailVerified,
+      loginResponse.details?.user?.otpVerified,
+      loginResponse.user?.isVerified,
+      loginResponse.user?.verified,
+      loginResponse.user?.emailVerified,
+      loginResponse.user?.otpVerified,
+      loginResponse.isVerified,
+      loginResponse.verified,
+      loginResponse.emailVerified,
+      loginResponse.otpVerified,
+      loginResponse.data?.user?.isVerified,
+      loginResponse.data?.user?.verified,
+    ];
+
+    const isVerified = verificationSources.find((status) => status === true);
+
+    console.log('🔍 Verification check sources:', verificationSources);
+    console.log('✅ Account verified status:', isVerified);
+
+    return isVerified === true;
+  }
+
+  // ✅ NEW: Navigate to OTP verification page
+  private navigateToOtpVerification(loginResponse: any, email: string): void {
+    // Store necessary data for OTP verification
+    const otpData = {
+      email: email,
+      userId:
+        loginResponse.details?.user?.id ||
+        loginResponse.user?.id ||
+        loginResponse.id,
+      role: this.extractUserRole(loginResponse),
+      tempUserData: loginResponse,
+    };
+
+    localStorage.setItem('pending_verification', JSON.stringify(otpData));
+
+    // Navigate to appropriate OTP page based on role
+    const role = this.extractUserRole(loginResponse);
+    if (role === 'scouter') {
+      this.router.navigate(['/auth/verify-otp'], {
+        state: {
+          email: email,
+          userData: loginResponse,
+          requiresVerification: true,
+        },
+      });
+    } else if (role === 'talent') {
+      this.router.navigate(['/auth/verify-otp'], {
+        state: {
+          email: email,
+          userData: loginResponse,
+          requiresVerification: true,
+        },
+      });
+      return;
+    }
+    // else {
+    //   // Default OTP page
+    //   this.router.navigate(['/auth/verify-otp'], {
+    //     state: {
+    //       email: email,
+    //       userData: loginResponse,
+    //       requiresVerification: true,
+    //     },
+    //   });
+    // }
   }
 
   // ✅ NEW: Extract user role with multiple fallbacks
@@ -173,36 +266,42 @@ export class AuthPage implements OnInit {
     return role || '';
   }
 
-  // ✅ NEW: Improved error handling
   private handleLoginError(err: any): void {
     let errorMessage = 'Login failed. Please try again.';
 
-    if (err?.name === 'TimeoutError') {
-      errorMessage = 'Request timeout. Please check your connection.';
+    if (err?.status === 500) {
+      // ✅ More specific 500 error handling
+      const serverError = err?.error;
+
+      if (serverError?.message) {
+        errorMessage = `Server error: ${serverError.message}`;
+      } else if (err.statusText) {
+        errorMessage = `Server error: ${err.statusText}`;
+      } else {
+        errorMessage = 'Server is experiencing issues. Please try again later.';
+      }
+
+      console.error('🔧 Server 500 Error Details:', {
+        status: err.status,
+        statusText: err.statusText,
+        error: err.error,
+        url: err.url,
+      });
     } else if (err?.status === 0) {
       errorMessage = 'Network error. Please check your internet connection.';
     } else if (err?.status === 401) {
       errorMessage = 'Invalid email or password. Please try again.';
-    } else if (err?.status === 403) {
-      errorMessage = 'Account not verified. Please check your email.';
-    } else if (err?.status === 404) {
-      errorMessage = 'Account not found. Please check your credentials.';
-    } else if (err?.status === 422) {
-      errorMessage = 'Invalid input data. Please check your form.';
-    } else if (err?.status === 500) {
-      errorMessage = 'Server error. Please try again later.';
     } else if (err?.error?.message) {
       errorMessage = err.error.message;
-    } else if (err?.message) {
-      errorMessage = err.message;
     }
 
     this.toast.openSnackBar(errorMessage, 'error');
 
-    // ✅ Clear form on certain errors
-    if (err?.status === 401 || err?.status === 404) {
-      this.loginForm.get('password')?.setValue('');
-      this.loginForm.get('password')?.markAsUntouched();
+    // Additional debugging for developers
+    if (err?.status === 500) {
+      console.warn(
+        '⚠️  Server 500 Error - Check backend logs for more details'
+      );
     }
   }
 

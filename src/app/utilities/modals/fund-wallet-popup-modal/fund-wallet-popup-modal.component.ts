@@ -3,6 +3,7 @@ import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { PaymentService } from 'src/app/services/payment.service';
 import { FundWalletReceiptModalComponent } from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-fund-wallet-popup-modal',
@@ -36,7 +37,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     modalCtrl: ModalController,
     platform: Platform,
     private paymentService: PaymentService,
-    private toastCtrl: ToastController,
+    private toastService: ToastsService,
     private ngZone: NgZone
   ) {
     super(modalCtrl, platform);
@@ -74,10 +75,11 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
         'image/svg+xml',
       ];
       if (!allowedTypes.includes(file.type)) {
-        this.showToast(
+        this.toastService.openSnackBar(
           'Invalid file type. Please upload an image (PNG, JPG, JPEG, GIF, SVG).',
           'danger'
         );
+
         this.removeScreenshot();
         return;
       }
@@ -109,14 +111,14 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   // Extra input validation (for walletAcc & walletName)
   private validateForm(): boolean {
     if (!this.amount || this.amount <= 0) {
-      this.showToast('Enter a valid amount greater than zero.', 'danger');
+      this.showToast('Enter a valid amount greater than zero.', 'warning');
       return false;
     }
 
     if (!this.walletAccNo || !/^\d{10,11}$/.test(this.walletAccNo)) {
       this.showToast(
         'Enter a valid wallet account number (10–11 digits).',
-        'danger'
+        'warning'
       );
       return false;
     }
@@ -124,23 +126,34 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     if (!this.walletName || !/^[A-Za-z ]+$/.test(this.walletName)) {
       this.showToast(
         'Wallet name is required and must contain only letters.',
-        'danger'
+        'warning'
       );
       return false;
     }
 
     if (!this.selectedFile) {
       this.showToast('Please upload a valid receipt screenshot.', 'danger');
+      this.toastService.openSnackBar(
+        'Please upload a valid receipt screenshot.',
+        'warning'
+      );
       return false;
     }
 
     if (!this.agreed) {
-      this.showToast('You must agree to terms & conditions.', 'warning');
+      this.toastService.openSnackBar(
+        'You must agree to terms & conditions.',
+        'warning'
+      );
       return false;
     }
 
     if (!this.reason || this.reason.trim().length < 3) {
-      this.showToast('Enter a valid reason for deposit.', 'danger');
+      this.toastService.openSnackBar(
+        'Enter a valid reason for deposit.',
+        'warning'
+      );
+
       return false;
     }
 
@@ -197,24 +210,26 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       await navigator.clipboard.writeText(text);
       this.copied = true;
 
-      this.showToast('Copied to clipboard ✅', 'success');
+      this.toastService.openSnackBar('Copied to clipboard ✅', 'success');
 
       // Reset icon back to copy after 2s
       setTimeout(() => {
         this.copied = false;
       }, 2000);
     } catch (err) {
-      this.showToast('Failed to copy ❌', 'danger');
+      this.toastService.openSnackBar('Failed to copy ❌', 'danger');
     }
   }
 
   private async showToast(message: string, color: string) {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 2000,
-      position: 'bottom',
-      color,
-    });
-    await toast.present();
+    // const toast = await this.toastCtrl.create({
+    //   message,
+    //   duration: 2000,
+    //   position: 'bottom',
+    //   color,
+    // });
+    // await toast.present();
+
+    this.toastService.openSnackBar(message, color);
   }
 }

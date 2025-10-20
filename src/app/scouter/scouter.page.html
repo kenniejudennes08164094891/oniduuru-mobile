@@ -30,12 +30,12 @@
           {{ steps[currentStep] }}
         </h4>
 
-        <div
+        <!-- <div
           *ngIf="errorMessage"
           class="bg-red-100 text-red-700 px-3 py-2 rounded-md mb-3 text-sm"
-        >
-          ⚠️ {{ errorMessage }}
-        </div>
+        > -->
+          <!-- ⚠️ {{ errorMessage }} -->
+        <!-- </div> -->
         <!-- STEP 1 -->
         <form
           *ngIf="currentStep === 0"
@@ -99,6 +99,15 @@
           [formGroup]="forms[1]"
           class="mt-4 space-y-6"
         >
+          <!-- TEMPORARY DEBUG BUTTON -->
+          <!-- <button
+            type="button"
+            (click)="manualCheckStep2()"
+            class="bg-yellow-500 text-white p-2 rounded"
+          >
+            Debug Step 2
+          </button> -->
+
           <div class="space-y-2">
             <label for="location">Enter your Location</label>
             <input
@@ -108,15 +117,21 @@
               class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
               placeholder="e.g Ikeja, Lagos"
             />
+            <!-- Add validation message -->
+            <div
+              *ngIf="forms[1]?.get('location')?.touched && forms[1]?.get('location')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Location is required.
+            </div>
           </div>
 
-          <!-- Organisation Type - UPDATED DESIGN WITH TAGS INSIDE INPUT -->
+          <!-- Your existing organization section remains the same -->
           <div class="space-y-2">
             <label class="block text-gray-600 text-sm mb-2">
               Your Organization Type(s):
             </label>
 
-            <!-- Input Container with Tags Inside -->
             <div class="relative">
               <div
                 class="w-full border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 shadow-sm min-h-[56px] flex flex-wrap items-center gap-2 cursor-text"
@@ -130,31 +145,38 @@
                   {{ org }}
                   <button
                     type="button"
-                    (click)="removeOrgType(i)"
+                    (click)="removeOrgType(i); $event.stopPropagation()"
                     class="text-gray-500 hover:text-red-500 text-lg leading-none ml-1"
                   >
                     ×
                   </button>
                 </span>
 
-                <!-- Type Input Field -->
                 <input
                   #orgInput
                   id="organisation"
                   type="text"
                   placeholder="Type and press Enter"
-                  [(ngModel)]="orgTypeInput"
+                  [value]="orgTypeInput"
+                  (input)="onOrgInput($event)"
                   (keydown.enter)="addOrgTypeFromInput($event)"
-                  [ngModelOptions]="{standalone: true}"
                   class="flex-1 min-w-[120px] bg-transparent border-none outline-none placeholder-gray-400"
                 />
               </div>
             </div>
 
-            <!-- Helper Text -->
             <p class="text-xs text-gray-500 mt-1">
               Type your organization type and press Enter to add
             </p>
+
+            <!-- Enhanced validation message -->
+            <div
+              *ngIf="forms[1]?.get('organisation')?.touched && forms[1]?.get('organisation')?.invalid"
+              class="text-red-600 text-sm mt-1"
+            >
+              At least one organization type is required. (Current: {{
+              forms[1]?.get('organisation')?.value?.length || 0 }})
+            </div>
           </div>
 
           <div class="space-y-2">
@@ -166,13 +188,20 @@
               class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
               placeholder="e.g For a concert"
             />
+            <!-- Add validation message -->
+            <div
+              *ngIf="forms[1]?.get('purpose')?.touched && forms[1]?.get('purpose')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Purpose is required.
+            </div>
           </div>
 
           <div class="space-y-2">
             <label for="payRange">Pay Range</label>
             <input
               id="payRange"
-              type="number"
+              type="text"
               formControlName="payRange"
               class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
               placeholder="Select the amount you are willing to pay"
@@ -185,6 +214,7 @@
             </div>
           </div>
         </form>
+
         <!-- STEP 3 -->
         <form
           *ngIf="currentStep === 2"

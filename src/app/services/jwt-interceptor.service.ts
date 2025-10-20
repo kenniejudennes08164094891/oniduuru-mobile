@@ -109,16 +109,21 @@ export class JwtInterceptorService implements HttpInterceptor {
     req: HttpRequest<any>,
     token: string
   ): HttpRequest<any> {
-    return req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-        'Content-Type':
-          req.method === 'PATCH'
-            ? 'application/merge-patch+json'
-            : 'application/json',
-      },
-    });
+    // Only set auth and Accept headers here. Do not override Content-Type so
+    // individual services can choose the correct media type (some backends
+    // expect 'application/json' for PATCH instead of merge-patch).
+    const headers: any = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    };
+
+    // Preserve existing Content-Type if set by the request
+    const existingCt = req.headers.get('Content-Type');
+    if (existingCt) {
+      headers['Content-Type'] = existingCt;
+    }
+
+    return req.clone({ setHeaders: headers });
   }
 
   private handleError(
@@ -168,6 +173,15 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/get-profile-image',
       '/profile-picture',
       '/scouters/v1/get-profile-picture',
+      // These endpoints may return 401 when a picture does not exist or when
+      // the server signals create/replace semantics. Treat them as non-
+      // critical so we don't clear the user's auth on intermediate errors.
+      '/scouters/v1/upload-profile-picture',
+      '/scouters/v1/update-profile-picture',
+      '/scouters/v1/delete-scouter-picture',
+      '/upload-profile-picture',
+      '/update-profile-picture',
+      '/delete-scouter-picture',
     ];
     return nonCriticalEndpoints.some((endpoint) => url.includes(endpoint));
   }

@@ -1,50 +1,4 @@
 <div class="overflow-x-auto">
-  <!-- Add filters if needed -->
-  <div class="p-4 bg-gray-50 border-b">
-    <div class="flex flex-wrap gap-4 items-center">
-      <!-- Status Filter -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"
-          >Status</label
-        >
-        <select
-          [(ngModel)]="statusFilter"
-          (change)="applyFilters()"
-          class="border border-gray-300 rounded-md px-3 py-2 text-sm"
-        >
-          <option value="">All Status</option>
-          <option value="awaiting-acceptance">Awaiting Acceptance</option>
-          <option value="offer-accepted">Offer Accepted</option>
-          <option value="offer-declined">Offer Declined</option>
-        </select>
-      </div>
-
-      <!-- Talent ID Filter -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"
-          >Talent ID</label
-        >
-        <input
-          type="text"
-          [(ngModel)]="talentIdFilter"
-          (keyup.enter)="applyFilters()"
-          placeholder="Enter Talent ID"
-          class="border border-gray-300 rounded-md px-3 py-2 text-sm"
-        />
-      </div>
-
-      <!-- Clear Filters -->
-      <div class="flex items-end">
-        <button
-          (click)="clearFilters()"
-          class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium"
-        >
-          Clear Filters
-        </button>
-      </div>
-    </div>
-  </div>
-
   <table class="min-w-full text-sm text-left text-gray-700">
     <thead class="border-b text-xs uppercase text-gray-500">
       <tr>
@@ -71,38 +25,38 @@
         >
           <img
             class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
-            [src]="hire.profilePic || 'assets/images/default-avatar.png'"
-            [alt]="hire.talentName"
+            [src]="hire.profilePic"
+            alt="{{ hire.name }}"
           />
           <div>
             <p class="text-sm sm:text-base font-medium text-gray-900">
-              {{ hire.talentName }}
+              {{ hire.name }}
             </p>
             <p class="text-xs sm:text-sm text-gray-500">
-              {{ hire.talentEmail }}
+              {{ hire.email }}
             </p>
           </div>
         </td>
 
-        <!-- Date of Hire -->
+        <!-- Date -->
         <td
           class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
         >
-          {{ hire.dateOfHire | date : "mediumDate" }}
+          {{ hire.date }}
         </td>
 
         <!-- Start Date -->
         <td
           class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
         >
-          {{ hire.startDate | date : "mediumDate" }}
+          {{ hire.startDate }}
         </td>
 
         <!-- Amount -->
         <td
           class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
         >
-          {{ getFormattedAmount(hire.agreedAmount) }}
+          {{ getFormattedAmount(hire.amount) }}
         </td>
 
         <!-- Status -->
@@ -113,10 +67,10 @@
             <!-- colored dot -->
             <span
               class="h-2 w-2 rounded-full"
-              [style.backgroundColor]="getStatusColor(hire.hireStatus)"
+              [style.backgroundColor]="getStatusColor(hire.offerStatus)"
             ></span>
             <span>
-              {{ mapApiStatusToComponent(hire.hireStatus) }}
+              {{ hire.offerStatus }}
             </span>
           </span>
         </td>
@@ -124,12 +78,12 @@
     </tbody>
   </table>
 
-  <!-- No Data Template -->
+  <!-- ✅ Add fallback -->
   <ng-template #noDataTable>
     <tbody>
       <tr>
         <td colspan="5" class="text-center text-gray-500 py-6">
-          No market engagements found
+          No hires found
         </td>
       </tr>
     </tbody>

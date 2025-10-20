@@ -8,6 +8,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-log-complaints-popup-modal',
@@ -27,9 +28,9 @@ export class LogComplaintsPopupModalComponent
     platform: Platform,
     private router: Router,
     private scouterEndpoints: ScouterEndpointsService,
-    private toastCtrl: ToastController,
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private toastService: ToastsService
   ) {
     super(modalCtrl, platform);
     this.routerSub = this.router.events.subscribe((event) => {
@@ -198,12 +199,10 @@ export class LogComplaintsPopupModalComponent
 
   async submitComplaint() {
     if (this.complaintText.trim().length === 0) {
-      const toast = await this.toastCtrl.create({
-        message: 'Please describe your issue before submitting.',
-        duration: 2000,
-        color: 'warning',
-      });
-      toast.present();
+      this.toastService.openSnackBar(
+        'Please describe your issue before submitting.',
+        'warning'
+      );
       return;
     }
 
@@ -212,12 +211,10 @@ export class LogComplaintsPopupModalComponent
 
     // Validate that we have a uniqueId
     if (!userData.uniqueId || userData.uniqueId === 'unknown-user') {
-      const toast = await this.toastCtrl.create({
-        message: 'Unable to identify user. Please log in again.',
-        duration: 3000,
-        color: 'danger',
-      });
-      toast.present();
+      this.toastService.openSnackBar(
+        'Unable to identify user. Please log in again.',
+        'danger'
+      );
       return;
     }
 
@@ -232,12 +229,11 @@ export class LogComplaintsPopupModalComponent
 
     this.scouterEndpoints.logComplaint(payload).subscribe({
       next: async (res) => {
-        const toast = await this.toastCtrl.create({
-          message: 'Complaint logged successfully ✅',
-          duration: 2000,
-          color: 'success',
-        });
-        toast.present();
+        this.toastService.openSnackBar(
+          'Complaint logged successfully ✅',
+          'success'
+        );
+
         this.modalCtrl.dismiss({ success: true });
       },
       error: async (err) => {
@@ -252,12 +248,9 @@ export class LogComplaintsPopupModalComponent
           errorMessage = 'Server error. Please try again later.';
         }
 
-        const toast = await this.toastCtrl.create({
-          message: errorMessage,
-          duration: 3000,
-          color: 'danger',
-        });
-        toast.present();
+      
+
+        this.toastService.openSnackBar(errorMessage, 'danger');
       },
     });
   }

@@ -115,11 +115,25 @@
                 class="hidden"
                 (change)="onFileSelected($event)"
               />
+              <!-- Camera icon - show when NOT editing (standalone upload) -->
+              <div
+                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
+                (click)="openProfileImagePicker(); $event.stopPropagation()"
+                *ngIf="!isEditing"
+                title="Change profile picture"
+                role="button"
+                aria-label="Change profile picture"
+              >
+                <ion-icon
+                  name="camera-outline"
+                  class="text-gray-700 text-base"
+                ></ion-icon>
+              </div>
 
               <!-- Edit pencil icon - show when editing -->
               <div
                 class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
-                (click)="triggerFileInput()"
+                (click)="$event.stopPropagation(); triggerFileInput()"
                 *ngIf="isEditing"
               >
                 <ion-icon
@@ -362,38 +376,6 @@
           </span>
         </button>
 
-        <!-- Add this temporary debug section after your action buttons -->
-        <div class="mt-4 p-4 bg-orange-100 border border-orange-400 rounded-lg">
-          <h3 class="font-bold text-orange-800 mb-2">Save Debug</h3>
-          <button
-            (click)="debugSaveState()"
-            class="bg-orange-500 text-white px-4 py-2 rounded text-sm mr-2"
-          >
-            Debug Save State
-          </button>
-          <button
-            (click)="forceRefresh()"
-            class="bg-green-500 text-white px-4 py-2 rounded text-sm mr-2"
-          >
-            Force Refresh Data
-          </button>
-          <button
-            (click)="testEndpoint()"
-            class="bg-blue-500 text-white px-4 py-2 rounded text-sm"
-          >
-            Test Endpoint
-          </button>
-          <div class="mt-2 text-xs">
-            <p>Editing: {{ isEditing }} | Saving: {{ isSavingProfile }}</p>
-            <p>
-              Org Types: {{ selectedOrgTypes?.length }} | Scouter ID:
-              {{ scouterId }}
-            </p>
-          </div>
-        </div>
-
-
-        
         <!-- Show Return button as secondary option -->
         <button
           class="bg-transparent border border-gray-300 rounded-lg w-full py-3 text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors"

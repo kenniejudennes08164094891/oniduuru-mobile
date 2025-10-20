@@ -52,9 +52,49 @@ export class AuthService {
     this.userLoggedInSubject.next(!!(token && userData));
   }
 
+// Add this to your AuthService
+testApiConnection(): Observable<any> {
+  const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
+  return this.http.get(testUrl).pipe(
+    timeout(5000),
+    catchError((error) => {
+      console.error('🔌 API Connection Test Failed:', error);
+      return throwError(() => new Error('API server is unreachable'));
+    })
+  );
+}
+
+  // In auth.service.ts, add this to see request/response details
+private debugRequestResponse(url: string, body: any, response: any, error?: any) {
+  console.group('🔍 HTTP Request Debug');
+  console.log('URL:', url);
+  console.log('Method: POST');
+  console.log('Headers:', {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  });
+  console.log('Body:', body);
+  if (response) {
+    console.log('Response:', response);
+  }
+  if (error) {
+    console.log('Error:', {
+      status: error.status,
+      statusText: error.statusText,
+      error: error.error,
+      headers: error.headers
+    });
+  }
+  console.groupEnd();
+}
+
   // ============ LOGIN & AUTHENTICATION ============
   loginUser(credentials: { email: string; password: string }): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.userLogin}`;
+
+    // ✅ DEBUG: Enhanced request logging
+    console.log('🚀 Making login request to:', url);
+    console.log('📝 Request payload:', credentials);
 
     return this.http
       .post<any>(url, credentials, {
@@ -86,7 +126,21 @@ export class AuthService {
           }
         }),
         catchError((error) => {
-          console.error('❌ AuthService login error:', error);
+          // ✅ ENHANCED: Better error logging
+          console.error('❌ AuthService login error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            url: error.url,
+            error: error.error,
+            message: error.message,
+            headers: error.headers,
+          });
+
+          // Log the actual server response if available
+          if (error.error) {
+            console.error('🔍 Server error response:', error.error);
+          }
+
           throw error;
         })
       );
@@ -350,23 +404,52 @@ export class AuthService {
 
   // ============ SECURITY QUESTIONS ============
   public getMySecurityQuestions(uniqueId: string): Observable<any> {
-    const url = `${environment.baseUrl}/${
-      endpoints.getMySecurityQuestions
-    }?uniqueId=${uniqueId.trim()}`;
+    const base = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}`;
 
-    return this.http
-      .get<any>(url, {
-        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-      })
-      .pipe(
-        tap((response) => {
-          // console.log('🔍 Raw security questions response:', response);
+    // Build candidates: prefer full uniqueId (may be "scouter/1234/...") then numeric id
+    const candidates: string[] = [];
+    if (uniqueId && uniqueId.trim() !== '') {
+      candidates.push(
+        `${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`
+      );
+      // extract numeric part if present
+      const numericMatch = String(uniqueId).match(/(\d+)/);
+      if (numericMatch && numericMatch[1]) {
+        candidates.push(
+          `${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`
+        );
+      }
+    }
+
+    if (candidates.length === 0) {
+      return throwError(
+        () => new Error('Invalid uniqueId for security questions')
+      );
+    }
+
+    const headers = this.jwtInterceptor.customHttpHeaders; // will include Authorization when token exists
+
+    const tryFetch = (urls: string[], idx = 0): Observable<any> => {
+      const url = urls[idx];
+      return this.http.get<any>(url, { headers }).pipe(
+        tap(() => {
+          // success log suppressed
         }),
         catchError((error) => {
-          console.error('❌ Error fetching security questions:', error);
+          console.error(
+            '❌ Error fetching security questions from',
+            url,
+            error?.status || error?.message
+          );
+          if (idx < urls.length - 1) {
+            return tryFetch(urls, idx + 1);
+          }
           return throwError(() => error);
         })
       );
+    };
+
+    return tryFetch(candidates);
   }
 
   public getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
@@ -388,10 +471,18 @@ export class AuthService {
 
   public createScouterSecurityQuestion(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
-    let url = `${environment?.baseUrl}/${endpoints?.createScouterSecurityQuestions}`;
-    return this.http.post<any>(url, body, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-    });
+    const url = `${environment?.baseUrl}/${endpoints?.createScouterSecurityQuestions}`;
+
+    // Use authenticated headers when available; fall back to no-auth headers
+    const headers = this.jwtInterceptor.customHttpHeaders;
+
+    return this.http.post<any>(url, body, { headers }).pipe(
+      tap((res) => console.log('✅ Created scouter security questions:', res)),
+      catchError((error) => {
+        console.error('❌ Error creating scouter security questions:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   public updateTalentSecurityQuestions(

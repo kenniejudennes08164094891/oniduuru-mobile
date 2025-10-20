@@ -286,7 +286,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       email: this.profileData.email || 'test@example.com',
       location: 'Test Location',
       scoutingPurpose: 'Testing',
-      organizationType: JSON.stringify(['TEST']),
+      organizationType: ['TEST'], // send array
       payRange: '50k',
     };
 
@@ -322,7 +322,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       email: this.profileData.email,
       location: 'Test Location',
       scoutingPurpose: 'Testing',
-      organizationType: JSON.stringify(['TEST']),
+      organizationType: ['TEST'], // send array
       payRange: '100k',
     };
 
@@ -361,7 +361,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       });
   }
 
-  
   // ==================== CORE METHODS - MATCHING WORKING FLOW ====================
 
   private initializeScouterId(): void {
@@ -713,9 +712,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.isSavingProfile = true;
     this.saveButtonText = 'Saving...';
 
-    // FIX: Ensure organizationType is properly formatted as JSON string
-    const organizationTypeJson = JSON.stringify(this.selectedOrgTypes);
-    console.log('📦 Organization Type JSON to send:', organizationTypeJson);
+    // FIX: Ensure organizationType is sent as an array (backend expects an array)
+    console.log('📦 Organization Types to send:', this.selectedOrgTypes);
 
     const payload = {
       fullName: this.profileData.fullName.trim(),
@@ -724,7 +722,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       location: this.profileData.location?.trim() || '',
       scoutingPurpose: this.profileData.scoutingPurpose?.trim() || '',
       payRange: this.profileData.payRange?.trim() || '',
-      organizationType: organizationTypeJson, // This should be a JSON string
+      organizationType: this.selectedOrgTypes || [], // Send real array; backend expects array
     };
 
     console.log('🚀 FINAL UPDATE PAYLOAD:', payload);
@@ -971,52 +969,158 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private uploadProfilePicture(file: File): void {
     const reader = new FileReader();
     reader.onload = (e: any) => {
-      const base64Image = e.target.result.split(',')[1]; // Get base64 string only
+      const fullDataUrl = e.target.result as string;
+      const base64Image = fullDataUrl.split(',')[1]; // Get base64 string only
       const payload = {
         scouterId: this.scouterId,
         base64Picture: base64Image,
       };
 
-      console.log('📷 Uploading profile picture...');
+      console.log(
+        '📷 Starting profile picture flow. scouterId:',
+        this.scouterId
+      );
 
-      // MATCHING: Upload logic like working component
-      if (this.hasExistingProfilePicture) {
-        // Replace existing picture
-        console.log('📷 Replacing existing profile picture');
-        this.endpointService.replaceScouterPicture(payload).subscribe({
-          next: (res: any) => {
-            console.log('✅ Profile picture replaced successfully:', res);
-            this.handleSuccessfulUpload(e.target.result); // Pass the full data URL
-          },
-          error: (err) => {
-            console.error('❌ Replace picture failed:', err);
-            this.toastService.openSnackBar(
-              'Failed to update profile picture',
-              'error'
+      // First check if backend already has a picture for this scouter to avoid
+      // sending a create request that the server rejects when a picture exists.
+      this.endpointService.getScouterPicture(this.scouterId).subscribe({
+        next: (existing: any) => {
+          const exists =
+            !!existing &&
+            (existing?.data?.base64Picture ||
+              existing?.base64Picture ||
+              typeof existing === 'string');
+          console.log('📷 Backend picture exists:', exists);
+
+          if (exists) {
+            console.log(
+              '📷 Replacing existing profile picture via replace endpoint'
             );
-            // Still show the image locally even if upload fails
-            this.setProfilePicture(e.target.result);
-          },
-        });
-      } else {
-        // Upload new picture
-        console.log('📷 Uploading new profile picture');
-        this.endpointService.uploadScouterPicture(payload).subscribe({
-          next: (res: any) => {
-            console.log('✅ Profile picture uploaded successfully:', res);
-            this.handleSuccessfulUpload(e.target.result); // Pass the full data URL
-          },
-          error: (err) => {
-            console.error('❌ Upload picture failed:', err);
-            this.toastService.openSnackBar(
-              'Failed to upload profile picture',
-              'error'
+            this.endpointService.replaceScouterPicture(payload).subscribe({
+              next: (res: any) => {
+                console.log('✅ Profile picture replaced successfully:', res);
+                this.handleSuccessfulUpload(fullDataUrl); // Pass the full data URL
+              },
+              error: (err) => {
+                console.error('❌ Replace picture failed:', err);
+                this.toastService.openSnackBar(
+                  'Failed to update profile picture',
+                  'error'
+                );
+                // Still show the image locally even if upload fails
+                this.setProfilePicture(fullDataUrl);
+              },
+            });
+          } else {
+            console.log(
+              '📷 Uploading new profile picture (no existing picture)'
             );
-            // Still show the image locally even if upload fails
-            this.setProfilePicture(e.target.result);
-          },
-        });
-      }
+            console.log(
+              '📷 Upload payload size:',
+              payload.base64Picture?.length
+            );
+            console.log(
+              '📷 Upload payload preview:',
+              payload.base64Picture
+                ? payload.base64Picture.substring(0, 60) + '...'
+                : 'n/a'
+            );
+
+            this.endpointService.uploadScouterPicture(payload).subscribe({
+              next: (res: any) => {
+                console.log('✅ Profile picture uploaded successfully:', res);
+                this.handleSuccessfulUpload(fullDataUrl); // Pass the full data URL
+              },
+              error: (err) => {
+                console.error('❌ Upload picture failed:', err);
+
+                // If the server says you can only replace an existing picture, try replace endpoint
+                const serverMessage = err?.error?.message || err?.message || '';
+                if (
+                  typeof serverMessage === 'string' &&
+                  serverMessage.toLowerCase().includes('replace')
+                ) {
+                  console.log(
+                    '🔁 Server requires replace - attempting replace call'
+                  );
+                  this.endpointService
+                    .replaceScouterPicture(payload)
+                    .subscribe({
+                      next: (res2: any) => {
+                        console.log(
+                          '✅ Replace after upload fallback succeeded:',
+                          res2
+                        );
+                        this.handleSuccessfulUpload(fullDataUrl);
+                      },
+                      error: (err2) => {
+                        console.error('❌ Replace fallback failed:', err2);
+                        this.toastService.openSnackBar(
+                          'Failed to upload profile picture',
+                          'error'
+                        );
+                        this.setProfilePicture(fullDataUrl);
+                      },
+                    });
+                  return;
+                }
+
+                this.toastService.openSnackBar(
+                  'Failed to upload profile picture',
+                  'error'
+                );
+                // Still show the image locally even if upload fails
+                this.setProfilePicture(fullDataUrl);
+              },
+            });
+          }
+        },
+        error: (err) => {
+          console.warn(
+            '⚠️ Could not determine existing picture state, proceeding to upload:',
+            err
+          );
+          // If we cannot determine, attempt upload then fallback to replace
+          this.endpointService.uploadScouterPicture(payload).subscribe({
+            next: (res: any) => {
+              console.log(
+                '✅ Profile picture uploaded successfully (fallback):',
+                res
+              );
+              this.handleSuccessfulUpload(fullDataUrl);
+            },
+            error: (err2) => {
+              console.error('❌ Upload picture failed (fallback):', err2);
+              const serverMessage = err2?.error?.message || err2?.message || '';
+              if (
+                typeof serverMessage === 'string' &&
+                serverMessage.toLowerCase().includes('replace')
+              ) {
+                this.endpointService.replaceScouterPicture(payload).subscribe({
+                  next: (res3: any) => {
+                    console.log('✅ Replace after fallback succeeded:', res3);
+                    this.handleSuccessfulUpload(fullDataUrl);
+                  },
+                  error: (err3) => {
+                    console.error('❌ Replace fallback failed (final):', err3);
+                    this.toastService.openSnackBar(
+                      'Failed to upload profile picture',
+                      'error'
+                    );
+                    this.setProfilePicture(fullDataUrl);
+                  },
+                });
+                return;
+              }
+              this.toastService.openSnackBar(
+                'Failed to upload profile picture',
+                'error'
+              );
+              this.setProfilePicture(fullDataUrl);
+            },
+          });
+        },
+      });
     };
     reader.readAsDataURL(file);
   }
@@ -1060,9 +1164,46 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     this.endpointService.removeProfilePicture(this.scouterId).subscribe({
       next: (res: any) => {
-        this.setDefaultAvatar();
-        localStorage.removeItem('profile_image');
-        this.toastService.openSnackBar('Profile picture removed', 'success');
+        // After server reports deletion, verify by attempting to fetch the picture.
+        // Some backends return 200 even when deletion is not fully processed,
+        // so confirm before clearing local cache/UI.
+        this.endpointService.getScouterPicture(this.scouterId).subscribe({
+          next: (check: any) => {
+            const exists =
+              !!check &&
+              (check?.data?.base64Picture ||
+                check?.base64Picture ||
+                typeof check === 'string');
+
+            if (!exists) {
+              this.setDefaultAvatar();
+              localStorage.removeItem('profile_image');
+              this.toastService.openSnackBar(
+                'Profile picture removed',
+                'success'
+              );
+            } else {
+              console.warn(
+                '⚠️ Delete reported success but picture still exists on backend'
+              );
+              this.toastService.openSnackBar(
+                'Picture deletion reported but still present on server',
+                'warning'
+              );
+              // Refresh UI with backend image
+              this.loadProfilePicture();
+            }
+          },
+          error: (err) => {
+            // If we can't verify, conservatively clear cache and let next load reconcile
+            this.setDefaultAvatar();
+            localStorage.removeItem('profile_image');
+            this.toastService.openSnackBar(
+              'Profile picture removed',
+              'success'
+            );
+          },
+        });
       },
       error: (err) => {
         console.error('❌ Failed to remove profile picture:', err);
@@ -1153,14 +1294,151 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
             'success'
           );
 
-          // MATCHING: Reload after success like working component
+          // Reload after success
           setTimeout(() => {
             this.loadSecurityQuestions();
           }, 1000);
         },
         error: (err) => {
-          this.isLoadingSecurityQuestions = false;
           console.error('❌ Failed to save security questions:', err);
+
+          // If server responds that a security profile already exists, merge
+          // new questions into existing ones (up to max of 5) using update API.
+          const serverMsg = (err?.error?.message || err?.message || '')
+            .toString()
+            .toLowerCase();
+
+          if (
+            err?.status === 403 &&
+            serverMsg.includes('security profile already exists')
+          ) {
+            console.log('ℹ️ Security profile exists — attempting merge flow');
+
+            // Fetch existing questions with answers (server-side hashed answers)
+            this.authService
+              .getMySecurityQuestionsWithAnswers(this.scouterId)
+              .subscribe({
+                next: async (existingRes: any) => {
+                  try {
+                    const existing =
+                      existingRes?.data?.questions ||
+                      existingRes?.questions ||
+                      [];
+
+                    // Normalize existing to { question, answer } where answer is hashed
+                    const existingNormalized = existing.map((q: any) => ({
+                      question: String(
+                        q.question || q.questionText || q.q || ''
+                      ).trim(),
+                      answer: q.answer || q.hashedAnswer || q.ans || '',
+                    }));
+
+                    // Prepare new hashed entries (we already hashed them above)
+                    const newHashed = hashedQuestions.map((q: any) => ({
+                      question: String(q.question).trim(),
+                      answer: q.answer,
+                    }));
+
+                    // Merge while avoiding duplicate questions (case-insensitive)
+                    const mergedMap = new Map<string, any>();
+                    for (const e of existingNormalized) {
+                      const key = e.question.toLowerCase();
+                      if (key) mergedMap.set(key, e);
+                    }
+                    for (const n of newHashed) {
+                      const key = n.question.toLowerCase();
+                      if (!mergedMap.has(key)) mergedMap.set(key, n);
+                    }
+
+                    // Enforce max of 5 questions; keep existing order by preferring
+                    // existing questions first then newly added ones
+                    const finalArray: any[] = [];
+                    // add existing in original order
+                    for (const e of existingNormalized) {
+                      if (finalArray.length >= 5) break;
+                      const key = e.question.toLowerCase();
+                      if (mergedMap.has(key)) {
+                        finalArray.push(mergedMap.get(key));
+                        mergedMap.delete(key);
+                      }
+                    }
+                    // then add remaining new ones
+                    for (const [k, v] of mergedMap) {
+                      if (finalArray.length >= 5) break;
+                      finalArray.push(v);
+                    }
+
+                    // If nothing to update
+                    if (finalArray.length === 0) {
+                      this.isLoadingSecurityQuestions = false;
+                      this.toastService.openSnackBar(
+                        'No questions to update',
+                        'warning'
+                      );
+                      return;
+                    }
+
+                    // Call update endpoint with merged questions
+                    this.authService
+                      .updateScouterSecurityQuestions(
+                        this.scouterId,
+                        finalArray
+                      )
+                      .subscribe({
+                        next: (uRes: any) => {
+                          this.isLoadingSecurityQuestions = false;
+                          this.toastService.openSnackBar(
+                            'Security questions merged successfully',
+                            'success'
+                          );
+                          // update UI masked answers
+                          this.securityQuestions = finalArray.map((q) => ({
+                            question: q.question,
+                            answer: '••••••••',
+                          }));
+                          this.isEditingSecurityQuestions = false;
+                          this.editingQuestionIndex = null;
+                          setTimeout(() => this.loadSecurityQuestions(), 800);
+                        },
+                        error: (uErr) => {
+                          this.isLoadingSecurityQuestions = false;
+                          console.error(
+                            '❌ Failed to merge security questions:',
+                            uErr
+                          );
+                          this.toastService.openSnackBar(
+                            'Failed to merge security questions',
+                            'error'
+                          );
+                        },
+                      });
+                  } catch (mergeErr) {
+                    this.isLoadingSecurityQuestions = false;
+                    console.error('❌ Merge flow failed:', mergeErr);
+                    this.toastService.openSnackBar(
+                      'Failed to merge security questions',
+                      'error'
+                    );
+                  }
+                },
+                error: (fetchErr) => {
+                  this.isLoadingSecurityQuestions = false;
+                  console.error(
+                    '❌ Could not fetch existing questions:',
+                    fetchErr
+                  );
+                  this.toastService.openSnackBar(
+                    'Unable to fetch existing security questions. Please refresh and try again.',
+                    'error'
+                  );
+                },
+              });
+
+            return;
+          }
+
+          // Generic error path
+          this.isLoadingSecurityQuestions = false;
           this.toastService.openSnackBar(
             err?.error?.message || 'Failed to save security questions',
             'error'
@@ -1184,9 +1462,17 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   triggerFileInput(): void {
+    // Allow opening the file picker regardless of edit mode so users can
+    // update their profile picture without entering form edit state.
     if (this.fileInput?.nativeElement) {
+      console.log('📁 Opening profile picture picker (standalone)');
       this.fileInput.nativeElement.click();
     }
+  }
+
+  // Public alias for templates: makes intention clearer in HTML bindings
+  public openProfileImagePicker(): void {
+    this.triggerFileInput();
   }
 
   focusOrgInput(): void {
@@ -1306,38 +1592,87 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // If no cached image, fetch from backend
+    // If no cached image, fetch from backend. Be tolerant of different response shapes.
     this.endpointService.getScouterPicture(this.scouterId).subscribe({
       next: (res: any) => {
         console.log('📷 Profile picture API response:', res);
 
-        if (res?.data?.base64Picture) {
-          const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
-          console.log('✅ Profile picture loaded from backend');
-
-          this.profileImage = base64Image;
+        // Helper to apply and cache image
+        const applyImage = (imgSrc: string) => {
+          this.profileImage = imgSrc;
           this.hasExistingProfilePicture = true;
-          this.userService.setProfileImage(base64Image);
-
-          // Cache the image in localStorage
-          this.storeProfileImage(base64Image);
-
+          this.userService.setProfileImage(imgSrc);
+          this.storeProfileImage(imgSrc);
           this.cdr.detectChanges();
-        } else {
-          console.log('📷 No profile picture data in response');
-          this.setDefaultAvatar();
+          console.log('✅ Profile picture applied');
+        };
+
+        // Case A: expected shape { data: { base64Picture: '...' } }
+        if (res?.data && res.data.base64Picture) {
+          const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
+          console.log(
+            '✅ Profile picture loaded from backend (data.base64Picture)'
+          );
+          applyImage(base64Image);
+          return;
         }
+
+        // Case B: response contains base64 at top-level
+        if (res?.base64Picture) {
+          const base64Image = `data:image/jpeg;base64,${res.base64Picture}`;
+          console.log('✅ Profile picture loaded from backend (base64Picture)');
+          applyImage(base64Image);
+          return;
+        }
+
+        // Case C: API returns a direct URL or data string in res or res.data
+        const candidate =
+          (res && typeof res === 'string' ? res : null) ||
+          (res?.data && typeof res.data === 'string' ? res.data : null) ||
+          (res?.data?.pictureUrl && res.data.pictureUrl) ||
+          (res?.pictureUrl && res.pictureUrl) ||
+          null;
+
+        if (candidate) {
+          const trimmed = String(candidate).trim();
+
+          // If it's a URL, use it directly
+          if (trimmed.startsWith('http')) {
+            console.log('✅ Profile picture is a URL, using as-is');
+            applyImage(trimmed);
+            return;
+          }
+
+          // If it looks like base64 payload, convert to data URL
+          const base64Only = trimmed.replace(
+            /^data:image\/[a-zA-Z]+;base64,/,
+            ''
+          );
+          if (this.isProbableBase64(base64Only)) {
+            const dataUrl = `data:image/jpeg;base64,${base64Only}`;
+            console.log('✅ Profile picture looks like base64 string');
+            applyImage(dataUrl);
+            return;
+          }
+        }
+
+        // No usable picture found
+        console.log('📷 No usable profile picture data in response');
+        this.setDefaultAvatar();
       },
       error: (err) => {
         console.log('📷 Profile picture load error:', err);
 
         // Check if it's a 404 (no picture) or other error
-        if (err.status === 404) {
+        if (err?.status === 404) {
           console.log('📷 No profile picture exists for this user');
-        } else if (err.status === 401) {
+        } else if (err?.status === 401) {
           console.log('📷 Unauthorized - might need to refresh token');
         } else {
-          console.log('📷 Other error loading profile picture:', err.message);
+          console.log(
+            '📷 Other error loading profile picture:',
+            err?.message || err
+          );
         }
 
         this.setDefaultAvatar();
@@ -1349,16 +1684,27 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private isValidImageData(data: string): boolean {
     if (!data) return false;
 
-    // Check if it's a data URL
+    // Data URL is always valid
     if (data.startsWith('data:image/')) return true;
 
-    // Check if it's a base64 string
-    if (data.length > 100 && /[a-zA-Z0-9+/=]/.test(data)) return true;
-
-    // Check if it's a URL
+    // URL looks valid
     if (data.startsWith('http')) return true;
 
+    // If it's a base64-like string, accept shorter lengths (images may be small)
+    const base64 = data.replace(/^data:image\/[a-zA-Z]+;base64,/, '').trim();
+    const base64Regex = /^[A-Za-z0-9+/=]+$/;
+    if (base64.length >= 20 && base64Regex.test(base64)) return true;
+
     return false;
+  }
+
+  // New helper to guess if a string is probably base64 (lenient)
+  private isProbableBase64(str: string): boolean {
+    if (!str) return false;
+    const s = str.trim();
+    if (s.length < 20) return false;
+    const base64Regex = /^[A-Za-z0-9+/=]+$/;
+    return base64Regex.test(s);
   }
 
   private storeProfileImage(imageData: string): void {

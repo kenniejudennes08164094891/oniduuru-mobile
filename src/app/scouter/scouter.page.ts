@@ -53,8 +53,16 @@ export class ScouterPage implements OnInit, OnDestroy {
   orgTypeInput: string = '';
   selectedOrgTypes: string[] = []; // Changed from single string to array
 
-  // Add organization type from input
-  addOrgTypeFromInput(event: any) {
+  // Add this method to handle input events
+  onOrgInput(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    if (inputElement) {
+      this.orgTypeInput = inputElement.value;
+    }
+  }
+
+  // Update the organization handling methods
+  addOrgTypeFromInput(event: Event) {
     event.preventDefault();
     event.stopPropagation();
 
@@ -64,16 +72,25 @@ export class ScouterPage implements OnInit, OnDestroy {
       this.updateOrganisationFormControl();
     }
 
-    this.orgTypeInput = ''; // clear after enter
+    this.orgTypeInput = '';
+
+    // Debug after adding
+    console.log('✅ Added org type:', newType);
+    console.log('📋 Current org types:', this.selectedOrgTypes);
+    this.checkFormStatus();
   }
 
-  // Remove organization type
   removeOrgType(index: number) {
     this.selectedOrgTypes.splice(index, 1);
     this.updateOrganisationFormControl();
+
+    // Debug after removal
+    console.log('🗑️ Removed org type at index:', index);
+    console.log('📋 Current org types:', this.selectedOrgTypes);
+    this.checkFormStatus();
   }
 
-  // Focus the organization input when container is clicked
+  // Update the focus method with null check
   focusOrgInput() {
     const input = document.getElementById('organisation') as HTMLInputElement;
     if (input) {
@@ -107,64 +124,157 @@ export class ScouterPage implements OnInit, OnDestroy {
     clearInterval(this.timer);
   }
 
-  private initializeForms() {
-    // Step 1: Personal Details
-    this.forms[0] = this.fb.group({
-      fullname: ['', [Validators.required, Validators.minLength(2)]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/)]],
-      email: ['', [Validators.required, this.strictEmailValidator()]],
-    });
+  // Add this custom validator
+  arrayMinLengthValidator(min: number) {
+    return (control: AbstractControl) => {
+      if (
+        !control.value ||
+        !Array.isArray(control.value) ||
+        control.value.length < min
+      ) {
+        return {
+          minLength: {
+            requiredLength: min,
+            actualLength: control.value?.length || 0,
+          },
+        };
+      }
+      return null;
+    };
+  }
 
-    // Step 2: Scouter Information - UPDATED for array of organization types
-    this.forms[1] = this.fb.group({
-      location: ['', Validators.required],
-      organisation: [[], Validators.required], // Now expects an array
-      purpose: ['', Validators.required],
-      payRange: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
-    });
+  // Update your form initialization for step 2
+  private initializeForms() {
+    this.forms = [];
+
+    // Step 1: Personal Details (unchanged)
+    this.forms.push(
+      this.fb.group({
+        fullname: ['', [Validators.required, Validators.minLength(2)]],
+        phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/)]],
+        email: ['', [Validators.required, this.strictEmailValidator()]],
+      })
+    );
+
+    // Step 2: Scouter Information - UPDATED with custom validator
+    this.forms.push(
+      this.fb.group({
+        location: ['', Validators.required],
+        organisation: [
+          [],
+          [Validators.required, this.arrayMinLengthValidator(1)],
+        ],
+        purpose: ['', Validators.required],
+        payRange: ['', [Validators.required]],
+      })
+    );
 
     // Step 3: Credentials
-    this.forms[2] = this.fb.group(
-      {
-        password: [
-          '',
-          [
-            Validators.required,
-            Validators.minLength(8),
-            Validators.pattern(
-              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
-            ),
+    this.forms.push(
+      this.fb.group(
+        {
+          password: [
+            '',
+            [
+              Validators.required,
+              Validators.minLength(8),
+              Validators.pattern(
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+              ),
+            ],
           ],
-        ],
-        confirmPassword: ['', Validators.required],
-      },
-      { validators: this.passwordMatchValidator }
+          confirmPassword: ['', Validators.required],
+        },
+        { validators: this.passwordMatchValidator }
+      )
     );
 
     // Step 4: OTP Verification
-    this.forms[3] = this.fb.group({
-      otp: this.fb.array([]),
-    });
+    this.forms.push(
+      this.fb.group({
+        otp: this.fb.array([]),
+      })
+    );
   }
 
-  // Update the organization type handling in onboarding
+  private buildPayload() {
+    const orgTypes = this.selectedOrgTypes.length ? this.selectedOrgTypes : [];
+
+    return {
+      fullName: this.forms[0].get('fullname')?.value,
+      phoneNumber: this.forms[0].get('phone')?.value,
+      email: this.forms[0].get('email')?.value,
+      location: this.forms[1].get('location')?.value,
+      scoutingPurpose: this.forms[1].get('purpose')?.value,
+      organizationType: orgTypes,
+      payRange: String(this.forms[1].get('payRange')?.value),
+      password: this.forms[2].get('password')?.value,
+    };
+  }
+
+  // Add this temporary method to manually check what's missing
+  manualCheckStep2() {
+    const form = this.forms[1];
+    if (!form) return;
+
+    console.log('🔍 MANUAL STEP 2 CHECK:');
+    console.log(
+      'Location:',
+      form.get('location')?.value,
+      'Valid:',
+      form.get('location')?.valid
+    );
+    console.log(
+      'Organization:',
+      form.get('organisation')?.value,
+      'Valid:',
+      form.get('organisation')?.valid
+    );
+    console.log(
+      'Purpose:',
+      form.get('purpose')?.value,
+      'Valid:',
+      form.get('purpose')?.valid
+    );
+    console.log(
+      'PayRange:',
+      form.get('payRange')?.value,
+      'Valid:',
+      form.get('payRange')?.valid
+    );
+    console.log('Overall Form Valid:', form.valid);
+  }
+
+  // Update the organization form control method
   private updateOrganisationFormControl() {
     const orgTypes = this.selectedOrgTypes.filter(
       (org) => org && org.trim() !== ''
     );
-    this.forms[1].get('organisation')?.setValue(orgTypes);
+    const orgControl = this.forms[1]?.get('organisation');
+
+    if (orgControl) {
+      orgControl.setValue(orgTypes);
+      orgControl.markAsTouched();
+      orgControl.updateValueAndValidity();
+
+      console.log('🔄 Organization control updated:', {
+        value: orgControl.value,
+        valid: orgControl.valid,
+        errors: orgControl.errors,
+      });
+    }
   }
 
   // Update the account creation payload
   submitScouterAccount() {
     if (this.forms[2].invalid) {
+      console.log('Step 3 form invalid');
       this.forms[2].markAllAsTouched();
       return;
     }
 
     this.isProcessing = true;
 
-    // ✅ Ensure organizationType is always an array
     const organizationType = Array.isArray(this.selectedOrgTypes)
       ? this.selectedOrgTypes.filter((org) => org && org.trim() !== '')
       : [];
@@ -175,26 +285,24 @@ export class ScouterPage implements OnInit, OnDestroy {
       email: this.forms[0].get('email')?.value,
       location: this.forms[1].get('location')?.value,
       scoutingPurpose: this.forms[1].get('purpose')?.value,
-      organizationType: organizationType, // ✅ Always array
+      organizationType: organizationType,
       payRange: String(this.forms[1].get('payRange')?.value),
       password: this.forms[2].get('password')?.value,
     };
 
-    console.log(
-      '📤 Creating account with organization types:',
-      payload.organizationType
-    );
+    console.log('📤 Final payload:', payload);
 
     this.scouterService.createScouterProfile(payload).subscribe({
       next: (res) => {
-        console.log('✅ Account created:', res);
+        console.log('✅ Account creation response:', res);
         this.isProcessing = false;
-        this.tempUserData = { ...res, password: '****' };
+        this.tempUserData = { ...res };
+        this.tempUserId = res?.id || null;
         this.currentStep = 3;
         this.sendOtpAutomatically();
       },
       error: (err) => {
-        console.error('❌ Error creating account:', err);
+        console.error('❌ Account creation error:', err);
         this.isProcessing = false;
         this.setError(err?.error?.message || 'Failed to create account.');
       },
@@ -225,13 +333,13 @@ export class ScouterPage implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (res: any) => {
-          this.accountExistsError = res.exists
-            ? 'Account already exists. Please log in instead.'
-            : null;
-          this.toast.openSnackBar(
-            'Account already exists. Please log in instead',
-            'error'
-          );
+          if (res.exists) {
+            this.accountExistsError =
+              'Account already exists. Please log in instead.';
+            this.toast.openSnackBar(this.accountExistsError, 'error');
+          } else {
+            this.accountExistsError = null;
+          }
         },
         error: (err) => {
           console.error('Email check error', err);
@@ -240,10 +348,43 @@ export class ScouterPage implements OnInit, OnDestroy {
       });
   }
 
-  // Navigation Methods
+  goPrevious() {
+    if (this.currentStep > 0) {
+      this.currentStep--;
+    }
+  }
+
+  // Form Validation
+  isCurrentFormValid(): boolean {
+    const currentForm = this.forms[this.currentStep];
+    return currentForm ? currentForm.valid : false;
+  }
+
+  // Add this method to check form status
+  checkFormStatus() {
+    const currentForm = this.forms[this.currentStep];
+    if (currentForm) {
+      console.log('🔍 FORM STATUS:', {
+        valid: currentForm.valid,
+        invalid: currentForm.invalid,
+        errors: currentForm.errors,
+        controls: Object.keys(currentForm.controls).map((key) => ({
+          control: key,
+          valid: currentForm.get(key)?.valid,
+          errors: currentForm.get(key)?.errors,
+          value: currentForm.get(key)?.value,
+        })),
+      });
+    }
+  }
+
+  // Update your goNext method to call this
   goNext() {
-    if (!this.isCurrentFormValid()) {
-      this.forms[this.currentStep].markAllAsTouched();
+    this.checkFormStatus(); // Add this line
+
+    const currentForm = this.forms[this.currentStep];
+    if (!currentForm || !this.isCurrentFormValid()) {
+      currentForm?.markAllAsTouched();
       return;
     }
 
@@ -258,17 +399,6 @@ export class ScouterPage implements OnInit, OnDestroy {
         this.sendOtpAutomatically();
       }
     }
-  }
-
-  goPrevious() {
-    if (this.currentStep > 0) {
-      this.currentStep--;
-    }
-  }
-
-  // Form Validation
-  isCurrentFormValid(): boolean {
-    return this.forms[this.currentStep]?.valid || false;
   }
 
   strictEmailValidator(): ValidatorFn {
@@ -399,16 +529,17 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   // OTP Input Handling
-  onOtpInput(event: any, index: number) {
+  onOtpInput(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     const value = input.value;
 
     // Auto-advance to next input
     if (value && index < this.otpControls.length - 1) {
-      const nextInput = input.parentElement?.querySelectorAll('input')[
-        index + 1
-      ] as HTMLInputElement;
-      if (nextInput) nextInput.focus();
+      const inputs = input.parentElement?.querySelectorAll('input');
+      if (inputs && inputs[index + 1]) {
+        const nextInput = inputs[index + 1] as HTMLInputElement;
+        nextInput.focus();
+      }
     }
 
     // Auto-submit when last digit is entered
@@ -425,10 +556,9 @@ export class ScouterPage implements OnInit, OnDestroy {
 
       if (!input.value && index > 0) {
         // Move to previous input if current is empty
-        const prevInput = input.parentElement?.querySelectorAll('input')[
-          index - 1
-        ] as HTMLInputElement;
-        if (prevInput) {
+        const inputs = input.parentElement?.querySelectorAll('input');
+        if (inputs && inputs[index - 1]) {
+          const prevInput = inputs[index - 1] as HTMLInputElement;
           prevInput.focus();
           prevInput.select();
         }
@@ -440,10 +570,6 @@ export class ScouterPage implements OnInit, OnDestroy {
     }
   }
 
-  getOtpValue(): string {
-    return this.otpControls.map((control) => control.value || '').join('');
-  }
-
   clearOtpFields() {
     this.otpControls.forEach((control) => {
       control.setValue('');
@@ -452,14 +578,12 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   // UI Helpers
-  startCountdown(duration: number = 120) {
+  private startCountdown() {
     clearInterval(this.timer);
-    this.countdown = duration;
-
+    this.countdown = 120;
     this.timer = setInterval(() => {
-      if (this.countdown > 0) {
-        this.countdown--;
-      } else {
+      this.countdown--;
+      if (this.countdown <= 0) {
         clearInterval(this.timer);
       }
     }, 1000);
@@ -469,6 +593,19 @@ export class ScouterPage implements OnInit, OnDestroy {
     return `${((this.currentStep + 1) / this.steps.length) * 100}%`;
   }
 
+  getOtpValue(): string {
+    return this.otpControls
+      .map((control) => control?.value || '')
+      .join('')
+      .replace(/\s/g, '');
+  }
+
+  private setError(message: string) {
+    this.errorMessage = message;
+    this.toast.openSnackBar(message, 'error');
+    setTimeout(() => (this.errorMessage = ''), 5000);
+  }
+
   getEmailForOtp(): string {
     return this.forms[0]?.get('email')?.value || '';
   }
@@ -476,29 +613,13 @@ export class ScouterPage implements OnInit, OnDestroy {
   maskEmail(email: string): string {
     if (!email) return '';
     const [user, domain] = email.split('@');
+    if (!user || !domain) return '***@***';
+
     if (user.length <= 2) return `***@${domain}`;
 
     const maskedUser =
       user.slice(0, 2) + '*'.repeat(Math.min(3, user.length - 2));
     return `${maskedUser}@${domain}`;
-  }
-
-  // Organisation Dropdown
-  // toggleOrganisationDropdown() {
-  //   this.isOrganisationDropdownOpen = !this.isOrganisationDropdownOpen;
-  // }
-
-  // selectOrganisation(organisation: string) {
-  //   this.forms[1].get('organisation')?.setValue(organisation);
-  //   this.isOrganisationDropdownOpen = false;
-  // }
-
-  // Error Handling
-  setError(message: string) {
-    this.errorMessage = message;
-    setTimeout(() => {
-      this.errorMessage = '';
-    }, 5000);
   }
 
   // Navigation
@@ -525,6 +646,7 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   goToDashboard() {
+    this.showSuccessModal = false;
     this.router.navigate(['/scouter/dashboard']);
   }
 }
