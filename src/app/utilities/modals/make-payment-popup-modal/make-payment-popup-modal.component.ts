@@ -8,6 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 interface PaymentDetail {
   label: string;
@@ -36,7 +37,7 @@ export class MakePaymentPopupModalComponent extends BaseModal {
     modalCtrl: ModalController,
     platform: Platform,
     private router: Router,
-    private toastCtrl: ToastController
+    private toastService: ToastsService
   ) {
     super(modalCtrl, platform); // ✅ inherits dismiss + back button
   }
@@ -52,12 +53,8 @@ export class MakePaymentPopupModalComponent extends BaseModal {
     item.copied = true;
     setTimeout(() => (item.copied = false), 2000);
 
-    const toast = await this.toastCtrl.create({
-      message: `Copied: ${item.value}`,
-      duration: 1500,
-      position: 'bottom',
-      color: 'success',
-    });
-    await toast.present();
+
+
+    this.toastService.openSnackBar(`Copied: ${item.value}`, 'success');
   }
 }

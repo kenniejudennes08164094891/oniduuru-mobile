@@ -1,4 +1,4 @@
-import { Type } from "@angular/core";
+import { Type } from '@angular/core';
 
 export interface DeviceView {
   title?: string;
@@ -39,9 +39,44 @@ export interface RecentReview {
 }
 
 export interface Location {
-  lat: number;
-  lng: number;
+  lat: any;
+  lng: any;
   city: string;
+}
+
+export interface InactiveUsersParam {
+  role: string;
+  durationInMonths: number;
+}
+
+export interface FilterScouterParam {
+  key: string;
+  param: string;
+}
+
+export interface ComplaintStatus {
+  status: string;
+}
+
+export interface BulkNotificationParams {
+  senderId: string;
+  receiverId: string[];
+  message: string;
+}
+
+export interface WalletProfileParams {
+  wallet_id?: string | undefined | any;
+  uniqueId?: string | undefined | any;
+}
+
+export interface PaginationParams {
+  skillset?: string[] | any;
+  location?: string | any;
+  skillLevel?: string | any;
+  search?: string | any;
+  limit: number;
+  pageNo: number;
+  statusParams?: string | any;
 }
 
 export interface MockPayment {
@@ -1350,6 +1385,298 @@ export const banks: string[] = [
   'Heritage Bank',
   'Globus Bank',
 ];
+
+export interface Deposit {
+  id: number;
+  amount: number;
+  walletName: string;
+  walletAcctNo: string;
+  identifier: string;
+  status: 'Successful' | 'Invalid' | 'Reversed' | 'Failed';
+  date: Date; // 👈 use Date instead of string
+  reason: string;
+}
+
+export const deposit: Deposit[] = [
+  {
+    id: 1,
+
+    amount: 653655,
+    walletName: 'Omoseyin Kehinde Jude',
+    walletAcctNo: '1234211234',
+    identifier: 'Fund Others',
+    status: 'Successful',
+    date: new Date(2016, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'I want to pay a talent',
+  },
+  {
+    id: 2,
+    amount: 450000,
+    walletName: 'Adeola Michael',
+    walletAcctNo: '9988776655',
+    identifier: 'Fund Self',
+    status: 'Failed',
+    date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Personal',
+  },
+  {
+    id: 3,
+    amount: 320500,
+    walletName: 'Chukwuemeka Nnamdi',
+    walletAcctNo: '5566778899',
+    identifier: 'Fund Others',
+    status: 'Reversed',
+    date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Miscellaneous',
+  },
+  {
+    id: 4,
+    amount: 120000,
+    walletName: 'Blessing Adeyemi',
+    walletAcctNo: '1122334455',
+    identifier: 'Fund Self',
+    status: 'Invalid',
+    date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Personal',
+  },
+  {
+    id: 5,
+    amount: 90000,
+    walletName: 'Uche Okafor',
+    walletAcctNo: '4433221100',
+    identifier: 'Fund Others',
+    status: 'Successful',
+    date: new Date(2024, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Miscellaneous',
+  },
+  {
+    id: 6,
+    amount: 250000,
+    walletName: 'Fatima Musa',
+    walletAcctNo: '6655443322',
+    identifier: 'Fund Self',
+    status: 'Failed',
+    date: new Date(2021, 4, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Miscellaneous',
+  },
+  {
+    id: 7,
+    amount: 310000,
+    walletName: 'Emmanuel Johnson',
+    walletAcctNo: '7788990011',
+    identifier: 'Fund Others',
+    status: 'Successful',
+    date: new Date(2020, 5, 4, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Personal',
+  },
+  {
+    id: 8,
+    amount: 480000,
+    walletName: 'Grace Adeola',
+    walletAcctNo: '9900112233',
+    identifier: 'Fund Self',
+    status: 'Reversed',
+    date: new Date(2020, 10, 24, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Personal',
+  },
+  {
+    id: 9,
+    amount: 70000,
+    walletName: 'Ibrahim Abdullahi',
+    walletAcctNo: '3344556677',
+    identifier: 'Fund Others',
+    status: 'Invalid',
+    date: new Date(2019, 2, 21, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Miscellaneous',
+  },
+  {
+    id: 10,
+    amount: 150000,
+    walletName: 'Chinenye Udo',
+    walletAcctNo: '2211334455',
+    identifier: 'Fund Self',
+    status: 'Successful',
+    date: new Date(2021, 9, 6, 10, 57), // May is month 4 (0-indexed)
+    reason: 'Miscellaneous',
+  },
+];
+
+export interface Withdrawal {
+  id: number;
+  amount: number;
+  walletName: string;
+  walletAcctNo: string;
+  identifier: string;
+  status: 'Successful' | 'Pending' | 'Declined' | 'Reversed';
+  date: Date;
+  bank: string;
+  nubamAccNo: string;
+  walletId: string;
+  acctName?: string; // account holder name (if stored)
+  transactionId?: string; // ✅ add this
+  // 👇 add these if you plan to use them
+  fromName?: string;
+  toName?: string;
+  fromWalletId?: string;
+}
+
+export const withdrawal: Withdrawal[] = [
+  {
+    id: 1,
+    amount: 653655,
+    walletName: 'Omoseyin Kehinde Jude',
+    walletAcctNo: '1234211234',
+    identifier: 'Fund Others',
+    status: 'Successful',
+    date: new Date(2025, 4, 4, 10, 47), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 2,
+    amount: 450000,
+    walletName: 'Adeola Michael',
+    walletAcctNo: '9988776655',
+    identifier: 'Fund Self',
+    status: 'Pending',
+    date: new Date(2025, 9, 24, 10, 37), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 3,
+    amount: 320500,
+    walletName: 'Chukwuemeka Nnamdi',
+    walletAcctNo: '5566778899',
+    identifier: 'Fund Others',
+    status: 'Declined',
+    date: new Date(2020, 4, 10, 1, 7), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 4,
+    amount: 450000,
+    walletName: 'Adeola Michael',
+    walletAcctNo: '9988776655',
+    identifier: 'Fund Self',
+    status: 'Reversed',
+    date: new Date(2016, 4, 4, 10, 7), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+];
+
+export interface Transfer {
+  id: number;
+  amount: number;
+  walletName: string;
+  walletAcctNo: string;
+  identifier: string;
+  status: 'Successful' | 'Pending' | 'Declined' | 'Reversed';
+  bank: string;
+  nubamAccNo: string;
+  walletId: string;
+  date: Date; // 👈 use Date instead of string
+
+  // 👇 add these optional fields to fix your errors
+  acctName?: string;
+  fromName?: string;
+  toName?: string;
+  fromWalletId?: string;
+}
+
+export const transfer: Transfer[] = [
+  {
+    id: 1,
+    amount: 653655,
+    walletName: 'Omoseyin Kehinde Jude',
+    walletAcctNo: '1234211234',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
+    identifier: 'Fund Others',
+    status: 'Successful',
+    date: new Date(2025, 3, 17, 10, 57), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 2,
+    amount: 450000,
+    walletName: 'Adeola Michael',
+    walletAcctNo: '9988776655',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
+    identifier: 'Fund Self',
+    status: 'Pending',
+    date: new Date(2025, 4, 4, 10, 7), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 3,
+    amount: 320500,
+    walletName: 'Chukwuemeka Nnamdi',
+    walletAcctNo: '5566778899',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
+    identifier: 'Fund Others',
+    status: 'Declined',
+    date: new Date(2025, 4, 24, 10, 8), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+  {
+    id: 4,
+    amount: 450000,
+    walletName: 'Adeola Michael',
+    walletAcctNo: '9988776655',
+    acctName: 'Omosehin Kehinde Jude', // 👈 new
+    fromName: 'Shoft Main Wallet', // 👈 new
+    toName: 'Omosehin Kehinde Jude', // 👈 new
+    identifier: 'Fund Self',
+    status: 'Reversed',
+    date: new Date(2021, 9, 24, 9, 57), // May is month 4 (0-indexed)
+    bank: 'Access Bank Nigeria Plc',
+    nubamAccNo: '1234211234',
+    walletId: '0033392845',
+  },
+];
+
+// MARKET
+// models/market-engagement.model.ts
+export interface MarketEngagement {
+  id: string;
+  talentName: string;
+  talentEmail: string;
+  profilePic: string;
+  dateOfHire: string; // or Date
+  startDate: string; // or Date
+  agreedAmount: number;
+  hireStatus: 'awaiting-acceptance' | 'offer-accepted' | 'offer-declined';
+  talentId?: string;
+  scouterId?: string;
+  // Add other fields as needed from API response
+}
+
+export interface MarketEngagementResponse {
+  data: MarketEngagement[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 
 export const title: string[] = ['Mr', 'Mrs', 'Miss', 'Dr'];
 export const gender: string[] = ['Male', 'Female', 'Others'];

@@ -1,20 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { MockRecentHires } from 'src/app/models/mocks';
+import { MockRecentHires, withdrawal } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { WithdrawFundsPopupModalComponent } from 'src/app/utilities/modals/withdraw-funds-popup-modal/withdraw-funds-popup-modal.component';
-
-interface Deposit {
-  amount: number;
-  walletName: string;
-  walletAcctNo: string;
-  identifier: string;
-  status: 'Successful' | 'Pending' | 'Declined' | 'Reversed';
-  date: Date;
-  bank: string;
-  nubamAccNo: string;
-  walletId: string;
-}
 
 @Component({
   selector: 'app-withdraw-fund',
@@ -45,66 +34,33 @@ export class WithdrawFundComponent implements OnInit {
     'December',
   ];
 
+  // statuses: string[] = ['Successful', 'Invalid', 'Reversed', 'Failed'];
+  identifiers: string[] = ['Fund Self', 'Fund Others'];
+
   selectedYear: number | null = null;
   selectedMonth: string | null = null;
 
   isYearDropdownOpen = false;
   isMonthDropdownOpen = false;
 
-  // Mock data for table
-  withdrawal: Deposit[] = [
-    {
-      amount: 653655,
-      walletName: 'Omoseyin Kehinde Jude',
-      walletAcctNo: '1234211234',
-      identifier: 'Fund Others',
-      status: 'Successful',
-      date: new Date(2025, 4, 4, 10, 47), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 450000,
-      walletName: 'Adeola Michael',
-      walletAcctNo: '9988776655',
-      identifier: 'Fund Self',
-      status: 'Pending',
-      date: new Date(2025, 9, 24, 10, 37), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 320500,
-      walletName: 'Chukwuemeka Nnamdi',
-      walletAcctNo: '5566778899',
-      identifier: 'Fund Others',
-      status: 'Declined',
-      date: new Date(2020, 4, 10, 1, 7), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-    {
-      amount: 450000,
-      walletName: 'Adeola Michael',
-      walletAcctNo: '9988776655',
-      identifier: 'Fund Self',
-      status: 'Reversed',
-      date: new Date(2016, 4, 4, 10, 7), // May is month 4 (0-indexed)
-      bank: 'Access Bank Nigeria Plc',
-      nubamAccNo: '1234211234',
-      walletId: '0033392845',
-    },
-  ];
+  withdrawal = withdrawal;
 
   // ✅ Pagination setup
   pageSize = 4;
   currentPage = 1;
 
-  get filteredWithdrawal(): Deposit[] {
-    return this.withdrawal.filter((d) => {
+  toggleYearDropdown() {
+    this.isYearDropdownOpen = !this.isYearDropdownOpen;
+    this.isMonthDropdownOpen = false;
+  }
+
+  toggleMonthDropdown() {
+    this.isMonthDropdownOpen = !this.isMonthDropdownOpen;
+    this.isYearDropdownOpen = false;
+  }
+
+  get filteredWithdrawal(): any {
+    return this.withdrawal.filter((w) => {
       let matchesYear = true;
       let matchesMonth = true;
       // let matchesStatus = true;
@@ -112,12 +68,12 @@ export class WithdrawFundComponent implements OnInit {
       // let matchesWalletName = true;
 
       if (this.selectedYear) {
-        const withdrawalYear = new Date(d.date).getFullYear();
+        const withdrawalYear = new Date(w.date).getFullYear();
         matchesYear = withdrawalYear === this.selectedYear;
       }
 
       if (this.selectedMonth) {
-        const withdrawalMonth = new Date(d.date).toLocaleString('en-US', {
+        const withdrawalMonth = new Date(w.date).toLocaleString('en-US', {
           month: 'long',
         });
         matchesMonth = withdrawalMonth === this.selectedMonth;
@@ -152,7 +108,7 @@ export class WithdrawFundComponent implements OnInit {
     return Math.ceil(this.filteredWithdrawal.length / this.pageSize);
   }
 
-  get paginatedWithdrawal(): Deposit[] {
+  get paginatedWithdrawal(): any {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredWithdrawal.slice(start, start + this.pageSize);
   }
@@ -163,28 +119,47 @@ export class WithdrawFundComponent implements OnInit {
     }
   }
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(private modalCtrl: ModalController, private router: Router) {}
 
   ngOnInit() {}
 
-  toggleYearDropdown() {
-    this.isYearDropdownOpen = !this.isYearDropdownOpen;
-    this.isMonthDropdownOpen = false;
-  }
-
-  toggleMonthDropdown() {
-    this.isMonthDropdownOpen = !this.isMonthDropdownOpen;
-    this.isYearDropdownOpen = false;
+  async goToRequest(withdrawal: any): Promise<void> {
+await this.router.navigate(
+  ['scouter/wallet-page/withdraw-funds/withdraw-funds-request', withdrawal.id],
+  { state: { withdrawal } }
+);
   }
 
   selectYear(year: number) {
     this.selectedYear = year;
     this.isYearDropdownOpen = false;
+    this.currentPage = 1;
   }
 
   selectMonth(month: string) {
     this.selectedMonth = month;
     this.isMonthDropdownOpen = false;
+    this.currentPage = 1;
+  }
+
+  get successfulCount(): number {
+    return this.withdrawal.filter((w) => w.status === 'Successful').length;
+  }
+
+  get pendingCount(): number {
+    return this.withdrawal.filter((w) => w.status === 'Pending').length;
+  }
+
+  get reversedCount(): number {
+    return this.withdrawal.filter((w) => w.status === 'Reversed').length;
+  }
+
+  get declinedCount(): number {
+    return this.withdrawal.filter((w) => w.status === 'Declined').length;
+  }
+
+  get totalCount(): number {
+    return this.withdrawal.length;
   }
 
   // 👇 function to open modal
@@ -198,6 +173,9 @@ export class WithdrawFundComponent implements OnInit {
 
     modal.onDidDismiss().then((result) => {
       if (result.role === 'submitted' && result.data) {
+        // assign a unique id if not already present
+        result.data.id = Date.now(); // simple unique id
+
         // push the new withdrawal at the top
         this.withdrawal = [result.data, ...this.withdrawal];
         this.currentPage = 1;

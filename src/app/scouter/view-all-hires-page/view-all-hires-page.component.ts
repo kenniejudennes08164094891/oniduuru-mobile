@@ -18,6 +18,7 @@ interface MockPayment {
   offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
   status: 'Active' | 'Pending' | 'Away';
 
+
   // NEW FIELDS
   jobDescription: string;
   yourComment: string;

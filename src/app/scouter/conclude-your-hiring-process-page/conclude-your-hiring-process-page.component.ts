@@ -4,6 +4,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { Location } from '@angular/common';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-conclude-your-hiring-process-page',
@@ -37,8 +38,9 @@ export class ConcludeYourHiringProcessPageComponent
 
   constructor(
     private router: Router,
-    private toastCtrl: ToastController,
+    // private toastCtrl: ToastController,
     private location: Location,
+    private toastService: ToastsService,
     modalCtrl: ModalController,
     platform: Platform
   ) {
@@ -87,13 +89,15 @@ export class ConcludeYourHiringProcessPageComponent
 
   async hireTalent() {
     // console.log('Hiring talent...', this.formData);
-    const toast = await this.toastCtrl.create({
-      message: 'Hire offer sent!',
-      duration: 2000,
-      color: 'success',
-      position: 'bottom',
-    });
-    await toast.present();
+    // const toast = await this.toastCtrl.create({
+    //   message: 'Hire offer sent!',
+    //   duration: 2000,
+    //   color: 'success',
+    //   position: 'bottom',
+    // });
+    // await toast.present();
+
+    this.toastService.openSnackBar('Hire offer sent! ✅', 'success');
 
     this.location.back();
   }
@@ -101,14 +105,16 @@ export class ConcludeYourHiringProcessPageComponent
   async updateRecord() {
     // console.log('Updating record...', this.formData);
 
-    const toast = await this.toastCtrl.create({
-      message: 'Record updated successfully ✅',
-      duration: 2000,
-      color: 'success',
-      position: 'bottom',
-    });
+    // const toast = await this.toastCtrl.create({
+    //   message: 'Record updated successfully ✅',
+    //   duration: 2000,
+    //   color: 'success',
+    //   position: 'bottom',
+    // });
 
-    await toast.present();
+    // await toast.present();
+
+    this.toastService.openSnackBar('Record updated successfully ✅', 'success');
 
     // ✅ hide the button
     this.isUpdated = true;
@@ -116,9 +122,18 @@ export class ConcludeYourHiringProcessPageComponent
 
   onCancel() {
     this.dismiss(null, 'cancel');
+    this.router.navigate([
+      '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+    ]);
   }
 
   onConfirm() {
     this.dismiss(null, 'confirm');
   }
+
+  // goBack() {
+  //   this.router.navigate([
+  //     '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+  //   ]);
+  // }
 }

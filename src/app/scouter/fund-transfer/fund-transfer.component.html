@@ -13,7 +13,7 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight"
-            >Hi Vikiwest,</span
+            >Hi Viki West,</span
           >
           <p class="text-gray-200 text-lg leading-relaxed">
             Seamlessly transfer funds between wallets.
@@ -56,7 +56,7 @@
       </div>
       <div
         *ngIf="isYearDropdownOpen"
-        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 max-h-60 overflow-y-auto"
       >
         <p
           *ngFor="let year of years"
@@ -106,7 +106,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">10</p>
+        <p class="text-lg font-semibold">{{ successfulCount }}</p>
         <p>Successful</p>
       </div>
 
@@ -114,7 +114,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#FFA086] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">2</p>
+        <p class="text-lg font-semibold">{{ pendingCount }}</p>
         <p>Pending</p>
       </div>
 
@@ -122,15 +122,15 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">0</p>
+        <p class="text-lg font-semibold">{{ reversedCount }}</p>
         <p>Reversed</p>
       </div>
 
       <!-- Declined -->
       <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-red-700 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-red-600 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">1</p>
+        <p class="text-lg font-semibold">{{ declinedCount }}</p>
         <p>Declined</p>
       </div>
 
@@ -138,7 +138,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">0</p>
+        <p class="text-lg font-semibold">{{ totalCount }}</p>
         <p>Fetched all</p>
       </div>
     </div>
@@ -167,6 +167,7 @@
         <tbody class="divide-y divide-gray-100">
           <tr
             *ngFor="let transfer of paginatedTransfer"
+            (click)="openTransfer(transfer)"
             class="hover:bg-gray-50 transition-colors h-16 cursor-pointer"
           >
             <td class="px-3 py-3 text-center">

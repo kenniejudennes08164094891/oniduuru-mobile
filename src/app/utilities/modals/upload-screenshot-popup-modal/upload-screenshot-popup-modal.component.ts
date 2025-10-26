@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
+import { Router, NavigationStart } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
-import { BaseModal } from 'src/app/base/base-modal.abstract'; // 👈 adjust path
+import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
   selector: 'app-upload-screenshot-popup-modal',
@@ -11,18 +13,37 @@ import { BaseModal } from 'src/app/base/base-modal.abstract'; // 👈 adjust pat
   styleUrls: ['./upload-screenshot-popup-modal.component.scss'],
   standalone: false,
 })
-export class UploadScreenshotPopupModalComponent extends BaseModal {
+export class UploadScreenshotPopupModalComponent
+  extends BaseModal
+  implements OnInit, OnDestroy
+{
   images = imageIcons;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
 
+  private navSub?: Subscription;
+
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
+    private router: Router,
     private paymentService: PaymentService,
     private toastCtrl: ToastController
   ) {
-    super(modalCtrl, platform); // ✅ gets dismiss + back button
+    super(modalCtrl, platform);
+  }
+
+  override ngOnInit() {
+    // auto close modal on any route navigation
+    this.navSub = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.dismiss();
+      }
+    });
+  }
+
+  override ngOnDestroy() {
+    this.navSub?.unsubscribe();
   }
 
   override dismiss() {
@@ -64,7 +85,7 @@ export class UploadScreenshotPopupModalComponent extends BaseModal {
       });
       await toast.present();
 
-      // 👇 using BaseModal's dismiss
+      // close current modal
       await this.dismiss();
 
       // open awaiting verification modal

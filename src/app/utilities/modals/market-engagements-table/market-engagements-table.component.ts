@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { ToastController } from '@ionic/angular';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-market-engagements-table',
@@ -18,7 +19,7 @@ export class MarketEngagementsTableComponent {
 
   @Output() hireSelected = new EventEmitter();
 
-  constructor(private toastController: ToastController) {}
+  constructor(private toastService: ToastsService) {}
 
   async openHireModal(hire: any) {
     // 👉 Always update dashboard first
@@ -26,24 +27,24 @@ export class MarketEngagementsTableComponent {
 
     // 👉 Then run modal conditions
     if (hire.offerStatus !== 'Offer Accepted') {
-      const toast = await this.toastController.create({
-        message: `${hire.offerStatus}`,
-        duration: 2500,
-        position: 'bottom',
-        color: 'success',
-      });
-      await toast.present();
+      // const toast = await this.toastController.create({
+      //   message: ``,
+      //   duration: 2500,
+      //   position: 'bottom',
+      //   color: '',
+      // });
+      // await toast.present();
+      this.toastService.openSnackBar(`${hire.offerStatus}`, 'success');
       return;
     }
 
     if (!hire.yourRating || hire.yourRating <= 0) {
-      const toast = await this.toastController.create({
-        message: `⭐ No rating provided yet. Set your own rating ↑ `,
-        duration: 2500,
-        position: 'bottom',
-        color: 'warning',
-      });
-      await toast.present();
+      
+
+      this.toastService.openSnackBar(
+        `⭐ No rating provided yet. Set your own rating ↑`,
+        'warning'
+      );
       return;
     }
 

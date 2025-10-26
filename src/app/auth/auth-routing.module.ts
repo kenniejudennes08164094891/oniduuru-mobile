@@ -4,21 +4,25 @@ import { Routes, RouterModule } from '@angular/router';
 import { AuthPage } from './auth.page';
 import { WelcomePageComponent } from './welcome-page/welcome-page.component';
 import { SignupSelectComponent } from './signup-select/signup-select.component';
-
+import { VerifyOtpComponent } from './verify-otp/verify-otp.component';
 
 const routes: Routes = [
   {
     path: 'login',
-    component: AuthPage
+    component: AuthPage,
   },
-    {
+  {
+    path: 'verify-otp',
+    component: VerifyOtpComponent,
+  },
+  {
     path: 'welcome-page',
-    component: WelcomePageComponent
+    component: WelcomePageComponent,
   },
-     {
+  {
     path: 'signup-select',
-    component: SignupSelectComponent
-  }
+    component: SignupSelectComponent,
+  },
 ];
 
 @NgModule({

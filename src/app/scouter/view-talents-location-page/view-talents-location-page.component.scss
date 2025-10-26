@@ -6,6 +6,14 @@
   position: relative;
 }
 
+.paid-dark-card-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* just dims the image */
+  z-index: 0;
+}
+
 .no-padding-bg {
   --background: #eef0f6; /* sets ion-content background */
   padding: 0 !important; /* kills default padding */

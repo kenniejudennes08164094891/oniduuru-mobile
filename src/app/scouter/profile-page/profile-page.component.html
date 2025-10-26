@@ -8,28 +8,30 @@
 
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
-    <div class="space-y-4 mt-10">
-      <!-- Security Question Banner -->
+    <!-- Loading State for Profile -->
+    <!-- <div *ngIf="isLoadingProfile" class="minimal-loading">
+      <div class="minimal-spinner"></div>
+      <p class="minimal-text">Loading profile...</p>
+    </div> -->
 
+    <div class="space-y-4 mt-10">
+      <!-- *ngIf="!isLoadingProfile" -->
+      <!-- Security Question Banner -->
       <div
         class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
         *ngIf="securityQuestions.length === 0"
       >
-        <!-- Dark overlay -->
         <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
-
-        <!-- Content -->
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
             <ion-icon
               class="h-7 w-7"
               name="information-circle-outline"
             ></ion-icon>
-            <span class="font-normal text-[16px] leading-tight"
-              >Why haven’t you created your security questions yet?</span
-            >
+            <span class="font-normal text-[16px] leading-tight">
+              Why haven't you created your security questions yet?
+            </span>
           </div>
-
           <ion-button
             fill="clear"
             class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
@@ -41,26 +43,21 @@
       </div>
 
       <!-- Upload Profile Picture Banner -->
-
       <div
         class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
-        *ngIf="!profileImage"
+        *ngIf="!hasExistingProfilePicture"
       >
-        <!-- Dark overlay -->
         <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
-
-        <!-- Content -->
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
             <ion-icon
               class="h-7 w-7"
               name="information-circle-outline"
             ></ion-icon>
-            <span class="font-normal text-[16px] leading-tight"
-              >Why haven’t you uploaded your profile picture yet?</span
-            >
+            <span class="font-normal text-[16px] leading-tight">
+              Why haven't you uploaded your profile picture yet?
+            </span>
           </div>
-
           <ion-button
             fill="clear"
             class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
@@ -72,53 +69,72 @@
       </div>
     </div>
 
-    <div class="mt-12">
+    <div class="mt-12" *ngIf="!isLoadingProfile">
       <div class="logcomplainModalBG h-[69px] pt-2">
         <p class="text-white text-xl font-bold item-start mt-3 px-5">
           Personal Information
         </p>
       </div>
 
-      <!-- here -->
       <div class="p-6">
         <!-- Profile Picture -->
-        <p class="mt-3 pb-3 text-gray-600" #profilePicture>profile picture</p>
+        <p class="mt-3 pb-3 text-gray-600" #profilePicture>Profile Picture</p>
+        <!-- In your template - update the profile picture section -->
         <div class="flex flex-col mb-6">
-          <!-- Outer Circle -->
+          <!-- Show profile picture container ALWAYS -->
           <div
             class="w-28 h-28 rounded-full border-4 border-gray-600 flex items-center justify-center"
           >
-            <!-- Inner Circle -->
             <div
-              class="w-24 h-24 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center relative"
+              class="w-24 h-24 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center relative overflow-hidden"
             >
-              <!-- Show uploaded image OR default icon -->
+              <!-- Show actual profile picture if it exists -->
               <img
-                *ngIf="profileImage"
+                *ngIf="profileImage && hasExistingProfilePicture"
                 [src]="profileImage"
                 alt="Profile"
                 class="w-full h-full object-cover rounded-full"
+                (error)="handleImageError($event)"
               />
 
-              <ion-icon
-                *ngIf="!profileImage"
-                name="person-outline"
-                class="text-gray-500 text-4xl"
-              ></ion-icon>
+              <!-- Show placeholder when no profile picture -->
+              <div
+                *ngIf="!profileImage || !hasExistingProfilePicture"
+                class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-300 rounded-full"
+              >
+                <ion-icon
+                  name="person-outline"
+                  class="text-3xl text-gray-500"
+                ></ion-icon>
+              </div>
 
-              <!-- Hidden file input -->
               <input
                 type="file"
-                accept="image/*"
                 #fileInput
+                accept="image/*"
                 class="hidden"
                 (change)="onFileSelected($event)"
               />
-
-              <!-- Edit Icon -->
+              <!-- Camera icon - show when NOT editing (standalone upload) -->
               <div
-                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md"
-                (click)="fileInput.click()"
+                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
+                (click)="openProfileImagePicker(); $event.stopPropagation()"
+                *ngIf="!isEditing"
+                title="Change profile picture"
+                role="button"
+                aria-label="Change profile picture"
+              >
+                <ion-icon
+                  name="camera-outline"
+                  class="text-gray-700 text-base"
+                ></ion-icon>
+              </div>
+
+              <!-- Edit pencil icon - show when editing -->
+              <div
+                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
+                (click)="$event.stopPropagation(); triggerFileInput()"
+                *ngIf="isEditing"
               >
                 <ion-icon
                   name="pencil-outline"
@@ -127,42 +143,77 @@
               </div>
             </div>
           </div>
+
+          <!-- Profile Picture Actions - ALWAYS show when editing -->
+          <div class="profile-image-actions mt-4" *ngIf="isEditing">
+            <ion-button
+              fill="clear"
+              size="small"
+              (click)="triggerFileInput()"
+              class="edit-button text-[#000000]"
+            >
+              <ion-icon name="camera" slot="start"></ion-icon>
+              {{
+                hasExistingProfilePicture ? "Change Picture" : "Upload Picture"
+              }}
+            </ion-button>
+
+            <!-- Show Remove button only when there's an actual profile picture -->
+            <ion-button
+              *ngIf="hasExistingProfilePicture && profileImage"
+              fill="clear"
+              size="small"
+              color="danger"
+              (click)="removeProfilePicture()"
+              class="remove-button"
+            >
+              <ion-icon name="trash" slot="start"></ion-icon>
+              Remove Picture
+            </ion-button>
+          </div>
         </div>
 
         <!-- Full Name -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+          <label class="block text-gray-600 text-sm mb-2">Full Name *</label>
           <input
             type="text"
-            placeholder="Vikiwest"
-            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            [(ngModel)]="profileData.fullName"
+            placeholder="Full Name"
+            [readonly]="!isEditing"
+            [class.bg-gray-100]="!isEditing"
+            [class.cursor-not-allowed]="!isEditing"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
           />
         </div>
 
         <!-- Phone Number -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2"
-            >Enter your Phone Number</label
-          >
+          <label class="block text-gray-600 text-sm mb-2">Phone Number *</label>
           <input
-            type="number"
+            type="tel"
+            [(ngModel)]="profileData.phoneNumber"
             placeholder="e.g 0908123456"
-            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            [readonly]="!isEditing"
+            [class.bg-gray-100]="!isEditing"
+            [class.cursor-not-allowed]="!isEditing"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
           />
         </div>
 
         <!-- Email -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2"
-            >Enter your Email Address</label
+            >Email Address *</label
           >
           <input
             type="email"
+            [(ngModel)]="profileData.email"
             placeholder="baba.saala@gmail.com"
-            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            readonly
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
           />
         </div>
-
         <!-- Password -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Password</label>
@@ -170,83 +221,164 @@
             type="password"
             placeholder="********************"
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            readonly
           />
         </div>
 
         <!-- Location -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2"
-            >Enter your Location</label
-          >
+          <label class="block text-gray-600 text-sm mb-2">Location</label>
           <input
             type="text"
+            [(ngModel)]="profileData.location"
             placeholder="e.g Ikeja, Lagos"
-            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+            [readonly]="!isEditing"
+            [class.bg-gray-100]="!isEditing"
+            [class.cursor-not-allowed]="!isEditing"
+            class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
           />
         </div>
       </div>
     </div>
 
-    <div class="logcomplainModalBG h-[69px] pt-2">
+    <div class="logcomplainModalBG h-[69px] pt-2" *ngIf="!isLoadingProfile">
       <p class="text-white text-xl font-bold item-start mt-3 px-5">
         Other Details
       </p>
     </div>
 
-    <div class="mt-6 px-6">
-      <!-- Phone Number -->
+    <div class="mt-6 px-6" *ngIf="!isLoadingProfile">
+      <!-- Organisation Type -->
       <div class="mb-4">
-        <div class="flex gap-3 items-center">
-          <label class="block text-gray-600 text-sm mb-2"
-            >Your Organization Type(s):</label
+        <label class="block text-gray-600 text-sm mb-2">
+          Your Organization Type(s):
+        </label>
+
+        <!-- DEBUG: Show current state -->
+        <!-- <div
+          class="mb-2 p-2 bg-blue-50 rounded text-xs"
+          *ngIf="selectedOrgTypes.length > 0"
+        >
+          <strong>Debug:</strong> {{ selectedOrgTypes.length }} org types
+          loaded: {{ selectedOrgTypes | json }}
+        </div> -->
+
+        <div class="relative">
+          <div
+            class="w-full border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 shadow-sm min-h-[56px] flex flex-wrap items-center gap-2 cursor-text transition-colors"
+            (click)="focusOrgInput()"
+            [class.bg-gray-100]="!isEditing"
+            [class.cursor-not-allowed]="!isEditing"
           >
-          <span
-            class="bg-[#CAD2DF] rounded-lg px-2 py-1 mb-2 flex items-center gap-1 w-fit"
-          >
-            Individual
-            <button
-              class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
+            <!-- Selected Tags - FIXED: Use proper ngFor with trackBy -->
+            <ng-container
+              *ngIf="selectedOrgTypes && selectedOrgTypes.length > 0"
             >
-              ×
-            </button>
-          </span>
+              <span
+                *ngFor="
+                  let org of selectedOrgTypes;
+                  let i = index;
+                  trackBy: trackByOrgType
+                "
+                class="bg-gray-200 rounded-lg px-3 py-1 flex items-center gap-1 text-sm border border-gray-300"
+              >
+                {{ org }}
+                <button
+                  *ngIf="isEditing"
+                  type="button"
+                  (click)="removeOrgType(i); $event.stopPropagation()"
+                  class="text-gray-500 hover:text-red-500 text-lg leading-none ml-1 transition-colors"
+                >
+                  ×
+                </button>
+              </span>
+            </ng-container>
+
+            <!-- Show empty state when no org types -->
+            <div
+              *ngIf="!selectedOrgTypes || selectedOrgTypes.length === 0"
+              class="text-gray-400 text-sm"
+            >
+              No organization types added
+            </div>
+
+            <!-- Type Input Field -->
+            <input
+              #orgInput
+              type="text"
+              placeholder="Type and press Enter"
+              [readonly]="!isEditing"
+              [(ngModel)]="orgTypeInput"
+              (keydown.enter)="addOrgTypeFromInput($event)"
+              (input)="onOrgTypeTyping($event)"
+              class="flex-1 min-w-[120px] bg-transparent border-none outline-none placeholder-gray-400 transition-colors"
+              [class.cursor-not-allowed]="!isEditing"
+              [class.placeholder-gray-300]="!isEditing"
+            />
+          </div>
         </div>
+
+        <p class="text-xs text-gray-500 mt-1" *ngIf="isEditing">
+          Type your organization type and press Enter to add
+        </p>
+        <p class="text-xs text-gray-400 mt-1" *ngIf="!isEditing">
+          Switch to edit mode to modify organization types
+        </p>
+      </div>
+
+      <!-- Scouting Purpose -->
+      <div class="mb-4">
+        <label class="block text-gray-600 text-sm mb-2">
+          Scouting Purpose (Reasons for Hiring talent)
+        </label>
         <input
           type="text"
-          placeholder="e.g  Corporate, Small business, Individual...etc"
-          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
+          [(ngModel)]="profileData.scoutingPurpose"
+          placeholder="Painting"
+          [readonly]="!isEditing"
+          [class.bg-gray-100]="!isEditing"
+          [class.cursor-not-allowed]="!isEditing"
+          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
         />
       </div>
 
-      <div class="mb-4">
-        <label class="block text-gray-600 text-sm mb-2"
-          >Scouting Purpose (Reasons for Hiring talent)</label
-        >
-        <input
-          type="text"
-          placeholder="Painting"
-          class="w-full border-none rounded-md px-4 pb-32 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
-        />
-      </div>
+      <!-- Pay Range - FINAL SIMPLIFIED VERSION -->
       <div class="mb-4">
         <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
         <input
           type="text"
-          placeholder="30,000"
-          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"
-          (input)="formatNumber($event)"
+          [(ngModel)]="profileData.payRange"
+          placeholder="e.g., 750k or 750"
+          [readonly]="!isEditing"
+          [class.bg-gray-100]="!isEditing"
+          [class.cursor-not-allowed]="!isEditing"
+          class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
         />
+        <p class="text-xs text-gray-500 mt-1" *ngIf="isEditing">
+          Enter pay range (e.g., 750k, 750, etc.)
+        </p>
       </div>
 
-      <div class="space-y-4 py-16">
+      <!-- Action Buttons -->
+      <div class="space-y-4 py-8">
+        <!-- In your profile-page.component.html -->
         <button
-          class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer"
+          class="bg-[#101828] rounded-lg w-full py-3 text-white font-medium cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
           (click)="openConfirmationPopup()"
+          [disabled]="isSavingProfile"
         >
-          Save
+          <span *ngIf="isSavingProfile" class="flex items-center gap-2">
+            <ion-icon name="refresh-outline" class="animate-spin"></ion-icon>
+            Saving...
+          </span>
+          <span *ngIf="!isSavingProfile">
+            {{ isEditing ? "Save Changes" : "Edit Profile" }}
+          </span>
         </button>
+
+        <!-- Show Return button as secondary option -->
         <button
-          class="bg-white border border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+          class="bg-transparent border border-gray-300 rounded-lg w-full py-3 text-gray-600 font-medium cursor-pointer hover:bg-gray-50 transition-colors"
           (click)="goBack()"
         >
           Return
@@ -254,89 +386,197 @@
       </div>
     </div>
 
-    <!-- Security Question -->
-
-    <!-- Render Question/Answer inputs -->
+    <!-- Security Questions Section -->
     <div
       class="logcomplainModalBG h-[69px] pt-2 mt-12"
       #securityQuestionsSection
+      *ngIf="!isLoadingProfile"
     >
       <p class="text-white text-xl font-bold item-start mt-3 px-5">
-        Create Security Questions
+        Security Questions
       </p>
     </div>
 
-    <div class="mb-4 px-6 py-6">
+    <div class="mb-4 px-6 py-6" *ngIf="!isLoadingProfile">
       <label class="block text-gray-600 text-sm mb-2">
-        You're advised to create up to 3 security questions
+        You're advised to create up to 5 security questions for account recovery
       </label>
 
-      <!-- Fake input (click to add questions) -->
-      <div
-        class="w-full border rounded-md px-4 py-4 bg-white shadow-md cursor-pointer hover:bg-gray-50 transition"
-        (click)="toggleQuestions()"
-      >
-        <span *ngIf="securityQuestions.length === 0" class="text-gray-400">
-          Click to add questions
-        </span>
-        <span *ngIf="securityQuestions.length > 0">
-          {{ securityQuestions.length }} / 5
-        </span>
-      </div>
-    </div>
-
-    <!-- Render Question/Answer inputs -->
-    <div class="px-6 space-y-6" *ngIf="showQuestions">
-      <div
-        *ngFor="let qa of securityQuestions; let i = index"
-        class="p-4 border rounded-lg shadow-sm bg-gray-50"
-      >
-        <label class="block text-gray-600 text-sm mb-2">
-          Question {{ i + 1 }}
-        </label>
-        <input
-          type="text"
-          placeholder="First pet's name"
-          [(ngModel)]="qa.question"
-          class="w-full border rounded-md px-4 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
-        />
-
-        <label class="block text-gray-600 text-sm mb-2">
-          Answer {{ i + 1 }}
-        </label>
-        <input
-          type="text"
-          placeholder="Ruby"
-          [(ngModel)]="qa.answer"
-          class="w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
-        />
+      <!-- Loading State -->
+      <div *ngIf="isLoadingSecurityQuestions" class="text-center py-4">
+        <p>Loading security questions...</p>
       </div>
 
-      <!-- Add new Question button (max 2) -->
-      <button
-        class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full"
-        (click)="addQuestion()"
-        [disabled]="securityQuestions.length >= 5"
+      <!-- Display saved questions -->
+      <div
+        *ngIf="
+          !isLoadingSecurityQuestions &&
+          securityQuestions.length > 0 &&
+          !isEditingSecurityQuestions
+        "
+        class="space-y-4 mb-4"
       >
-        + Add Question
-      </button>
-    </div>
+        <div
+          *ngFor="let qa of securityQuestions; let i = index"
+          class="p-4 border rounded-lg shadow-sm bg-white relative group"
+        >
+          <div
+            class="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            *ngIf="isEditing"
+          >
+            <button
+              (click)="editQuestion(i)"
+              class="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50 transition"
+              title="Edit question"
+            >
+              <ion-icon name="pencil-outline" class="text-lg"></ion-icon>
+            </button>
+            <button
+              (click)="deleteQuestion(i)"
+              class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition"
+              title="Delete question"
+            >
+              <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+            </button>
+          </div>
 
-    <div class="px-6 py-10">
-      <button
-        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="securityQuestions.length < 1"
-        (click)="saveSecurityQuestions()"
+          <label class="block text-gray-600 text-sm mb-2 font-medium">
+            Question {{ i + 1 }}
+          </label>
+          <input
+            type="text"
+            [value]="qa.question"
+            readonly
+            class="w-full border border-gray-300 rounded-md px-4 py-2 mb-3 bg-gray-50 text-gray-700 focus:outline-none cursor-not-allowed"
+          />
+
+          <label class="block text-gray-600 text-sm mb-2 font-medium">
+            Answer {{ i + 1 }}
+          </label>
+          <input
+            type="password"
+            [value]="qa.answer"
+            readonly
+            class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50 text-gray-700 focus:outline-none cursor-not-allowed"
+          />
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        *ngIf="
+          !isLoadingSecurityQuestions &&
+          securityQuestions.length === 0 &&
+          !isEditingSecurityQuestions
+        "
+        class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg mb-4"
       >
-        Save
-      </button>
+        <ion-icon
+          name="help-circle-outline"
+          class="text-4xl text-gray-400 mb-2"
+        ></ion-icon>
+        <p class="text-gray-500">No security questions set up yet</p>
+        <p class="text-sm text-gray-400 mt-1">
+          Create security questions for account recovery
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-2 mb-4 flex-wrap">
+        <button
+          class="bg-[#101828] rounded-lg px-4 py-2 text-white text-sm font-medium cursor-pointer flex items-center gap-2"
+          (click)="toggleEditSecurityQuestions()"
+        >
+          <ion-icon
+            [name]="
+              isEditingSecurityQuestions ? 'close-outline' : 'add-outline'
+            "
+          ></ion-icon>
+          {{
+            isEditingSecurityQuestions
+              ? "Cancel Editing"
+              : securityQuestions.length > 0
+              ? "Edit Questions"
+              : "Add Questions"
+          }}
+        </button>
+
+        <button
+          *ngIf="securityQuestions.length > 0 && !isEditingSecurityQuestions"
+          class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium cursor-pointer flex items-center gap-2"
+          (click)="addMoreQuestions()"
+          [disabled]="securityQuestions.length >= 5"
+        >
+          <ion-icon name="add-outline"></ion-icon>
+          + Add More Questions
+        </button>
+      </div>
+
+      <!-- Edit/Add Questions Form -->
+      <div class="space-y-6" *ngIf="isEditingSecurityQuestions">
+        <div
+          *ngFor="let qa of tempSecurityQuestions; let i = index"
+          class="p-4 border rounded-lg shadow-sm bg-white relative"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-gray-600 text-sm font-medium">
+              Question {{ i + 1 }}
+            </label>
+            <button
+              *ngIf="tempSecurityQuestions.length > 1"
+              class="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
+              (click)="removeQuestion(i)"
+            >
+              <ion-icon name="trash-outline"></ion-icon>
+              Remove
+            </button>
+          </div>
+
+          <input
+            type="text"
+            placeholder="e.g., What was your first pet's name?"
+            [(ngModel)]="qa.question"
+            class="w-full border border-gray-300 rounded-md px-4 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
+          />
+
+          <label class="block text-gray-600 text-sm mb-2 font-medium">
+            Answer {{ i + 1 }}
+          </label>
+          <input
+            type="text"
+            placeholder="Enter your answer"
+            [(ngModel)]="qa.answer"
+            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
+          />
+        </div>
+
+        <!-- Add new Question button -->
+        <button
+          class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full cursor-pointer flex items-center justify-center gap-2"
+          (click)="addNewQuestion()"
+          [disabled]="tempSecurityQuestions.length >= 5"
+        >
+          <ion-icon name="add-outline"></ion-icon>
+          + Add New Question
+        </button>
+
+        <!-- Save Questions Button -->
+        <button
+          class="bg-[#101828] rounded-lg w-full py-3 text-white font-medium cursor-pointer mt-4 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          (click)="saveSecurityQuestions()"
+          [disabled]="!canSaveSecurityQuestions() || isLoadingSecurityQuestions"
+        >
+          <ion-icon
+            name="save-outline"
+            *ngIf="!isLoadingSecurityQuestions"
+          ></ion-icon>
+          <span *ngIf="isLoadingSecurityQuestions">Saving...</span>
+          <span *ngIf="!isLoadingSecurityQuestions">
+            {{ securityQuestions.length > 0 ? "Update" : "Save" }} Security
+            Questions
+          </span>
+        </button>
+      </div>
     </div>
   </div>
-
-  <!-- Fixed Footer -->
-  <!-- <footer class="mt-auto py-5">
-    <div class="container mx-auto px-4 text-left text-gray-600">
-      <p>Shoft Africa © {{ currentYear }}</p>
-    </div>
-  </footer> -->
 </ion-content>

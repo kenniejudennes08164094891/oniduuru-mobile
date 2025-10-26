@@ -8,15 +8,20 @@ export class AuthRedirectGuard implements CanActivate {
   constructor(private router: Router) {}
 
   canActivate(): boolean {
-    const token = localStorage.getItem('authToken'); // or however you store auth state
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
 
     if (token) {
       // ✅ If already logged in → redirect away
       this.router.navigate(['/scouter/dashboard']); // or dashboard
       return false;
     }
+    if (token && userData) {
+      return true; // ✅ User is logged in
+    }
 
-    // ❌ Not logged in → allow access to login/signup
-    return true;
+    // ❌ No token, redirect to login
+    this.router.navigate(['/auth/login'], { replaceUrl: true });
+    return false;
   }
 }

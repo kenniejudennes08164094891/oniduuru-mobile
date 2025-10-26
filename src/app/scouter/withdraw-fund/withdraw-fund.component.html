@@ -13,7 +13,7 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight"
-            >Hi Vikiwest,</span
+            >Hi Viki West,</span
           >
           <p class="text-gray-200 text-lg leading-relaxed">
             Withdraw funds from your wallet into your NUBAN bank account.
@@ -57,7 +57,7 @@
       </div>
       <div
         *ngIf="isYearDropdownOpen"
-        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
+        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 overflow-y-auto max-h-60"
       >
         <p
           *ngFor="let year of years"
@@ -97,76 +97,6 @@
         </p>
       </div>
     </div>
-
-    <!-- Status Dropdown -->
-    <!-- <div class="relative w-[40%]">
-      <div
-        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
-        (click)="isStatusDropdownOpen = !isStatusDropdownOpen"
-      >
-        <span class="text-[#101828] text-[14px]">
-          {{ selectedStatus || "Select Status" }}
-        </span>
-        <ion-icon
-          [name]="
-            isStatusDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
-          "
-        ></ion-icon>
-      </div>
-      <div
-        *ngIf="isStatusDropdownOpen"
-        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
-      >
-        <p
-          *ngFor="let status of statuses"
-          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-          (click)="selectStatus(status)"
-        >
-          {{ status }}
-        </p>
-      </div>
-    </div> -->
-
-    <!-- Identifier Dropdown -->
-    <!-- <div class="relative w-[40%]">
-      <div
-        class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
-        (click)="isIdentifierDropdownOpen = !isIdentifierDropdownOpen"
-      >
-        <span class="text-[#101828] text-[14px]">
-          {{ selectedIdentifier || "Select Identifier" }}
-        </span>
-        <ion-icon
-          [name]="
-            isIdentifierDropdownOpen
-              ? 'chevron-up-outline'
-              : 'chevron-down-outline'
-          "
-        ></ion-icon>
-      </div>
-      <div
-        *ngIf="isIdentifierDropdownOpen"
-        class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10"
-      >
-        <p
-          *ngFor="let id of identifiers"
-          class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-          (click)="selectIdentifier(id)"
-        >
-          {{ id }}
-        </p>
-      </div>
-    </div> -->
-
-    <!-- Wallet Name Search -->
-    <!-- <div class="w-[60%]">
-      <input
-        type="text"
-        [(ngModel)]="searchWalletName"
-        placeholder="Search by wallet name"
-        class="border border-[#D9DCE5] rounded-md px-4 py-3 w-full bg-[#F6F6F6] text-sm"
-      />
-    </div> -->
   </div>
 
   <div class="overflow-x-auto mt-10">
@@ -177,7 +107,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">10</p>
+        <p class="text-lg font-semibold">{{ successfulCount }}</p>
         <p>Successful</p>
       </div>
 
@@ -185,7 +115,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#FFA086] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">2</p>
+        <p class="text-lg font-semibold">{{ pendingCount }}</p>
         <p>Pending</p>
       </div>
 
@@ -193,7 +123,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">0</p>
+        <p class="text-lg font-semibold">{{ reversedCount }}</p>
         <p>Reversed</p>
       </div>
 
@@ -201,7 +131,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-red-600 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">1</p>
+        <p class="text-lg font-semibold">{{ declinedCount }}</p>
         <p>Declined</p>
       </div>
 
@@ -209,7 +139,7 @@
       <div
         class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
       >
-        <p class="text-lg font-semibold">0</p>
+        <p class="text-lg font-semibold">{{ totalCount }}</p>
         <p>Fetched all</p>
       </div>
     </div>
@@ -240,6 +170,7 @@
         <tbody class="divide-y divide-gray-100">
           <tr
             *ngFor="let withdrawal of paginatedWithdrawal"
+            (click)="goToRequest(withdrawal)"
             class="hover:bg-gray-50 transition-colors h-16 cursor-pointer"
           >
             <td class="px-3 py-3 text-center">

@@ -1,6 +1,6 @@
 <ion-content class="ion-padding bg-white">
   <!-- Modal Container -->
-  <div class="bg-white rounded-xl overflow-hidden shadow-md">
+  <div class="bg-white rounded-xl overflow-hidden">
     <!-- Modal Header -->
     <div class="bg-white px-6 py-5 flex flex-col justify items-center">
       <img [src]="images.VerifiedIconUpdateProfile" alt="" />
@@ -19,8 +19,14 @@
     <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
       <ion-button
         fill="solid"
-        class="ion-btn--successgreen rounded-md"
-        (click)="dismiss('confirm')"
+        (click)="onConfirm()"
+        class="w-full font-semibold rounded-md py-3 transition-all duration-300"
+        style="
+          --background: #101828;
+          --background-hover: #1d2939;
+          --color: white;
+          --border-radius: 8px;
+        "
       >
         Update Scouter Record
       </ion-button>
@@ -28,7 +34,7 @@
       <ion-button
         class="rounded-md shadow-lg w-full text-black"
         fill="clear"
-        (click)="dismiss('cancel')"
+        (click)="onCancel()"
       >
         Cancel
       </ion-button>

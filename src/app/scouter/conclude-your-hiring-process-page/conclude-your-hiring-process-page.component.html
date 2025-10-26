@@ -179,18 +179,18 @@
 
           <!-- Modal Footer -->
           <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
-            <ion-button
+            <button
               fill="solid"
-              class="ion-btn--successgreen rounded-md"
+              class="rounded-md bg-[#000000] text-white py-2"
               (click)="confirmPreview()"
             >
               Yes
-            </ion-button>
+            </button>
 
             <ion-button
               class="rounded-md shadow-lg w-full text-black"
               fill="clear"
-              (click)="dismiss('cancel')"
+              (click)="onCancel()"
             >
               No
             </ion-button>

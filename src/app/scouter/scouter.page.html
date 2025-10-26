@@ -1,13 +1,423 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>scouter</ion-title>
-  </ion-toolbar>
+<ion-header class="bg-white">
+  <div class="w-full flex justify-between items-center px-4 py-2">
+    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+
+    <div class="flex items-center gap-4">
+      <button
+        (click)="goBack()"
+        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white"
+      >
+        Back
+      </button>
+    </div>
+  </div>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">scouter</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<!-- Scrollable full page -->
+<ion-content [fullscreen]="true" class="">
+  <!-- Title Section -->
+  <div class="py-4 px-4 bg-[#F1F1F1] text-[#101828] text-[24px]">
+    <span>Create an account</span>
+  </div>
+  <div class="flex flex-col h-[90%] ion-padding mt-4">
+    <!-- TOP SECTION (progress, steps, forms) -->
+    <div class="flex-1">
+      <!-- HERE  -->
+
+      <!-- Dynamic Form Step -->
+      <div class="flex-1">
+        <h4 class="text-[#202939] text-[18px] font-semibold">
+          {{ steps[currentStep] }}
+        </h4>
+
+        <!-- <div
+          *ngIf="errorMessage"
+          class="bg-red-100 text-red-700 px-3 py-2 rounded-md mb-3 text-sm"
+        > -->
+          <!-- ⚠️ {{ errorMessage }} -->
+        <!-- </div> -->
+        <!-- STEP 1 -->
+        <form
+          *ngIf="currentStep === 0"
+          [formGroup]="forms[0]"
+          class="mt-4 space-y-6"
+        >
+          <div class="space-y-2">
+            <label for="fullname">Full Name</label>
+            <input
+              id="fullname"
+              type="text"
+              formControlName="fullname"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="Enter your first and last name"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="phone">Phone Number</label>
+            <input
+              id="phone"
+              type="tel"
+              formControlName="phone"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="e.g 09012345678"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="email">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="aka.saka@gmail.com"
+              [ngClass]="{ 'border-red-500': accountExistsError }"
+            />
+            <!-- Error display -->
+            <div
+              *ngIf="forms[0]?.get('email')?.touched && forms[0].get('email')?.errors"
+              class="text-red-500 text-sm mt-1"
+            >
+              <span *ngIf="forms[0].get('email')?.errors?.['required']"
+                >Email is required.</span
+              >
+              <span *ngIf="forms[0].get('email')?.errors?.['pattern']"
+                >Enter a valid email address.</span
+              >
+            </div>
+
+            <div *ngIf="accountExistsError" class="text-red-500 text-sm mt-1">
+              {{ accountExistsError }}
+            </div>
+          </div>
+        </form>
+
+        <!-- STEP 2 -->
+        <form
+          *ngIf="currentStep === 1"
+          [formGroup]="forms[1]"
+          class="mt-4 space-y-6"
+        >
+          <!-- TEMPORARY DEBUG BUTTON -->
+          <!-- <button
+            type="button"
+            (click)="manualCheckStep2()"
+            class="bg-yellow-500 text-white p-2 rounded"
+          >
+            Debug Step 2
+          </button> -->
+
+          <div class="space-y-2">
+            <label for="location">Enter your Location</label>
+            <input
+              id="location"
+              type="text"
+              formControlName="location"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="e.g Ikeja, Lagos"
+            />
+            <!-- Add validation message -->
+            <div
+              *ngIf="forms[1]?.get('location')?.touched && forms[1]?.get('location')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Location is required.
+            </div>
+          </div>
+
+          <!-- Your existing organization section remains the same -->
+          <div class="space-y-2">
+            <label class="block text-gray-600 text-sm mb-2">
+              Your Organization Type(s):
+            </label>
+
+            <div class="relative">
+              <div
+                class="w-full border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 shadow-sm min-h-[56px] flex flex-wrap items-center gap-2 cursor-text"
+                (click)="focusOrgInput()"
+              >
+                <!-- Selected Tags Inside Input -->
+                <span
+                  *ngFor="let org of selectedOrgTypes; let i = index"
+                  class="bg-gray-200 rounded-lg px-3 py-1 flex items-center gap-1 text-sm"
+                >
+                  {{ org }}
+                  <button
+                    type="button"
+                    (click)="removeOrgType(i); $event.stopPropagation()"
+                    class="text-gray-500 hover:text-red-500 text-lg leading-none ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+
+                <input
+                  #orgInput
+                  id="organisation"
+                  type="text"
+                  placeholder="Type and press Enter"
+                  [value]="orgTypeInput"
+                  (input)="onOrgInput($event)"
+                  (keydown.enter)="addOrgTypeFromInput($event)"
+                  class="flex-1 min-w-[120px] bg-transparent border-none outline-none placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-1">
+              Type your organization type and press Enter to add
+            </p>
+
+            <!-- Enhanced validation message -->
+            <div
+              *ngIf="forms[1]?.get('organisation')?.touched && forms[1]?.get('organisation')?.invalid"
+              class="text-red-600 text-sm mt-1"
+            >
+              At least one organization type is required. (Current: {{
+              forms[1]?.get('organisation')?.value?.length || 0 }})
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="purpose">Purpose for finding Talent</label>
+            <input
+              id="purpose"
+              type="text"
+              formControlName="purpose"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="e.g For a concert"
+            />
+            <!-- Add validation message -->
+            <div
+              *ngIf="forms[1]?.get('purpose')?.touched && forms[1]?.get('purpose')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Purpose is required.
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="payRange">Pay Range</label>
+            <input
+              id="payRange"
+              type="text"
+              formControlName="payRange"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="Select the amount you are willing to pay"
+            />
+            <div
+              *ngIf="forms[1].get('payRange')?.touched && forms[1].get('payRange')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Pay range is required and must be greater than 0.
+            </div>
+          </div>
+        </form>
+
+        <!-- STEP 3 -->
+        <form
+          *ngIf="currentStep === 2"
+          [formGroup]="forms[2]"
+          class="mt-4 space-y-6"
+        >
+          <div class="space-y-2">
+            <label for="username">Email Address</label>
+            <p
+              class="text-gray-600 text-sm border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+            >
+              {{ forms[0].get('email')?.value }}
+            </p>
+          </div>
+          <div class="space-y-2">
+            <label for="password">Create Password</label>
+            <input
+              id="password"
+              type="password"
+              formControlName="password"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="Enter password"
+            />
+            <span> </span>
+            <div
+              *ngIf="forms[2].get('password')?.touched && forms[2].get('password')?.invalid"
+              class="text-red-600 text-sm"
+            >
+              Password must contain 8+ characters, including uppercase,
+              lowercase, and special characters.
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label for="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              formControlName="confirmPassword"
+              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
+              placeholder="Re-enter your password"
+            />
+            <div
+              *ngIf="forms[2].get('confirmPassword')?.touched && forms[2].get('confirmPassword')?.hasError('mismatch')"
+              class="text-red-600 text-sm"
+            >
+              Passwords must match.
+            </div>
+          </div>
+        </form>
+
+        <!-- STEP 4 -->
+        <form
+          *ngIf="currentStep === 3"
+          [formGroup]="forms[3]"
+          class="mt-4 space-y-6"
+        >
+          <p class="py-6 px-1 text-[#101828] text-[18px] font-semibold">
+            OTP Verification
+          </p>
+          <p class="text-[12px] px-1 text-[#101828] text-center">
+            Input the 4-digit OTP sent to {{ maskEmail(getEmailForOtp()) }}
+          </p>
+
+          <!-- OTP Input Boxes -->
+          <div class="flex justify-center gap-3 my-6">
+            <input
+              *ngFor="let ctrl of otpControls; let i = index"
+              type="text"
+              maxlength="1"
+              inputmode="numeric"
+              class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] placeholder:text-[#D0D5DD] placeholder:text-[48px]"
+              [formControl]="ctrl"
+              (input)="onOtpInput($event, i)"
+              (keydown)="onKeyDown($event, i)"
+            />
+          </div>
+
+          <!-- Countdown -->
+          <!-- Resend -->
+          <p class="text-sm text-gray-500">
+            Didn’t get the code?
+            <button *ngIf="countdown === 0" (click)="resendOtp()" type="button">
+              Resend OTP
+            </button>
+            <span *ngIf="countdown > 0">
+              Resend available in {{countdown}}s
+            </span>
+          </p>
+
+          <!-- Action Buttons -->
+
+          <div class="mt-6 space-y-3">
+            <button
+              type="button"
+              class="flex justify-center bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer"
+              (click)="verifyOtpAndProceed()"
+            >
+              Proceed
+            </button>
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <button
+              type="button"
+              class="flex justify-center bg-white border-[1px] border-solid border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+              (click)="goToLogin()"
+            >
+              Route Back
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- BOTTOM BUTTONS -->
+    <div *ngIf="currentStep !== 3" class="space-y-4 mt-10 pb-32">
+      <!-- NEXT -->
+      <button
+        (click)="goNext()"
+        [disabled]="!isCurrentFormValid() || isProcessing"
+        class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        <ng-container *ngIf="!isProcessing; else loading">
+          {{ currentStep === steps.length - 1 ? 'Finish' : 'Next' }}
+        </ng-container>
+        <ng-template #loading>
+          <ion-spinner name="crescent" class="text-white"></ion-spinner>
+          <span>Processing...</span>
+        </ng-template>
+      </button>
+
+      <!-- PREVIOUS -->
+      <button
+        *ngIf="currentStep > 0"
+        (click)="goPrevious()"
+        class="bg-white border-2 border-[#D0D5DD] shadow-lg rounded-lg w-full py-2 text-black font-medium cursor-pointer"
+      >
+        Previous
+      </button>
+
+      <!-- CANCEL -->
+      <button
+        *ngIf="currentStep === 0"
+        (click)="goBack()"
+        class="bg-white border-2 border-[#D0D5DD] shadow-lg rounded-lg w-full py-2 text-black font-medium cursor-pointer"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div
+    *ngIf="showSuccessModal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-lg w-11/12 max-w-md p-6 text-center"
+    >
+      <div class="flex flex-col items-center space-y-4">
+        <ion-icon
+          name="checkmark-circle-outline"
+          class="text-green-500 text-6xl"
+        ></ion-icon>
+        <h2 class="text-xl font-bold text-gray-800">Verification Successful</h2>
+        <p class="text-gray-600 text-sm">
+          Your account has been successfully verified. You can now access your
+          dashboard.
+        </p>
+        <button
+          class="mt-4 bg-[#101828] text-white px-6 py-2 rounded-lg font-medium"
+          (click)="goToDashboard()"
+        >
+          Login
+        </button>
+      </div>
+    </div>
+  </div>
 </ion-content>
+
+<ion-footer class="bg-white shadow-inner border-t border-gray-200 py-3 px-4">
+  <!-- Progress Bar -->
+  <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+    <div
+      class="h-2 bg-[#364152] transition-all duration-500 ease-in-out rounded-full"
+      [style.width]="getProgressWidth()"
+    ></div>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="flex justify-between items-center text-sm">
+    <ng-container *ngFor="let step of steps; let i = index">
+      <p
+        [ngClass]="
+          i === currentStep
+            ? 'text-[#CC0000] font-semibold'
+            : 'text-[#667085]'
+        "
+        class="transition-colors duration-300"
+      >
+        {{ step }}
+      </p>
+    </ng-container>
+  </div>
+</ion-footer>

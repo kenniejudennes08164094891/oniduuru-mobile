@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
@@ -50,12 +50,19 @@ import { TransferFundsPopupModalComponent } from '../utilities/modals/transfer-f
 import { FundWalletReceiptModalComponent } from '../utilities/modals/fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 import { WithdrawReceiptModalComponent } from '../utilities/modals/withdraw-receipt-modal/withdraw-receipt-modal.component';
 import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
+import { FundWalletRequestPageComponent } from './fund-wallet-request-page/fund-wallet-request-page.component';
+import { WithdrawFundsRequestPageComponent } from './withdraw-funds-request-page/withdraw-funds-request-page.component';
+import { TransferFundsRequestPageComponent } from './transfer-funds-request-page/transfer-funds-request-page.component';
+
+import { RouterModule } from '@angular/router';
+import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 
 @NgModule({
   imports: [
     CommonModule,
     FormsModule,
     IonicModule,
+    RouterModule.forChild([{ path: '', component: ScouterPage }]),
     ScouterPageRoutingModule,
     //TalentPageModule,
     NgChartsModule,
@@ -108,7 +115,12 @@ import { TransferFundsReceiptModalComponent } from '../utilities/modals/transfer
     FundWalletReceiptModalComponent,
     WithdrawReceiptModalComponent,
     TransferFundsReceiptModalComponent,
+    FundWalletRequestPageComponent,
+    WithdrawFundsRequestPageComponent,
+    TransferFundsRequestPageComponent,
+    VerifyOtpComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], // 👈 ADD THIS LINE HERE TOO
 })
 export class ScouterPageModule {}

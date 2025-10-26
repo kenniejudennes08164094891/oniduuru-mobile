@@ -86,7 +86,9 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
         return '#ffffff';
     }
   }
-
+  close() {
+    this.dismiss();
+  }
   async openTalentModal(hire: MockPayment) {
     await this.dismiss(); // ✅ inherited dismiss
 

@@ -1,17 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { MockRecentHires } from 'src/app/models/mocks';
+import { MockRecentHires, deposit } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { FundWalletPopupModalComponent } from 'src/app/utilities/modals/fund-wallet-popup-modal/fund-wallet-popup-modal.component';
 
-interface Deposit {
-  amount: number;
-  walletName: string;
-  walletAcctNo: string;
-  identifier: string;
-  status: 'Successful' | 'Invalid' | 'Reversed' | 'Failed';
-  date: Date; // 👈 use Date instead of string
-}
 
 // fund-wallet.component.ts
 @Component({
@@ -42,105 +35,106 @@ export class FundWalletComponent implements OnInit {
     'November',
     'December',
   ];
-  statuses: string[] = ['Successful', 'Invalid', 'Reversed', 'Failed'];
+  // statuses: string[] = ['Successful', 'Invalid', 'Reversed', 'Failed'];
   identifiers: string[] = ['Fund Self', 'Fund Others'];
 
   // Selected filters
   selectedYear: number | null = null;
   selectedMonth: string | null = null;
-  selectedStatus: string | null = null;
-  selectedIdentifier: string | null = null;
-  searchWalletName: string = '';
+  // selectedStatus: string | null = null;
+  // selectedIdentifier: string | null = null;
+  // searchWalletName: string = '';
 
   // Dropdown states
   isYearDropdownOpen = false;
   isMonthDropdownOpen = false;
-  isStatusDropdownOpen = false;
-  isIdentifierDropdownOpen = false;
+  // isStatusDropdownOpen = false;
+  // isIdentifierDropdownOpen = false;
 
   // Mock data
-  deposit: Deposit[] = [
-    {
-      amount: 653655,
-      walletName: 'Omoseyin Kehinde Jude',
-      walletAcctNo: '1234211234',
-      identifier: 'Fund Others',
-      status: 'Successful',
-      date: new Date(2016, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 450000,
-      walletName: 'Adeola Michael',
-      walletAcctNo: '9988776655',
-      identifier: 'Fund Self',
-      status: 'Failed',
-      date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 320500,
-      walletName: 'Chukwuemeka Nnamdi',
-      walletAcctNo: '5566778899',
-      identifier: 'Fund Others',
-      status: 'Reversed',
-      date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 120000,
-      walletName: 'Blessing Adeyemi',
-      walletAcctNo: '1122334455',
-      identifier: 'Fund Self',
-      status: 'Invalid',
-      date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 90000,
-      walletName: 'Uche Okafor',
-      walletAcctNo: '4433221100',
-      identifier: 'Fund Others',
-      status: 'Successful',
-      date: new Date(2024, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 250000,
-      walletName: 'Fatima Musa',
-      walletAcctNo: '6655443322',
-      identifier: 'Fund Self',
-      status: 'Failed',
-      date: new Date(2021, 4, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 310000,
-      walletName: 'Emmanuel Johnson',
-      walletAcctNo: '7788990011',
-      identifier: 'Fund Others',
-      status: 'Successful',
-      date: new Date(2020, 5, 4, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 480000,
-      walletName: 'Grace Adeola',
-      walletAcctNo: '9900112233',
-      identifier: 'Fund Self',
-      status: 'Reversed',
-      date: new Date(2020, 10, 24, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 70000,
-      walletName: 'Ibrahim Abdullahi',
-      walletAcctNo: '3344556677',
-      identifier: 'Fund Others',
-      status: 'Invalid',
-      date: new Date(2019, 2, 21, 10, 57), // May is month 4 (0-indexed)
-    },
-    {
-      amount: 150000,
-      walletName: 'Chinenye Udo',
-      walletAcctNo: '2211334455',
-      identifier: 'Fund Self',
-      status: 'Successful',
-      date: new Date(2021, 9, 6, 10, 57), // May is month 4 (0-indexed)
-    },
-  ];
+  // deposit: Deposit[] = [
+  //   {
+  //     amount: 653655,
+  //     walletName: 'Omoseyin Kehinde Jude',
+  //     walletAcctNo: '1234211234',
+  //     identifier: 'Fund Others',
+  //     status: 'Successful',
+  //     date: new Date(2016, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 450000,
+  //     walletName: 'Adeola Michael',
+  //     walletAcctNo: '9988776655',
+  //     identifier: 'Fund Self',
+  //     status: 'Failed',
+  //     date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 320500,
+  //     walletName: 'Chukwuemeka Nnamdi',
+  //     walletAcctNo: '5566778899',
+  //     identifier: 'Fund Others',
+  //     status: 'Reversed',
+  //     date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 120000,
+  //     walletName: 'Blessing Adeyemi',
+  //     walletAcctNo: '1122334455',
+  //     identifier: 'Fund Self',
+  //     status: 'Invalid',
+  //     date: new Date(2025, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 90000,
+  //     walletName: 'Uche Okafor',
+  //     walletAcctNo: '4433221100',
+  //     identifier: 'Fund Others',
+  //     status: 'Successful',
+  //     date: new Date(2024, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 250000,
+  //     walletName: 'Fatima Musa',
+  //     walletAcctNo: '6655443322',
+  //     identifier: 'Fund Self',
+  //     status: 'Failed',
+  //     date: new Date(2021, 4, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 310000,
+  //     walletName: 'Emmanuel Johnson',
+  //     walletAcctNo: '7788990011',
+  //     identifier: 'Fund Others',
+  //     status: 'Successful',
+  //     date: new Date(2020, 5, 4, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 480000,
+  //     walletName: 'Grace Adeola',
+  //     walletAcctNo: '9900112233',
+  //     identifier: 'Fund Self',
+  //     status: 'Reversed',
+  //     date: new Date(2020, 10, 24, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 70000,
+  //     walletName: 'Ibrahim Abdullahi',
+  //     walletAcctNo: '3344556677',
+  //     identifier: 'Fund Others',
+  //     status: 'Invalid',
+  //     date: new Date(2019, 2, 21, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  //   {
+  //     amount: 150000,
+  //     walletName: 'Chinenye Udo',
+  //     walletAcctNo: '2211334455',
+  //     identifier: 'Fund Self',
+  //     status: 'Successful',
+  //     date: new Date(2021, 9, 6, 10, 57), // May is month 4 (0-indexed)
+  //   },
+  // ];
+  deposit = deposit;
 
   // ✅ Pagination setup
   pageSize = 4;
@@ -175,8 +169,9 @@ export class FundWalletComponent implements OnInit {
   //   this.isStatusDropdownOpen = false;
   // }
 
+  //
   // 🔹 Master filter logic
-  get filteredDeposit(): Deposit[] {
+  get filteredDeposit(): any {
     return this.deposit.filter((d) => {
       let matchesYear = true;
       let matchesMonth = true;
@@ -225,7 +220,8 @@ export class FundWalletComponent implements OnInit {
     return Math.ceil(this.filteredDeposit.length / this.pageSize);
   }
 
-  get paginatedDeposit(): Deposit[] {
+  //
+  get paginatedDeposit(): any {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredDeposit.slice(start, start + this.pageSize);
   }
@@ -236,9 +232,16 @@ export class FundWalletComponent implements OnInit {
     }
   }
 
-  constructor(private modalCtrl: ModalController) {}
+  constructor(private modalCtrl: ModalController, private router: Router) {}
 
   ngOnInit() {}
+
+  async goToRequest(deposit: any): Promise<void> {
+    await this.router.navigate(
+      ['/scouter/wallet-page/fund-wallet/fund-wallet-request', deposit.id],
+       { state: { deposit } } // ✅ passing the deposit object
+    );
+  }
 
   // 🔹 Reset to first page when filters change
   selectYear(year: number) {
@@ -265,6 +268,26 @@ export class FundWalletComponent implements OnInit {
   //   this.currentPage = 1;
   // }
 
+  get successfulCount(): number {
+    return this.deposit.filter((d) => d.status === 'Successful').length;
+  }
+
+  get invalidCount(): number {
+    return this.deposit.filter((d) => d.status === 'Invalid').length;
+  }
+
+  get reversedCount(): number {
+    return this.deposit.filter((d) => d.status === 'Reversed').length;
+  }
+
+  get failedCount(): number {
+    return this.deposit.filter((d) => d.status === 'Failed').length;
+  }
+
+  get totalCount(): number {
+    return this.deposit.length;
+  }
+
   // 👇 function to open modal
   async openFundWalletPopup() {
     const modal = await this.modalCtrl.create({
@@ -274,10 +297,10 @@ export class FundWalletComponent implements OnInit {
 
     modal.onDidDismiss().then((result) => {
       if (result.role === 'submitted' && result.data) {
-        // 🔹 Push into the main deposit array
-        this.deposit = [result.data, ...this.deposit];
+        // assign a unique id if not already present
+        result.data.id = Date.now(); // simple unique id
 
-        // 🔹 Reset to first page (optional, so user sees new deposit on top)
+        this.deposit = [result.data, ...this.deposit];
         this.currentPage = 1;
       }
     });

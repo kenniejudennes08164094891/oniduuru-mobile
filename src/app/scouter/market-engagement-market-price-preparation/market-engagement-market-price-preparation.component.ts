@@ -12,7 +12,7 @@ import { imageIcons } from 'src/app/models/stores';
 export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   hire: MockPayment | undefined;
   images = imageIcons;
-  userName: string = 'Vikiwest';
+  userName: string = 'Viki West';
 
   rating: number = 0;
 

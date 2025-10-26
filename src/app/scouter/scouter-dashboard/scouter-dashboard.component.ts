@@ -7,7 +7,7 @@ import { PaymentService } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
-import {AuthService} from "../../services/auth.service";
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-scouter-dashboard',
@@ -18,11 +18,13 @@ import {AuthService} from "../../services/auth.service";
 export class ScouterDashboardComponent implements OnInit {
   MockRecentHires: MockPayment[] = MockRecentHires; // ✅ now available to template
 
+  notificationCount: number = 0;
+
   hire: MockPayment | undefined;
   images = imageIcons;
   loading: string = 'Loading...';
   showSpinner: boolean = true;
-  userName: string = 'Vikiwest';
+  userName: string = '';
   balance: number = 50220.1;
   timeOfDay: string = '';
   timeIcon: string = '';
@@ -41,6 +43,7 @@ export class ScouterDashboardComponent implements OnInit {
     title: string;
   }[] = [];
   paymentStatus: any;
+  scouterDetails: any; // Add this to store scouter details
 
   // New properties for header scroll behavior
   headerHidden: boolean = false;
@@ -53,37 +56,20 @@ export class ScouterDashboardComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService
-  ) {
-    this.getScouterDetails();
-  }
-
-  getScouterDetails(){
-   const scouterDetails = this.authService.decodeScouterDetails();
-   console.log("scouter details>>", scouterDetails?.details?.user?.role);
-  }
- async goToViewHires():Promise<void> {
-   await this.router.navigate(['/scouter/view-hires']);
-  }
-  async goToHireTalent():Promise<void>  {
-   await this.router.navigate(['/scouter/hire-talent']);
-  }
-
- async goToWalletPage():Promise<void>  {
-   await this.router.navigate(['/scouter/wallet-page']);
-  }
-
-  async goToHireDetails(hireId: string) {
-   await this.router.navigate([
-      `/market-engagement-market-price-preparation`,
-      hireId,
-    ]);
-  }
+  ) {}
 
   ngOnInit(): void {
+    this.getScouterDetails();
+    this.setTimeOfDay();
+
+    // Just load from localStorage - data is already initialized by AppInitService
+    this.loadNotificationCount();
+
+    // ✅ Set up listener for real-time updates
+    this.setupNotificationListener();
+
     const id = this.route.snapshot.paramMap.get('id');
     this.hire = MockRecentHires.find((h) => h.id === id);
-
-    this.setTimeOfDay();
 
     // Subscribe to paymentStatus
     this.paymentService.paymentStatus$.subscribe((status) => {
@@ -94,6 +80,101 @@ export class ScouterDashboardComponent implements OnInit {
       this.showSpinner = false;
     }, 2000);
 
+    this.initializeDashboardData();
+  }
+
+  // ✅ ENHANCED: Load notification count
+  private loadNotificationCount(): void {
+    const storedCount = localStorage.getItem('notification_count');
+    this.notificationCount = storedCount ? parseInt(storedCount, 10) : 0;
+    console.log(
+      '📬 Dashboard: Loaded notification count:',
+      this.notificationCount
+    );
+  }
+
+  // ✅ NEW: Setup notification listener for dashboard
+  private setupNotificationListener(): void {
+    const storageHandler = (event: StorageEvent) => {
+      if (event.key === 'notification_count') {
+        const newCount = parseInt(event.newValue || '0', 10);
+        console.log('🔄 Dashboard: Notification count updated to', newCount);
+        this.notificationCount = newCount;
+      }
+    };
+
+    window.addEventListener('storage', storageHandler);
+
+    // Clean up would be handled by Angular automatically for components
+  }
+
+  getScouterDetails() {
+    // // Method 1: Try to get from AuthService directly
+    // const currentUser = this.authService.getCurrentUser();
+    // console.log('🔍 Current User from AuthService:', currentUser);
+
+    // if (currentUser) {
+    //   this.userName = this.extractUserName(currentUser);
+    //   console.log('✅ User name from AuthService:', this.userName);
+    //   return;
+    // }
+
+    // // Method 2: Try to decode from token
+    // this.scouterDetails = this.authService.decodeScouterDetails();
+    // console.log('🔍 Decoded Scouter Details:', this.scouterDetails);
+
+    // if (this.scouterDetails) {
+    //   this.userName = this.extractUserName(this.scouterDetails);
+    //   console.log('✅ User name from decoded details:', this.userName);
+    //   return;yy
+    // }
+
+    // Method 3: Try localStorage as fallback
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        this.userName = this.extractUserName(parsedUser);
+        console.log('✅ User name from localStorage:', this.userName);
+        return;
+      } catch (error) {
+        console.error('Error parsing user_data from localStorage:', error);
+      }
+    }
+
+    // Final fallback
+    console.warn('No user details found');
+    this.userName = 'User';
+  }
+
+  private extractUserName(userData: any): string {
+    if (!userData) return 'User';
+
+    console.log('🔍 Extracting user name from:', userData);
+
+    // Try different possible structures and property names
+    const user =
+      userData.details?.user ||
+      userData.user ||
+      userData.data?.user ||
+      userData;
+
+    // Try multiple possible property names for full name
+    const fullName =
+      user.fullName ||
+      user.fullname ||
+      user.name ||
+      user.username ||
+      user.displayName ||
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+      user.email?.split('@')[0] || // Use email username as fallback
+      'User';
+
+    console.log('✅ Extracted user name:', fullName);
+    return fullName;
+  }
+
+  initializeDashboardData() {
     // Calculate total
     this.totalValue = this.dashboardCardsUnpaid.reduce(
       (sum, card) => sum + card.value,
@@ -106,11 +187,6 @@ export class ScouterDashboardComponent implements OnInit {
 
     // Update the dashboardStatCards with correct percentages
     this.dashboardStatCardsUnpaid = [
-      // {
-      //   title: 'Market Engagement',
-      //   value: this.getPercentage(this.dashboardCards[0].value),
-      //   status: '',
-      // },
       {
         title: 'Offer Accepted',
         value: this.getPercentage(this.dashboardCardsUnpaid[1].value),
@@ -127,12 +203,8 @@ export class ScouterDashboardComponent implements OnInit {
         status: 'inactive',
       },
     ];
+
     this.dashboardStatCardsPaid = [
-      // {
-      //   title: 'Market Engagement',
-      //   value: this.getPercentage(this.dashboardCards[0].value),
-      //   status: '',
-      // },
       {
         title: 'Offer Accepted',
         value: this.getPercentage(this.dashboardCardsPaid[1].value),
@@ -151,12 +223,10 @@ export class ScouterDashboardComponent implements OnInit {
     ];
 
     // Build circle layers with proper sizing
-    const maxSize = 280; // Maximum size of the largest circle
-    const baseSize = 120; // Minimum size of the smallest circle
+    const baseSize = 120;
 
     this.percentageCirclesUnpaid = this.dashboardStatCardsUnpaid
       .map((card, index) => {
-        // Calculate size based on index (larger index = larger circle)
         const size = baseSize + index * 40;
         return {
           size: size,
@@ -165,10 +235,10 @@ export class ScouterDashboardComponent implements OnInit {
           title: card.title,
         };
       })
-      .reverse(); // Reverse to show largest circle at the back
+      .reverse();
+
     this.percentageCirclesPaid = this.dashboardStatCardsPaid
       .map((card, index) => {
-        // Calculate size based on index (larger index = larger circle)
         const size = baseSize + index * 40;
         return {
           size: size,
@@ -177,7 +247,25 @@ export class ScouterDashboardComponent implements OnInit {
           title: card.title,
         };
       })
-      .reverse(); // Reverse to show largest circle at the back
+      .reverse();
+  }
+
+  async goToViewHires(): Promise<void> {
+    await this.router.navigate(['/scouter/view-hires']);
+  }
+  async goToHireTalent(): Promise<void> {
+    await this.router.navigate(['/scouter/hire-talent']);
+  }
+
+  async goToWalletPage(): Promise<void> {
+    await this.router.navigate(['/scouter/wallet-page']);
+  }
+
+  async goToHireDetails(hireId: string) {
+    await this.router.navigate([
+      `/market-engagement-market-price-preparation`,
+      hireId,
+    ]);
   }
 
   // Handle scroll events
@@ -271,19 +359,19 @@ export class ScouterDashboardComponent implements OnInit {
     const hour = new Date().getHours();
 
     if (hour < 5) {
-      this.timeOfDay = 'Night';
+      this.timeOfDay = "It's Bed Time";
       this.timeIcon = imageIcons.Night;
     } else if (hour < 12) {
-      this.timeOfDay = 'Morning';
+      this.timeOfDay = 'Good Morning';
       this.timeIcon = imageIcons.Morning;
     } else if (hour < 17) {
-      this.timeOfDay = 'Afternoon';
+      this.timeOfDay = 'Good Afternoon';
       this.timeIcon = imageIcons.Afternoon;
     } else if (hour < 21) {
-      this.timeOfDay = 'Evening';
+      this.timeOfDay = 'Good Evening';
       this.timeIcon = imageIcons.Evening;
     } else {
-      this.timeOfDay = 'Night';
+      this.timeOfDay = "It's Bed Time";
       this.timeIcon = imageIcons.Night;
     }
   }
@@ -386,31 +474,4 @@ export class ScouterDashboardComponent implements OnInit {
       currency: 'NGN',
     });
   }
-
-  // MockRecentHires: MockPayment[] = [
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/men/32.jpg',
-  //     name: 'John Doe',
-  //     date: 'Sep 10, 2025, 11:45 AM',
-  //     amount: 123120.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/women/45.jpg',
-  //     name: 'Jane Smith',
-  //     date: 'Sep 9, 2025, 03:15 PM',
-  //     amount: 123250.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/men/21.jpg',
-  //     name: 'Michael Johnson',
-  //     date: 'Sep 8, 2025, 09:30 AM',
-  //     amount: 23475.0,
-  //   },
-  //   {
-  //     profilePic: 'https://randomuser.me/api/portraits/women/18.jpg',
-  //     name: 'Emily Davis',
-  //     date: 'Sep 7, 2025, 07:50 PM',
-  //     amount: 234599.99,
-  //   },
-  // ];
 }

@@ -12,8 +12,6 @@
 
 <ion-content class="ion-padding">
   <form>
-
- 
     <div class="flex justify-between items-center gap-4 mt-6 px-10">
       <label class="flex items-center space-x-2">
         <input
@@ -172,6 +170,7 @@
       <label class="text-[#344054] text-[14px]">Reason (Optional)</label>
       <textarea
         [(ngModel)]="reason"
+        required
         name="reason"
         placeholder="Write your thoughts here..."
         pattern="^[A-Za-z0-9 .,!?-]*$"

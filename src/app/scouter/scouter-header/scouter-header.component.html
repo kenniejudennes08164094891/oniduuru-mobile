@@ -1,7 +1,6 @@
 <ion-header class="bg-[#EEF0F6]">
   <div class="w-full flex justify-between items-center px-4 py-2">
     <!-- App Logo/Title -->
-
     <button *ngIf="!isWallet" class="text-2xl font-semibold text-[#101828]">
       ∯ Oniduuru
     </button>
@@ -11,7 +10,6 @@
       class="flex items-center gap-3 text-2xl font-semibold text-[#101828]"
     >
       <button (click)="openMenu()">
-        <!-- Menu -->
         <ion-icon name="menu-outline"></ion-icon>
       </button>
       <span> ∯ Oniduuru </span>
@@ -23,26 +21,47 @@
         <button class="bg-[#444444] rounded-xl p-2.5 hover:cursor-pointer">
           <img [src]="images.NotificationIcon" alt="Notification" />
         </button>
+        <!-- Show badge only if there are notifications -->
         <span
+          *ngIf="notificationCount > 0"
           class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold border-2 border-white rounded-full min-w-[20px] h-[20px] flex items-center justify-center"
         >
-          {{ notifications.length }}
+          {{ notificationCount }}
         </span>
       </button>
 
-      <!-- Profile Avatar with Status Dot -->
+      <!-- Profile Avatar with Error Handling -->
       <button
         class="relative hover:cursor-pointer"
         (click)="openProfilePopover($event)"
       >
-        <!-- Avatar with Double Border -->
         <div class="border border-black rounded-full p-0.5">
           <div class="border-1 border-white rounded-full">
-            <img
+            <!-- Show profile picture if exists, otherwise show placeholder icon -->
+            <div
+              *ngIf="
+                profileImage && profileImage !== 'assets/default-avatar.png'
+              "
               class="rounded-full w-10 h-10"
-              [src]="profileImage"
-              alt="Profile"
-            />
+            >
+              <img
+                class="rounded-full w-10 h-10 transition-opacity duration-500 ease-in-out opacity-100"
+                [src]="profileImage"
+                alt="Profile Picture"
+                (error)="handleImageError($event)"
+              />
+            </div>
+            <div
+              *ngIf="
+                !profileImage || profileImage === 'assets/default-avatar.png'
+              "
+              class="rounded-full w-10 h-10 bg-gray-200 flex items-center justify-center"
+            >
+              <ion-icon
+                name="person-outline"
+                class="text-gray-500 text-xl"
+              ></ion-icon>
+            </div>
           </div>
         </div>
 

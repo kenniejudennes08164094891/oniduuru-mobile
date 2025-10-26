@@ -1,0 +1,30 @@
+.btn {
+  @apply w-full py-2 rounded-lg font-medium cursor-pointer transition;
+}
+
+.btn-primary {
+  @apply bg-[#101828] text-white disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-white border-2 border-[#D0D5DD] text-black shadow-lg;
+}
+
+.border-red-500 {
+  border: 1px solid #ef4444; /* Tailwind red-500 */
+}
+
+ion-tab-bar {
+  ion-tab-button {
+    color: #667085;
+    transition: all 0.3s ease;
+    &.active-tab {
+      color: #101828;
+      font-weight: 600;
+      ion-icon {
+        color: #101828;
+        transform: scale(1.1);
+      }
+    }
+  }
+}
