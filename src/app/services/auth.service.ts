@@ -12,7 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
-import { timeout, catchError } from 'rxjs/operators';
+import { timeout, catchError, delay, retry, map } from 'rxjs/operators';
 
 import { JwtInterceptorService } from '../services/jwt-interceptor.service';
 import { FilterScouterParam, PaginationParams } from 'src/app/models/mocks';
@@ -52,41 +52,41 @@ export class AuthService {
     this.userLoggedInSubject.next(!!(token && userData));
   }
 
-// Add this to your AuthService
-testApiConnection(): Observable<any> {
-  const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
-  return this.http.get(testUrl).pipe(
-    timeout(5000),
-    catchError((error) => {
-      console.error('🔌 API Connection Test Failed:', error);
-      return throwError(() => new Error('API server is unreachable'));
-    })
-  );
-}
+  // Add this to your AuthService
+  // testApiConnection(): Observable<any> {
+  //   const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
+  //   return this.http.get(testUrl).pipe(
+  //     timeout(5000),
+  //     catchError((error) => {
+  //       console.error('🔌 API Connection Test Failed:', error);
+  //       return throwError(() => new Error('API server is unreachable'));
+  //     })
+  //   );
+  // }
 
-  // In auth.service.ts, add this to see request/response details
-private debugRequestResponse(url: string, body: any, response: any, error?: any) {
-  console.group('🔍 HTTP Request Debug');
-  console.log('URL:', url);
-  console.log('Method: POST');
-  console.log('Headers:', {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  });
-  console.log('Body:', body);
-  if (response) {
-    console.log('Response:', response);
-  }
-  if (error) {
-    console.log('Error:', {
-      status: error.status,
-      statusText: error.statusText,
-      error: error.error,
-      headers: error.headers
-    });
-  }
-  console.groupEnd();
-}
+  // // In auth.service.ts
+  // checkBackendHealth(): Observable<any> {
+  //   const healthUrl = `${this.baseUrl}/health`; // or any health endpoint
+  //   const loginUrl = `${this.baseUrl}/${endpoints.userLogin}`;
+
+  //   console.log('🏥 Checking backend health...');
+
+  //   // Try health endpoint first, then fallback to HEAD request to login endpoint
+  //   return this.http.get(healthUrl).pipe(
+  //     timeout(5000),
+  //     catchError(() => {
+  //       console.log('⚠️ Health endpoint not available, trying HEAD request...');
+  //       return this.http.head(loginUrl, { observe: 'response' }).pipe(
+  //         timeout(5000),
+  //         map((response) => ({ status: 'ok', endpoint: 'HEAD login' }))
+  //       );
+  //     }),
+  //     catchError((error) => {
+  //       console.error('🔴 Backend appears to be down:', error);
+  //       return throwError(() => new Error('Backend service is unavailable'));
+  //     })
+  //   );
+  // }
 
   // ============ LOGIN & AUTHENTICATION ============
   loginUser(credentials: { email: string; password: string }): Observable<any> {
@@ -105,6 +105,20 @@ private debugRequestResponse(url: string, body: any, response: any, error?: any)
       })
       .pipe(
         timeout(15000),
+        // ✅ ADD RETRY LOGIC for transient 500 errors
+        retry({
+          count: 2,
+          delay: (error, retryCount) => {
+            // Only retry on 500 errors
+            if (error.status === 500 && retryCount < 2) {
+              console.log(
+                `🔄 Retrying login request (attempt ${retryCount + 1})...`
+              );
+              return of(null).pipe(delay(1000)); // 1 second delay
+            }
+            throw error;
+          },
+        }),
         tap((response) => {
           if (response?.access_token) {
             this.setUserCredentialFromBackend(response);
@@ -125,25 +139,120 @@ private debugRequestResponse(url: string, body: any, response: any, error?: any)
             }, 500);
           }
         }),
+        // In auth.service.ts - enhance the catchError
         catchError((error) => {
-          // ✅ ENHANCED: Better error logging
-          console.error('❌ AuthService login error details:', {
+          // ✅ ENHANCED: More detailed backend error analysis
+          console.error('🔍 Backend Error Analysis:', {
             status: error.status,
             statusText: error.statusText,
             url: error.url,
-            error: error.error,
-            message: error.message,
             headers: error.headers,
+            error: error.error,
+            // Add request details for comparison
+            request: {
+              method: 'POST',
+              url: url,
+              body: credentials,
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+            },
           });
 
-          // Log the actual server response if available
+          // Check for specific backend error patterns
           if (error.error) {
-            console.error('🔍 Server error response:', error.error);
+            console.error(
+              '📋 Backend Error Body:',
+              JSON.stringify(error.error, null, 2)
+            );
+
+            // Common backend error patterns
+            if (
+              error.error.message?.includes('database') ||
+              error.error.message?.includes('SQL')
+            ) {
+              console.warn('🚨 Possible database connection issue');
+            }
+            if (
+              error.error.message?.includes('validation') ||
+              error.error.message?.includes('Validation')
+            ) {
+              console.warn('🚨 Possible data validation error');
+            }
+            if (
+              error.error.message?.includes('password') ||
+              error.error.message?.includes('credential')
+            ) {
+              console.warn('🚨 Possible authentication service issue');
+            }
           }
 
           throw error;
         })
       );
+  }
+
+  logoutUser(): Observable<any> {
+    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
+    const token = this.getToken();
+
+    console.log('🚀 Logging out...');
+
+    // No token? Just clear local data and redirect
+    if (!token) {
+      console.warn('⚠️ No token found, clearing local data only');
+      this.clearAuthData();
+      setTimeout(() => this.router.navigate(['/auth/login']), 300);
+      return of({ message: 'Local logout completed' });
+    }
+
+    return this.http
+      .post<any>(
+        url,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      .pipe(
+        tap((res) => {
+          console.log('✅ Server logout successful:', res);
+          this.clearAuthData();
+          setTimeout(() => this.router.navigate(['/auth/login']), 300);
+        }),
+        catchError((error) => {
+          console.error('❌ Server logout failed, clearing local data:', error);
+          this.clearAuthData();
+          setTimeout(() => this.router.navigate(['/auth/login']), 300);
+          return throwError(() => error);
+        })
+      );
+  }
+  validateStoredToken(): boolean {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
+
+    if (!token || !userData) {
+      return false;
+    }
+
+    try {
+      // Check if token is expired (basic check)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const isExpired = payload.exp * 1000 < Date.now();
+
+      if (isExpired) {
+        this.clearAuthData();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Token validation error:', error);
+      this.clearAuthData();
+      return false;
+    }
   }
 
   // ✅ ENHANCED: Set user credentials with UserService integration
@@ -206,94 +315,6 @@ private debugRequestResponse(url: string, body: any, response: any, error?: any)
     }
   }
 
-  logoutUser(): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
-    const token = this.getToken();
-
-    console.log('🚀 Logging out...');
-
-    // No token? Just clear local data and redirect
-    if (!token) {
-      console.warn('⚠️ No token found, clearing local data only');
-      this.clearAuthData();
-      setTimeout(() => this.router.navigate(['/auth/login']), 300);
-      return of({ message: 'Local logout completed' });
-    }
-
-    return this.http
-      .post<any>(
-        url,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-      .pipe(
-        tap((res) => {
-          console.log('✅ Server logout successful:', res);
-          this.clearAuthData();
-          setTimeout(() => this.router.navigate(['/auth/login']), 300);
-        }),
-        catchError((error) => {
-          console.error('❌ Server logout failed, clearing local data:', error);
-          this.clearAuthData();
-          setTimeout(() => this.router.navigate(['/auth/login']), 300);
-          return throwError(() => error);
-        })
-      );
-  }
-
-  // setUserCredentialFromBackend(loginResponse: any): void {
-  //   // console.log('💾 Storing user credentials...');
-
-  //   if (loginResponse.access_token) {
-  //     // Store token
-  //     localStorage.setItem('access_token', loginResponse.access_token);
-
-  //     // Store user data with multiple fallbacks
-  //     const userData =
-  //       loginResponse.details?.user || loginResponse.user || loginResponse;
-  //     localStorage.setItem('user_data', JSON.stringify(userData));
-
-  //     // Store encoded user data if provided
-  //     if (loginResponse.eniyan) {
-  //       localStorage.setItem('eniyan', loginResponse.eniyan);
-  //     }
-
-  //     // console.log('✅ Credentials stored successfully');
-  //   } else {
-  //     console.error('❌ No access token in login response');
-  //     throw new Error('No access token received');
-  //   }
-  // }
-
-  // ✅ NEW: Validate stored tokens
-
-  validateStoredToken(): boolean {
-    const token = localStorage.getItem('access_token');
-    const userData = localStorage.getItem('user_data');
-
-    if (!token || !userData) {
-      return false;
-    }
-
-    try {
-      // Check if token is expired (basic check)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const isExpired = payload.exp * 1000 < Date.now();
-
-      if (isExpired) {
-        this.clearAuthData();
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('❌ Token validation error:', error);
-      this.clearAuthData();
-      return false;
-    }
-  }
 
   // In auth.service.ts - ENHANCE the clearAuthData method
   private clearAuthData(): void {

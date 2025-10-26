@@ -2,7 +2,6 @@ import { Injectable, Injector } from '@angular/core';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
 import { ScouterEndpointsService } from './scouter-endpoints.service';
-import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -14,8 +13,7 @@ export class AppInitService {
     private injector: Injector,
     private authService: AuthService,
     private userService: UserService,
-    private scouterService: ScouterEndpointsService,
-    private router: Router
+    private scouterService: ScouterEndpointsService
   ) {}
 
   async initializeApp(): Promise<void> {
@@ -33,9 +31,6 @@ export class AppInitService {
         await this.initializeNotificationCount();
         this.isInitialized = true;
 
-        // ✅ NEW: Check if user needs OTP verification before proceeding
-        await this.checkAndHandleVerificationStatus();
-
         // ✅ Emit event to notify components
         this.emitAppInitializedEvent();
         console.log('✅ App initialization completed');
@@ -46,129 +41,6 @@ export class AppInitService {
       console.log('🔐 User not authenticated, skipping app initialization');
       this.isInitialized = true;
     }
-  }
-
-  // ✅ NEW: Check if user needs OTP verification
-  private async checkAndHandleVerificationStatus(): Promise<void> {
-    console.log('🔍 Checking account verification status...');
-    
-    const currentUser = this.authService.getCurrentUser();
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-
-    // Check if account is verified
-    const isVerified = this.checkAccountVerificationStatus(currentUser || userData);
-    
-    if (!isVerified) {
-      console.log('⚠️ Account not verified, redirecting to OTP verification');
-      await this.redirectToOtpVerification(currentUser || userData);
-      return;
-    }
-
-    console.log('✅ Account is verified, allowing dashboard access');
-  }
-
-  // ✅ NEW: Check account verification status from multiple possible fields
-  private checkAccountVerificationStatus(userData: any): boolean {
-    if (!userData) return false;
-
-    // Check multiple possible locations for verification status
-    const verificationSources = [
-      userData.details?.user?.isVerified,
-      userData.details?.user?.verified,
-      userData.details?.user?.emailVerified,
-      userData.details?.user?.otpVerified,
-      userData.user?.isVerified,
-      userData.user?.verified,
-      userData.user?.emailVerified,
-      userData.user?.otpVerified,
-      userData.isVerified,
-      userData.verified,
-      userData.emailVerified,
-      userData.otpVerified,
-      userData.data?.user?.isVerified,
-      userData.data?.user?.verified,
-    ];
-
-    const isVerified = verificationSources.find(status => status === true);
-
-    console.log('🔍 Verification check sources:', verificationSources);
-    console.log('✅ Account verified status:', isVerified);
-
-    return isVerified === true;
-  }
-
-  // ✅ NEW: Redirect to appropriate OTP verification page
-  private async redirectToOtpVerification(userData: any): Promise<void> {
-    const email = userData.email || userData.details?.user?.email || userData.user?.email;
-    const role = this.extractUserRole(userData);
-    
-    console.log('🔄 Redirecting to OTP verification:', { email, role });
-
-    // Store verification data
-    const otpData = {
-      email: email,
-      userId: userData.details?.user?.id || userData.user?.id || userData.id,
-      role: role,
-      userData: userData,
-      redirectFrom: this.router.url // Track where they came from
-    };
-
-    localStorage.setItem('pending_verification', JSON.stringify(otpData));
-
-    // Navigate to appropriate OTP page based on role
-    if (role === 'scouter') {
-      await this.router.navigate(['/scouter/verify'], {
-        replaceUrl: true,
-        state: {
-          email: email,
-          userData: userData,
-          requiresVerification: true,
-          redirectFrom: this.router.url
-        }
-      });
-    } else if (role === 'talent') {
-      await this.router.navigate(['/talent/verify'], {
-        replaceUrl: true,
-        state: {
-          email: email,
-          userData: userData,
-          requiresVerification: true,
-          redirectFrom: this.router.url
-        }
-      });
-    } else {
-      // Default OTP page
-      await this.router.navigate(['/auth/verify-otp'], {
-        replaceUrl: true,
-        state: {
-          email: email,
-          userData: userData,
-          requiresVerification: true,
-          redirectFrom: this.router.url
-        }
-      });
-    }
-  }
-
-  // ✅ NEW: Extract user role from multiple possible locations
-  private extractUserRole(userData: any): string {
-    if (!userData) return '';
-
-    const roleSources = [
-      userData.details?.user?.role,
-      userData.user?.role,
-      userData.role,
-      userData.data?.user?.role,
-      userData.data?.role,
-    ];
-
-    const role = roleSources.find((r) => r && typeof r === 'string');
-
-    if (!role) {
-      console.warn('⚠️ No role found in user data:', userData);
-    }
-
-    return role || '';
   }
 
   private async initializeUserData(): Promise<void> {
@@ -343,9 +215,6 @@ export class AppInitService {
     // Clear notification count and emit event
     this.setNotificationCount(0);
     localStorage.removeItem('notifications_cleared');
-
-    // Clear any pending verification data
-    localStorage.removeItem('pending_verification');
 
     // Emit logout event
     window.dispatchEvent(new Event('userLoggedOut'));
