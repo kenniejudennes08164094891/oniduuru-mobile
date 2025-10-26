@@ -15,7 +15,7 @@ export class ToastsService {
     this.snackBar.openFromComponent(ToastComponent, {
       data: {message,panelClass},
       duration: duration === undefined ? this.duration : duration,
-      verticalPosition: 'top',
+      verticalPosition: 'bottom',
       horizontalPosition: 'center',
       panelClass: panelClass,
     });

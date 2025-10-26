@@ -105,7 +105,7 @@
     <div class="mb-4 mt-3">
       <label class="block text-gray-600 text-sm mb-2"> Your skill set(s):</label>
       <div class="flex flex-wrap gap-2 mb-2">
-        <span *ngFor="let skill of skills" class="bg-[#CAD2DF] rounded-lg px-2 py-1 flex items-center gap-1">
+        <span *ngFor="let skill of talent.skills" class="bg-[#CAD2DF] rounded-lg px-2 py-1 flex items-center gap-1">
           {{ skill }}
           <button
             class="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 hover:text-red-500 transition-colors"
@@ -213,7 +213,7 @@
 
             <!-- Remove button -->
             <div class="flex justify-end mt-2">
-              <button type="button" class="text-red-500 text-sm hover:underline" (click)="removeQuestion(i)"
+              <button type="button" class="w-full text-red-500 text-sm hover:underline" (click)="removeQuestion(i)"
                 *ngIf="questions.length > 1">
                 Remove
               </button>
@@ -233,7 +233,7 @@
         <!-- Save Button -->
         <div class="px-6 py-10 flex justify-center">
           <button
-            class="bg-[#101828] w-48 rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="bg-[#101828] w-full rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             [disabled]="securityForm.invalid" (click)="save()">
             Save
           </button>

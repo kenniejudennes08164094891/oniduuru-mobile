@@ -80,3 +80,15 @@ export const dummyLogin = [
     route: '/talent/dashboard',
   },
 ];
+
+export interface TalentProfile {
+  fullName: string;
+  phone: string;
+  email: string;
+  password: string;
+  location: string;
+  skillLevel: string;
+  educationalBackground: string;
+  skills: string[];
+  payRange: string;
+}

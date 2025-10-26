@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { IonContent } from '@ionic/angular';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import {imageIcons, TalentProfile} from "../../models/stores";
+import {AuthService} from "../../services/auth.service";
+import {ToastsService} from "../../services/toasts.service";
 
 @Component({
   selector: 'app-profile-page',
@@ -16,8 +19,10 @@ export class ProfilePageComponent implements OnInit {
 
   securityForm!: FormGroup;
 
+  talentFullProfile: any = {};
+  talentId: string = "";
   // Talent profile data model
-  talent = {
+  talent : TalentProfile = {
     fullName: '',
     phone: '',
     email: '',
@@ -26,7 +31,6 @@ export class ProfilePageComponent implements OnInit {
     skillLevel: '',
     educationalBackground: '',
     skills: [] as string[],
-    experience: '',
     payRange: '',
   };
   // questions = [
@@ -41,7 +45,44 @@ export class ProfilePageComponent implements OnInit {
   skills: string[] = ['Singing', 'Painting', 'Acting'];
   newSkill: string = '';
 
-  constructor(private router: Router, private location: Location, private fb: FormBuilder) {}
+  constructor(
+    private router: Router,
+    private location: Location,
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private toast: ToastsService
+  ) {
+   // console.log("talent profile>>", this.authService.decodeTalentDetails());
+    this.fetchTalentProfile();
+  }
+
+  fetchTalentProfile(){
+    const talentProfile = this.authService.decodeTalentDetails();
+    this.talentId = talentProfile?.details?.user?.talentId ?? this.talentFullProfile?.talentId;
+    this.talent = talentProfile;
+    this.talent = {
+      fullName: talentProfile?.details?.user?.fullName,
+      phone: talentProfile?.details?.user?.phoneNumber,
+      email: talentProfile?.details?.session?.email,
+      password: talentProfile?.details?.session?.password,
+      location: talentProfile?.details?.user?.address,
+      skillLevel: talentProfile?.details?.user?.skillLevel,
+      educationalBackground: talentProfile?.details?.user?.educationalBackground,
+      skills: talentProfile?.details?.user?.skillSets,
+      payRange: talentProfile?.details?.user?.payRange,
+    };
+    console.log("talent>>", this.talent);
+  }
+
+  async getTalentProfileFromAPI():Promise<any>{
+    try{
+      const talentProfile = ""
+    }catch (e:any) {
+      this.toast.openSnackBar(e?.message ?? "Oops an error occurred when fetching talent's profile", 'error')
+    }
+  }
+
+
 
   ngOnInit() {
     this.securityForm = this.fb.group({
@@ -89,14 +130,14 @@ export class ProfilePageComponent implements OnInit {
     this.talent.payRange = input.value;
   }
 
-  scrollToProfilePicture() {
+  async scrollToProfilePicture():Promise<any> {
     const y = this.profilePicture.nativeElement.offsetTop;
-    this.pageContent.scrollToPoint(0, y, 600);
+   await this.pageContent.scrollToPoint(0, y, 600);
   }
 
-  scrollToSecurityQuestions() {
+  async scrollToSecurityQuestions():Promise<any> {
     const y = this.securityQuestionsSection.nativeElement.offsetTop;
-    this.pageContent.scrollToPoint(0, y, 600);
+   await this.pageContent.scrollToPoint(0, y, 600);
   }
 
   saveProfile() {
