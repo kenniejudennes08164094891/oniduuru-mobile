@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 @Component({
   selector: 'app-hires-table',
@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
   styleUrls: ['./hires-table.component.scss'],
 })
 export class HiresTableComponent implements OnInit, OnDestroy {
+  @Input() hires: any[] = [];
   marketExpenditures: any[] = [];
   currentMonth: string = '';
   currentTime: Date = new Date(); // live clock
@@ -172,8 +173,8 @@ export class HiresTableComponent implements OnInit, OnDestroy {
 
   // ===== Search + Pagination =====
   get filteredAndSearchedHires() {
-    let list = [...this.MockRecentHires];
-
+     const source = (this.hires && this.hires.length) ? this.hires : this.MockRecentHires;
+    let list = [...source];
     // Apply filter dropdown
     if (this.activeCategoryTable && this.activeCategoryTable !== 'all') {
       list = list.filter(h => this.mapStatusToKey(h.status) === this.activeCategoryTable);

@@ -3,6 +3,9 @@ import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
 import { Router } from '@angular/router';
 import { AuthService } from "../../services/auth.service";
+import { EndpointService } from 'src/app/services/endpoint.service';
+import { PaginationParams } from 'src/app/models/mocks';
+import { Observable } from 'rxjs';
 Chart.register(...registerables);
 
 @Component({
@@ -32,41 +35,91 @@ export class TalentDashboardComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private endpointService: EndpointService,
 
-  // ✅ Get user details (name) from localStorage or decoded auth data
-  getTalentDetails() {
-  try {
-    // 1️⃣ Try to get saved profile first
-    const savedProfile = localStorage.getItem('talentProfile');
-    if (savedProfile) {
-      const parsedProfile = JSON.parse(savedProfile);
-      console.log('Loaded talent profile from localStorage:', parsedProfile);
+  ) { }
+  //async goToViewHires(): Promise<void> {…}
+  async goToViewHires(): Promise<void> {
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
 
-      this.userName =
-        parsedProfile.fullName ||
-        parsedProfile.details?.user?.fullName ||
-        'User';
-
-      if (this.userName !== 'User') return; // ✅ Found name, stop here
+    if (!talentId) {
+      console.warn('talentId not found — navigating to view-hires without preloaded data');
+      await this.router.navigate(['/view-hires']);
+      return;
     }
 
-    // 2️⃣ Otherwise, decode from token as fallback
-    const talentDetails = this.authService.decodeTalentDetails();
-    console.log("talent details>>", talentDetails);
-    console.log('Decoded Talent Details (fallback):', talentDetails);
+    const paginationParams = { limit: 10, pageNo: 1 }; // Example pagination params
+    const base64JsonDecode = (b64: string) => {
+      try {
+        if (!b64) return null;
+        const binary = atob(b64);
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+        const jsonString = new TextDecoder().decode(bytes);
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error('Error decoding base64 JSON:', error);
+        return null;
+      }
+    };
 
-    this.userName =
-      talentDetails?.fullName ||
-      talentDetails?.details?.user?.fullName ||
-      'User';
-  } catch (error) {
-    console.error('Error loading talent details:', error);
-    this.userName = 'User';
+    this.endpointService.fetchMarketsByTalent(talentId, paginationParams, '', '').subscribe({
+      next: (response: any) => {
+        const markets = base64JsonDecode(response?.details) || [];
+        this.router.navigate(['/view-hires'], { state: { markets } });
+      },
+      error: (error) => {
+        console.error('Error fetching markets by talent:', error);
+        this.router.navigate(['/view-hires']);
+      }
+    });
   }
-}
+  // ✅ Get user details (name) from localStorage or decoded auth data
+  getTalentDetails() {
+    try {
+      // 1️⃣ Try to get saved profile first
+      const savedProfile = localStorage.getItem('talentProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        console.log('Loaded talent profile from localStorage:', parsedProfile);
 
+        this.userName =
+          parsedProfile.fullName ||
+          parsedProfile.details?.user?.fullName ||
+          'User';
+
+        if (this.userName !== 'User') return; // ✅ Found name, stop here
+      }
+
+      // 2️⃣ Otherwise, decode from token as fallback
+      const talentDetails = this.authService.decodeTalentDetails();
+    console.log("talent details>>", talentDetails);
+      console.log('Decoded Talent Details (fallback):', talentDetails);
+
+      this.userName =
+        talentDetails?.fullName ||
+        talentDetails?.details?.user?.fullName ||
+        'User';
+    } catch (error) {
+      console.error('Error loading talent details:', error);
+      this.userName = 'User';
+    }
+  }
+  private async loadTalentProfile(): Promise<void> {
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+    if (!talentId) return;
+    try {
+      const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(talentId));
+      if (res) {
+        const name = res?.details?.fullName || res?.fullName;
+        if (name) this.userName = name;
+        // Optionally cache
+        localStorage.setItem('talentProfile', JSON.stringify(res));
+      }
+    } catch (err) {
+      console.error('Failed to load talent profile:', err);
+    }
+  }
 
 
   proceedToMarketProfile(): void {
@@ -80,9 +133,9 @@ export class TalentDashboardComponent implements OnInit {
     this.router.navigate(['/create-record', talentId]);
   }
 
-  async goToViewHires(): Promise<void> {
-    await this.router.navigate(['/view-hires']);
-  }
+  // async goToViewHires(): Promise<void> {
+  //   await this.router.navigate(['/view-hires']);
+  // }
 
   // Dashboard stats
   dashboardCards = [
@@ -181,7 +234,7 @@ export class TalentDashboardComponent implements OnInit {
 
   private initRatingsChart(): void {
     const ctx = document.getElementById('ratingsChart') as HTMLCanvasElement;
-
+    if (!ctx) return;
     new Chart(ctx, {
       type: 'bar',
       data: {
@@ -277,3 +330,7 @@ export class TalentDashboardComponent implements OnInit {
     return this.getStatusColor(status);
   }
 }
+function firstValueFrom(arg0: Observable<any>): any {
+  throw new Error('Function not implemented.');
+}
+

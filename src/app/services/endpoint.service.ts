@@ -5,7 +5,8 @@ import { AuthService } from "./auth.service";
 import { environment } from "../../environments/environment";
 import { endpoints } from "../models/endpoint";
 import { Observable } from "rxjs";
-
+import { HttpParams } from "@angular/common/http";
+import { PaginationParams } from 'src/app/models/mocks';
 @Injectable({
   providedIn: 'root'
 })
@@ -14,7 +15,8 @@ export class EndpointService {
   constructor(
     private http: HttpClient,
     private jwtInterceptor: JwtInterceptorService,
-    private authService: AuthService
+    private authService: AuthService,
+
   ) { }
 
   public getAllCountries(): Observable<any> {
@@ -33,31 +35,51 @@ export class EndpointService {
     let url = `${environment?.baseUrl}/${endpoints?.updateTalentProfile}/${encodedTalentId}`;
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
-   public fetchTalentProfile(talentId: string): Observable<any> {
+  public fetchTalentProfile(talentId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.fetchTalentProfile}/${encodedTalentId}`;
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
-   public uploadTalentReel(formData: FormData | any): Observable<any> {
+  public uploadTalentReel(formData: FormData | any): Observable<any> {
     let url = `${environment?.baseUrl}/${endpoints?.uploadTalentReel}`;
     return this.http.post<any>(url, formData, { headers: this.jwtInterceptor?.customFormDataHttpHeaders });
   }
-  public createTalentMarketProfileData(payload: any, talentId: string):Observable<any>{
+  public createTalentMarketProfileData(payload: any, talentId: string): Observable<any> {
     const body = JSON.stringify(payload);
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.createTalentMarketProfile}?${encodedTalentId}`;
-    return this.http.post<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
+    return this.http.post<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
-   public fetchTalentMarketProfile(talentId: string):Observable<any>{
+  public fetchTalentMarketProfile(talentId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.getTalentMarketProfile}/${encodedTalentId}`;
-    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
-   public updateTalentMarketProfileData(payload: any, talentId: string):Observable<any>{
+  public updateTalentMarketProfileData(payload: any, talentId: string): Observable<any> {
     const body = JSON.stringify(payload);
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.updateTalentMarketProfile}/${encodedTalentId}`;
-    return this.http.patch<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
+    return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+  public fetchMarketsByTalent(
+    talentId: string,
+    paginationParams: PaginationParams = { limit: 10, pageNo: 1 },
+    statusParams: string = '',
+    scouterId: string = ''
+  ): Observable<any> {
+    const encodedTalentId = encodeURIComponent(talentId);
+    const url = `${environment?.baseUrl}/${endpoints?.getMarketsByTalentId}/${encodedTalentId}`;
+
+    let params = new HttpParams()
+      .set('statusParams', statusParams?.trim() ?? '')
+      .set('scouterId', scouterId?.trim() ?? '')
+      .set('limit', String(paginationParams?.limit ?? 10))
+      .set('pageNo', String(paginationParams?.pageNo ?? 1));
+
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+      params
+    });
   }
 
 }

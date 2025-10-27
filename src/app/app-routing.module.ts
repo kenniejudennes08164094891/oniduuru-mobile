@@ -29,6 +29,11 @@ const routes: Routes = [
       import('./auth/auth.module').then((m) => m.AuthPageModule),
   },
   {
+  path: 'talent/onboarding',
+  loadChildren: () =>
+    import('./talent/onboarding/onboarding.module').then(m => m.OnboardingPageModule)
+},
+  {
     path: 'scouter',
     loadChildren: () =>
       import('./scouter/scouter.module').then((m) => m.ScouterPageModule),

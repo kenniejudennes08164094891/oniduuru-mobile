@@ -1377,6 +1377,15 @@ export interface resendOTP {
   email?: string | null,
   phoneNumber?: string | null
 }
+export interface PaginationParams {
+  skillset?: string[] | any,
+  location?: string | any,
+  skillLevel?: string | any,
+  search?: string | any,
+  limit: number,
+  pageNo: number,
+  statusParams?: string | any
+}
 
 export const title: string[] = ['Mr', 'Mrs', 'Miss', 'Dr'];
 export const gender: string[] = ['Male', 'Female', 'Others'];
