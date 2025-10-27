@@ -55,40 +55,40 @@ export class AuthService {
   }
 
 // Add this to your AuthService
-testApiConnection(): Observable<any> {
-  const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
-  return this.http.get(testUrl).pipe(
-    timeout(5000),
-    catchError((error) => {
-      console.error('🔌 API Connection Test Failed:', error);
-      return throwError(() => new Error('API server is unreachable'));
-    })
-  );
-}
+  testApiConnection(): Observable<any> {
+    const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
+    return this.http.get(testUrl).pipe(
+      timeout(5000),
+      catchError((error) => {
+        console.error('🔌 API Connection Test Failed:', error);
+        return throwError(() => new Error('API server is unreachable'));
+      })
+    );
+  }
 
   // In auth.service.ts, add this to see request/response details
-private debugRequestResponse(url: string, body: any, response: any, error?: any) {
-  console.group('🔍 HTTP Request Debug');
-  console.log('URL:', url);
-  console.log('Method: POST');
-  console.log('Headers:', {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  });
-  console.log('Body:', body);
-  if (response) {
-    console.log('Response:', response);
-  }
-  if (error) {
-    console.log('Error:', {
-      status: error.status,
-      statusText: error.statusText,
-      error: error.error,
-      headers: error.headers
+  private debugRequestResponse(url: string, body: any, response: any, error?: any) {
+    console.group('🔍 HTTP Request Debug');
+    console.log('URL:', url);
+    console.log('Method: POST');
+    console.log('Headers:', {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     });
+    console.log('Body:', body);
+    if (response) {
+      console.log('Response:', response);
+    }
+    if (error) {
+      console.log('Error:', {
+        status: error.status,
+        statusText: error.statusText,
+        error: error.error,
+        headers: error.headers
+      });
+    }
+    console.groupEnd();
   }
-  console.groupEnd();
-}
 
   // ============ LOGIN & AUTHENTICATION ============
   loginUser(credentials: { email: string; password: string }): Observable<any> {
