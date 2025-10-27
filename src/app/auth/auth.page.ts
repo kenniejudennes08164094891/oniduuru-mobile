@@ -42,7 +42,6 @@ export class AuthPage implements OnInit {
     if (token && userData) {
       try {
         const user = JSON.parse(userData);
-        console.log('🔄 User already logged in, navigating to dashboard...');
         this.navigateByRole(user.role || user.details?.user?.role);
       } catch (error) {
         console.error('❌ Error parsing stored user data:', error);
@@ -90,7 +89,7 @@ export class AuthPage implements OnInit {
   async submitForm(): Promise<void> {
     // console.log('🚀 Form submitted:', this.loginForm.value);
 
-    console.log('🔄 Login process started...');
+  //  console.log('🔄 Login process started...');
 
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -109,16 +108,16 @@ export class AuthPage implements OnInit {
       const loginData = this.loginForm.value;
 
       // ✅ DEBUG: Log the exact payload being sent
-      console.log('📤 Login payload:', JSON.stringify(loginData, null, 2));
-      console.log(
-        '🔗 API URL:',
-        `${environment.baseUrl}/${endpoints.userLogin}`
-      );
+      // console.log('📤 Login payload:', JSON.stringify(loginData, null, 2));
+      // console.log(
+      //   '🔗 API URL:',
+      //   `${environment.baseUrl}/${endpoints.userLogin}`
+      // );
 
       const res = await firstValueFrom(this.authService.loginUser(loginData));
       // console.log('🛰️ Login request triggered:', loginData);
 
-      console.log('✅ Login response received:', res);
+     // console.log('✅ Login response received:', res);
 
       if (res?.access_token) {
         // ✅ Store credentials properly
@@ -128,12 +127,12 @@ export class AuthPage implements OnInit {
         const email = this.loginForm.get('email')?.value;
         if (email) {
           localStorage.setItem('registration_email', email);
-          console.log('✅ Email stored:', email);
+        //  console.log('✅ Email stored:', email);
         }
 
         // ✅ Extract role with better error handling
         const role = this.extractUserRole(res);
-        console.log('🎯 User role detected:', role);
+       // console.log('🎯 User role detected:', role);
 
         if (!role) {
           throw new Error('Unable to determine user role');
@@ -141,10 +140,10 @@ export class AuthPage implements OnInit {
 
         // ✅ NEW: Check if OTP is verified and account is active
         const isVerified = this.checkAccountVerificationStatus(res);
-        console.log('🔍 Account verification status:', isVerified);
+      //  console.log('🔍 Account verification status:', isVerified);
 
         if (!isVerified) {
-          console.log('⚠️ Account not verified, redirecting to OTP page');
+        //  console.log('⚠️ Account not verified, redirecting to OTP page');
           this.navigateToOtpVerification(res, email);
           return;
         }
@@ -191,8 +190,8 @@ export class AuthPage implements OnInit {
 
     const isVerified = verificationSources.find((status) => status === true);
 
-    console.log('🔍 Verification check sources:', verificationSources);
-    console.log('✅ Account verified status:', isVerified);
+    // console.log('🔍 Verification check sources:', verificationSources);
+    // console.log('✅ Account verified status:', isVerified);
 
     return isVerified === true;
   }
@@ -313,7 +312,7 @@ export class AuthPage implements OnInit {
     };
 
     const route = routes[role] || '/auth/login';
-    console.log('🧭 Navigating to:', route);
+ //   console.log('🧭 Navigating to:', route);
 
     this.router.navigateByUrl(route, { replaceUrl: true });
   }

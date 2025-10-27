@@ -15,12 +15,16 @@
           <div class="flex items-center gap-3 mb-3">
             <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
             <span class="font-normal text-[16px] leading-tight">
-              Why haven’t created your security question yet?
+              {{
+              completeOnboardingEnums.hasSecurityQuestions ? 'You may update your security questions here' : 'Why haven’t you created your security questions yet?'
+              }}
             </span>
           </div>
           <ion-button fill="clear" class="bg-transparent border border-white rounded-lg text-white"
-            (click)="scrollToProfilePicture()">
-            Create Security Questions
+                      (click)="navigateToView('securityQ')">
+            {{
+              completeOnboardingEnums.hasSecurityQuestions ? 'Update security questions': 'Create Security Questions'
+            }}
           </ion-button>
         </div>
       </div>
@@ -39,52 +43,60 @@
         </p>
       </div>
 
+      <div class="flex-shrink-0 float-left mb-2" id="file-uploads">
+        <label for="file-upload"
+               class="block mb-2 ml-4 text-sm font-medium text-gray-900 dark:text-white">Upload Picture</label>
+        <div class="relative">
+          <div class="flex items-center justify-center">
+            <label for="dropzone-file" class="cursor-pointer">
+              <div class="relative rounded-full border-2 border-black p-1">
+                <div class="absolute inset-0 bg-transparent rounded-full border-2 border-black">
+                </div>
 
-      <div class="p-6">
-        <!-- Profile Picture -->
-        <!-- Profile Picture -->
-        <p class="mt-3 pb-3 text-gray-600" #profilePicture>Profile Picture</p>
+                <img [src]="fileUploads" alt="Your Image"
+                     class="rounded-full w-32 h-32 object-cover cursor-pointer"/>
+              </div>
+              <input id="dropzone-file" type="file" class="hidden" (change)="uploadProfilePic($event)"/>
+            </label>
+          </div>
 
-        <div class="flex items-center mb-6">
-          <!-- Profile Image -->
-          <img src="assets/images/talentprofile.png" alt="Profile Picture"
-            class="w-28 h-28 rounded-full object-cover border-4 border-gray shadow-md" />
         </div>
-
-
+      </div>
+      <br/>
+      <div class="p-6">
         <!-- Full Name -->
         <div class="mb-4">
-          <label class="block text-gray-600 text-sm mb-2">Full Name</label>
+          <!--          <label class="block text-gray-600 text-sm mb-2">Full Name</label>-->
           <input type="text" [(ngModel)]="talent.fullName" placeholder="Adediji Seyi"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                 class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
 
         <!-- Phone Number -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Enter Your Phone Number</label>
           <input type="number" [(ngModel)]="talent.phone" placeholder="e.g. 0908123456"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                 class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
 
         <!-- Email -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Enter Your Email Address</label>
           <input type="email" [(ngModel)]="talent.email" placeholder="adedijiSamuel@email.com"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                 class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
 
         <!-- Password -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Password</label>
-          <input type="password" [(ngModel)]="talent.password" placeholder="****************"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="password" [(ngModel)]="talent.password" placeholder="****************" [disabled]="true"
+                 class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
 
         <!-- Location -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Enter Your Location</label>
           <input type="text" [(ngModel)]="talent.location" placeholder="e.g. Ikeja, Lagos"
-            class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                 class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"/>
         </div>
       </div>
     </div>
@@ -115,32 +127,47 @@
         </span>
       </div>
       <input type="text" placeholder="e.g Singing, Painting, Acting..." [(ngModel)]="newSkill"
-        (keyup.enter)="addSkill()"
-        class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md" />
+             (keyup.enter)="addSkill()"
+             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md"/>
     </div>
 
-    <!-- Skill Level -->
-    <div class="mb-4">
+    <!-- Skill Level Dropdown -->
+    <div class="mb-4 px-6">
       <label class="block text-gray-600 text-sm mb-2">Skill Level</label>
-      <input type="text" [(ngModel)]="talent.skillLevel" placeholder="Intermediate"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <select [(ngModel)]="talent.skillLevel" name="skillLevel"
+              class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option [value]="talent.skillLevel" disabled>{{ talent.skillLevel }}</option>
+        <option *ngFor="let level of selectItems.skillLevel"
+                [value]="level ?? talent.skillLevel">{{ level ?? talent.skillLevel }}
+        </option>
+      </select>
     </div>
 
-    <!-- Eduactional Background -->
-    <div class="mb-4">
-      <label class="block text-gray-600 text-sm mb-2">Eduactional Background</label>
-      <input type="text" [(ngModel)]="talent.educationalBackground" placeholder="Masters Degree"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    <!-- Educational Background Dropdown -->
+    <div class="mb-4 px-6">
+      <label class="block text-gray-600 text-sm mb-2">Educational Background</label>
+      <select [(ngModel)]="talent.educationalBackground" name="educationalBackground"
+              class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option *ngFor="let edu of selectItems.educationalBackground"
+                [value]="edu ?? talent.educationalBackground">{{ edu ?? talent.educationalBackground }}
+        </option>
+      </select>
     </div>
 
-    <div class="mb-4">
+    <!-- Pay Range Dropdown -->
+    <div class="mb-4 px-6">
       <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
-      <input type="text" [(ngModel)]="talent.payRange" placeholder="e.g $200 - $500"
-        class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <select [(ngModel)]="talent.payRange" name="payRange"
+              class="w-full border-none rounded-md px-4 py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option *ngFor="let range of selectItems.payRange"
+                [value]="range ?? talent.payRange">{{ range ?? talent.payRange }}
+        </option>
+      </select>
     </div>
+
 
     <!--Reels Upload  -->
-    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
+    <div class="relative h-[69px] justify-center pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')] bg-cover bg-center">
       <!-- Dark Overlay -->
       <div class="absolute inset-0 bg-black/60"></div>
 
@@ -152,18 +179,47 @@
 
     <!-- Upload Video -->
     <div class="mb-6">
-      <label class="block text-gray-600 text-sm mb-2">Upload Video</label>
-      <div
-        class="w-full border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer hover:border-blue-500 transition">
-        <ion-icon name="cloud-upload-outline" class="text-3xl text-gray-500 mb-2"></ion-icon>
-        <p class="text-gray-500">Drag & drop or click to upload</p>
+
+      <div class="flex items-center justify-center w-full">
+        <label *ngIf="!previewUrl" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-500">
+          <div class="flex flex-col items-center justify-center pt-5 pb-6">
+            <svg class="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+            </svg>
+            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload Reel</span> </p>
+            <p class="text-xs text-gray-500">mp4 formats</p>
+          </div>
+          <input
+            type="file"
+            class="hidden"
+            (change)="onFileSelected($event)"
+            accept="video/mp4"
+          />
+        </label>
+        <div *ngIf="previewUrl" class="mt-4 w-full">
+          <video width="100%" height="240" controls [src]="previewUrl" autoplay class="rounded-lg shadow"></video>
+          <!-- Progress Loader -->
+          <div *ngIf="isUploading" class="w-[500px] mt-4">
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div
+                class="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                [style.width.%]="uploadProgress"
+              ></div>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">{{ uploadProgress }}%</p>
+          </div>
+
+        </div>
       </div>
+
     </div>
+
     <div class="px-6 py-10">
       <button
         class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="questions.length < 1" (click)="saveProfile()">
-        Save
+        (click)="uploadTalentReel()">
+        {{ updateText }}
+<!--        updateTalentProfile()-->
       </button>
 
       <button
@@ -174,7 +230,7 @@
     </div>
     <!-- Security Questions -->
 
-    <div class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
+    <div id="securityQ" class="relative h-[69px] pt-2 bg-[url('/assets/images/Profile-Information-BG.jpg')]   bg-cover bg-center">
       <div class="absolute inset-0 bg-black/60"></div>
       <p class="relative text-white text-xl font-bold mt-3 px-5">
         Create Security Questions
@@ -196,49 +252,45 @@
           <div *ngFor="let q of questions.controls; let i = index" [formGroupName]="i" class="mb-8">
             <!-- Question -->
             <div class="flex items-center">
-              <img src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2" />
-              <img src="assets/icon/question 1.png" alt="Q Icon" class="w-5 h-5 mr-2" />
+              <img (click)="removeQuestion(i)" src="assets/icon/Vector (1).png" alt="Answer Icon" class="w-5 h-5 mr-2"/>
+              <img src="assets/icon/question 1.png" alt="Q Icon" class="w-5 h-5 mr-2"/>
               <ion-input type="text" placeholder="Enter your security question" formControlName="question"
-                class="border rounded-lg px-3 py-2 flex-1"></ion-input>
+                         class="border rounded-lg px-3 py-2 flex-1"></ion-input>
             </div>
 
             <!-- Answer (aligned with question input) -->
             <div class="flex items-center mt-3 ml-7">
-              <!-- Empty placeholder icons for alignment -->
-              <!-- <div class="w-10"></div> -->
               <div class="ml-2 w-5"></div>
-              <ion-input type="text" placeholder="Enter answer" formControlName="answer"
-                class="border rounded-lg px-5 py-2 flex-1"></ion-input>
-            </div>
-
-            <!-- Remove button -->
-            <div class="flex justify-end mt-2">
-              <button type="button" class="w-full text-red-500 text-sm hover:underline" (click)="removeQuestion(i)"
-                *ngIf="questions.length > 1">
-                Remove
-              </button>
+              <ion-input type="password" placeholder="Enter answer" formControlName="answer" class="border rounded-lg px-5 py-2 flex-1">
+                <ion-input-password-toggle slot="end"></ion-input-password-toggle>
+              </ion-input>
             </div>
           </div>
         </div>
 
-        <!-- Add Question Button -->
+        <!-- Add Question Button (keydown.enter)="addQuestion()" -->
         <div class="flex justify-center mt-6">
           <button type="button"
-            class="bg-gray-100 text-gray-800 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200"
-            (click)="addQuestion()">
+                  class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200"
+                  (click)="addQuestion()" >
             + Add Another Question
           </button>
         </div>
 
-        <!-- Save Button -->
+        <!-- Save Button [disabled]="questions.length < 1" -->
         <div class="px-6 py-10 flex justify-center">
-          <button
+          <button *ngIf="!completeOnboardingEnums.hasSecurityQuestions"
             class="bg-[#101828] w-full rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="securityForm.invalid" (click)="save()">
-            Save
+            [disabled]="securityForm.invalid"  [ngStyle]="{ 'background-color': securityForm.invalid ? '#CDD5DF' : '#101323' }" (click)="createSecurityQuestion()">
+            {{createSecQBtn}}
+          </button>
+          <button *ngIf="completeOnboardingEnums.hasSecurityQuestions"
+                  class="bg-[#101828] w-full rounded-lg px-7 py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="securityForm.invalid"  [ngStyle]="{ 'background-color': securityForm.invalid ? '#CDD5DF' : '#101323' }" (click)="updateSecQuestions()">
+            {{updateSecQBtn}}
           </button>
         </div>
       </div>
-     </div>
+    </div>
   </div>
 </ion-content>

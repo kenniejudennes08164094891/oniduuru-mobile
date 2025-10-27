@@ -20,6 +20,7 @@ import { WithdrawFundsRequestPageComponent } from './scouter/withdraw-funds-requ
 import { TransferFundsRequestPageComponent } from './scouter/transfer-funds-request-page/transfer-funds-request-page.component';
 import { AuthRedirectGuard } from './guard/auth.guard';
 import { LoginGuard } from './guard/login.guard';
+import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
@@ -162,5 +163,6 @@ const routes: Routes = [
     RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules }),
   ],
   exports: [RouterModule],
+  providers: [{ provide: LocationStrategy, useClass: HashLocationStrategy }]
 })
 export class AppRoutingModule {}

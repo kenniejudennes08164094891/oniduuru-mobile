@@ -51,13 +51,13 @@ export class AppInitService {
   // ✅ NEW: Check if user needs OTP verification
   private async checkAndHandleVerificationStatus(): Promise<void> {
     console.log('🔍 Checking account verification status...');
-    
+
     const currentUser = this.authService.getCurrentUser();
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
 
     // Check if account is verified
     const isVerified = this.checkAccountVerificationStatus(currentUser || userData);
-    
+
     if (!isVerified) {
       console.log('⚠️ Account not verified, redirecting to OTP verification');
       await this.redirectToOtpVerification(currentUser || userData);
@@ -101,7 +101,7 @@ export class AppInitService {
   private async redirectToOtpVerification(userData: any): Promise<void> {
     const email = userData.email || userData.details?.user?.email || userData.user?.email;
     const role = this.extractUserRole(userData);
-    
+
     console.log('🔄 Redirecting to OTP verification:', { email, role });
 
     // Store verification data

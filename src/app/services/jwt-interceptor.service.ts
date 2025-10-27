@@ -73,7 +73,6 @@ export class JwtInterceptorService implements HttpInterceptor {
 
     // Check if it's a public endpoint
     if (this.isPublicEndpoint(req.url)) {
-      // console.log('⏭️ Skipping auth for public endpoint');
       return next.handle(req);
     }
 
@@ -264,6 +263,7 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/verify-user-email',
       '/admin/v1/admin/validateUserEmail', // 👈 ADD THIS
       '/assets/',
+     'https://api.cloudinary.com/v1_1/dosiy2cmk/video/upload'
     ];
 
     // More flexible matching for scouter registration endpoints
@@ -346,4 +346,10 @@ export class JwtInterceptorService implements HttpInterceptor {
       });
     }
   }
+
+  public customFormDataNoAuthHttpHeaders = new HttpHeaders({
+    // 'Content-Type': 'multipart/form-data',
+    'accept': '*/*',
+  })
+
 }

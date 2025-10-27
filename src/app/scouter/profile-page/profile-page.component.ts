@@ -85,8 +85,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('🔄 ProfilePageComponent initializing...');
-
     // Simple debug first
     this.simpleDebug();
 
@@ -111,36 +109,36 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   // Add this method to debug the actual backend response
   private debugBackendResponse(apiResponse: any): void {
-    console.log('🔍 DEBUG BACKEND RESPONSE STRUCTURE:');
-    console.log('Full response:', apiResponse);
-    console.log('Response keys:', Object.keys(apiResponse || {}));
-    console.log('Has data:', !!apiResponse?.data);
-    console.log('Has details:', !!apiResponse?.details);
-    console.log('Has organizationType:', !!apiResponse?.organizationType);
-    console.log('organizationType value:', apiResponse?.organizationType);
-    console.log('organizationType type:', typeof apiResponse?.organizationType);
-
-    if (apiResponse?.data) {
-      console.log('Data keys:', Object.keys(apiResponse.data));
-      console.log('Data organizationType:', apiResponse.data?.organizationType);
-    }
-
-    if (apiResponse?.details) {
-      console.log('Details keys:', Object.keys(apiResponse.details));
-      console.log(
-        'Details organizationType:',
-        apiResponse.details?.organizationType
-      );
-    }
+    // console.log('🔍 DEBUG BACKEND RESPONSE STRUCTURE:');
+    // console.log('Full response:', apiResponse);
+    // console.log('Response keys:', Object.keys(apiResponse || {}));
+    // console.log('Has data:', !!apiResponse?.data);
+    // console.log('Has details:', !!apiResponse?.details);
+    // console.log('Has organizationType:', !!apiResponse?.organizationType);
+    // console.log('organizationType value:', apiResponse?.organizationType);
+    // console.log('organizationType type:', typeof apiResponse?.organizationType);
+    //
+    // if (apiResponse?.data) {
+    //   console.log('Data keys:', Object.keys(apiResponse.data));
+    //   console.log('Data organizationType:', apiResponse.data?.organizationType);
+    // }
+    //
+    // if (apiResponse?.details) {
+    //   console.log('Details keys:', Object.keys(apiResponse.details));
+    //   console.log(
+    //     'Details organizationType:',
+    //     apiResponse.details?.organizationType
+    //   );
+    // }
   }
 
   // Add this method to debug current form state
   debugFormState(): void {
-    console.log('🐛 CURRENT FORM STATE:');
-    console.log('profileData:', this.profileData);
-    console.log('selectedOrgTypes:', this.selectedOrgTypes);
-    console.log('isEditing:', this.isEditing);
-    console.log('isSavingProfile:', this.isSavingProfile);
+    // console.log('🐛 CURRENT FORM STATE:');
+    // console.log('profileData:', this.profileData);
+    // console.log('selectedOrgTypes:', this.selectedOrgTypes);
+    // console.log('isEditing:', this.isEditing);
+    // console.log('isSavingProfile:', this.isSavingProfile);
 
     // Check if form fields have the right values
     const formFields = [
@@ -154,58 +152,58 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     ];
 
     formFields.forEach((field) => {
-      console.log(
-        `📝 ${field}:`,
-        this.profileData[field as keyof typeof this.profileData]
-      );
+      // console.log(
+      //   `📝 ${field}:`,
+      //   this.profileData[field as keyof typeof this.profileData]
+      // );
     });
   }
 
   // Debug profile picture state
   private debugProfilePicture(): void {
-    console.log('🐛 PROFILE PICTURE DEBUG:');
+    // console.log('🐛 PROFILE PICTURE DEBUG:');
 
     // Check localStorage
     const cachedImage = localStorage.getItem('profile_image');
-    console.log('📦 Cached image in localStorage:', !!cachedImage);
+    // console.log('📦 Cached image in localStorage:', !!cachedImage);
     if (cachedImage) {
-      console.log('📦 Cached image length:', cachedImage.length);
-      console.log(
-        '📦 Cached image starts with:',
-        cachedImage.substring(0, 50) + '...'
-      );
+      // console.log('📦 Cached image length:', cachedImage.length);
+      // console.log(
+      //   '📦 Cached image starts with:',
+      //   cachedImage.substring(0, 50) + '...'
+      // );
     }
 
     // Check current state
-    console.log('🖼️ Current profileImage:', !!this.profileImage);
-    console.log(
-      '📸 hasExistingProfilePicture:',
-      this.hasExistingProfilePicture
-    );
-    console.log('🆔 scouterId:', this.scouterId);
+    // console.log('🖼️ Current profileImage:', !!this.profileImage);
+    // console.log(
+    //   '📸 hasExistingProfilePicture:',
+    //   this.hasExistingProfilePicture
+    // );
+    //console.log('🆔 scouterId:', this.scouterId);
 
     // Check UserService state
-    console.log(
-      '👤 UserService profile image:',
-      !!this.userService.getProfileImage()
-    );
+    // console.log(
+    //   '👤 UserService profile image:',
+    //   !!this.userService.getProfileImage()
+    // );
   }
 
   // Simple debug without JSON parsing issues
   private simpleDebug(): void {
-    console.log('🔍 SIMPLE AUTH DEBUG:');
+    //console.log('🔍 SIMPLE AUTH DEBUG:');
 
     // Check user_data only
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
-        console.log('💾 user_data found:', {
-          email: parsed?.email,
-          'details.email': parsed?.details?.email,
-          'details.user.email': parsed?.details?.user?.email,
-          'details.session.email': parsed?.details?.session?.email,
-        });
+        // console.log('💾 user_data found:', {
+        //   email: parsed?.email,
+        //   'details.email': parsed?.details?.email,
+        //   'details.user.email': parsed?.details?.user?.email,
+        //   'details.session.email': parsed?.details?.session?.email,
+        // });
       } catch (e) {
         console.log('💾 user_data (raw):', userData);
       }
@@ -215,12 +213,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     // Check auth service
     const userDetails = this.authService.decodeScouterDetails();
-    console.log('🔐 Auth Service:', {
-      email: userDetails?.email,
-      'details.email': userDetails?.details?.email,
-      'details.user.email': userDetails?.details?.user?.email,
-      'details.session.email': userDetails?.details?.session?.email,
-    });
+    // console.log('🔐 Auth Service:', {
+    //   email: userDetails?.email,
+    //   'details.email': userDetails?.details?.email,
+    //   'details.user.email': userDetails?.details?.user?.email,
+    //   'details.session.email': userDetails?.details?.session?.email,
+    // });
 
     // Check registration email
     const regEmail = localStorage.getItem('registration_email');

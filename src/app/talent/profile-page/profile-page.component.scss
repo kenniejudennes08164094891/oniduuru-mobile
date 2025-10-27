@@ -124,3 +124,10 @@ footer {
   font-size: 0.85rem;
   color: #6b7280; // gray-500
 }
+
+.progress-bar {
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 9999px;
+  transition: width 0.3s ease-in-out;
+}

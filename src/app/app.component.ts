@@ -61,7 +61,6 @@ export class AppComponent implements OnInit {
     // ✅ NEW: Listen for login events to re-initialize app data
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
-        console.log('🔄 App: User logged in, re-initializing app data');
         setTimeout(() => {
           this.appInitService.onUserLogin();
         }, 1000); // Give time for data to be stored
@@ -79,7 +78,6 @@ export class AppComponent implements OnInit {
     if (route === '/scouter/dashboard') {
       // ✅ Use the enhanced token validation
       if (!this.authService.validateStoredToken()) {
-        console.log('❌ Invalid token, redirecting to login');
         await this.router.navigate(['/auth/login']);
         return;
       }
@@ -90,8 +88,6 @@ export class AppComponent implements OnInit {
         try {
           const user = JSON.parse(userData);
           const role = user.role || user.details?.user?.role;
-
-          console.log('🎯 Navigating by role:', role);
 
           switch (role) {
             case 'scouter':

@@ -19,6 +19,7 @@ import { FilterScouterParam, PaginationParams } from 'src/app/models/mocks';
 import { ToastController } from '@ionic/angular';
 import { UserService } from './user.service';
 import { AppInitService } from './app-init.service';
+import {ToastsService} from "./toasts.service";
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +41,8 @@ export class AuthService {
     private router: Router,
     private jwtInterceptor: JwtInterceptorService,
     private toast: ToastController,
-    private injector: Injector
+    private injector: Injector,
+    private toastr: ToastsService
   ) {
     this.loadStoredUser();
     this.checkInitialAuthState();
@@ -207,10 +209,12 @@ private debugRequestResponse(url: string, body: any, response: any, error?: any)
   }
 
   logoutUser(): Observable<any> {
+    sessionStorage.clear();
+    localStorage.clear();
+    this.toastr.openSnackBar('🚀 Logging out...', 'success');
+    setTimeout(() => this.router.navigate(['/auth/login']), 300);
     const url = `${this.baseUrl}/${endpoints.logoutUser}`;
     const token = this.getToken();
-
-    console.log('🚀 Logging out...');
 
     // No token? Just clear local data and redirect
     if (!token) {

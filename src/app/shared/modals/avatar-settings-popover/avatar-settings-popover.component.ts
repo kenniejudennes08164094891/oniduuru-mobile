@@ -20,8 +20,8 @@ export class AvatarSettingsPopoverComponent {
    await this.router.navigate([path]);
   }
 
-  async logout():Promise<void> {
+   logout() {
     // Clear any stored auth data if needed
-    await this.authService.logoutUser()
+    this.authService.logoutUser()
   }
 }
