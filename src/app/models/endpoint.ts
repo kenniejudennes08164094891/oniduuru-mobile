@@ -128,6 +128,6 @@ export const endpoints = {
   adminToggleFundWithdrawal: 'wallets/v1/toggle-fund-withdrawal',
   adminFetchAllFundsTransfers: 'wallets/v1/admin/fetch-all-transfers',
 
-  // utils
+  // utils used
   getAllCountryFlags: 'api-service/fetch-all-countries'
 }
