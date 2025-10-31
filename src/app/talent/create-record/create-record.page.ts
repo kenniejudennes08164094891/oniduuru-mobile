@@ -177,7 +177,7 @@ import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { Router, ActivatedRoute } from '@angular/router';
-
+import { AuthService } from 'src/app/services/auth.service';
 @Component({
   selector: 'app-create-record',
   templateUrl: './create-record.page.html',
@@ -211,10 +211,10 @@ export class CreateRecordPage implements OnInit {
 
   // profile basics used for UI header (you can populate from talent profile if available)
   profile = {
-    name: 'Adediji Oluwaseyi',
+    name: '',
     address: '12 Henry Uzoma Street, Awoyaya Lagos',
     bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
-    phone: '09031251953',
+    phone: '',
     photo: ''
   };
 
@@ -225,7 +225,8 @@ export class CreateRecordPage implements OnInit {
     private endPointService: EndpointService,
     private toastr: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private authService: AuthService
   ) { }
   setActiveTab(tab: 'skills' | 'docs'): void {
     this.activeTab = tab;
@@ -238,7 +239,13 @@ export class CreateRecordPage implements OnInit {
       if (this.talentId) {
         // persist for other pages and subsequent reloads
         localStorage.setItem('talentId', this.talentId);
-        this.loadMarketOrTalentProfile();
+        //Try Local First
+        const gotLocal = this.getTalentDetailsFromLocal();
+
+        // If not found locally, load from backend
+  
+          this.loadMarketOrTalentProfile();
+        
       } else {
         this.toastr.error('Talent ID not found. Please log in again.');
         this.router.navigate(['/login']);
@@ -319,6 +326,52 @@ export class CreateRecordPage implements OnInit {
       }
     });
   }
+  getTalentDetailsFromLocal() {
+    try {
+      // 1️⃣ Check for saved profile first
+      const savedProfile = localStorage.getItem('talentProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        console.log('Loaded talent profile from localStorage:', parsedProfile);
+
+        const user = parsedProfile.details?.user || parsedProfile;
+
+        this.profile = {
+          name: user.fullName || '',
+          address: user.address || 'No address provided',
+          bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
+          phone: user.phoneNumber || '',
+          photo: user.photo || ''
+        };
+
+        if (this.profile.name) {
+          console.log('✅ Populated from localStorage');
+          return true;
+        }
+      }
+
+      //  Fallback: decode from token (if available)
+      const talentDetails = this.authService?.decodeTalentDetails?.();
+      if (talentDetails) {
+        console.log('Decoded Talent Details (fallback):', talentDetails);
+
+        const user = talentDetails.details?.user || talentDetails;
+        this.profile = {
+          name: user.fullName || '',
+          address: user.address || 'No address provided',
+          bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
+          phone: user.phoneNumber || '',
+          photo: user.photo || ''
+        };
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error loading local talent details:', error);
+      return false;
+    }
+  }
 
   // Fetch talent profile (basic profile where user enters skill names)
   loadTalentProfile(): void {
@@ -331,6 +384,7 @@ export class CreateRecordPage implements OnInit {
       next: (res: any) => {
         console.log('Fetched Talent Data:', res);
         const details = res?.details || {};
+        const user = res?.user || {};
 
         // Parse skillSets (stringified array)
         let parsedSkillNames: string[] = [];
@@ -359,19 +413,7 @@ export class CreateRecordPage implements OnInit {
             }))
             : [{ skill: '', skillLevel: '', pricing: '' }],
           pictorialDocumentations: []
-        };
-
-        // Populate header profile details
-        this.profile = {
-          name: details.fullName || '',
-          address: details.address || '',
-          bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
-          phone: details.phoneNumber || '',
-          photo: details.photo || ''
-        };
-
-        this.saveText = 'Create Record';
-        this.isLoading = false;
+        };  
       },
       error: (err) => {
         console.error('Error fetching talent profile:', err);
