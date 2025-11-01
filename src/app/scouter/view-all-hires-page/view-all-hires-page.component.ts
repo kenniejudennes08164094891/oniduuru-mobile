@@ -6,6 +6,8 @@ import {
   HireCategories,
   HireFilters,
 } from 'src/app/models/mocks';
+import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 interface MockPayment {
   id: string; // unique identifier for routing
@@ -18,7 +20,6 @@ interface MockPayment {
   offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
   status: 'Active' | 'Pending' | 'Away';
 
-  // NEW FIELDS
   jobDescription: string;
   yourComment: string;
   yourRating: number;
@@ -35,7 +36,9 @@ interface MockPayment {
 export class ViewAllHiresPageComponent implements OnInit {
   @ViewChild('categoryDisplaySection') categoryDisplaySection!: ElementRef;
 
-  MockRecentHires = MockRecentHires;
+  MockRecentHires: MockPayment[] = [];
+  isLoading: boolean = false;
+  allMarketData: MockPayment[] = []; // Store all fetched data for filtering
 
   categories = HireCategories;
   filters = HireFilters;
@@ -47,16 +50,112 @@ export class ViewAllHiresPageComponent implements OnInit {
 
   searchTerm: string = '';
   currentPage: number = 1;
-  pageSize: number = 5; // rows per page
+  pageSize: number = 10; // rows per page Maximum allowed by API
   isFilterOpen: boolean = false;
 
+  // Initialize with placeholder text - will be updated when data loads
   slideshowTexts: string[] = [
-    `Your Total Market Expenditures for the Month of ${new Date().toLocaleString(
-      'en-US',
-      { month: 'short' }
-    )} is ₦${(25000).toLocaleString()}`,
+    `Your Total Market Expenditures for the Month of ${this.currentMonth} is calculating...`,
     'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
   ];
+
+  constructor(
+    private router: Router,
+    private scouterService: ScouterEndpointsService,
+    private authService: AuthService
+  ) {}
+
+  ngOnInit() {
+    this.loadMarketEngagements();
+  }
+
+  // Load market engagements from API
+  loadMarketEngagements(statusParams?: string, pageNo: number = 1) {
+    this.isLoading = true;
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId) {
+      console.error('❌ No scouter ID found');
+      this.isLoading = false;
+      return;
+    }
+
+    const params: any = {
+      limit: 10, // Maximum allowed by API
+      pageNo: pageNo, // ✅ Use the pageNo parameter
+    };
+
+    if (statusParams) {
+      params.statusParams = statusParams;
+    }
+
+    this.scouterService.getAllMarketsByScouter(scouterId, params).subscribe({
+      next: (response) => {
+        this.MockRecentHires = response.data || [];
+        this.allMarketData = response.data || []; // Store for filtering
+
+        this.updateSlideshowText();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading market engagements:', error);
+        this.MockRecentHires = [];
+        this.allMarketData = [];
+        this.isLoading = false;
+      },
+    });
+  }
+
+  private updateSlideshowText() {
+    const totalExpenditure = this.totalMarketExpenditure;
+
+    // Only update the slideshow if we have data
+    if (this.MockRecentHires.length > 0) {
+      this.slideshowTexts = [
+        `Your Total Market Expenditures for the Month of ${
+          this.currentMonth
+        } is ₦${totalExpenditure.toLocaleString()}`,
+        'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
+      ];
+    } else {
+      // Keep the placeholder text when no data
+      this.slideshowTexts = [
+        `Your Total Market Expenditures for the Month of ${this.currentMonth} is calculating...`,
+        'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
+      ];
+    }
+  }
+
+  viewMarketPricePreposition(talentId: string) {
+    this.router.navigate([
+      '/scouter/market-engagement-market-price-preparation',
+      talentId,
+    ]);
+  }
+
+  setActiveCategoryTable(categoryKey: string) {
+    this.activeCategoryTable = categoryKey;
+
+    let statusParams: string | undefined;
+    switch (categoryKey) {
+      case 'all':
+        statusParams = undefined;
+        break;
+      case 'accepted':
+        statusParams = 'offer-accepted';
+        break;
+      case 'awaiting':
+        statusParams = 'awaiting-acceptance';
+        break;
+      case 'declined':
+        statusParams = 'offer-declined';
+        break;
+    }
+
+    this.loadMarketEngagements(statusParams, 1);
+    this.currentPage = 1; // Reset to first page when filter changes
+  }
 
   getFilterStatus(key: string): string {
     return this.filters.find((f) => f.key === key)?.status || '';
@@ -65,16 +164,6 @@ export class ViewAllHiresPageComponent implements OnInit {
   getFilterTitle(key: string): string {
     return this.filters.find((f) => f.key === key)?.title || '';
   }
-  constructor(private router: Router) {}
-
-  viewMarketPricePreposition(id: string) {
-    this.router.navigate([
-      '/scouter/market-engagement-market-price-preparation',
-      id,
-    ]);
-  }
-
-  ngOnInit() {}
 
   getSlideAnimationDuration(text: string): string {
     const baseDuration = 15; // seconds for ~40 chars
@@ -111,10 +200,6 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.scrollToCategoryDisplay();
       }, 100);
     }
-  }
-
-  setActiveCategoryTable(categoryKey: string) {
-    this.activeCategoryTable = categoryKey;
   }
 
   // 👉 Format currency

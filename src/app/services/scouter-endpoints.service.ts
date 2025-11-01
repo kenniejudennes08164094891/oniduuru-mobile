@@ -989,15 +989,19 @@ export class ScouterEndpointsService {
       httpParams = httpParams.set('talentId', params.talentId);
     }
 
-    if (params?.limit) {
-      httpParams = httpParams.set('limit', params.limit.toString());
-    }
+    // ✅ FIX: Ensure limit is between 0-10 as per API requirement
+    const limit = params?.limit ? Math.min(Math.max(0, params.limit), 10) : 10;
+    httpParams = httpParams.set('limit', limit.toString());
 
     if (params?.pageNo) {
       httpParams = httpParams.set('pageNo', params.pageNo.toString());
     }
 
-    console.log('📊 Fetching market engagements:', { url, params });
+    console.log('📊 Fetching market engagements:', {
+      url,
+      limit,
+      pageNo: params?.pageNo,
+    });
 
     return this.http
       .get<any>(url, {
@@ -1006,6 +1010,7 @@ export class ScouterEndpointsService {
       })
       .pipe(
         timeout(15000),
+        map((response) => this.transformMarketResponse(response)),
         catchError((error) => {
           console.error('❌ Failed to fetch market engagements:', error);
           return throwError(
@@ -1016,6 +1021,63 @@ export class ScouterEndpointsService {
           );
         })
       );
+  }
+
+  // Helper method to transform API response to match your MockPayment interface
+  private transformMarketResponse(response: any): any {
+    if (!response) return { data: [], total: 0 };
+
+    // Transform the API response to match your frontend structure
+    const transformedData =
+      response.data?.map((item: any) => ({
+        id: item.talentId || item.id || Math.random().toString(),
+        profilePic: item.profilePicture || 'assets/images/default-avatar.png',
+        name: item.talentName || 'Unknown Talent',
+        email: item.talentEmail || 'No email',
+        date: item.createdAt
+          ? new Date(item.createdAt).toLocaleDateString()
+          : 'N/A',
+        startDate: item.startDate
+          ? new Date(item.startDate).toLocaleDateString()
+          : 'N/A',
+        amount: item.amount || item.price || 0,
+        offerStatus: this.mapStatus(item.status),
+        status: this.mapActiveStatus(item.status),
+
+        // Additional fields for the detail view
+        jobDescription: item.jobDescription || 'No description provided',
+        yourComment: item.scouterComment || '',
+        yourRating: item.scouterRating || 0,
+        talentComment: item.talentComment || '',
+        talentRating: item.talentRating || 0,
+      })) || [];
+
+    return {
+      data: transformedData,
+      total: response.total || response.count || transformedData.length,
+      currentPage: response.currentPage || 1,
+      totalPages: response.totalPages || 1,
+    };
+  }
+
+  private mapStatus(
+    apiStatus: string
+  ): 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' {
+    const statusMap: { [key: string]: any } = {
+      'offer-accepted': 'Offer Accepted',
+      'awaiting-acceptance': 'Awaiting Acceptance',
+      'offer-declined': 'Offer Rejected',
+    };
+    return statusMap[apiStatus] || 'Awaiting Acceptance';
+  }
+
+  private mapActiveStatus(apiStatus: string): 'Active' | 'Pending' | 'Away' {
+    const statusMap: { [key: string]: any } = {
+      'offer-accepted': 'Active',
+      'awaiting-acceptance': 'Pending',
+      'offer-declined': 'Away',
+    };
+    return statusMap[apiStatus] || 'Pending';
   }
 }
 
