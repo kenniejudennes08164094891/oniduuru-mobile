@@ -40,6 +40,8 @@ export class ViewAllHiresPageComponent implements OnInit {
   isLoading: boolean = false;
   allMarketData: MockPayment[] = []; // Store all fetched data for filtering
 
+  userName: string = '';
+
   categories = HireCategories;
   filters = HireFilters;
 
@@ -66,7 +68,24 @@ export class ViewAllHiresPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loadUserData();
     this.loadMarketEngagements();
+  }
+
+  //Load user data from AuthService
+  private loadUserData() {
+    const currentUser = this.authService.getCurrentUser();
+
+    if (currentUser) {
+      // Try different possible property names for the user's name
+      this.userName =
+        currentUser.fullName ||
+        currentUser.name ||
+        currentUser.firstName ||
+        'Scouter'; // Fallback if no name found
+    } else {
+      this.userName = 'Scouter'; // Default fallback
+    }
   }
 
   // Load market engagements from API

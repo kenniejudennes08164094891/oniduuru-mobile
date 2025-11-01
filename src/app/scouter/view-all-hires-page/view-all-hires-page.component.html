@@ -17,7 +17,7 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight"
-            >Hi Viki West</span
+            >Hi {{ userName }}</span
           >
           <p class="text-gray-200 text-lg leading-relaxed">
             View your
@@ -55,7 +55,7 @@
       class="w-full flex justify-between items-center px-4 py-8 rounded-lg shadow-md bg-white hover:bg-gray-100 cursor-pointer"
       [class.bg-gray-200]="activeCategoryBtn === cat.key"
     >
-      <span class="flex items-center gap-3 bg-[#CDD5DF33]  px-6 py-3 rounded-lg">
+      <span class="flex items-center gap-3 bg-[#CDD5DF33] px-6 py-3 rounded-lg">
         <img class="h-5 w-5" [src]="images.FoxCryptoIcon" alt="" />
         <span>{{ cat.title }}</span>
         <span class="bg-gray-300 text-xs px-2 py-0.5 rounded-sm">
