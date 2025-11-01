@@ -8,6 +8,7 @@ import {
 } from 'src/app/models/mocks';
 
 // Test commit
+// Test commit
 
 interface MockPayment {
   id: string; // unique identifier for routing
@@ -19,7 +20,6 @@ interface MockPayment {
   amount: number;
   offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
   status: 'Active' | 'Pending' | 'Away';
-
 
   // NEW FIELDS
   jobDescription: string;
