@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
@@ -9,6 +9,8 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from '../../services/scouter-endpoints.service';
 import { ToastsService } from '../../services/toasts.service';
+
+// Test
 
 @Component({
   selector: 'app-verify-otp',
@@ -345,5 +347,24 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   goToLogin() {
     this.router.navigate(['/auth/login']);
+  }
+
+
+  @HostListener('window:keydown', ['$event'])
+  disableReloadKeys(event: KeyboardEvent) {
+    if (
+      (event.key === 'F5') ||
+      ((event.ctrlKey || event.metaKey) && event.key === 'r')
+    ) {
+      event.preventDefault();
+      alert('Page reload is disabled.');
+    }
+  }
+
+
+  @HostListener('window:beforeunload', ['$event'])
+  preventBrowserRefresh(event: BeforeUnloadEvent) {
+    event.preventDefault();
+    event.returnValue = ''; // Required for Chrome
   }
 }

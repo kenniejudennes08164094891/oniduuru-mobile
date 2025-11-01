@@ -7,9 +7,6 @@ import {
   HireFilters,
 } from 'src/app/models/mocks';
 
-// Test commit
-// Test commit
-
 interface MockPayment {
   id: string; // unique identifier for routing
   profilePic: string;
