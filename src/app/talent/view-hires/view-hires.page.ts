@@ -1,5 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
+import { EndpointService } from 'src/app/services/endpoint.service';
+import { PaginationParams,marketHires } from 'src/app/models/mocks'; // or local interface
+import { AuthService } from 'src/app/services/auth.service';
 @Component({
   selector: 'app-view-hires',
   templateUrl: './view-hires.page.html',
@@ -7,17 +10,82 @@ import { Router } from '@angular/router';
 })
 export class ViewHiresPage implements OnInit, OnDestroy {
   marketExpenditures: any[] = [];
+  initialPaginatedHires: any[] = [];
+   paginatedHiresData: any[] = []; // writable source
+ @Input() hires: any[] = []; // new input from parent
   currentMonth: string = '';
   currentTime: Date = new Date(); // live clock
+  talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+  userName: string = 'User';
   private intervalId: any;
 
 
-  constructor(private router: Router) { }
-  goToHireTransaction(hireId: number) {
-    console.log('Clicked hire:', hireId); // 👈 test log
-    this.router.navigate(['/talent/market-price-preposition', hireId]);
+  constructor(
+    private router: Router,
+    private endpointService: EndpointService,
+    private authService: AuthService
+  ) { }
+  private base64JsonDecode<T = any>(b64: string): T | null {
+    try {
+      if (!b64) return null;
+      const binary = atob(b64);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const json = new TextDecoder().decode(bytes);
+      return JSON.parse(json) as T;
+    } catch (e) {
+      console.error('Failed to decode base64 JSON:', e);
+      return null;
+    }
   }
-  ngOnInit() {
+
+  async goToHireTransaction(hireId: string | number): Promise<any> {
+    console.log('Clicked hire:', hireId); // 👈 test log
+   await this.router.navigate(['/talent/market-price-preposition', hireId]);
+  }
+  ngOnInit() : void {
+    this.loadTalentName();
+    //    // 1) Prefer navigation state (set by dashboard)
+    // const navMarkets = (history.state && history.state.markets) ? history.state.markets : null;
+    // if (Array.isArray(navMarkets) && navMarkets.length) {
+    //   this.initialPaginatedHires = navMarkets;
+    //   this.paginatedHiresData = navMarkets;
+    //   sessionStorage.setItem('lastMarkets', JSON.stringify(navMarkets)); // optional
+    //   return;
+    // }
+
+    // 2) Try sessionStorage fallback
+    // const cached = sessionStorage.getItem('lastMarkets');
+    // if (cached) {
+    //   try {
+    //     this.initialPaginatedHires = JSON.parse(cached);
+    //     this.paginatedHiresData = this.initialPaginatedHires;
+    //     console.log("cached>>>",this.initialPaginatedHires);
+    //     return;
+    //   } catch { /* ignore */ }
+    // }
+
+
+    // 3) Final fallback: call API directly
+    if (!this.talentId) return;
+    const paginationParams: PaginationParams = { limit: 10, pageNo: 1 };
+    this.endpointService.fetchMarketsByTalent(this.talentId, paginationParams, '', '').subscribe({
+      next: (res: any) => {
+        const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
+        console.clear();
+        console.log("decoded>>",decoded); // use this as mock data: marketHires
+        this.initialPaginatedHires = decoded;
+        this.paginatedHiresData = decoded;
+        sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
+      },
+      error: (err) => {
+        console.error('Error fetching markets in view-hires:', err);
+        this.initialPaginatedHires = [];
+        this.paginatedHiresData = [];
+      }
+    });
+
+    this.paginatedHiresData = this.initialPaginatedHires;
+
     // set current month
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
@@ -33,6 +101,30 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
     // Example mock data
     this.marketExpenditures = [];
+  }
+  loadTalentName() {
+    try {
+      const savedProfile = localStorage.getItem('talentProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        this.userName =
+          parsedProfile.fullName ||
+          parsedProfile.details?.user?.fullName ||
+          'User';
+        if (this.userName !== 'User') return;
+      }
+
+      const talentDetails = this.authService.decodeTalentDetails();
+      console.log('Decoded Talent Details (View Hires):', talentDetails);
+
+      this.userName =
+        talentDetails?.fullName ||
+        talentDetails?.details?.user?.fullName ||
+        'User';
+    } catch (error) {
+      console.error('Error loading talent name:', error);
+      this.userName = 'User';
+    }
   }
 
   ngOnDestroy() {

@@ -30,16 +30,8 @@
     </div>
     <div class="space-y-3">
       <div
-        (click)="
-          openFindProfessionalsByLocationModal(
-            currentLocationHires,
-            currentLocation
-          )
-        "
-        [ngClass]="{
-          '': $any(activeTab) === 'skill',
-          '': $any(activeTab) !== 'skill'
-        }"
+        (click)="openFindProfessionalsByLocationModal(currentLocationHires, currentLocation)"
+        [class.active]="activeTab === 'skill'"
         class="flex justify-between bg-[#FFFFFF] items-center px-8 py-4 rounded-md shadow-lg cursor-pointer"
       >
         <p>Find professionals by Location</p>

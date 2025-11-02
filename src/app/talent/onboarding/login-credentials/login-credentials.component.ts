@@ -1,14 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-login-credentials',
   templateUrl: './login-credentials.component.html',
-  styleUrls: ['./login-credentials.component.scss'],
 })
-export class LoginCredentialsComponent  implements OnInit {
+export class LoginCredentialsComponent {
+  @Output() next = new EventEmitter<void>();
+  @Output() previous = new EventEmitter<void>();
 
-  constructor() { }
+  email = '';
+  password = '';
+  confirmPassword = '';
 
-  ngOnInit() {}
+  formValid() {
+    return (
+      this.email &&
+      this.password &&
+      this.password === this.confirmPassword &&
+      this.password.length >= 8
+    );
+  }
 
+  onNext() {
+    if (this.formValid()) this.next.emit();
+  }
+
+  onPrevious() {
+    this.previous.emit();
+  }
 }

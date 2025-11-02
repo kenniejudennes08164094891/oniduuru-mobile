@@ -1,7 +1,8 @@
 import { Injectable, Injector } from '@angular/core';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
-import { ScouterEndpointsService } from './scouter-endpoints.service';
+import { ScouterEndpointsService } from './scouter-endpoint.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,8 @@ export class AppInitService {
     private injector: Injector,
     private authService: AuthService,
     private userService: UserService,
-    private scouterService: ScouterEndpointsService
+    private scouterService: ScouterEndpointsService,
+    private router: Router
   ) {}
 
   async initializeApp(): Promise<void> {
@@ -24,15 +26,17 @@ export class AppInitService {
 
     console.log('🚀 Initializing app...');
 
-    // Check if user is authenticated
     if (this.authService.isAuthenticated()) {
       try {
         await this.initializeUserData();
         await this.initializeNotificationCount();
-        this.isInitialized = true;
 
-        // ✅ Emit event to notify components
+        // ✅ Check verification before proceeding
+        await this.checkAndHandleVerificationStatus();
+
+        this.isInitialized = true;
         this.emitAppInitializedEvent();
+
         console.log('✅ App initialization completed');
       } catch (error) {
         console.error('❌ App initialization failed:', error);
@@ -43,22 +47,110 @@ export class AppInitService {
     }
   }
 
+  /** ✅ Check if user needs OTP verification before accessing dashboard */
+  private async checkAndHandleVerificationStatus(): Promise<void> {
+    console.log('🔍 Checking account verification status...');
+
+    const currentUser = this.authService.getCurrentUser();
+    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    const isVerified = this.checkAccountVerificationStatus(currentUser || userData);
+
+    if (!isVerified) {
+      console.log('⚠️ Account not verified, redirecting to OTP verification');
+      await this.redirectToOtpVerification(currentUser || userData);
+      return;
+    }
+
+    console.log('✅ Account is verified, allowing dashboard access');
+  }
+
+  /** ✅ Determine if user is verified from different data structures */
+  private checkAccountVerificationStatus(userData: any): boolean {
+    if (!userData) return false;
+
+    const verificationSources = [
+      userData.details?.user?.isVerified,
+      userData.details?.user?.verified,
+      userData.details?.user?.emailVerified,
+      userData.details?.user?.otpVerified,
+      userData.user?.isVerified,
+      userData.user?.verified,
+      userData.user?.emailVerified,
+      userData.user?.otpVerified,
+      userData.isVerified,
+      userData.verified,
+      userData.emailVerified,
+      userData.otpVerified,
+      userData.data?.user?.isVerified,
+      userData.data?.user?.verified,
+    ];
+
+    const isVerified = verificationSources.find(status => status === true);
+    console.log('🔍 Verification check sources:', verificationSources);
+    console.log('✅ Account verified status:', isVerified);
+    return isVerified === true;
+  }
+
+  /** ✅ Redirects user to appropriate OTP verification page */
+  private async redirectToOtpVerification(userData: any): Promise<void> {
+    const email = userData.email || userData.details?.user?.email || userData.user?.email;
+    const role = this.extractUserRole(userData);
+
+    console.log('🔄 Redirecting to OTP verification:', { email, role });
+
+    const otpData = {
+      email,
+      userId: userData.details?.user?.id || userData.user?.id || userData.id,
+      role,
+      userData,
+      redirectFrom: this.router.url,
+    };
+
+    localStorage.setItem('pending_verification', JSON.stringify(otpData));
+
+    if (role === 'scouter') {
+      await this.router.navigate(['/scouter/verify'], {
+        replaceUrl: true,
+        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+      });
+    } else if (role === 'talent') {
+      await this.router.navigate(['/talent/verify'], {
+        replaceUrl: true,
+        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+      });
+    } else {
+      await this.router.navigate(['/auth/verify-otp'], {
+        replaceUrl: true,
+        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+      });
+    }
+  }
+
+  /** ✅ Extract user role from nested structures */
+  private extractUserRole(userData: any): string {
+    if (!userData) return '';
+    const roleSources = [
+      userData.details?.user?.role,
+      userData.user?.role,
+      userData.role,
+      userData.data?.user?.role,
+      userData.data?.role,
+    ];
+    const role = roleSources.find(r => r && typeof r === 'string');
+    if (!role) console.warn('⚠️ No role found in user data:', userData);
+    return role || '';
+  }
+
+  /** ✅ Load user profile data */
   private async initializeUserData(): Promise<void> {
     console.log('👤 Initializing user data...');
-
-    // Get current user from AuthService
     const currentUser = this.authService.getCurrentUser();
 
     if (currentUser) {
-      // Update UserService with current user data
       this.userService.updateFullProfile(currentUser);
-
-      // Load profile image
       this.userService.initializeProfileImage();
-
       console.log('✅ User data initialized:', currentUser);
     } else {
-      // Try to load from localStorage as fallback
       const userData = localStorage.getItem('user_data');
       if (userData) {
         try {
@@ -72,12 +164,10 @@ export class AppInitService {
     }
   }
 
+  /** ✅ Initialize notifications count */
   private async initializeNotificationCount(): Promise<void> {
     console.log('🔔 Initializing notification count...');
-
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-
-    // ✅ ENHANCED: Try multiple possible locations for uniqueId
     const receiverId = this.extractUniqueId(userData);
 
     if (!receiverId) {
@@ -89,8 +179,6 @@ export class AppInitService {
     try {
       const notifications = await this.loadNotificationsFromAPI(receiverId);
       const count = notifications.length;
-
-      // Store in localStorage for components to use
       this.setNotificationCount(count);
       console.log('✅ Notification count initialized:', count);
     } catch (error) {
@@ -99,11 +187,9 @@ export class AppInitService {
     }
   }
 
-  // ✅ NEW: Extract uniqueId from multiple possible locations
+  /** ✅ Extract uniqueId from flexible data shapes */
   private extractUniqueId(userData: any): string | null {
     if (!userData) return null;
-
-    // Try different possible locations for uniqueId
     const uniqueId =
       userData.uniqueId ||
       userData.id ||
@@ -117,34 +203,25 @@ export class AppInitService {
     return uniqueId || null;
   }
 
+  /** ✅ Fetch notifications using the API service */
   private loadNotificationsFromAPI(receiverId: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
       this.scouterService.fetchAllNotifications(receiverId).subscribe({
-        next: (res) => {
+        next: (res: any) => {
           let notifications = [];
-
-          if (Array.isArray(res?.notifications)) {
-            notifications = res.notifications;
-          } else if (Array.isArray(res?.data)) {
-            notifications = res.data;
-          } else if (Array.isArray(res)) {
-            notifications = res;
-          }
-
+          if (Array.isArray(res?.notifications)) notifications = res.notifications;
+          else if (Array.isArray(res?.data)) notifications = res.data;
+          else if (Array.isArray(res)) notifications = res;
           resolve(notifications);
         },
-        error: (err) => {
-          reject(err);
-        },
+        error: (err: any) => reject(err),
       });
     });
   }
 
-  // ✅ ENHANCED: Centralized method to set notification count
+  /** ✅ Store notification count and emit events */
   private setNotificationCount(count: number): void {
     localStorage.setItem('notification_count', count.toString());
-
-    // ✅ CRITICAL: Emit a storage event to notify all listening components
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: 'notification_count',
@@ -154,16 +231,14 @@ export class AppInitService {
         url: window.location.href,
       })
     );
-
     console.log('💾 Notification count set and event emitted:', count);
   }
 
-  // ✅ NEW: Emit app initialized event
+  /** ✅ Emit global app initialization events */
   private emitAppInitializedEvent(): void {
     window.dispatchEvent(new Event('appInitialized'));
     localStorage.setItem('app_initialized', Date.now().toString());
 
-    // Also emit storage event for cross-tab communication
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: 'app_initialized',
@@ -175,25 +250,19 @@ export class AppInitService {
     );
   }
 
-  // Method to re-initialize when user logs in
+  /** ✅ Reinitialize app after login */
   async onUserLogin(): Promise<void> {
     console.log('🔄 Re-initializing app after user login');
     this.isInitialized = false;
     await this.initializeApp();
-
-    // ✅ Force refresh all components
     this.forceComponentRefresh();
   }
 
-  // ✅ ENHANCED: Force all components to refresh their data
+  /** ✅ Emit UI refresh signals for components */
   private forceComponentRefresh(): void {
     console.log('🔄 Forcing component refresh...');
-
-    // Emit multiple events to ensure components catch them
     window.dispatchEvent(new Event('appRefresh'));
     window.dispatchEvent(new Event('userLoggedIn'));
-
-    // Use setTimeout to ensure events are processed
     setTimeout(() => {
       window.dispatchEvent(
         new StorageEvent('storage', {
@@ -207,16 +276,13 @@ export class AppInitService {
     }, 100);
   }
 
-  // Method to clear data when user logs out
+  /** ✅ Clear all app-related data on logout */
   onUserLogout(): void {
     console.log('🧹 Clearing app data on logout');
     this.isInitialized = false;
-
-    // Clear notification count and emit event
     this.setNotificationCount(0);
     localStorage.removeItem('notifications_cleared');
-
-    // Emit logout event
+    localStorage.removeItem('pending_verification');
     window.dispatchEvent(new Event('userLoggedOut'));
   }
 }

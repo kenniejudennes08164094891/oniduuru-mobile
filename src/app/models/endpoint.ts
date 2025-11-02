@@ -129,5 +129,6 @@ export const endpoints = {
   adminFetchAllFundsTransfers: 'wallets/v1/admin/fetch-all-transfers',
 
   // utils
-  getAllCountryFlags: 'api-service/fetch-all-countries'
+  getAllCountryFlags: 'api-service/fetch-all-countries',
+  cloudinaryGetSecrets: 'utility/v1/cloudinary/signature'
 }

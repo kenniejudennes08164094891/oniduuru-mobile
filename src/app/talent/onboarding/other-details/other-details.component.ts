@@ -1,14 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-other-details',
   templateUrl: './other-details.component.html',
-  styleUrls: ['./other-details.component.scss'],
 })
-export class OtherDetailsComponent  implements OnInit {
+export class OtherDetailsComponent {
+  @Output() next = new EventEmitter<void>();
+  @Output() previous = new EventEmitter<void>();
 
-  constructor() { }
+  skillLevel = '';
+  skillSet = '';
+  education = '';
+  payRange = '';
 
-  ngOnInit() {}
+  formValid() {
+    return this.skillLevel && this.skillSet && this.payRange;
+  }
 
+  onNext() {
+    if (this.formValid()) this.next.emit();
+  }
+
+  onPrevious() {
+    this.previous.emit();
+  }
 }

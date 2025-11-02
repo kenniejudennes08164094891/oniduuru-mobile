@@ -84,9 +84,6 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.selectedOrgTypes.splice(index, 1);
     this.updateOrganisationFormControl();
 
-    // Debug after removal
-    console.log('🗑️ Removed org type at index:', index);
-    console.log('📋 Current org types:', this.selectedOrgTypes);
     this.checkFormStatus();
   }
 
@@ -216,33 +213,6 @@ export class ScouterPage implements OnInit, OnDestroy {
   manualCheckStep2() {
     const form = this.forms[1];
     if (!form) return;
-
-    console.log('🔍 MANUAL STEP 2 CHECK:');
-    console.log(
-      'Location:',
-      form.get('location')?.value,
-      'Valid:',
-      form.get('location')?.valid
-    );
-    console.log(
-      'Organization:',
-      form.get('organisation')?.value,
-      'Valid:',
-      form.get('organisation')?.valid
-    );
-    console.log(
-      'Purpose:',
-      form.get('purpose')?.value,
-      'Valid:',
-      form.get('purpose')?.valid
-    );
-    console.log(
-      'PayRange:',
-      form.get('payRange')?.value,
-      'Valid:',
-      form.get('payRange')?.valid
-    );
-    console.log('Overall Form Valid:', form.valid);
   }
 
   // Update the organization form control method

@@ -1,24 +1,22 @@
 // auth.service.ts
-import { Injectable, Inject, Injector } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable, Injector } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {
   BehaviorSubject,
-  // catchError,
   Observable,
   of,
   tap,
   throwError,
 } from 'rxjs';
+import { catchError, timeout, delay, retry } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
-import { timeout, catchError, delay, retry, map } from 'rxjs/operators';
-
 import { JwtInterceptorService } from '../services/jwt-interceptor.service';
-import { FilterScouterParam, PaginationParams } from 'src/app/models/mocks';
 import { ToastController } from '@ionic/angular';
 import { UserService } from './user.service';
 import { AppInitService } from './app-init.service';
+import { ToastsService } from './toasts.service';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +26,6 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  // ✅ NEW: Add subjects for profile updates
   private profileUpdatedSubject = new BehaviorSubject<boolean>(false);
   public profileUpdated$ = this.profileUpdatedSubject.asObservable();
 
@@ -40,7 +37,8 @@ export class AuthService {
     private router: Router,
     private jwtInterceptor: JwtInterceptorService,
     private toast: ToastController,
-    private injector: Injector
+    private injector: Injector,
+    private toastr: ToastsService
   ) {
     this.loadStoredUser();
     this.checkInitialAuthState();
@@ -52,273 +50,116 @@ export class AuthService {
     this.userLoggedInSubject.next(!!(token && userData));
   }
 
-  // Add this to your AuthService
-  // testApiConnection(): Observable<any> {
-  //   const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
-  //   return this.http.get(testUrl).pipe(
-  //     timeout(5000),
-  //     catchError((error) => {
-  //       console.error('🔌 API Connection Test Failed:', error);
-  //       return throwError(() => new Error('API server is unreachable'));
-  //     })
-  //   );
-  // }
-
-  // // In auth.service.ts
-  // checkBackendHealth(): Observable<any> {
-  //   const healthUrl = `${this.baseUrl}/health`; // or any health endpoint
-  //   const loginUrl = `${this.baseUrl}/${endpoints.userLogin}`;
-
-  //   console.log('🏥 Checking backend health...');
-
-  //   // Try health endpoint first, then fallback to HEAD request to login endpoint
-  //   return this.http.get(healthUrl).pipe(
-  //     timeout(5000),
-  //     catchError(() => {
-  //       console.log('⚠️ Health endpoint not available, trying HEAD request...');
-  //       return this.http.head(loginUrl, { observe: 'response' }).pipe(
-  //         timeout(5000),
-  //         map((response) => ({ status: 'ok', endpoint: 'HEAD login' }))
-  //       );
-  //     }),
-  //     catchError((error) => {
-  //       console.error('🔴 Backend appears to be down:', error);
-  //       return throwError(() => new Error('Backend service is unavailable'));
-  //     })
-  //   );
-  // }
-
-  // ============ LOGIN & AUTHENTICATION ============
+  // ============ LOGIN ============
   loginUser(credentials: { email: string; password: string }): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.userLogin}`;
-
-    // ✅ DEBUG: Enhanced request logging
-    console.log('🚀 Making login request to:', url);
-    console.log('📝 Request payload:', credentials);
+    console.log('Making login request to:', url, credentials);
 
     return this.http
       .post<any>(url, credentials, {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       })
       .pipe(
         timeout(15000),
-        // ✅ ADD RETRY LOGIC for transient 500 errors
         retry({
           count: 2,
           delay: (error, retryCount) => {
-            // Only retry on 500 errors
             if (error.status === 500 && retryCount < 2) {
-              console.log(
-                `🔄 Retrying login request (attempt ${retryCount + 1})...`
-              );
-              return of(null).pipe(delay(1000)); // 1 second delay
+              console.log(`Retrying login attempt ${retryCount + 1}...`);
+              return of(null).pipe(delay(1000));
             }
             throw error;
           },
         }),
-        tap((response) => {
-          if (response?.access_token) {
-            this.setUserCredentialFromBackend(response);
-
-            // ✅ EMIT login event and trigger app re-initialization
-            this.userLoggedInSubject.next(true);
-
-            console.log(
-              '✅ Login successful, triggering app re-initialization'
-            );
-
-            // ✅ Use setTimeout to ensure the app init service runs after data is stored
-            setTimeout(() => {
-              const appInitService = this.injector.get(AppInitService);
-              appInitService.onUserLogin().catch((err) => {
-                console.error('❌ App re-initialization failed:', err);
-              });
-            }, 500);
-          }
+        tap({
+          next: (response) => {
+            if (response?.access_token) {
+              this.setUserCredentialFromBackend(response);
+              this.userLoggedInSubject.next(true);
+              console.log('Login successful, triggering app re-initialization');
+              setTimeout(() => {
+                const appInitService = this.injector.get(AppInitService);
+                appInitService.onUserLogin().catch(console.error);
+              }, 500);
+            }
+          },
+          error: (error) => {
+            console.error('Login request failed:', error);
+          },
+          complete: () => console.log('Login request completed.'),
         }),
-        // In auth.service.ts - enhance the catchError
         catchError((error) => {
-          // ✅ ENHANCED: More detailed backend error analysis
-          console.error('🔍 Backend Error Analysis:', {
+          console.error('AuthService login error details:', {
             status: error.status,
             statusText: error.statusText,
             url: error.url,
-            headers: error.headers,
             error: error.error,
-            // Add request details for comparison
-            request: {
-              method: 'POST',
-              url: url,
-              body: credentials,
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-            },
           });
-
-          // Check for specific backend error patterns
-          if (error.error) {
-            console.error(
-              '📋 Backend Error Body:',
-              JSON.stringify(error.error, null, 2)
-            );
-
-            // Common backend error patterns
-            if (
-              error.error.message?.includes('database') ||
-              error.error.message?.includes('SQL')
-            ) {
-              console.warn('🚨 Possible database connection issue');
-            }
-            if (
-              error.error.message?.includes('validation') ||
-              error.error.message?.includes('Validation')
-            ) {
-              console.warn('🚨 Possible data validation error');
-            }
-            if (
-              error.error.message?.includes('password') ||
-              error.error.message?.includes('credential')
-            ) {
-              console.warn('🚨 Possible authentication service issue');
-            }
-          }
-
-          throw error;
-        })
-      );
-  }
-
-  logoutUser(): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
-    const token = this.getToken();
-
-    console.log('🚀 Logging out...');
-
-    // No token? Just clear local data and redirect
-    if (!token) {
-      console.warn('⚠️ No token found, clearing local data only');
-      this.clearAuthData();
-      setTimeout(() => this.router.navigate(['/auth/login']), 300);
-      return of({ message: 'Local logout completed' });
-    }
-
-    return this.http
-      .post<any>(
-        url,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-      .pipe(
-        tap((res) => {
-          console.log('✅ Server logout successful:', res);
-          this.clearAuthData();
-          setTimeout(() => this.router.navigate(['/auth/login']), 300);
-        }),
-        catchError((error) => {
-          console.error('❌ Server logout failed, clearing local data:', error);
-          this.clearAuthData();
-          setTimeout(() => this.router.navigate(['/auth/login']), 300);
           return throwError(() => error);
         })
       );
   }
+
+  // ============ LOGOUT ============
+  logoutUser(): Observable<any> {
+    sessionStorage.clear();
+    localStorage.clear();
+    this.toastr.openSnackBar('Logging out...', 'success');
+    setTimeout(() => this.router.navigate(['/auth/login']), 300);
+
+    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
+    const token = this.getToken();
+
+    if (!token) {
+      this.clearAuthData();
+      return of({ message: 'Local logout completed' });
+    }
+
+    return this.http
+      .post<any>(url, {}, { headers: { Authorization: `Bearer ${token}` } })
+      .pipe(
+        tap({
+          next: (res) => {
+            console.log('Server logout successful:', res);
+            this.clearAuthData();
+          },
+          error: (err) => {
+            console.error('Server logout failed, clearing local data:', err);
+            this.clearAuthData();
+          },
+          complete: () => this.router.navigate(['/auth/login']),
+        }),
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  // ============ TOKEN MANAGEMENT ============
   validateStoredToken(): boolean {
     const token = localStorage.getItem('access_token');
     const userData = localStorage.getItem('user_data');
-
-    if (!token || !userData) {
-      return false;
-    }
+    if (!token || !userData) return false;
 
     try {
-      // Check if token is expired (basic check)
       const payload = JSON.parse(atob(token.split('.')[1]));
       const isExpired = payload.exp * 1000 < Date.now();
-
       if (isExpired) {
         this.clearAuthData();
         return false;
       }
-
       return true;
     } catch (error) {
-      console.error('❌ Token validation error:', error);
+      console.error('Token validation error:', error);
       this.clearAuthData();
       return false;
     }
   }
 
-  // ✅ ENHANCED: Set user credentials with UserService integration
-  setUserCredentialFromBackend(loginResponse: any): void {
-    if (loginResponse.access_token) {
-      localStorage.setItem('access_token', loginResponse.access_token);
-
-      const userData =
-        loginResponse.details?.user || loginResponse.user || loginResponse;
-      localStorage.setItem('user_data', JSON.stringify(userData));
-
-      if (loginResponse.eniyan) {
-        localStorage.setItem('eniyan', loginResponse.eniyan);
-      }
-
-      // ✅ CRITICAL: Update UserService with new user data
-      const userService = this.injector.get(UserService);
-      userService.updateFullProfile(userData);
-
-      this.currentUserSubject.next(userData);
-      this.userLoggedInSubject.next(true);
-
-      console.log('✅ Credentials stored and all services updated');
-    } else {
-      console.error('❌ No access token in login response');
-      throw new Error('No access token received');
-    }
+  getToken(): string | null {
+    return localStorage.getItem('access_token');
   }
 
-  // ✅ ENHANCED: Notify all components of profile updates
-  notifyProfileUpdated(): void {
-    console.log('🔄 AuthService: Notifying all components of profile update');
-    this.profileUpdatedSubject.next(true);
-
-    // Force reload user data from storage
-    this.loadStoredUser();
-
-    // Also trigger UserService refresh
-    setTimeout(() => {
-      const userService = this.injector.get(UserService);
-      userService.refreshFromStorage();
-    });
-  }
-
-  // ✅ NEW: Method to force reload user data
-  reloadUserData(): void {
-    this.loadStoredUser();
-    this.profileUpdatedSubject.next(true);
-  }
-
-  private loadStoredUser(): void {
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const parsedData = JSON.parse(userData);
-        this.currentUserSubject.next(parsedData);
-      } catch (e) {
-        console.error('Error parsing stored user data:', e);
-      }
-    }
-  }
-
-
-  // In auth.service.ts - ENHANCE the clearAuthData method
   private clearAuthData(): void {
-    const keysToRemove = [
+    [
       'access_token',
       'user_data',
       'eniyan',
@@ -327,64 +168,77 @@ export class AuthService {
       'profile_image',
       'security_questions',
       'profile_was_saved',
-    ];
+    ].forEach((key) => localStorage.removeItem(key));
 
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-
-    // ✅ CRITICAL: Reset subjects
     this.currentUserSubject.next(null);
     this.userLoggedInSubject.next(false);
     this.profileUpdatedSubject.next(false);
-
-    console.log('🧹 All auth data cleared completely');
+    console.log('All auth data cleared completely');
   }
 
   // ============ USER MANAGEMENT ============
+  setUserCredentialFromBackend(loginResponse: any): void {
+    if (!loginResponse.access_token) {
+      throw new Error('No access token received');
+    }
+
+    localStorage.setItem('access_token', loginResponse.access_token);
+
+    const userData =
+      loginResponse.details?.user || loginResponse.user || loginResponse;
+    localStorage.setItem('user_data', JSON.stringify(userData));
+
+    if (loginResponse.eniyan) {
+      localStorage.setItem('eniyan', loginResponse.eniyan);
+    }
+
+    const userService = this.injector.get(UserService);
+    userService.updateFullProfile(userData);
+    this.currentUserSubject.next(userData);
+    this.userLoggedInSubject.next(true);
+    console.log('Credentials stored and all services updated');
+  }
+
+  notifyProfileUpdated(): void {
+    this.profileUpdatedSubject.next(true);
+    this.loadStoredUser();
+    setTimeout(() => {
+      const userService = this.injector.get(UserService);
+      userService.refreshFromStorage();
+    });
+  }
+
+  private loadStoredUser(): void {
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        this.currentUserSubject.next(JSON.parse(userData));
+      } catch (e) {
+        console.error('Error parsing stored user data:', e);
+      }
+    }
+  }
+
   getCurrentUser(): any {
     return this.currentUserSubject.value;
   }
 
   updateCurrentUser(userData: any): void {
     try {
-      const currentUser = this.getCurrentUser();
-      const updatedUser = { ...currentUser, ...userData };
-
-      // Update localStorage
+      const updatedUser = { ...this.getCurrentUser(), ...userData };
       localStorage.setItem('user_data', JSON.stringify(updatedUser));
-
-      // Notify subscribers
       this.currentUserSubject.next(updatedUser);
-
-      console.log('✅ AuthService: Current user updated');
     } catch (error) {
-      console.error('❌ Error updating current user in AuthService:', error);
+      console.error('Error updating current user:', error);
     }
   }
 
-  // private loadStoredUser(): void {
-  //   const userData = localStorage.getItem('user_data');
-  //   if (userData) {
-  //     try {
-  //       this.currentUserSubject.next(JSON.parse(userData));
-  //     } catch (e) {
-  //       console.error('Error parsing stored user data:', e);
-  //     }
-  //   }
-  // }
-
   decodeScouterDetails(): any {
     try {
-      const eniyan = localStorage.getItem('eniyan');
-      if (eniyan) {
-        return JSON.parse(atob(eniyan));
-      }
-
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        return JSON.parse(userData);
-      }
-
-      return null;
+      const fetchSession =
+        localStorage.getItem('user_data') ||
+        localStorage.getItem('user_profile_data');
+      return fetchSession ? JSON.parse(fetchSession) : {};
     } catch (e) {
       console.error('Error decoding scouter details:', e);
       return null;
@@ -393,82 +247,40 @@ export class AuthService {
 
   decodeTalentDetails(): any {
     try {
-      const eniyan = localStorage.getItem('eniyan');
-      if (eniyan) {
-        return JSON.parse(atob(eniyan));
-      }
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        return JSON.parse(userData);
-      }
-      return null;
+      const fetchSession =
+        localStorage.getItem('user_data') ||
+        localStorage.getItem('user_profile_data');
+      return fetchSession ? JSON.parse(fetchSession) : {};
     } catch (e) {
       console.error('Error decoding talent details:', e);
       return null;
     }
   }
 
-  // ============ TOKEN MANAGEMENT ============
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  // ============ PASSWORD RESET ============
-  forgotPassword(email: string): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.forgotPasswords}`;
-    return this.http.post<any>(url, { email });
-  }
-
   // ============ SECURITY QUESTIONS ============
-  public getMySecurityQuestions(uniqueId: string): Observable<any> {
+  getMySecurityQuestions(uniqueId: string): Observable<any> {
     const base = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}`;
-
-    // Build candidates: prefer full uniqueId (may be "scouter/1234/...") then numeric id
     const candidates: string[] = [];
-    if (uniqueId && uniqueId.trim() !== '') {
-      candidates.push(
-        `${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`
-      );
-      // extract numeric part if present
+
+    if (uniqueId?.trim()) {
+      candidates.push(`${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`);
       const numericMatch = String(uniqueId).match(/(\d+)/);
-      if (numericMatch && numericMatch[1]) {
-        candidates.push(
-          `${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`
-        );
+      if (numericMatch?.[1]) {
+        candidates.push(`${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`);
       }
     }
 
-    if (candidates.length === 0) {
-      return throwError(
-        () => new Error('Invalid uniqueId for security questions')
-      );
-    }
+    if (!candidates.length)
+      return throwError(() => new Error('Invalid uniqueId for security questions'));
 
-    const headers = this.jwtInterceptor.customHttpHeaders; // will include Authorization when token exists
+    const headers = this.jwtInterceptor.customHttpHeaders;
 
-    const tryFetch = (urls: string[], idx = 0): Observable<any> => {
-      const url = urls[idx];
-      return this.http.get<any>(url, { headers }).pipe(
-        tap(() => {
-          // success log suppressed
-        }),
-        catchError((error) => {
-          console.error(
-            '❌ Error fetching security questions from',
-            url,
-            error?.status || error?.message
-          );
-          if (idx < urls.length - 1) {
-            return tryFetch(urls, idx + 1);
-          }
-          return throwError(() => error);
-        })
+    const tryFetch = (urls: string[], idx = 0): Observable<any> =>
+      this.http.get<any>(urls[idx], { headers }).pipe(
+        catchError((error) =>
+          idx < urls.length - 1 ? tryFetch(urls, idx + 1) : throwError(() => error)
+        )
       );
-    };
 
     return tryFetch(candidates);
   }
@@ -480,6 +292,62 @@ export class AuthService {
     return this.http.get<any>(url, {
       headers: this.jwtInterceptor.customHttpHeaders,
     });
+  }
+
+// Add this to your AuthService
+  testApiConnection(): Observable<any> {
+    const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
+    return this.http.get(testUrl).pipe(
+      timeout(5000),
+      catchError((error) => {
+        console.error('🔌 API Connection Test Failed:', error);
+        return throwError(() => new Error('API server is unreachable'));
+      })
+    );
+  }
+
+  // In auth.service.ts, add this to see request/response details
+  private debugRequestResponse(url: string, body: any, response: any, error?: any) {
+    console.group('🔍 HTTP Request Debug');
+    console.log('URL:', url);
+    console.log('Method: POST');
+    console.log('Headers:', {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    console.log('Body:', body);
+    if (response) {
+      console.log('Response:', response);
+    }
+    if (error) {
+      console.log('Error:', {
+        status: error.status,
+        statusText: error.statusText,
+        error: error.error,
+        headers: error.headers
+      });
+    }
+    console.groupEnd();
+  }
+
+
+
+  // ✅ NEW: Method to force reload user data
+  reloadUserData(): void {
+    this.loadStoredUser();
+    this.profileUpdatedSubject.next(true);
+  }
+
+  // ============ TOKEN MANAGEMENT ============
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+
+  // ============ PASSWORD RESET ============
+  forgotPassword(email: string): Observable<any> {
+    const url = `${this.baseUrl}/${endpoints.forgotPasswords}`;
+    return this.http.post<any>(url, { email });
   }
 
   public ValidateScouterSecurityQ(question: any): Observable<any> {
@@ -537,4 +405,5 @@ export class AuthService {
       })
     );
   }
+
 }

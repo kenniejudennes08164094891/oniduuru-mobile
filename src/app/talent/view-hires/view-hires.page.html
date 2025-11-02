@@ -13,7 +13,7 @@
       <div class="flex items-start gap-3">
         <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
         <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight">Hi seyiAde</span>
+          <span class="font-medium text-[24px] leading-tight">Hi {{ userName }}</span>
           <p class="text-gray-200 text-lg leading-relaxed">
             View your {{ MockRecentHires.length }} Hires at a Glance
           </p>
@@ -42,23 +42,6 @@
       </p>
     </div>
   </ng-template>
-
-
-  <!-- Category Buttons -->
-  <!-- <div class="grid gap-4 mb-6 mt-6">
-    <button *ngFor="let cat of categories" (click)="setActiveCategoryBtn(cat.key)"
-      class="w-full flex justify-between items-center px-4 py-8 rounded-lg shadow-md bg-white hover:bg-gray-100 cursor-pointer"
-      [class.bg-gray-200]="activeCategoryBtn === cat.key">
-      <span class="flex items-center gap-3 bg-[#CDD5DF33] px-6 py-3 rounded-lg">
-        <img class="h-5 w-5" [src]="images.FoxCryptoIcon" alt="" />
-        <span>{{ cat.title }}</span>
-        <span class="bg-gray-300 text-xs px-2 py-0.5 rounded-sm">
-          {{ getCategoryCount(cat.key) }}
-        </span>
-      </span>
-    </button>
-  </div> -->
-
   <!-- Section for Selected Category -->
   <div #categoryDisplaySection *ngIf="activeCategoryBtn" class="py-4 px-1">
     <h3 class="font-semibold text-lg mb-4">
@@ -261,10 +244,5 @@
     </div>
   </div>
 
-  <!-- Fixed Footer -->
-  <!-- <footer class="mt-auto py-5">
-    <div class="container mx-auto px-4 text-left text-gray-600">
-      <p>Shoft Africa © {{ currentYear }}</p>
-    </div>
-  </footer> -->
+  <!-- <app-hires-table [hires]="paginatedHiresData"></app-hires-table> -->
 </ion-content>

@@ -15,7 +15,7 @@ const routes: Routes = [
     path: 'verify-otp',
     component: VerifyOtpComponent,
   },
-  {
+    {
     path: 'welcome-page',
     component: WelcomePageComponent,
   },

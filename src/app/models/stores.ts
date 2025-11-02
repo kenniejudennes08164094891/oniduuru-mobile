@@ -13,7 +13,6 @@ export const accountOptions = [
     param: 'scouter_onboarding',
   },
 ];
-
 export const imageIcons = {
   scouterImage: '/assets/images/scouter.jpg',
   talentImage: '/assets/images/talent.png',
@@ -41,6 +40,9 @@ export const imageIcons = {
   logoutIcon: '/assets/icon/logout.png',
   viewProfileIcon: '/assets/icon/profile.png',
   SkillSetIcon: '/assets/icon/SkillSetIcon.svg',
+  imageUploads: 'assets/images/imageIcon.svg',
+  fileUploadIcon: '/assets/images/file_uploads.svg',
+  reelIcon: 'assets/images/reel.svg',
 };
 
 export const talentOnboardingTabItems: TabItems[] = [
@@ -80,3 +82,33 @@ export const dummyLogin = [
     route: '/talent/dashboard',
   },
 ];
+
+export interface TalentProfile {
+  fullName: string;
+  phone: string;
+  email: string;
+  password: string;
+  location: string;
+  skillLevel: string;
+  educationalBackground: string;
+  skills: string[];
+  payRange: string;
+}
+
+export interface dropdownItems{
+  educationalBackground: [],
+  organizationType: [],
+  payRange: [],
+  skillLevel: [],
+  skillSets: []
+}
+
+export interface completeOnboardingEnums{
+  uploadedReel?: false,
+  uploadedProfilePicture?: false,
+  isOTPVerified?: false,
+  hasSecurityQuestions?: false,
+  hasMarketProfile?: false,
+  hasWalletProfile?: false,
+  nextActivationDate?: string,
+}

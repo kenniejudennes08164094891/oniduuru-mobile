@@ -21,11 +21,7 @@
       <div class="flex bg-[#CDD5DF33] px-2 py-2 rounded-b-2xl gap-2">
         <!-- Button -->
         <div class="flex items-end">
-          <ion-button
-            color="primary"
-            [disabled]="!complaintText.trim()"
-            (click)="submitComplaint()"
-          >
+          <ion-button color="primary" (click)="submitComplaint()">
             Submit
           </ion-button>
         </div>

@@ -10,15 +10,13 @@ import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from '../../services/scouter-endpoints.service';
 import { ToastsService } from '../../services/toasts.service';
 
-// Test
-
 @Component({
   selector: 'app-verify-otp',
   templateUrl: './verify-otp.component.html',
   styleUrls: ['./verify-otp.component.scss'],
 })
 export class VerifyOtpComponent implements OnInit, OnDestroy {
-  otpForm!: FormGroup;
+  otpForm!: FormGroup | any;
   otpControls: FormControl[] = [];
   otpLength = 4;
   countdown = 0;
@@ -48,7 +46,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   private initializeOtpForm() {
-    // Initialize OTP controls
     this.otpControls = Array.from({ length: this.otpLength }, () =>
       this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)])
     );
@@ -59,7 +56,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   private loadUserData() {
-    // Get data from navigation state or localStorage
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as any;
 
@@ -68,7 +64,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       this.userData = state.userData;
       this.requiresVerification = state.requiresVerification || false;
     } else {
-      // Try to get from localStorage
       const pendingVerification = localStorage.getItem('pending_verification');
       if (pendingVerification) {
         try {
@@ -88,7 +83,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       userData: this.userData,
     });
 
-    // If no email found, redirect to login
     if (!this.email) {
       this.toast.openSnackBar(
         'No verification session found. Please login again.',
@@ -98,18 +92,15 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Auto-send OTP if required
     if (this.requiresVerification) {
       this.sendOtpAutomatically();
     }
   }
 
-  // OTP Input Handling
   onOtpInput(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     const value = input.value;
 
-    // Auto-advance to next input
     if (value && index < this.otpControls.length - 1) {
       const inputs = input.parentElement?.querySelectorAll('input');
       if (inputs && inputs[index + 1]) {
@@ -118,7 +109,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Auto-submit when last digit is entered
     if (value && index === this.otpControls.length - 1) {
       if (this.getOtpValue().length === this.otpLength) {
         this.verifyOtpAndProceed();
@@ -129,9 +119,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   onKeyDown(event: KeyboardEvent, index: number) {
     if (event.key === 'Backspace') {
       const input = event.target as HTMLInputElement;
-
       if (!input.value && index > 0) {
-        // Move to previous input if current is empty
         const inputs = input.parentElement?.querySelectorAll('input');
         if (inputs && inputs[index - 1]) {
           const prevInput = inputs[index - 1] as HTMLInputElement;
@@ -139,7 +127,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
           prevInput.select();
         }
       } else if (input.value) {
-        // Clear current input
         input.value = '';
         this.otpControls[index].setValue('');
       }
@@ -160,7 +147,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     });
   }
 
-  // OTP Methods
   sendOtpAutomatically() {
     if (!this.email) {
       this.setError('Email is required to send OTP');
@@ -168,7 +154,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     }
 
     console.log('🔍 Sending OTP to:', this.email);
-
     const payload = { email: this.email };
 
     this.scouterService.resendOtp(payload).subscribe({
@@ -189,41 +174,26 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   verifyOtpAndProceed() {
     const otpValue = this.getOtpValue();
-
-    console.log('🔍 Verifying OTP:', otpValue);
-
     if (!otpValue || otpValue.length !== this.otpLength) {
       this.setError('Please enter complete 4-digit OTP.');
       return;
     }
 
     this.isProcessing = true;
-
-    const payload = {
-      otp: otpValue,
-      email: this.email,
-    };
-
+    const payload = { otp: otpValue, email: this.email };
     console.log('🔍 OTP Verification Payload:', payload);
 
     this.scouterService.verifyOtp(payload).subscribe({
       next: (res: any) => {
         console.log('✅ OTP verified successfully', res);
         this.isProcessing = false;
-
-        // Update user verification status
         this.updateUserVerificationStatus();
-
         this.toast.openSnackBar('Account verified successfully!', 'success');
-
-        // Navigate to appropriate page
         this.handleSuccessfulVerification();
       },
       error: (err: any) => {
         console.error('❌ OTP verification failed', err);
         this.isProcessing = false;
-
-        // More specific error messages
         if (err.status === 422) {
           this.setError(
             'The OTP you entered is invalid or has expired. Please try again or request a new OTP.'
@@ -239,13 +209,11 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   private updateUserVerificationStatus() {
-    // Update localStorage user data to mark as verified
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const user = JSON.parse(userData);
 
-        // Update verification status in multiple possible locations
         user.isVerified = true;
         user.verified = true;
         user.emailVerified = true;
@@ -272,7 +240,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Clear pending verification
     localStorage.removeItem('pending_verification');
   }
 
@@ -289,8 +256,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Navigate based on role
-    const routes: { [key: string]: string } = {
+    const routes: Record<string, string> = {
       scouter: '/scouter/dashboard',
       talent: '/talent/dashboard',
       admin: '/admin/dashboard',
@@ -299,9 +265,8 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const route = routes[role] || '/auth/login';
     console.log('🧭 Navigating to:', route);
 
-    // Small delay for better UX
-    setTimeout(() => {
-      this.router.navigateByUrl(route, { replaceUrl: true });
+    setTimeout(async () => {
+      await this.router.navigateByUrl(route, { replaceUrl: true });
     }, 1500);
   }
 
@@ -310,7 +275,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     this.sendOtpAutomatically();
   }
 
-  // UI Helpers
   private startCountdown() {
     clearInterval(this.timer);
     this.countdown = 120;
@@ -328,7 +292,6 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     if (!user || !domain) return '***@***';
 
     if (user.length <= 2) return `***@${domain}`;
-
     const maskedUser =
       user.slice(0, 2) + '*'.repeat(Math.min(3, user.length - 2));
     return `${maskedUser}@${domain}`;
@@ -340,27 +303,22 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     setTimeout(() => (this.errorMessage = ''), 5000);
   }
 
-  // Navigation
-  goBack() {
-    this.router.navigate(['/auth/login']);
+  async goBack():Promise<void> {
+   await this.router.navigate(['/auth/login']);
   }
 
-  goToLogin() {
-    this.router.navigate(['/auth/login']);
+ async goToLogin():Promise<void> {
+    await this.router.navigate(['/auth/login']);
   }
 
-
+  // Prevents accidental reload or refresh during OTP verification
   @HostListener('window:keydown', ['$event'])
   disableReloadKeys(event: KeyboardEvent) {
-    if (
-      (event.key === 'F5') ||
-      ((event.ctrlKey || event.metaKey) && event.key === 'r')
-    ) {
+    if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key === 'r')) {
       event.preventDefault();
-      alert('Page reload is disabled.');
+      alert('Page reload is disabled during verification.');
     }
   }
-
 
   @HostListener('window:beforeunload', ['$event'])
   preventBrowserRefresh(event: BeforeUnloadEvent) {

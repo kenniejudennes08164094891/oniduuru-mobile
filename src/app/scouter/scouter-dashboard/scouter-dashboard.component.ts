@@ -98,7 +98,7 @@ export class ScouterDashboardComponent implements OnInit {
     const storageHandler = (event: StorageEvent) => {
       if (event.key === 'notification_count') {
         const newCount = parseInt(event.newValue || '0', 10);
-        console.log('🔄 Dashboard: Notification count updated to', newCount);
+      //  console.log('🔄 Dashboard: Notification count updated to', newCount);
         this.notificationCount = newCount;
       }
     };
@@ -135,7 +135,7 @@ export class ScouterDashboardComponent implements OnInit {
       try {
         const parsedUser = JSON.parse(userData);
         this.userName = this.extractUserName(parsedUser);
-        console.log('✅ User name from localStorage:', this.userName);
+      //  console.log('✅ User name from localStorage:', this.userName);
         return;
       } catch (error) {
         console.error('Error parsing user_data from localStorage:', error);
@@ -150,7 +150,7 @@ export class ScouterDashboardComponent implements OnInit {
   private extractUserName(userData: any): string {
     if (!userData) return 'User';
 
-    console.log('🔍 Extracting user name from:', userData);
+  //  console.log('🔍 Extracting user name from:', userData);
 
     // Try different possible structures and property names
     const user =
@@ -170,7 +170,7 @@ export class ScouterDashboardComponent implements OnInit {
       user.email?.split('@')[0] || // Use email username as fallback
       'User';
 
-    console.log('✅ Extracted user name:', fullName);
+    //console.log('✅ Extracted user name:', fullName);
     return fullName;
   }
 
