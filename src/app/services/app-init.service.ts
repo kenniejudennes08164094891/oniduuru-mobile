@@ -126,7 +126,7 @@ export class AppInitService {
     }
   }
 
-  /**  Extract user role from nested structures*/
+  /** Extract user role from nested structures*/
   private extractUserRole(userData: any): string {
     if (!userData) return '';
     const roleSources = [
