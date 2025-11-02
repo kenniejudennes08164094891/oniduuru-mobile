@@ -109,12 +109,12 @@ export class AppInitService {
     localStorage.setItem('pending_verification', JSON.stringify(otpData));
 
     if (role === 'scouter') {
-      await this.router.navigate(['/scouter/verify'], {
+      await this.router.navigate(['/auth/verify-otp'], {
         replaceUrl: true,
         state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
       });
     } else if (role === 'talent') {
-      await this.router.navigate(['/talent/verify'], {
+      await this.router.navigate(['/auth/verify-otp'], {
         replaceUrl: true,
         state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
       });

@@ -258,8 +258,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
     const routes: Record<string, string> = {
       scouter: '/scouter/dashboard',
-      talent: '/talent/dashboard',
-      admin: '/admin/dashboard',
+      talent: '/talent/dashboard'
     };
 
     const route = routes[role] || '/auth/login';
