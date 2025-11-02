@@ -1,0 +1,53 @@
+<ion-header class="shadow-none border-b border-gray-200">
+  <ion-toolbar class="flex justify-between items-center px-4">
+    <div class="flex items-center gap-2">
+      <img src="assets/logo.svg" alt="logo" class="h-6" />
+      <h1 class="text-lg font-semibold">Oniduuruu</h1>
+    </div>
+    <ion-button fill="clear" (click)="goBack()">Back</ion-button>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="px-4 mt-4">
+  <h2 class="text-xl font-semibold mb-4">Create an account</h2>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-gray-300 text-sm font-medium mb-6">
+    <button
+      *ngFor="let step of steps; let i = index"
+      class="flex-1 text-center py-2 relative"
+      [ngClass]="{
+        'text-red-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-red-600': currentStep === i,
+        'text-gray-500': currentStep !== i
+      }"
+    >
+      {{ step.label }}
+    </button>
+  </div>
+
+  <!-- Step Components -->
+  <ng-container [ngSwitch]="currentStep">
+    <app-talent-details
+      *ngSwitchCase="0"
+      (next)="goNext()"
+    ></app-talent-details>
+
+    <app-other-details
+      *ngSwitchCase="1"
+      (previous)="goPrevious()"
+      (next)="goNext()"
+    ></app-other-details>
+
+    <app-login-credentials
+      *ngSwitchCase="2"
+      (previous)="goPrevious()"
+      (next)="goNext()"
+    ></app-login-credentials>
+
+    <app-verify-credentials
+      *ngSwitchCase="3"
+      (previous)="goPrevious()"
+      (completed)="finishOnboarding()"
+    ></app-verify-credentials>
+  </ng-container>
+</ion-content>

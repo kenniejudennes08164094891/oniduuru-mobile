@@ -1,3 +1,26 @@
-<p>
-  other-details works!
-</p>
+<form class="space-y-4">
+  <ion-select label="Skill Level" [(ngModel)]="skillLevel" name="skillLevel" placeholder="Select skill level">
+    <ion-select-option value="Beginner">Beginner</ion-select-option>
+    <ion-select-option value="Intermediate">Intermediate</ion-select-option>
+    <ion-select-option value="Expert">Expert</ion-select-option>
+  </ion-select>
+
+  <ion-select label="Skill Set" [(ngModel)]="skillSet" name="skillSet" placeholder="Select skill set">
+    <ion-select-option value="Set 1">Set 1</ion-select-option>
+    <ion-select-option value="Set 2">Set 2</ion-select-option>
+    <ion-select-option value="Set 3">Set 3</ion-select-option>
+  </ion-select>
+
+  <ion-input placeholder="Educational Background" [(ngModel)]="education" name="education"></ion-input>
+
+  <ion-select label="Pay Range" [(ngModel)]="payRange" name="payRange" placeholder="Select pay range">
+    <ion-select-option value="₦10,000 - ₦50,000">₦10,000 - ₦50,000</ion-select-option>
+    <ion-select-option value="₦50,000 - ₦100,000">₦50,000 - ₦100,000</ion-select-option>
+    <ion-select-option value="₦100,000+">₦100,000+</ion-select-option>
+  </ion-select>
+
+  <div class="flex flex-col gap-2 mt-6">
+    <ion-button expand="block" color="dark" (click)="onNext()" [disabled]="!formValid()">Next</ion-button>
+    <ion-button expand="block" fill="outline" (click)="onPrevious()">Previous</ion-button>
+  </div>
+</form>

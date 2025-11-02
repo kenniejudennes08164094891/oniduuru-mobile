@@ -1,149 +1,129 @@
 <body>
-  <ion-header [translucent]="false">
-    <mat-toolbar
-      class="flex justify-between items-center shadow-lg px-4 navbar h-20"
-    >
-      <span class="text-lg font-semibold">∯ Oniduuru</span>
-      <div class="flex gap-3">
-        <button (click)="signupSelect()" mat-button class="text-sm">
-          Create Account
-        </button>
-      </div>
-    </mat-toolbar>
-  </ion-header>
+<ion-header [translucent]="false">
+  <mat-toolbar class="flex justify-between items-center shadow-lg px-4 navbar h-20">
+    <span class="text-lg font-semibold">∯ Oniduuru</span>
+    <div class="flex gap-3">
+      <button (click)="signupSelect()" mat-button class="text-sm">
+        Create Account
+      </button>
+    </div>
+  </mat-toolbar>
+</ion-header>
 
-  <ion-content class="h-screen [--background:transparent] p-0">
-    <ion-grid class="h-full grid grid-rows-4 bg-transparent float-left w-full">
-      <!-- Row 1 -->
-      <ion-row class="flex justify-center items-center bg-transparent">
-        <ion-col class="text-white text-center"> </ion-col>
-      </ion-row>
+<ion-content class="h-screen [--background:transparent] p-0">
+  <ion-grid class="h-full grid grid-rows-4 bg-transparent float-left w-full">
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center"></ion-col>
+    </ion-row>
 
-      <!-- Row 2 -->
-      <ion-row class="flex justify-center items-center bg-transparent">
-        <ion-col class="text-white text-center">
-          <form
-            [formGroup]="loginForm"
-            (ngSubmit)="submitForm()"
-            class="max-w-sm mx-auto"
-          >
-            <h1 class="text-2xl font-bold mb-4 float-left" id="signIn-text">
-              Welcome back — sign in
-            </h1>
-            <br /><br />
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center">
+        <form [formGroup]="loginForm" (ngSubmit)="submitForm()" class="max-w-sm mx-auto">
+          <h1 class="text-2xl font-bold mb-4 float-left" id="signIn-text">
+            Welcome back — sign in
+          </h1>
+          <br /><br />
 
-            <!-- Email Field -->
-            <div class="mb-5">
-              <label
-                for="email"
-                class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white float-left"
-                >Email</label
-              >
+          <div class="mb-5">
+            <label
+              for="email"
+              class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white float-left"
+            >Email</label
+            >
+            <input
+              type="email"
+              formControlName="email"
+              id="email"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Input email"
+              required
+              [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            />
+            <div
+              *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+              class="text-red-400 text-xs mt-1 text-left"
+            >
+              <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</span>
+              <span *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label
+              class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white text-left"
+            >Your password</label
+            >
+            <div class="relative">
               <input
-                type="email"
-                formControlName="email"
-                id="email"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Input email"
-                required
-                [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+                id="password"
+                [type]="passwordFieldType"
+                formControlName="password"
+                class="border border-[#D0D5DD] text-black px-3 py-2 w-full rounded-lg pr-10"
+                placeholder="Enter password"
+                [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
               />
-              <div
-                *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-                class="text-red-400 text-xs mt-1 text-left"
-              >
-                <span *ngIf="loginForm.get('email')?.errors?.['required']"
-                  >Email is required</span
-                >
-                <span *ngIf="loginForm.get('email')?.errors?.['email']"
-                  >Please enter a valid email</span
-                >
-              </div>
-            </div>
-
-            <!-- Password Field -->
-            <div class="mb-5">
-              <label
-                class="block mb-2 text-sm font-medium text-[#FFFFFF] dark:text-white text-left"
-                >Your password</label
-              >
-              <div class="relative">
-                <input
-                  id="password"
-                  [type]="passwordFieldType"
-                  formControlName="password"
-                  class="border border-[#D0D5DD] text-black px-3 py-2 w-full rounded-lg pr-10"
-                  placeholder="Enter password"
-                  [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-                />
-                <button
-                  type="button"
-                  (click)="togglePasswordVisibility()"
-                  class="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                >
-                  <ion-icon
-                    [name]="showEye ? 'eye-off-outline' : 'eye-outline'"
-                  ></ion-icon>
-                </button>
-              </div>
-              <div
-                *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-                class="text-red-400 text-xs mt-1 text-left"
-              >
-                Password is required
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between mb-5">
-              <!-- Remember me -->
-              <div class="flex items-center">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  class="w-4 h-4 cursor-pointer text-[#101323] bg-[#ffff] border-[#101323] rounded focus:ring-[#101323] dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <label
-                  for="remember"
-                  class="ml-2 text-sm font-medium text-[#FFFFFF] dark:text-gray-300"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <!-- Forgot password -->
               <button
                 type="button"
-                class="text-sm text-[#FFFFFF] hover:underline dark:text-blue-500"
-                (click)="forgotPassword()"
+                (click)="togglePasswordVisibility()"
+                class="absolute inset-y-0 right-3 flex items-center text-gray-500"
               >
-                Forgot password?
+                <ion-icon [name]="showEye ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
               </button>
             </div>
-
-            <!-- Submit Button -->
-            <ion-button
-              (click)="submitForm()"
-              type="submit"
-              [disabled]="isLoading || loginForm.invalid"
-              expand="block"
-              [color]="loginForm.valid ? 'primary' : 'medium'"
-              class="text-[#FFFFFF]"
+            <div
+              *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+              class="text-red-400 text-xs mt-1 text-left"
             >
-              <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
-              <span *ngIf="!isLoading">{{ loginText }}</span>
-            </ion-button>
-          </form>
-        </ion-col>
-      </ion-row>
+              Password is required
+            </div>
+          </div>
 
-      <!-- Row 3 & 4 -->
-      <ion-row class="flex justify-center items-center bg-transparent">
-        <ion-col class="text-white text-center"> </ion-col>
-      </ion-row>
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center">
+              <input
+                id="remember"
+                type="checkbox"
+                class="w-4 h-4 cursor-pointer text-[#101323] bg-[#ffff] border-[#101323] rounded focus:ring-[#101323] dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label
+                for="remember"
+                class="ml-2 text-sm font-medium text-[#FFFFFF] dark:text-gray-300"
+              >
+                Remember me
+              </label>
+            </div>
 
-      <ion-row class="flex justify-center items-center bg-transparent">
-        <ion-col class="text-white text-center"> </ion-col>
-      </ion-row>
-    </ion-grid>
-  </ion-content>
+            <button
+              type="button"
+              class="text-sm text-[#FFFFFF] hover:underline dark:text-blue-500"
+              (click)="forgotPassword()"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <ion-button
+            (click)="submitForm()"
+            type="submit"
+            [disabled]="isLoading || loginForm.invalid"
+            expand="block"
+            [color]="loginForm.valid ? 'primary' : 'medium'"
+            class="text-[#FFFFFF]"
+          >
+            <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+            <span *ngIf="!isLoading">{{ loginText }}</span>
+          </ion-button>
+        </form>
+      </ion-col>
+    </ion-row>
+
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center"></ion-col>
+    </ion-row>
+
+    <ion-row class="flex justify-center items-center bg-transparent">
+      <ion-col class="text-white text-center"></ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
 </body>

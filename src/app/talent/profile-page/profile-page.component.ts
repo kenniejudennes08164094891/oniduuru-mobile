@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { Router } from '@angular/router';
-import { Location } from '@angular/common';
-import { IonContent } from '@ionic/angular';
-import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import {Component, OnInit, ViewChild, ElementRef} from '@angular/core';
+import {Router} from '@angular/router';
+import {Location} from '@angular/common';
+import {IonContent} from '@ionic/angular';
+import {FormBuilder, FormGroup, FormArray, Validators} from '@angular/forms';
 import {completeOnboardingEnums, dropdownItems, imageIcons, TalentProfile} from "../../models/stores";
 import {AuthService} from "../../services/auth.service";
 import {ToastsService} from "../../services/toasts.service";
@@ -62,9 +62,11 @@ export class ProfilePageComponent implements OnInit {
 
   selectedFile: File | any = null;
   previewUrl: string | null = null;
+  videoResponseEnums: any = null;
 
   uploadProgress = 0;
   isUploading = false;
+  showSpinner:boolean = true;
 
   constructor(
     private router: Router,
@@ -82,8 +84,9 @@ export class ProfilePageComponent implements OnInit {
   fetchTalentProfile() {
     const talentProfile = this.authService.decodeTalentDetails();
     console.clear();
+    setTimeout(() => this.showSpinner = false, 1000);
     this.completeOnboardingEnums = JSON.parse(talentProfile?.completeOnboarding);
-    console.log("completeOnboardingEnums>>",this.completeOnboardingEnums);
+    console.log("completeOnboardingEnums>>", this.completeOnboardingEnums);
     this.talentId = talentProfile?.talentId ?? this.talentFullProfile?.talentId;
     this.talent = talentProfile;
     this.talent = {
@@ -162,9 +165,10 @@ export class ProfilePageComponent implements OnInit {
           } else if (err?.error?.message === "You can only replace an existing profile picture, and not create another!") {
             // replace the profile picture
             this.talentService.replaceTalentPicture(data).subscribe({
-              next: (response: any) => {
+              next: async (response: any) => {
                 //console.log("response updates>>>", response);
                 this.toast.openSnackBar(`${response?.message}`, 'success');
+               // await this.ngOnInit();
                 location.reload();
               },
               error: (err: any) => {
@@ -185,10 +189,11 @@ export class ProfilePageComponent implements OnInit {
       // replace profile pic
       //console.log('data>>>', data)
       this.talentService.replaceTalentPicture(data).subscribe({
-        next: (response: any) => {
+        next: async (response: any) => {
           //  console.log("response updates>>>", response);
           this.toast.openSnackBar(`${response?.message}`, 'success');
-          // location.reload();
+        // await this.ngOnInit();
+          location.reload();
         },
         error: (err: any) => {
           console.error("err>>>", err);
@@ -208,6 +213,7 @@ export class ProfilePageComponent implements OnInit {
     this.talentService.getTalentPicture(this.talentId).subscribe({
       next: (response: any) => {
         this.fileUploads = `${response?.data?.base64Picture}`;
+        localStorage.setItem('profilePicture', response?.data?.base64Picture);
         this.emmitterService.setProfilePicture(`${response?.data?.base64Picture}`);
         //  this.toast.openSnackBar(`${response?.message}`, 'success');
       },
@@ -349,7 +355,6 @@ export class ProfilePageComponent implements OnInit {
         }
       })
     }
-
   }
 
   createSecurityQuestion() {
@@ -443,100 +448,120 @@ export class ProfilePageComponent implements OnInit {
       this.selectedFile = file;
       const maxSize = 200 * 1024 * 1024;
       if (file.size > maxSize) {
-        this.toast.openSnackBar('Video size exceeds 200MB limit.','success');
+        this.toast.openSnackBar('Video size exceeds 200MB limit.', 'success');
         return;
       }
 
       // Preview video
-      const reader:FileReader = new FileReader();
+      const reader: FileReader = new FileReader();
       reader.onload = (e: any) => {
         this.previewUrl = e.target.result;
         //console.log("previewUrl>>", this.previewUrl);
       }
       reader.readAsDataURL(file);
+      this.videoResponseEnums.title = file?.name;
     } else {
-      this.toast.openSnackBar('Only MP4 videos are allowed.','success');
+      this.toast.openSnackBar('Only MP4 videos are allowed.', 'success');
       this.selectedFile = null;
       this.previewUrl = null;
     }
   }
 
- async uploadTalentReel():Promise<void>{
-   this.isUploading = true;
-   this.uploadProgress = 0;
-   console.log("completeOnboardingEnums>>", {
-     completeOnboardingEnums: this.completeOnboardingEnums,
-     previewUrl: this.previewUrl?.split(',')[1]
-   });
+  uploadNewReel() {
+    this.previewUrl = null;
+    this.emmitterService.setReplacedReel(true);
+  }
 
-    if(!this.completeOnboardingEnums.uploadedReel){
-      // Replace reel
-      const fetchUrlFromCloudinary = await this.handleCloudinaryUploads();
-      console.log("to replace reel>>", fetchUrlFromCloudinary);
-      const payload = {
-        title: `${this.talent.fullName?.split(' ')[0]} talent reel`,
-        videoUrl: fetchUrlFromCloudinary.response.secure_url,
-      }
-      const replaceReel = await firstValueFrom(this.talentService.replaceTalentReel(payload, this.talentId));
-      if(replaceReel){
-        this.uploadProgress = 100;
-        this.toast.openSnackBar("Reel Updated successfully!", 'success');
+  async uploadTalentReel(): Promise<void> {
+    try {
+      this.updateTalentProfile();
+      this.isUploading = true;
+      this.uploadProgress = 0;
+      this.updateText = "processing...";
+      // console.log("completeOnboardingEnums>>", {
+      //   completeOnboardingEnums: this.completeOnboardingEnums,
+      //   previewUrl: this.previewUrl?.split(',')[1]
+      // });
+
+      console.clear();
+      const isReplacedReel: boolean | null = await firstValueFrom(this.emmitterService.getReplaceReel());
+      if (!this.completeOnboardingEnums.uploadedReel || isReplacedReel === true) {
+        // Replace reel
+        const fetchUrlFromCloudinary = await this.handleCloudinaryUploads();
+        //console.log("to replace reel>>", fetchUrlFromCloudinary);
+        const payload = {
+          title: `${this.talent.fullName?.split(' ')[0]} talent reel`,
+          videoUrl: fetchUrlFromCloudinary.response.secure_url,
+        }
+        this.previewUrl = fetchUrlFromCloudinary.response.secure_url;
+       // window.open(this.previewUrl as string, '_blank')
+        const replaceReel = await firstValueFrom(this.talentService.replaceTalentReel(payload, this.talentId));
+        if (replaceReel) {
+          this.uploadProgress = 100;
+          this.toast.openSnackBar("Reel Updated successfully!", 'success');
+          this.updateText = "Save";
+        }
+
+      } else {
+        // upload reel
+        const fetchUrlFromCloudinary = await this.handleCloudinaryUploads();
+        console.log("to upload reel>>", fetchUrlFromCloudinary);
+        const payload = {
+          title: `${this.talent.fullName?.split(' ')[0]} talent reel`,
+          videoUrl: fetchUrlFromCloudinary.response.secure_url,
+          talentId: this.talentId
+        }
+        const uploadReel = await firstValueFrom(this.talentService.uploadTalentReel(payload));
+        if (uploadReel) {
+          this.uploadProgress = 100;
+          this.toast.openSnackBar("Reel uploaded successfully!", 'success');
+          this.updateText = "Save";
+        }
       }
 
-    }else{
-      // upload reel
-      const fetchUrlFromCloudinary = await this.handleCloudinaryUploads();
-      console.log("to upload reel>>", fetchUrlFromCloudinary);
-      const payload = {
-        title: `${this.talent.fullName?.split(' ')[0]} talent reel`,
-        videoUrl: fetchUrlFromCloudinary.response.secure_url,
-        talentId: this.talentId
-      }
-      const uploadReel = await firstValueFrom(this.talentService.uploadTalentReel(payload));
-      if(uploadReel){
-        this.uploadProgress = 100;
-        this.toast.openSnackBar("Reel uploaded successfully!", 'success');
-      }
+    } catch (e) {
+      this.updateText = "Save";
+      this.toast.openSnackBar("An error occurred while saving your profile!", 'error');
     }
   }
 
-  async handleCloudinaryUploads():Promise<any>{
-   try{
-     const cloudinaryResponse = await this.handleCloudinaryVideo();
-     const formData = new FormData();
-     formData.append('file', this.selectedFile);
-     formData.append('api_key', cloudinaryResponse.apiKey);
-     formData.append('timestamp', cloudinaryResponse.timestamp);
-     formData.append('signature', cloudinaryResponse.signature);
-     formData.append('resource_type', 'video');
-     const response = await lastValueFrom(
-       this.talentService.fetchUrlFromCloudinary(
-         `${cloudinaryResponse.cloudinaryBaseUrl}/${cloudinaryResponse.cloudinaryCloudName}/video/upload`,
-         formData
-       )
-     )
+  async handleCloudinaryUploads(): Promise<any> {
+    try {
+      const cloudinaryResponse = await this.handleCloudinaryVideo();
+      const formData = new FormData();
+      formData.append('file', this.selectedFile);
+      formData.append('api_key', cloudinaryResponse.apiKey);
+      formData.append('timestamp', cloudinaryResponse.timestamp);
+      formData.append('signature', cloudinaryResponse.signature);
+      formData.append('resource_type', 'video');
+      const response = await lastValueFrom(
+        this.talentService.fetchUrlFromCloudinary(
+          `${cloudinaryResponse.cloudinaryBaseUrl}/${cloudinaryResponse.cloudinaryCloudName}/video/upload`,
+          formData
+        )
+      )
 
-     if(response){
-       this.isUploading = false;
-       console.clear();
-       console.log("cloudinary data>>", response);
-       return {response,formData}
-     }
-   }catch (e) {
-     this.toast.openSnackBar("An error occurred while fetching video from cloudinary", 'error');
-   }
+      if (response) {
+        this.isUploading = false;
+        console.clear();
+        console.log("cloudinary data>>", response);
+        return {response, formData}
+      }
+    } catch (e) {
+      this.toast.openSnackBar("An error occurred while fetching video from cloudinary", 'error');
+    }
   }
 
-  async handleCloudinaryVideo():Promise<any>{
-    try{
+  async handleCloudinaryVideo(): Promise<any> {
+    try {
       const response = await firstValueFrom(this.talentService.fetchCloudinarySecrets())
       return JSON.parse(atob(response.data));
-    }catch (e:any) {
+    } catch (e: any) {
       this.toast.openSnackBar('Error from Cloudinary uploads!', e);
     }
   }
-  async ngOnInit()
-  {
+
+  async ngOnInit() {
     this.securityForm = this.fb.group({
       questions: this.fb.array([]),
     });
@@ -548,7 +573,19 @@ export class ProfilePageComponent implements OnInit {
     this.getMySecurityQuestions();
     // Declare promises below:
     await this.getTalentProfileFromAPI();
+    await this.getTalentReel();
   }
+
+  async getTalentReel(): Promise<any> {
+    try {
+      const reelResponse = await firstValueFrom(this.talentService.fetchTalentReel(this.talentId));
+      // console.log("reelResponse>>",reelResponse);
+      this.previewUrl = reelResponse?.videoUrl ?? null;
+      this.videoResponseEnums = reelResponse?.videoUrl ? reelResponse : null;
+    } catch (e: any) {
+      this.toast.openSnackBar("Error while fetching talent's Reel!", e);
+    }
+  }
+
+
 }
-
-

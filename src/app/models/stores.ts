@@ -13,7 +13,6 @@ export const accountOptions = [
     param: 'scouter_onboarding',
   },
 ];
-
 export const imageIcons = {
   scouterImage: '/assets/images/scouter.jpg',
   talentImage: '/assets/images/talent.png',

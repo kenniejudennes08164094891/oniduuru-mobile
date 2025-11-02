@@ -1,17 +1,24 @@
-import { Component, OnInit } from '@angular/core';
-import { IonicModule } from "@ionic/angular";
+import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'app-talent-details',
   templateUrl: './talent-details.component.html',
-  styleUrls: ['./talent-details.component.scss'],
-  imports: [IonicModule],
-  standalone: true
 })
-export class TalentDetailsComponent  implements OnInit {
+export class TalentDetailsComponent {
+  @Output() next = new EventEmitter<void>();
 
-  constructor() { }
+  fullName = '';
+  phone = '';
+  email = '';
+  location = '';
 
-  ngOnInit() {}
+  formValid() {
+    return this.fullName && this.phone && this.email && this.location;
+  }
 
+  onNext() {
+    if (this.formValid()) {
+      this.next.emit();
+    }
+  }
 }
