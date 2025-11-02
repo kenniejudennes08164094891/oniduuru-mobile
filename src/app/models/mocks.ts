@@ -69,6 +69,12 @@ export interface MockPayment {
   location: Location;
 }
 
+
+export interface FilterScouterParam {
+  key: string;
+  param: string;
+}
+
 export const MockRecentHires: MockPayment[] = [
   {
     id: '1',
@@ -1534,3 +1540,268 @@ export interface Stat {
   color?: string;
   suffix?: string;
 }
+
+export interface HireDetails {
+  id: string;
+  amountToPay: string;
+  dateOfHire: string;
+  startDate: string;
+  hireStatus: 'offer-accepted' | 'pending' | 'rejected' | string; // adjust enum values if you have others
+  jobDescription: string;
+  marketHireId: string;
+  satisFactoryCommentByScouter: string;
+  satisFactoryCommentByTalent: string;
+  scouterId: string;
+  scouterName: string;
+  scouterEmail: string;
+  scouterPhoneNumber: string;
+  scouterPicture: string;
+  talentId: string;
+  talentName: string;
+  talentEmail: string;
+  talentPicture: string;
+}
+
+
+export const marketHires:HireDetails[] = [
+  {
+    id: "38",
+    amountToPay: "450,000",
+    dateOfHire: "Oct 5, 2025, 11:19 AM",
+    startDate: "Oct 11, 2025",
+    hireStatus: "offer-accepted",
+    jobDescription: "For events and contents",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-5-October-2025-11:19am",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent: "",
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "37",
+    amountToPay: "900,000",
+    dateOfHire: "Sep 19, 2025, 9:30 AM",
+    startDate: "Sep 30, 2025",
+    hireStatus: "offer-declined",
+    jobDescription:
+      "i want your devops and cinematography skills for my startup",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-19-September-2025-9:30am",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"Oct 5, 2025, 3:50 PM","remark":"Scouter didn\'t pay me the full pay the last time. He shouldn\'t contact me again!!!"}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "36",
+    amountToPay: "500,000",
+    dateOfHire: "Sep 7, 2025, 4:39 PM",
+    startDate: "Sep 11, 2025",
+    hireStatus: "offer-declined",
+    jobDescription:
+      "I need a film maker/ content creator for my film set behind-the-scenes",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-7-September-2025-4:39pm",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"Oct 5, 2025, 3:18 PM","remark":"The pay is too small. Please kindly increase the pay. Thank you."}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "35",
+    amountToPay: "1,600,000",
+    dateOfHire: "Aug 29, 2025, 10:17 AM",
+    startDate: "Aug 30, 2025",
+    hireStatus: "offer-accepted",
+    jobDescription: "I want a devops engineer to help deploy my products",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-29-August-2025-9:52am",
+    satisFactoryCommentByScouter:
+      '{"scouterId":"scouter/5866/8June2024","dateOfComment":"Aug 29, 2025, 10:17 AM","remark":"(Proposal Reconsidered)","rating":0}',
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"Aug 29, 2025, 10:15 AM","remark":"Pay me my 1.6M"}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "34",
+    amountToPay: "900,000",
+    dateOfHire: "May 24, 2025, 10:43 AM",
+    startDate: "May 27, 2025",
+    hireStatus: "awaiting-acceptance",
+    jobDescription:
+      "i want you to build a software product for me on a 3 months contract.",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-24-May-2025-10:43am",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"Oct 5, 2025, 3:42 PM","remark":"The scouter didnt treat me nice the last time. Please do not contact me again!!!."}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "33",
+    amountToPay: "1,000,000",
+    dateOfHire: "Mar 19, 2025, 7:12 PM",
+    startDate: "Mar 20, 2025",
+    hireStatus: "offer-accepted",
+    jobDescription: "For my wedding",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-19-March-2025-7:12pm",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent: "",
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "31",
+    amountToPay: "900,000",
+    dateOfHire: "Dec 26, 2024, 3:17 PM",
+    startDate: "Dec 27, 2024",
+    hireStatus: "awaiting-acceptance",
+    jobDescription: "Devops engineer needed at Shoft Africa",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-26-December-2024-3:17pm",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"Oct 5, 2025, 3:45 PM","remark":"Scouter treated me badly the last time. He shouldn\'t contact me again!!!"}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "30",
+    amountToPay: "500,000",
+    dateOfHire: "Nov 23, 2024, 10:20 AM",
+    startDate: "Nov 24, 2024",
+    hireStatus: "offer-accepted",
+    jobDescription: "I need you to develop a site for me",
+    marketHireId:
+      "talent/1302/8June2024-scouter/4212/23November2024-23-November-2024-10:20am",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent: "",
+    scouterId: "scouter/4212/23November2024",
+    scouterName: "Kolade Josiah Taiwo",
+    scouterEmail: "kolytaiwo@gmail.com",
+    scouterPhoneNumber: "07032895486",
+    scouterPicture: "/9j/4AAUSkZJRgABAQEBLAEsAABBTVBG/+EqCUV4aWYAAE1NA",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "28",
+    amountToPay: "750,000",
+    dateOfHire: "Oct 15, 2024, 11:55 PM",
+    startDate: "Oct 17, 2024",
+    hireStatus: "offer-accepted",
+    jobDescription: "I need a DevOps engineer",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-15-October-2024-11:55pm",
+    satisFactoryCommentByScouter: "",
+    satisFactoryCommentByTalent:
+      '{"talentId":"talent/1302/8June2024","dateOfComment":"May 24, 2025, 10:23 AM","remark":"kenny did a great work","rating":5}',
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+  {
+    id: "27",
+    amountToPay: "700,000",
+    dateOfHire: "Oct 6, 2024, 10:53 AM",
+    startDate: "Oct 10, 2024",
+    hireStatus: "offer-accepted",
+    jobDescription: "i need a software dev for my startup.",
+    marketHireId:
+      "talent/1302/8June2024-scouter/5866/8June2024-6-October-2024-10:53am",
+    satisFactoryCommentByScouter:
+      '{"scouterId":"scouter/5866/8June2024","dateOfComment":"May 24, 2025, 10:46 AM","remark":"jude did a Great work","rating":5}',
+    satisFactoryCommentByTalent: "",
+    scouterId: "scouter/5866/8June2024",
+    scouterName: "Omosehin Kehinde Chisom",
+    scouterEmail: "kehindejude1995@gmail.com",
+    scouterPhoneNumber: "09031251953",
+    scouterPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1758929265/nest_uploads/mum38cu8iztvcn1keizl.png",
+    talentId: "talent/1302/8June2024",
+    talentName: "Omosehin Kehinde Jude",
+    talentEmail: "judeomosehin@gmail.com",
+    talentPicture:
+      "https://res.cloudinary.com/dosiy2cmk/image/upload/v1759003483/nest_uploads/fgofddtxujcggsddyskx.png",
+  },
+];

@@ -6,6 +6,7 @@ import { AuthPageRoutingModule } from './auth-routing.module';
 import { AuthPage } from './auth.page';
 import { WelcomePageComponent } from './welcome-page/welcome-page.component';
 import {MatToolbarModule} from "@angular/material/toolbar";
+import {VerifyOtpComponent} from "./verify-otp/verify-otp.component";
 
 
 
@@ -19,6 +20,6 @@ import {MatToolbarModule} from "@angular/material/toolbar";
     MatToolbarModule,
     ReactiveFormsModule
   ],
-  declarations: [AuthPage]
+  declarations: [AuthPage,VerifyOtpComponent]
 })
 export class AuthPageModule {}

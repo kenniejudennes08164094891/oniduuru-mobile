@@ -56,13 +56,13 @@ export class AppComponent implements OnInit {
 
   async navigateAndCloseMenu(route: string) {
     if(route === "/scouter/dashboard"){
-      const isScouter = this.authService.decodeScouterDetails()?.details?.user?.role ?? null;
-      const isTalent = this.authService.decodeTalentDetails()?.details?.user?.role ?? null;
+      const isScouter = this.authService.decodeScouterDetails()?.scouterId ?? null;
+      const isTalent = this.authService.decodeTalentDetails()?.talentId ?? null;
       console.log({isScouter, isTalent});
       await this.menuCtrl.close('scouter-menu');
       await this.router.navigate(
-        isScouter === 'scouter' ? [route] :
-          isTalent === 'talent' ? ['/talent/dashboard'] : ['/auth/login']
+        isScouter?.includes('scouter') ? [route] :
+          isTalent?.includes('talent') ? ['/talent/dashboard'] : ['/auth/login']
       );
 
     }else{

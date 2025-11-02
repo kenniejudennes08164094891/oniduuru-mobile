@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { EndpointService } from 'src/app/services/endpoint.service';
-import { PaginationParams } from 'src/app/models/mocks'; // or local interface
+import { PaginationParams,marketHires } from 'src/app/models/mocks'; // or local interface
 import { AuthService } from 'src/app/services/auth.service';
 @Component({
   selector: 'app-view-hires',
@@ -38,29 +38,32 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     }
   }
 
-  goToHireTransaction(hireId: string | number): void {
+  async goToHireTransaction(hireId: string | number): Promise<any> {
     console.log('Clicked hire:', hireId); // 👈 test log
-    this.router.navigate(['/talent/market-price-preposition', hireId]);
+   await this.router.navigate(['/talent/market-price-preposition', hireId]);
   }
   ngOnInit() : void {
     this.loadTalentName();
-       // 1) Prefer navigation state (set by dashboard)
-    const navMarkets = (history.state && history.state.markets) ? history.state.markets : null;
-    if (Array.isArray(navMarkets) && navMarkets.length) {
-      this.initialPaginatedHires = navMarkets;
-      this.paginatedHiresData = navMarkets;
-      sessionStorage.setItem('lastMarkets', JSON.stringify(navMarkets)); // optional
-      return;
-    }
+    //    // 1) Prefer navigation state (set by dashboard)
+    // const navMarkets = (history.state && history.state.markets) ? history.state.markets : null;
+    // if (Array.isArray(navMarkets) && navMarkets.length) {
+    //   this.initialPaginatedHires = navMarkets;
+    //   this.paginatedHiresData = navMarkets;
+    //   sessionStorage.setItem('lastMarkets', JSON.stringify(navMarkets)); // optional
+    //   return;
+    // }
 
     // 2) Try sessionStorage fallback
-    const cached = sessionStorage.getItem('lastMarkets');
-    if (cached) {
-      try { this.initialPaginatedHires = JSON.parse(cached); 
-        this.paginatedHiresData = this.initialPaginatedHires;
-        return;
-      } catch { /* ignore */ }
-    }
+    // const cached = sessionStorage.getItem('lastMarkets');
+    // if (cached) {
+    //   try {
+    //     this.initialPaginatedHires = JSON.parse(cached);
+    //     this.paginatedHiresData = this.initialPaginatedHires;
+    //     console.log("cached>>>",this.initialPaginatedHires);
+    //     return;
+    //   } catch { /* ignore */ }
+    // }
+
 
     // 3) Final fallback: call API directly
     if (!this.talentId) return;
@@ -68,6 +71,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     this.endpointService.fetchMarketsByTalent(this.talentId, paginationParams, '', '').subscribe({
       next: (res: any) => {
         const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
+        console.clear();
+        console.log("decoded>>",decoded); // use this as mock data: marketHires
         this.initialPaginatedHires = decoded;
         this.paginatedHiresData = decoded;
         sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
@@ -78,9 +83,9 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         this.paginatedHiresData = [];
       }
     });
-    
+
     this.paginatedHiresData = this.initialPaginatedHires;
-    
+
     // set current month
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',

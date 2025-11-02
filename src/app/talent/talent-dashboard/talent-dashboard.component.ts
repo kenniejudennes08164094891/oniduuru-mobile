@@ -123,7 +123,8 @@ export class TalentDashboardComponent implements OnInit {
 
 
   proceedToMarketProfile(): void {
-    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+    const talentProfile = localStorage.getItem('user_data') || localStorage.getItem('user_profile_data');
+    const talentId = talentProfile ? JSON.parse(talentProfile)?.talentId : null;
 
     if (!talentId) {
       alert('Talent ID not found. Please log in again.');
