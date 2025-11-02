@@ -192,7 +192,7 @@ export class ProfilePageComponent implements OnInit {
         next: async (response: any) => {
           //  console.log("response updates>>>", response);
           this.toast.openSnackBar(`${response?.message}`, 'success');
-        // await this.ngOnInit();
+        // await this.ngOnInit(); //
           location.reload();
         },
         error: (err: any) => {
