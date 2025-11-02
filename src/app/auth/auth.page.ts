@@ -265,43 +265,64 @@ export class AuthPage implements OnInit {
     return role || '';
   }
 
+  // In auth.page.ts - enhance handleLoginError
   private handleLoginError(err: any): void {
     let errorMessage = 'Login failed. Please try again.';
+    let actionMessage = '';
+    let showRetry = false;
 
     if (err?.status === 500) {
-      // ✅ More specific 500 error handling
-      const serverError = err?.error;
+      errorMessage = 'Our servers are experiencing issues.';
+      actionMessage = 'Please try again in a few moments.';
+      showRetry = true;
 
-      if (serverError?.message) {
-        errorMessage = `Server error: ${serverError.message}`;
-      } else if (err.statusText) {
-        errorMessage = `Server error: ${err.statusText}`;
-      } else {
-        errorMessage = 'Server is experiencing issues. Please try again later.';
-      }
-
-      console.error('🔧 Server 500 Error Details:', {
-        status: err.status,
-        statusText: err.statusText,
-        error: err.error,
-        url: err.url,
-      });
+      // Log detailed backend diagnosis
+      this.logBackendDiagnosis(err);
     } else if (err?.status === 0) {
-      errorMessage = 'Network error. Please check your internet connection.';
+      errorMessage = 'Cannot connect to our servers.';
+      actionMessage = 'Please check your internet connection.';
+      showRetry = true;
     } else if (err?.status === 401) {
-      errorMessage = 'Invalid email or password. Please try again.';
+      errorMessage = 'Invalid email or password.';
+      actionMessage = 'Please check your credentials and try again.';
     } else if (err?.error?.message) {
       errorMessage = err.error.message;
     }
 
+    // Show main error
     this.toast.openSnackBar(errorMessage, 'error');
 
-    // Additional debugging for developers
-    if (err?.status === 500) {
-      console.warn(
-        '⚠️  Server 500 Error - Check backend logs for more details'
-      );
+    // Show action message if available
+    if (actionMessage) {
+      setTimeout(() => {
+        this.toast.openSnackBar(actionMessage, 'info');
+      }, 1000);
     }
+
+    // Enable retry button for network/backend issues
+    if (showRetry) {
+      this.loginText = 'Retry Login';
+    }
+  }
+
+  private logBackendDiagnosis(err: any): void {
+    console.group('🔧 Backend 500 Error Diagnosis');
+    console.log('⏰ Time:', new Date().toISOString());
+    console.log('🔗 Endpoint:', err.url);
+    console.log('📡 HTTP Status:', err.status, err.statusText);
+    console.log('📦 Response Body:', err.error);
+    console.log('🌐 Network Info:', {
+      online: navigator.onLine,
+      userAgent: navigator.userAgent,
+    });
+    console.groupEnd();
+
+    // Suggest next steps
+    console.warn('🚨 Suggested actions:');
+    console.warn('1. Check if backend service is running');
+    console.warn('2. Verify database connections');
+    console.warn('3. Check backend logs for detailed error');
+    console.warn('4. Test API directly with Postman/curl');
   }
 
   private navigateByRole(role: string) {
