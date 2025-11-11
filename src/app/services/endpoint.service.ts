@@ -158,4 +158,9 @@ export class EndpointService {
     const url = `${environment.baseUrl}/${endpoints.replaceTalentReel}/${encodedTalentId}`;
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
+   public fetchTalentStats(talentId: string):Observable<any>{
+    let encodedTalentId = encodeURIComponent(talentId);
+    let url = `${environment?.baseUrl}/${endpoints?.talentDashboardStats}/${encodedTalentId}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+  }
 }

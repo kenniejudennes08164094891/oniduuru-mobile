@@ -11,6 +11,8 @@ export class EmmittersService {
   // Emits when a reel replacement occurs
   replaceReel$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
+   recentMarketHires$: ReplaySubject<any> = new ReplaySubject<any>(1);
+
   constructor() {}
 
   // Profile Picture Stream
@@ -29,5 +31,14 @@ export class EmmittersService {
 
   public getReplaceReel(): Observable<boolean> {
     return this.replaceReel$.asObservable();
+  }
+
+  //graph
+   public setMarketStats(data: any) {
+    return this.recentMarketHires$.next(data);
+  }
+
+  public getMarketStats(): Observable<any> {
+    return this.recentMarketHires$.asObservable();
   }
 }
