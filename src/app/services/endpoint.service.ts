@@ -15,7 +15,7 @@ export class EndpointService {
     private http: HttpClient,
     private jwtInterceptor: JwtInterceptorService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   // ✅ Talent Profile APIs
   public fetchTalentProfile(talentId: string): Observable<any> {
@@ -158,9 +158,15 @@ export class EndpointService {
     const url = `${environment.baseUrl}/${endpoints.replaceTalentReel}/${encodedTalentId}`;
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
-   public fetchTalentStats(talentId: string):Observable<any>{
+  public fetchTalentStats(talentId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.talentDashboardStats}/${encodedTalentId}`;
-    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+  public fetchScouterMarketStatsWithTalent(talentId: string, scouterId: string): Observable<any> {
+    let encodedTalentId = encodeURIComponent(talentId);
+    let encodedScouterId = encodeURIComponent(scouterId);
+    let url = `${environment?.baseUrl}/${endpoints?.scouterMarketWithTalent}/${encodedScouterId}/${encodedTalentId}`;
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 }
