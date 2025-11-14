@@ -143,109 +143,118 @@
   <div class="p-4 mt-10">
     <div
       id="receipt"
-      class="bg-white w-full h-full mx-auto shadow-md rounded-md"
+      class="bg-white rounded-2xl shadow-lg w-[350px] mx-auto border border-[#E3E5EA] overflow-hidden"
     >
-      <!-- <ion-header> -->
-      <!-- HEADER -->
+      <!-- Header -->
       <div
         class="logcomplainModalBG flex justify-center items-center px- py-2 border-b bg-[#1A1A1A] rounded-t-xl"
       >
         <h2 class="text-lg font-bold text-white">Funds Deposit Receipt</h2>
       </div>
 
-      <div class="px-4 py-6">
-        <!-- </ion-header> -->
-        <!-- Powered by -->
-        <h3 class="w-full mx-auto p-3 text-[#49536E] text-[16px] text-center">
-          Powered by Shoft Africa ❤️
-        </h3>
+      <!-- Powered by -->
+      <p class="text-center text-[#49536E] text-[12px] py-3">
+        Powered by Shoft Africa ❤️
+      </p>
 
-        <!-- Gradient Bar -->
-        <div
-          class="w-full h-2 rounded-full my-4"
-          style="
-            background: linear-gradient(to right, #daa21f, #cc0000, #057a55);
-          "
-        ></div>
+      <!-- Gradient line -->
+      <div
+        class="w-[90%] h-[6px] rounded-full mx-auto"
+        style="background: linear-gradient(to right, #daa21f, #cc0000, #057a55)"
+      ></div>
 
-        <!-- Parties -->
-        <div class="space-y-2">
-          <div
-            class="flex justify-between items-center text-[#49536E] text-[12px]"
-          >
-            <span>From</span>
-            <span>To</span>
-          </div>
-          <div
-            class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
-          >
-            <span>{{ deposit?.walletName || "User Wallet" }}</span>
-            <span>Shoft Africa Incorporated</span>
-          </div>
-          <div
-            class="flex justify-between items-center text-[12px] text-[#49536E]"
-          >
-            <span>Wallet ID: {{ deposit?.walletAcctNo }}</span>
-            <span>Wallet ID: 0325062797</span>
-          </div>
+      <!-- Sender and Receiver -->
+      <div class="flex justify-between px-6 py-5 text-[13px]">
+        <div>
+          <p class="text-[#49536E] font-medium">From</p>
+          <p class="font-semibold text-[#101828]">
+            {{ deposit?.walletName || "User Wallet" }}
+          </p>
+          <p class="text-[#919194] text-[12px]">Wallet ID: Admin Wallet</p>
         </div>
-
-        <!-- Transaction Details -->
-        <div
-          class="space-y-4 mt-6 bg-[#F3F4F6] px-4 py-4 rounded-lg text-[#49536E] text-[12px]"
-        >
-          <p class="flex justify-between items-center">
-            <span>Amount Deposited</span>
-            <span class="text-[13px] text-[#057A55] font-semibold">
-              ₦{{ deposit?.amount | number }}
-            </span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Transaction ID</span>
-            <span>{{ referenceId }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Date</span>
-            <span>{{ deposit?.date | date : "MMM d, y, h:mma" }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Status</span>
-
-            <span *ngIf="deposit as d">
-              <span
-                [ngClass]="[
-                  '',
-                  d.status === 'Successful' ? 'text-[#057A55]' : '',
-                  d.status === 'Invalid' ? 'text-[#EB0B00]' : '',
-                  d.status === 'Failed' ? 'text-[#EB0B00]' : '',
-                  d.status === 'Reversed' ? 'text-[#0033FF]' : ''
-                ]"
-              >
-                {{ d.status }}
-              </span>
-            </span>
-          </p>
-        </div>
-
-        <!-- Footer -->
-        <div class="w-full mx-auto mt-6 text-center">
-          <p class="p-3 text-[#49536E] text-[16px]">
-            Thanks for trusting Oniduuru ∯
-          </p>
-
-          <p class="text-[#968A64] text-[12px]">
-            <span>#Secure.</span><span>#Fast.</span><span>#ProudlyAfrican</span>
-          </p>
+        <div class="text-right">
+          <p class="text-[#49536E] font-medium">To</p>
+          <p class="font-semibold text-[#101828]">Omoshein Kehinde Chisom</p>
+          <p class="text-[#919194] text-[12px]">Wallet ID: 0447429947</p>
         </div>
       </div>
 
-      
+      <!-- Transaction Info Box -->
+      <div
+        class="bg-[#F9FAFB] mx-4 p-4 rounded-lg text-[#49536E] text-[12px] space-y-2"
+      >
+        <div class="flex justify-between">
+          <span>Amount</span>
+          <span class="text-[#057A55] font-semibold text-[14px]"
+            >₦{{ deposit?.amount | number }}</span
+          >
+        </div>
+        <div class="flex justify-between">
+          <span>Transaction ID</span>
+          <span>{{ referenceId }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Date</span>
+          <span>{{ deposit?.date | date : "MMM d, y, h:mma" }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Status</span>
+          <span *ngIf="deposit as d">
+            <span
+              [ngClass]="[
+                '',
+                d.status === 'Successful' ? 'text-[#057A55]' : '',
+                d.status === 'Invalid' ? 'text-[#EB0B00]' : '',
+                d.status === 'Failed' ? 'text-[#EB0B00]' : '',
+                d.status === 'Reversed' ? 'text-[#0033FF]' : ''
+              ]"
+            >
+              {{ d.status }}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center py-6">
+        <p class="text-[#49536E] text-[13px] mb-1">
+          Thanks for trusting Oniduuru ∯
+        </p>
+        <p class="text-[#968A64] text-[11px]">
+          #Secure. #Fast. #ProudlyAfrican
+        </p>
+      </div>
     </div>
+
     <button
       (click)="downloadReceipt()"
-      class="bg-[#101828] text-white px-6 py-2 text-[20px] font-medium rounded-lg mt-10"
+      [disabled]="isLoading"
+      class="bg-[#101828] text-white px-6 py-2 text-[20px] font-medium rounded-lg mt-10 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
     >
-      Download Receipt
+      <span *ngIf="!isLoading">Download Receipt</span>
+      <span *ngIf="isLoading" class="flex items-center gap-2">
+        <svg
+          class="animate-spin h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          ></path>
+        </svg>
+        <span>Downloading...</span>
+      </span>
     </button>
   </div>
 </ion-content>

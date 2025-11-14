@@ -269,6 +269,7 @@ export class AuthPage implements OnInit {
   }
 
   forgotPassword(): void {
-    this.toast.openSnackBar('Password reset feature coming soon!', 'info');
+    this.router.navigate(['/auth/forgot-password']);
+    this.toast.openSnackBar('Enter your email to reset your password', 'info');
   }
 }

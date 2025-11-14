@@ -76,6 +76,7 @@ export class WalletProfileComponent implements OnInit {
     Validators.required,
     Validators.pattern(/^[0-9]{11}$/),
   ]);
+  
   numberCtrl = new FormControl('', [
     Validators.required,
     Validators.pattern(/^[0-9]{11}$/),
