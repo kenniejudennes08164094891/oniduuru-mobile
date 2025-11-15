@@ -17,7 +17,7 @@ export class EndpointService {
     private authService: AuthService
   ) { }
 
-  // ✅ Talent Profile APIs
+  //  Talent Profile APIs
   public fetchTalentProfile(talentId: string): Observable<any> {
     const encodedTalentId = encodeURIComponent(talentId);
     const url = `${environment.baseUrl}/${endpoints.fetchTalentProfile}/${encodedTalentId}`;
@@ -37,13 +37,14 @@ export class EndpointService {
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Skill Dropdown
+  // Skill Dropdown
   public fetchSkillDropdown(): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.fetchDropdownItems}`;
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
+ 
 
-  // ✅ Talent Market Profile APIs
+  // Talent Market Profile APIs
   public createTalentMarketProfileData(payload: any, talentId: string): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -85,7 +86,7 @@ export class EndpointService {
     });
   }
 
-  // ✅ Profile Picture APIs
+  //  Profile Picture APIs
   public uploadTalentPicture(data: any): Observable<any> {
     const body = JSON.stringify(data);
     const url = `${environment.baseUrl}/${endpoints.uploadTalentProfilePic}`;
@@ -110,7 +111,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Security Question APIs
+  //  Security Question APIs
   public createTalentSecurityQuestion(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.createTalentSecurityQuestions}`;
@@ -129,7 +130,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Cloudinary Helpers
+  //  Cloudinary Helpers
   public fetchUrlFromCloudinary(apiUrl: string, formData: FormData): Observable<any> {
     return this.http.post<any>(apiUrl, formData);
   }
@@ -139,7 +140,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Talent Reel APIs
+  //  Talent Reel APIs
   public uploadTalentReel(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.uploadTalentReel}`;
