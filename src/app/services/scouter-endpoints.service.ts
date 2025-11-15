@@ -1079,7 +1079,196 @@ export class ScouterEndpointsService {
     };
     return statusMap[apiStatus] || 'Pending';
   }
+
+  // ============ DASHBOARD STATISTICS ============
+
+  /**
+   * Fetch Scouter's Dashboard Statistics
+   * GET /dashboard/v1/dashboard-statistics/get-scouter-stats/{scouterId}
+   * Used by: Super admins and Scouters only
+   */
+  // Enhanced version with market ID handling for super admins
+  public getScouterStats(
+    scouterId: string,
+    includeMarketIds: boolean = false
+  ): Observable<any> {
+    if (!scouterId || scouterId.trim() === '') {
+      return throwError(() => new Error('Invalid scouterId provided'));
+    }
+
+    const encodedScouterId = encodeURIComponent(scouterId);
+    let url = `${this.baseUrl}/${endpoints.scouterDashboardStats}/${encodedScouterId}`;
+
+    // Add query parameter for market IDs if requested (for super admins)
+    let params = new HttpParams();
+    if (includeMarketIds) {
+      params = params.set('includeMarketIds', 'true');
+    }
+
+    console.log('📊 Fetching scouter dashboard stats:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: includeMarketIds ? params : undefined,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Scouter stats fetched successfully:', response)
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to fetch scouter stats:', error);
+
+          // Provide more specific error messages
+          let errorMessage = 'Failed to load dashboard statistics';
+          if (error.status === 404) {
+            errorMessage = 'Dashboard statistics not found';
+          } else if (error.status === 403) {
+            errorMessage = 'Access denied to dashboard statistics';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+
+          return throwError(() => new Error(errorMessage));
+        })
+      );
+  }
+
+  /**
+   * Fetch Scouter's Market Stats with a particular Talent
+   * GET /dashboard/v1/dashboard-statistics/get-scouter-talent-stats/{scouterId}/{talentId}
+   * Used by: Super admins, Scouters, and Talents
+   */
+  public getScouterTalentStats(
+    scouterId: string,
+    talentId: string
+  ): Observable<any> {
+    if (
+      !scouterId ||
+      scouterId.trim() === '' ||
+      !talentId ||
+      talentId.trim() === ''
+    ) {
+      return throwError(
+        () => new Error('Invalid scouterId or talentId provided')
+      );
+    }
+
+    const encodedScouterId = encodeURIComponent(scouterId);
+    const encodedTalentId = encodeURIComponent(talentId);
+    const url = `${this.baseUrl}/${endpoints.scouterTalentStats}/${encodedScouterId}/${encodedTalentId}`;
+
+    console.log('📊 Fetching scouter-talent market stats:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Scouter-talent stats fetched successfully:', response)
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to fetch scouter-talent stats:', error);
+          return throwError(
+            () =>
+              new Error(
+                error.error?.message ||
+                  'Failed to load scouter-talent statistics'
+              )
+          );
+        })
+      );
+  }
+
+  /**
+   * Fetch all dashboard statistics for scouter (convenience method)
+   * Combines multiple stats endpoints if needed
+   */
+  public getScouterDashboardData(scouterId: string): Observable<any> {
+    return this.getScouterStats(scouterId).pipe(
+      catchError((error) => {
+        console.error(
+          '❌ Failed to fetch comprehensive dashboard data:',
+          error
+        );
+        // Return fallback data structure
+        return of({
+          totalMarketEngagement: 0,
+          totalOfferAccepted: 0,
+          totalOfferRejected: 0,
+          totalOfferAwaitingAcceptance: 0,
+          marketPercentages: {
+            accepted: 0,
+            rejected: 0,
+            awaiting: 0,
+          },
+        });
+      })
+    );
+  }
+
+  // Add to ScouterEndpointsService
+
+  /**
+   * Update scouter's comment and rating for a market engagement
+   * PATCH /market/v1/market-comment/scouter/{marketHireId}
+   */
+  updateMarketComment(
+    marketHireId: string,
+    payload: {
+      scouterId: string;
+      remark: string;
+      rating: number;
+    },
+    retryCount: number = 3
+  ): Observable<any> {
+    const encodedMarketHireId = encodeURIComponent(marketHireId);
+    const url = `${this.baseUrl}/market/v1/market-comment/scouter/${encodedMarketHireId}`;
+
+    console.log('📝 Updating market comment:', { marketHireId, payload });
+
+    return this.http
+      .patch<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Market comment updated successfully:', response)
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to update market comment:', error);
+
+          // Retry logic for network errors
+          if (
+            retryCount > 0 &&
+            (error.status === 0 || error.status === 502 || error.status === 503)
+          ) {
+            console.log(
+              `🔄 Retrying market comment update... ${retryCount} attempts left`
+            );
+            return this.updateMarketComment(
+              marketHireId,
+              payload,
+              retryCount - 1
+            );
+          }
+
+          return throwError(
+            () =>
+              new Error(
+                error.error?.message || 'Failed to update market comment'
+              )
+          );
+        })
+      );
+  }
 }
+
+// THIS IS UP TO DATE
 
 // When adding new endpoints to your services, follow this pattern:
 

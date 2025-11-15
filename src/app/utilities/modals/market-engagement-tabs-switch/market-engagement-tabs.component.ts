@@ -4,6 +4,7 @@ import {
   Output,
   OnInit,
   OnDestroy,
+  Input,
 } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
@@ -16,19 +17,26 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 })
 export class MarketEngagementTabsComponent implements OnInit, OnDestroy {
   @Output() hireSelected = new EventEmitter<MockPayment>();
-  @Output() backPressed = new EventEmitter<void>(); // ✅ emits when back button is used
+  @Output() backPressed = new EventEmitter<void>();
 
   private backButtonListener: any;
 
   activeTab: 'engagements' | 'stats' = 'engagements';
 
-  // mock data (replace with real API later)
-  hires: MockPayment[] = MockRecentHires;
+  // ✅ PROPERLY MANAGE SELECTED HIRE STATE
+  selectedHire: MockPayment | undefined;
+
+  // ✅ ACCEPT INITIAL HIRE AND SET IT AS SELECTED
+  @Input() 
+  set initialHire(hire: MockPayment | undefined) {
+    if (hire && !this.selectedHire) {
+      this.selectedHire = hire;
+    }
+  }
 
   constructor(private platform: Platform) {}
 
   ngOnInit() {
-    // ✅ Listen to device back button
     this.backButtonListener = this.platform.backButton.subscribeWithPriority(
       10,
       () => {
@@ -48,15 +56,20 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy {
   }
 
   onHireClick(hire: MockPayment) {
+    console.log('🔄 Tabs: Hire selected from table:', hire.name);
+    
+    // ✅ UPDATE THE SELECTED HIRE
+    this.selectedHire = hire;
+    
+    // ✅ EMIT TO PARENT (MarketPricePreparationComponent)
     this.hireSelected.emit(hire);
   }
 
   private onBackPress() {
-    // you can decide what happens: switch tab, close modal, or emit event
     if (this.activeTab === 'stats') {
-      this.activeTab = 'engagements'; // go back to engagements tab
+      this.activeTab = 'engagements';
     } else {
-      this.backPressed.emit(); // parent can decide to close/dismiss
+      this.backPressed.emit();
     }
   }
 }

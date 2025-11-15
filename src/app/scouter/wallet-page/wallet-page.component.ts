@@ -4,6 +4,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { Clipboard } from '@angular/cdk/clipboard'; // <-- Angular CDK Clipboard
 import { ToastController } from '@ionic/angular';
 import { ChartOptions, ChartData } from 'chart.js';
+import { EndpointService } from 'src/app/services/endpoint.service';
 
 @Component({
   selector: 'app-wallet-page',
@@ -18,7 +19,7 @@ export class WalletPageComponent implements OnInit {
   headerHidden: boolean = false;
   images = imageIcons;
   userName = 'Viki West';
-  walletBalance: number = 170000;
+  walletBalance: number = 17000000;
   accountNumber: string = '0447429947';
   balanceHidden: boolean = false;
 
@@ -39,12 +40,41 @@ export class WalletPageComponent implements OnInit {
     '2016',
   ];
 
+  loadingWallet = false;
+
   constructor(
     private clipboard: Clipboard,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private endpointService: EndpointService
   ) {}
 
   ngOnInit() {}
+
+  async ngAfterViewInit(): Promise<void> {
+    // fetch wallet details from API
+    try {
+      this.loadingWallet = true;
+      this.endpointService.fetchMyWallet().subscribe({
+        next: (res: any) => {
+          if (res && res.data) {
+            const w = res.data;
+            this.walletBalance = Number(w.balance ?? this.walletBalance);
+            this.accountNumber = w.accountNumber || this.accountNumber;
+            this.userName = w.walletName || this.userName;
+          }
+          this.loadingWallet = false;
+        },
+        error: (err: any) => {
+          // keep existing mock values but log
+          console.error('fetchMyWallet error', err);
+          this.loadingWallet = false;
+        },
+      });
+    } catch (err) {
+      console.error('fetchMyWallet catch', err);
+      this.loadingWallet = false;
+    }
+  }
 
   toggleBalance() {
     this.balanceHidden = !this.balanceHidden;

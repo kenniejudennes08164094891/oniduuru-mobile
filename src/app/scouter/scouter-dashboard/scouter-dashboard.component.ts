@@ -1,4 +1,3 @@
-// Modified TypeScript component
 import { Component, OnInit, HostListener } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
@@ -8,6 +7,7 @@ import { Router } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 
 @Component({
   selector: 'app-scouter-dashboard',
@@ -55,7 +55,8 @@ export class ScouterDashboardComponent implements OnInit {
     private paymentService: PaymentService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    private authService: AuthService,
+    private scouterEndpointsService: ScouterEndpointsService
   ) {}
 
   ngOnInit(): void {
@@ -67,6 +68,9 @@ export class ScouterDashboardComponent implements OnInit {
 
     // ✅ Set up listener for real-time updates
     this.setupNotificationListener();
+
+    // Load real dashboard data
+    this.loadDashboardData();
 
     const id = this.route.snapshot.paramMap.get('id');
     this.hire = MockRecentHires.find((h) => h.id === id);
@@ -98,7 +102,7 @@ export class ScouterDashboardComponent implements OnInit {
     const storageHandler = (event: StorageEvent) => {
       if (event.key === 'notification_count') {
         const newCount = parseInt(event.newValue || '0', 10);
-      //  console.log('🔄 Dashboard: Notification count updated to', newCount);
+        //  console.log('🔄 Dashboard: Notification count updated to', newCount);
         this.notificationCount = newCount;
       }
     };
@@ -135,7 +139,7 @@ export class ScouterDashboardComponent implements OnInit {
       try {
         const parsedUser = JSON.parse(userData);
         this.userName = this.extractUserName(parsedUser);
-      //  console.log('✅ User name from localStorage:', this.userName);
+        //  console.log('✅ User name from localStorage:', this.userName);
         return;
       } catch (error) {
         console.error('Error parsing user_data from localStorage:', error);
@@ -150,7 +154,7 @@ export class ScouterDashboardComponent implements OnInit {
   private extractUserName(userData: any): string {
     if (!userData) return 'User';
 
-  //  console.log('🔍 Extracting user name from:', userData);
+    //  console.log('🔍 Extracting user name from:', userData);
 
     // Try different possible structures and property names
     const user =
@@ -172,6 +176,82 @@ export class ScouterDashboardComponent implements OnInit {
 
     //console.log('✅ Extracted user name:', fullName);
     return fullName;
+  }
+
+  // Add this method to fetch real dashboard data
+  private loadDashboardData(): void {
+    // Get scouter ID from auth service or localStorage
+    const scouterId =
+      this.authService.getCurrentUser()?.scouterId ||
+      localStorage.getItem('scouter_id');
+
+    if (!scouterId) {
+      console.warn('No scouter ID found, using mock data');
+      return;
+    }
+
+    this.scouterEndpointsService.getScouterStats(scouterId).subscribe({
+      next: (stats: any) => {
+        console.log('📊 Dashboard stats received:', stats);
+        this.updateDashboardWithRealData(stats);
+      },
+      error: (error: any) => {
+        console.error('❌ Failed to load dashboard stats:', error);
+        // Keep using mock data as fallback
+      },
+    });
+  }
+
+  private updateDashboardWithRealData(stats: any): void {
+    // Update both paid and unpaid dashboard cards with real data
+    this.dashboardCardsUnpaid = [
+      {
+        title: 'Total Market Engagement',
+        value: stats.totalMarketEngagement || 0,
+        status: '',
+      },
+      {
+        title: 'Total Offer Accepted',
+        value: stats.totalOfferAccepted || 0,
+        status: 'active',
+      },
+      {
+        title: 'Total Offer Rejected',
+        value: stats.totalOfferRejected || 0,
+        status: 'inactive',
+      },
+      {
+        title: 'Total Offer Awaiting Acceptance',
+        value: stats.totalOfferAwaitingAcceptance || 0,
+        status: 'pending',
+      },
+    ];
+
+    this.dashboardCardsPaid = [
+      {
+        title: 'Total Market Engagement',
+        value: stats.totalMarketEngagement || 0,
+        status: '',
+      },
+      {
+        title: 'Total Offer Accepted',
+        value: stats.totalOfferAccepted || 0,
+        status: 'active',
+      },
+      {
+        title: 'Total Offer Rejected',
+        value: stats.totalOfferRejected || 0,
+        status: 'inactive',
+      },
+      {
+        title: 'Total Offer Awaiting Acceptance',
+        value: stats.totalOfferAwaitingAcceptance || 0,
+        status: 'pending',
+      },
+    ];
+
+    // Recalculate percentages
+    this.initializeDashboardData();
   }
 
   initializeDashboardData() {

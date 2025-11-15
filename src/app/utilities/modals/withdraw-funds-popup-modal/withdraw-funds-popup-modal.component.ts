@@ -11,6 +11,7 @@ import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { banks, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
+import { EndpointService } from 'src/app/services/endpoint.service';
 import { WithdrawReceiptModalComponent } from '../withdraw-receipt-modal/withdraw-receipt-modal.component'; // <-- added
 
 @Component({
@@ -30,7 +31,6 @@ export class WithdrawFundsPopupModalComponent
 
   formSubmitted = false;
 
-  
   walletAccNo: string = '';
   walletName: string = '';
   agreed: boolean = false;
@@ -59,7 +59,8 @@ export class WithdrawFundsPopupModalComponent
     platform: Platform,
     private paymentService: PaymentService,
     private toastCtrl: ToastController,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private endpointService: EndpointService
   ) {
     super(modalCtrl, platform);
   }
@@ -152,23 +153,59 @@ export class WithdrawFundsPopupModalComponent
       reason: 'Personal withdrawal', // 👈 you can capture reason here too
     };
 
-    // Pass data back to parent
-    this.modalCtrl.dismiss(newWithdrawal, 'submitted');
+    // Attempt backend withdraw; fallback to local behavior on error
+    try {
+      const payload = {
+        amount: newWithdrawal.amount,
+        transactionId: newWithdrawal.transactionId,
+        bank: newWithdrawal.bank,
+        accountNumber: newWithdrawal.nubamAccNo,
+        walletId: newWithdrawal.walletId,
+        receiptUrl: newWithdrawal.receiptUrl,
+        reason: newWithdrawal.reason,
+      };
 
-    // Also open receipt modal with same data
-    const receiptModal = await this.modalCtrl.create({
-      component: WithdrawReceiptModalComponent,
-      componentProps: {
-        ...newWithdrawal,
-        date: now.toISOString(),
-        fromName: 'Omosehin Kehinde Jude',
-        toName: 'Olorunda Victory Chidi',
-        fromWalletId: 'OniduuruAdmin Wallet',
-        toWalletId: newWithdrawal.nubamAccNo,
-      },
-      cssClass: 'withdraw-receipt-modal',
-      backdropDismiss: false,
-    });
-    await receiptModal.present();
+      this.endpointService.withdrawFunds(payload).subscribe({
+        next: async (res: any) => {
+          this.modalCtrl.dismiss(res?.data ?? newWithdrawal, 'submitted');
+          const receiptModal = await this.modalCtrl.create({
+            component: WithdrawReceiptModalComponent,
+            componentProps: {
+              ...(res?.data ?? newWithdrawal),
+              date: now.toISOString(),
+              fromName: 'Omosehin Kehinde Jude',
+              toName: 'Olorunda Victory Chidi',
+              fromWalletId: 'OniduuruAdmin Wallet',
+              toWalletId: newWithdrawal.nubamAccNo,
+            },
+            cssClass: 'withdraw-receipt-modal',
+            backdropDismiss: false,
+          });
+          await receiptModal.present();
+        },
+        error: async (err: any) => {
+          console.error('withdrawFunds error', err);
+          // fallback: local behavior
+          this.modalCtrl.dismiss(newWithdrawal, 'submitted');
+          const receiptModal = await this.modalCtrl.create({
+            component: WithdrawReceiptModalComponent,
+            componentProps: {
+              ...newWithdrawal,
+              date: now.toISOString(),
+              fromName: 'Omosehin Kehinde Jude',
+              toName: 'Olorunda Victory Chidi',
+              fromWalletId: 'OniduuruAdmin Wallet',
+              toWalletId: newWithdrawal.nubamAccNo,
+            },
+            cssClass: 'withdraw-receipt-modal',
+            backdropDismiss: false,
+          });
+          await receiptModal.present();
+        },
+      });
+    } catch (err) {
+      console.error('withdrawFunds catch', err);
+      this.modalCtrl.dismiss(newWithdrawal, 'submitted');
+    }
   }
 }

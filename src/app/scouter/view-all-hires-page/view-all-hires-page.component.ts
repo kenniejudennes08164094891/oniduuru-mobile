@@ -69,10 +69,15 @@ export class ViewAllHiresPageComponent implements OnInit {
 
   ngOnInit() {
     this.loadUserData();
-    this.loadMarketEngagements();
+    
+    // 🚨 PRODUCTION: Uncomment this line and comment the mock data line below
+    // this.loadMarketEngagements();
+    
+    // 🚨 DEVELOPMENT: Mock data - comment this out in production
+    this.loadMockData();
   }
 
-  //Load user data from AuthService
+  // 🚨 PRODUCTION: Load user data from AuthService
   private loadUserData() {
     const currentUser = this.authService.getCurrentUser();
 
@@ -88,7 +93,7 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
   }
 
-  // Load market engagements from API
+  // 🚨 PRODUCTION: Load market engagements from API
   loadMarketEngagements(statusParams?: string, pageNo: number = 1) {
     this.isLoading = true;
     const currentUser = this.authService.getCurrentUser();
@@ -122,8 +127,29 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.MockRecentHires = [];
         this.allMarketData = [];
         this.isLoading = false;
+        
+        // 🚨 PRODUCTION: Uncomment to use mock data as fallback when API fails
+        // this.loadMockData();
       },
     });
+  }
+
+  // 🚨 DEVELOPMENT: Mock data loader - comment this out in production
+  private loadMockData() {
+    this.isLoading = true;
+    setTimeout(() => {
+      this.MockRecentHires = MockRecentHires.map(hire => ({
+        ...hire,
+        jobDescription: hire.jobDescription ?? '',
+        yourComment: hire.yourComment ?? '',
+        yourRating: hire.yourRating ?? 0,
+        talentComment: hire.talentComment ?? '',
+        talentRating: hire.talentRating ?? 0,
+      }));
+      this.allMarketData = this.MockRecentHires;
+      this.updateSlideshowText();
+      this.isLoading = false;
+    }, 1000);
   }
 
   private updateSlideshowText() {
@@ -172,8 +198,48 @@ export class ViewAllHiresPageComponent implements OnInit {
         break;
     }
 
-    this.loadMarketEngagements(statusParams, 1);
+    // 🚨 PRODUCTION: Uncomment this line and comment the mock data line below
+    // this.loadMarketEngagements(statusParams, 1);
+    
+    // 🚨 DEVELOPMENT: Mock filter - comment this out in production
+    this.applyMockFilter(statusParams);
+    
     this.currentPage = 1; // Reset to first page when filter changes
+  }
+
+  // 🚨 DEVELOPMENT: Mock filter function - comment this out in production
+  private applyMockFilter(statusParams?: string) {
+    if (!statusParams) {
+      this.MockRecentHires = MockRecentHires.map(hire => ({
+        ...hire,
+        jobDescription: hire.jobDescription ?? '',
+        yourComment: hire.yourComment ?? '',
+        yourRating: hire.yourRating ?? 0,
+        talentComment: hire.talentComment ?? '',
+        talentRating: hire.talentRating ?? 0,
+      }));
+    } else {
+      this.MockRecentHires = MockRecentHires.filter(hire => {
+        switch (statusParams) {
+          case 'offer-accepted':
+            return hire.offerStatus === 'Offer Accepted';
+          case 'awaiting-acceptance':
+            return hire.offerStatus === 'Awaiting Acceptance';
+          case 'offer-declined':
+            return hire.offerStatus === 'Offer Rejected';
+          default:
+            return true;
+        }
+      }).map(hire => ({
+        ...hire,
+        jobDescription: hire.jobDescription ?? '',
+        yourComment: hire.yourComment ?? '',
+        yourRating: hire.yourRating ?? 0,
+        talentComment: hire.talentComment ?? '',
+        talentRating: hire.talentRating ?? 0,
+      }));
+    }
+    this.updateSlideshowText();
   }
 
   getFilterStatus(key: string): string {
@@ -387,5 +453,14 @@ export class ViewAllHiresPageComponent implements OnInit {
 
   prevPage() {
     if (this.currentPage > 1) this.currentPage--;
+  }
+  
+  // 🚨 PRODUCTION: Add refresh method for real API data
+  refreshData() {
+    // Uncomment in production:
+    // this.loadMarketEngagements(this.activeCategoryTable, this.currentPage);
+    
+    // Development - reload mock data:
+    this.loadMockData();
   }
 }

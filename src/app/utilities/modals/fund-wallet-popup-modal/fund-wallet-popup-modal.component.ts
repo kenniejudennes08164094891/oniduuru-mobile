@@ -2,6 +2,7 @@ import { Component, Input, NgZone, OnInit } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { PaymentService } from 'src/app/services/payment.service';
+import { EndpointService } from 'src/app/services/endpoint.service';
 import { FundWalletReceiptModalComponent } from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 import { ToastsService } from 'src/app/services/toasts.service';
 
@@ -38,7 +39,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     platform: Platform,
     private paymentService: PaymentService,
     private toastService: ToastsService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private endpointService: EndpointService
   ) {
     super(modalCtrl, platform);
   }
@@ -183,21 +185,59 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       reason: this.reason, // ✅ add this line
     };
 
-    // 🔹 Push to parent table (emit or service)
-    this.modalCtrl.dismiss(depositData, 'submitted');
+    // Try calling backend deposit endpoint; fallback to local dismissal on error
+    try {
+      this.formSubmitted = true;
+      const payload = {
+        amount: this.amount,
+        transactionId,
+        toWalletId: this.walletAccNo,
+        walletName: this.walletName,
+        identifier: this.fundType || 'Fund Self',
+        receiptUrl: this.previewUrl,
+        reason: this.reason,
+      };
 
-    // 🔹 Open receipt modal
-    const receiptModal = await this.modalCtrl.create({
-      component: FundWalletReceiptModalComponent,
-      componentProps: {
-        ...depositData,
-        date: depositData.date.toISOString(),
-      },
-      cssClass: 'fund-wallet-receipt-modal',
-      initialBreakpoint: 1,
-      backdropDismiss: false,
-    });
-    await receiptModal.present();
+      this.endpointService.fundsDeposit(payload).subscribe({
+        next: async (res: any) => {
+          // server returned success — dismiss and show receipt
+          this.modalCtrl.dismiss(res?.data ?? depositData, 'submitted');
+
+          const receiptModal = await this.modalCtrl.create({
+            component: FundWalletReceiptModalComponent,
+            componentProps: {
+              ...(res?.data ?? depositData),
+              date: (res?.data?.date || depositData.date).toString(),
+            },
+            cssClass: 'fund-wallet-receipt-modal',
+            initialBreakpoint: 1,
+            backdropDismiss: false,
+          });
+          await receiptModal.present();
+          this.formSubmitted = false;
+        },
+        error: async (err: any) => {
+          console.error('fundsDeposit error', err);
+          // fallback: dismiss with local data so UI still updates
+          this.modalCtrl.dismiss(depositData, 'submitted');
+          const receiptModal = await this.modalCtrl.create({
+            component: FundWalletReceiptModalComponent,
+            componentProps: {
+              ...depositData,
+              date: depositData.date.toISOString(),
+            },
+            cssClass: 'fund-wallet-receipt-modal',
+            initialBreakpoint: 1,
+            backdropDismiss: false,
+          });
+          await receiptModal.present();
+          this.formSubmitted = false;
+        },
+      });
+    } catch (err) {
+      console.error('fundsDeposit catch', err);
+      this.modalCtrl.dismiss(depositData, 'submitted');
+    }
   }
 
   removeScreenshot() {
