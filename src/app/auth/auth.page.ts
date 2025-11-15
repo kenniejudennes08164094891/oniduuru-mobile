@@ -241,14 +241,14 @@ export class AuthPage implements OnInit {
     console.groupEnd();
   }
 
-  private navigateByRole(role: string) {
+  private async navigateByRole(role: string) {
     const routes: Record<string, string> = {
       scouter: '/scouter/dashboard',
       talent: '/talent/dashboard',
       admin: '/admin/dashboard',
     };
     const route = routes[role] || '/auth/login';
-    this.router.navigateByUrl(route, { replaceUrl: true });
+   await this.router.navigateByUrl(route, { replaceUrl: true });
   }
 
   togglePasswordVisibility() {
@@ -256,8 +256,8 @@ export class AuthPage implements OnInit {
     this.passwordFieldType = this.showEye ? 'text' : 'password';
   }
 
-  signupSelect(): void {
-    this.router.navigate(['/auth/signup-select'], {
+ async signupSelect(): Promise<void> {
+   await this.router.navigate(['/auth/signup-select'], {
       relativeTo: this.route,
     });
   }
