@@ -175,8 +175,12 @@
 
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { EndpointService } from 'src/app/services/endpoint.service';
+import { EndpointService } from '../../services/endpoint.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 
 @Component({
   selector: 'app-create-record',
@@ -186,7 +190,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 export class CreateRecordPage implements OnInit {
   headerHidden = false;
   talentId: string | null = null;
-  skills: any[] = []; 
+  skills: any[] = [];
+  receiverId: string | any = "";
+
   // state
   isEditing = false; // true when a market profile already exists
   isLoading = false;
@@ -217,6 +223,17 @@ export class CreateRecordPage implements OnInit {
     phone: '09031251953',
     photo: ''
   };
+//   talentData = {
+//   email: '',
+//   fullName: '',
+//   phoneNumber: '',
+//   address: '',
+//   educationalBackground: '',
+//   skillSets: [],
+//   skillLevel: '',
+//   payRange: ''
+// };
+
 
   // uploaded files preview & payload content
   uploadedFiles: { base64: string; type: string }[] = [];
@@ -225,8 +242,26 @@ export class CreateRecordPage implements OnInit {
     private endPointService: EndpointService,
     private toastr: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+
   ) { }
+  copied = false;
+
+copyPhone() {
+  navigator.clipboard.writeText(this.profile.phone).then(() => {
+    this.copied = true;
+
+    // Hide checkmark after 2 seconds
+    setTimeout(() => {
+      this.copied = false;
+    }, 3000);
+
+    // Optionally show a toast
+    this.toastr.success('Phone number copied to clipboard!'); 
+    
+  });
+}
+
   setActiveTab(tab: 'skills' | 'docs'): void {
     this.activeTab = tab;
   }
@@ -245,7 +280,34 @@ export class CreateRecordPage implements OnInit {
       }
     });
     this.loadSkillDropdown();
+    this.fetchMyNotifications();
+    this.clearNotifications();
+    // this.updateTalentProfile();
   }
+  
+  // -------------------- NOTIFICATIONS --------------------
+  fetchMyNotifications(): void {
+    // Placeholder for notification fetching logic
+    console.debug('Fetching notifications for talentId:', this.talentId);
+    // You can implement actual notification fetching here
+  }
+  async clearNotifications(): Promise<void> {
+    if (!this.talentId) return;
+
+    const payload = {
+      receiverId: this.talentId
+    };
+
+    try {
+      const response = await firstValueFrom(this.endPointService.clearMyNotifications(payload));
+      console.debug('Clear notifications response:', response);
+      // Optionally show a toast or update UI
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      // Optionally show an error toast
+    }
+  }
+
   // -------------------- SKILL DROPDOWN --------------------
   skillOptions: string[] = [];
   loadSkillDropdown(): void {
@@ -277,124 +339,135 @@ export class CreateRecordPage implements OnInit {
     this.isBioEditorOpen = false;
   }
 
-  // -------------------- LOAD LOGIC --------------------
-  // Top-level loader: try market profile first, fallback to talent profile
+//  updateTalentProfile(): void {
+//   if (!this.talentId) return;
+
+//   this.endPointService.updateTalentProfile(this.talentId, this.talentData).subscribe({
+//     next: (res) => console.log('Updated:', res),
+//     error: (err) => console.error('Error:', err)
+//   });
+// }
+
+
+  // -------------------- LOAD PROFILES --------------------
   loadMarketOrTalentProfile(): void {
     if (!this.talentId) return;
 
     this.isLoading = true;
-    console.debug('Loading market profile for', this.talentId);
+    console.debug('Loading both market and talent profiles for:', this.talentId);
 
-    this.endPointService.fetchTalentMarketProfile(this.talentId).subscribe({
-      next: (res: any) => {
-        console.debug('Market profile response:', res);
-        if (res && res.details) {
-          // Market profile exists — use it (ensure skillSets is normalized)
-          const data = res.details;
-          this.isEditing = true;
-          this.saveText = 'Update Record';
+    const market$ = this.endPointService
+      .fetchTalentMarketProfile(this.talentId)
+      .pipe(
+        catchError((err) => {
+          console.warn('Market profile error:', err);
+          return of(null); // Prevent forkJoin from failing
+        })
+      );
 
-          // Normalize skillSets (backend may return string, object or array)
-          const normalizedSkillSets = this.normalizeSkillSets(data.skillSets);
+    const talent$ = this.endPointService
+      .fetchTalentProfile(this.talentId)
+      .pipe(
+        catchError((err) => {
+          console.warn('Talent profile error:', err);
+          return of(null);
+        })
+      );
 
-          // Ensure each entry has skill, skillLevel, pricing keys
+    forkJoin([market$, talent$]).subscribe({
+      next: ([marketRes, talentRes]) => {
+        console.log('Market Response:', marketRes);
+        console.log('Talent Response:', talentRes);
+
+        const marketDetails = marketRes?.details ?? null;
+        const talentDetails = talentRes?.details ?? null;
+
+        const hasMarketData =
+          marketDetails &&
+          (
+            (Array.isArray(marketDetails.skillSets) && marketDetails.skillSets.length > 0) ||
+            (typeof marketDetails.skillSets === 'string' && marketDetails.skillSets.trim().length > 0) ||
+            (marketDetails.valueProposition && marketDetails.valueProposition.trim().length > 0) ||
+            (marketDetails.profileName && marketDetails.profileName.trim().length > 0) ||
+            (Array.isArray(marketDetails.pictorialDocumentations) && marketDetails.pictorialDocumentations.length > 0)
+          );
+
+        if (hasMarketData) {
+          console.debug('Using MARKET profile data');
+
+          const normalizedSkillSets = this.normalizeSkillSets(marketDetails.skillSets);
+
           const normalizedObjects = normalizedSkillSets.length
             ? normalizedSkillSets.map((s: any) => ({
-              skill: s.skill ?? s, // if backend returns array of strings
+              skill: s.skill ?? s,
               skillLevel: s.skillLevel ?? '',
               pricing: s.pricing ?? ''
             }))
             : [{ skill: '', skillLevel: '', pricing: '' }];
 
           this.marketProfile = {
-            valueProposition: data.valueProposition ?? '',
+            valueProposition: marketDetails.valueProposition ?? '',
             skillSets: normalizedObjects,
-            pictorialDocumentations: Array.isArray(data.pictorialDocumentations) ? data.pictorialDocumentations : []
+            pictorialDocumentations: Array.isArray(marketDetails.pictorialDocumentations)
+              ? marketDetails.pictorialDocumentations
+              : []
           };
 
-          // Also populate header profile info if available
-          if (data.profileName) this.profile.name = data.profileName;
-        } else {
-          // No market profile — fallback to talent profile
-          this.loadTalentProfile();
-        }
+          this.profile.name = marketDetails.profileName ?? this.profile.name;
+          this.isEditing = true;
+          this.saveText = 'Update Record';
 
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.warn('fetchTalentMarketProfile error:', err);
-        this.isLoading = false;
-        if (err?.status === 404) {
-          // no market profile yet
+        } else if (talentDetails) {
+          console.debug('Market profile empty — using TALENT profile data');
+
+          let parsedSkillNames: string[] = [];
+
+          if (typeof talentDetails.skillSets === 'string') {
+            try {
+              parsedSkillNames = JSON.parse(talentDetails.skillSets);
+            } catch (e) {
+              parsedSkillNames = [];
+            }
+          } else if (Array.isArray(talentDetails.skillSets)) {
+            parsedSkillNames = talentDetails.skillSets;
+          }
+
+          this.marketProfile = {
+            valueProposition: '',
+            skillSets: parsedSkillNames.length
+              ? parsedSkillNames.map((skill: string) => ({
+                skill,
+                skillLevel: '',
+                pricing: ''
+              }))
+              : [{ skill: '', skillLevel: '', pricing: '' }],
+            pictorialDocumentations: []
+          };
+
+          this.profile = {
+            name: talentDetails.fullName || '',
+            address: talentDetails.address || '',
+            bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
+            phone: talentDetails.phoneNumber || '',
+            photo: talentDetails.photo || ''
+          };
+
           this.isEditing = false;
           this.saveText = 'Create Record';
-          this.loadTalentProfile();
         } else {
-          this.toastr.error('Error fetching market profile.');
-        }
-      }
-    });
-  }
-
-  // Fetch talent profile (basic profile where user enters skill names)
-  loadTalentProfile(): void {
-    if (!this.talentId) return;
-
-    this.isLoading = true;
-    console.debug('Loading talent profile for', this.talentId);
-
-    this.endPointService.fetchTalentProfile(this.talentId).subscribe({
-      next: (res: any) => {
-        console.log('Fetched Talent Data:', res);
-        const details = res?.details || {};
-
-        // Parse skillSets (stringified array)
-        let parsedSkillNames: string[] = [];
-        if (typeof details.skillSets === 'string') {
-          try {
-            parsedSkillNames = JSON.parse(details.skillSets);
-          } catch (e) {
-            console.warn('Could not parse skillSets JSON:', e);
-            parsedSkillNames = [];
-          }
-        } else if (Array.isArray(details.skillSets)) {
-          parsedSkillNames = details.skillSets;
+          this.toastr.error('No profile data found.');
         }
 
-        // Default skill level (if available)
-        const defaultLevel = details.skillLevel ?? '';
-
-        // Prepare market profile for Create Record
-        this.marketProfile = {
-          valueProposition: '',
-          skillSets: parsedSkillNames.length
-            ? parsedSkillNames.map((skillName: string) => ({
-              skill: skillName,
-              skillLevel: '',
-              pricing: ''
-            }))
-            : [{ skill: '', skillLevel: '', pricing: '' }],
-          pictorialDocumentations: []
-        };
-
-        // Populate header profile details
-        this.profile = {
-          name: details.fullName || '',
-          address: details.address || '',
-          bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
-          phone: details.phoneNumber || '',
-          photo: details.photo || ''
-        };
-
-        this.saveText = 'Create Record';
         this.isLoading = false;
       },
+
       error: (err) => {
-        console.error('Error fetching talent profile:', err);
-        this.toastr.error('Unable to fetch talent profile.');
+        console.error('Unexpected error:', err);
+        this.toastr.error('Error loading profiles.');
         this.isLoading = false;
       }
     });
+    
   }
 
 

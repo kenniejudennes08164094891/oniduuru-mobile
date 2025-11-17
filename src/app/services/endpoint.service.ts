@@ -170,4 +170,16 @@ export class EndpointService {
     let url = `${environment?.baseUrl}/${endpoints?.scouterMarketWithTalent}/${encodedScouterId}/${encodedTalentId}`;
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
+   public fetchMyNotifications(
+    receiverId?: any
+  ):Observable<any>{
+    let encodedReceiverId = encodeURIComponent(receiverId);
+    let url = `${environment?.baseUrl}/${endpoints?.getMyNotifications}?receiverId=${receiverId === undefined ? '' : receiverId?.trim()}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+  }
+   public clearMyNotifications(payload: any):Observable<any>{
+    const body = JSON.stringify(payload);
+    let url = `${environment?.baseUrl}/${endpoints?.clearMyNotifications}`;
+    return this.http.post<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
+  }
 }

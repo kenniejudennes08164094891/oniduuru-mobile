@@ -94,7 +94,16 @@
 
 
       <!-- Phone -->
-      <p class="text-sm text-gray-700">{{ profile.phone }}</p>
+      <div class="flex items-center gap-2 cursor-pointer" (click)="copyPhone()">
+        <p class="text-sm text-gray-700">{{ profile.phone }}</p>
+
+        <!-- Copy icon -->
+        <img *ngIf="!copied" src="assets/icon/Group.png" alt="copy icon" class="w-5 h-5 object-contain" />
+
+        <!-- Checkmark icon (when copied) -->
+        <img *ngIf="copied" src="assets/icon/check.png" alt="copied icon" class="w-5 h-5 object-contain" />
+      </div>
+
     </div>
   </div>
 
@@ -150,7 +159,7 @@
                   <option value="mid">Mid-level Experienced</option>
                   <option value="professional">Professional Experienced</option>
                   <option value="expert">Expert</option> -->
-                   <option *ngFor="let option of skillOptions" [value]="option">{{ option }}</option>
+                  <option *ngFor="let option of skillOptions" [value]="option">{{ option }}</option>
                 </select>
               </div>
 
