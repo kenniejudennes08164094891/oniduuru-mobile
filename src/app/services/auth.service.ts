@@ -1,13 +1,7 @@
 // auth.service.ts
 import { Injectable, Injector } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import {
-  BehaviorSubject,
-  Observable,
-  of,
-  tap,
-  throwError,
-} from 'rxjs';
+import { BehaviorSubject, Observable, of, tap, throwError } from 'rxjs';
 import { catchError, timeout, delay, retry } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
@@ -57,7 +51,10 @@ export class AuthService {
 
     return this.http
       .post<any>(url, credentials, {
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
       })
       .pipe(
         timeout(15000),
@@ -263,24 +260,34 @@ export class AuthService {
     const candidates: string[] = [];
 
     if (uniqueId?.trim()) {
-      candidates.push(`${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`);
+      candidates.push(
+        `${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`
+      );
       const numericMatch = String(uniqueId).match(/(\d+)/);
       if (numericMatch?.[1]) {
-        candidates.push(`${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`);
+        candidates.push(
+          `${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`
+        );
       }
     }
 
     if (!candidates.length)
-      return throwError(() => new Error('Invalid uniqueId for security questions'));
+      return throwError(
+        () => new Error('Invalid uniqueId for security questions')
+      );
 
     const headers = this.jwtInterceptor.customHttpHeaders;
 
     const tryFetch = (urls: string[], idx = 0): Observable<any> =>
-      this.http.get<any>(urls[idx], { headers }).pipe(
-        catchError((error) =>
-          idx < urls.length - 1 ? tryFetch(urls, idx + 1) : throwError(() => error)
-        )
-      );
+      this.http
+        .get<any>(urls[idx], { headers })
+        .pipe(
+          catchError((error) =>
+            idx < urls.length - 1
+              ? tryFetch(urls, idx + 1)
+              : throwError(() => error)
+          )
+        );
 
     return tryFetch(candidates);
   }
@@ -294,7 +301,7 @@ export class AuthService {
     });
   }
 
-// Add this to your AuthService
+  // Add this to your AuthService
   testApiConnection(): Observable<any> {
     const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
     return this.http.get(testUrl).pipe(
@@ -306,32 +313,6 @@ export class AuthService {
     );
   }
 
-  // In auth.service.ts, add this to see request/response details
-  private debugRequestResponse(url: string, body: any, response: any, error?: any) {
-    console.group('🔍 HTTP Request Debug');
-    console.log('URL:', url);
-    console.log('Method: POST');
-    console.log('Headers:', {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    });
-    console.log('Body:', body);
-    if (response) {
-      console.log('Response:', response);
-    }
-    if (error) {
-      console.log('Error:', {
-        status: error.status,
-        statusText: error.statusText,
-        error: error.error,
-        headers: error.headers
-      });
-    }
-    console.groupEnd();
-  }
-
-
-
   // ✅ NEW: Method to force reload user data
   reloadUserData(): void {
     this.loadStoredUser();
@@ -342,7 +323,6 @@ export class AuthService {
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
-
 
   // ============ PASSWORD RESET ============
   forgotPassword(email: string): Observable<any> {
@@ -405,5 +385,4 @@ export class AuthService {
       })
     );
   }
-
 }

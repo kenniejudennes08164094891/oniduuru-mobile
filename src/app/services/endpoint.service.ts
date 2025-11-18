@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, of, throwError } from 'rxjs';
 import { JwtInterceptorService } from './jwt-interceptor.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
@@ -203,19 +203,52 @@ export class EndpointService {
   // --------------------------
   // Wallets APIs
   // --------------------------
-  public createWalletAccount(payload: any): Observable<any> {
+  public createWalletProfile(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
-    const url = `${environment.baseUrl}/${endpoints.createWalletAccount}`;
+    const url = `${environment.baseUrl}/${endpoints.createWalletProfile}`;
     return this.http.post<any>(url, body, {
       headers: this.jwtInterceptor.customHttpHeaders,
     });
   }
 
-  public fetchMyWallet(): Observable<any> {
+  // In endpoint.service.ts - Update the fetchMyWallet method
+  public fetchMyWallet(
+    wallet_id?: string | null,
+    uniqueId?: string | null
+  ): Observable<any> {
+    let params = new HttpParams();
+
+    // Add parameters if provided and not null
+    if (wallet_id) {
+      params = params.set('wallet_id', wallet_id);
+    }
+    if (uniqueId) {
+      params = params.set('uniqueId', uniqueId);
+    }
+
     const url = `${environment.baseUrl}/${endpoints.fetchMyWallet}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    });
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params,
+      })
+      .pipe(
+        catchError((error) => {
+          // Handle specific wallet not found error gracefully
+          if (
+            error.status === 400 &&
+            error.error?.message === 'Wallet not found'
+          ) {
+            // Return a specific structure for wallet not found
+            return of({
+              walletNotFound: true,
+              message: 'Wallet profile not created yet',
+            });
+          }
+          // Re-throw other errors
+          return throwError(() => error);
+        })
+      );
   }
 
   public fundsDeposit(payload: any): Observable<any> {

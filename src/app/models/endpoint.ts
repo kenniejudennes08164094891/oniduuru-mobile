@@ -108,7 +108,7 @@ export const endpoints = {
   validateMyNIN: 'api-service/verify-nin',
   getNubanBanks: 'api-service/get-nigerian-banks',
   verifyAcctNum: 'api-service/verify-account-number',
-  createWalletAccount: 'wallets/v1/create-wallet-profile',
+  createWalletProfile: 'wallets/v1/create-wallet-profile',
   fetchMyWallet: 'wallets/v1/fetch-my-wallet',
   fundsDeposit: 'wallets/v1/deposit-funds',
   fetchMyDeposits: 'wallets/v1/fetch-my-deposits',

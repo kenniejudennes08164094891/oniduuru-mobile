@@ -34,6 +34,8 @@ export class AppInitService {
         // ✅ Check verification before proceeding
         await this.checkAndHandleVerificationStatus();
 
+        this.checkWalletProfileStatus();
+
         this.isInitialized = true;
         this.emitAppInitializedEvent();
 
@@ -53,7 +55,9 @@ export class AppInitService {
 
     const currentUser = this.authService.getCurrentUser();
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    const isVerified = this.checkAccountVerificationStatus(currentUser || userData);
+    const isVerified = this.checkAccountVerificationStatus(
+      currentUser || userData
+    );
 
     if (!isVerified) {
       console.log('⚠️ Account not verified, redirecting to OTP verification');
@@ -85,7 +89,7 @@ export class AppInitService {
       userData.data?.user?.verified,
     ];
 
-    const isVerified = verificationSources.find(status => status === true);
+    const isVerified = verificationSources.find((status) => status === true);
     console.log('🔍 Verification check sources:', verificationSources);
     console.log('✅ Account verified status:', isVerified);
     return isVerified === true;
@@ -93,7 +97,8 @@ export class AppInitService {
 
   /** ✅ Redirects user to appropriate OTP verification page */
   private async redirectToOtpVerification(userData: any): Promise<void> {
-    const email = userData.email || userData.details?.user?.email || userData.user?.email;
+    const email =
+      userData.email || userData.details?.user?.email || userData.user?.email;
     const role = this.extractUserRole(userData);
 
     console.log('🔄 Redirecting to OTP verification:', { email, role });
@@ -111,17 +116,32 @@ export class AppInitService {
     if (role === 'scouter') {
       await this.router.navigate(['/auth/verify-otp'], {
         replaceUrl: true,
-        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+        state: {
+          email,
+          userData,
+          requiresVerification: true,
+          redirectFrom: this.router.url,
+        },
       });
     } else if (role === 'talent') {
       await this.router.navigate(['/auth/verify-otp'], {
         replaceUrl: true,
-        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+        state: {
+          email,
+          userData,
+          requiresVerification: true,
+          redirectFrom: this.router.url,
+        },
       });
     } else {
       await this.router.navigate(['/auth/verify-otp'], {
         replaceUrl: true,
-        state: { email, userData, requiresVerification: true, redirectFrom: this.router.url },
+        state: {
+          email,
+          userData,
+          requiresVerification: true,
+          redirectFrom: this.router.url,
+        },
       });
     }
   }
@@ -136,7 +156,7 @@ export class AppInitService {
       userData.data?.user?.role,
       userData.data?.role,
     ];
-    const role = roleSources.find(r => r && typeof r === 'string');
+    const role = roleSources.find((r) => r && typeof r === 'string');
     if (!role) console.warn('⚠️ No role found in user data:', userData);
     return role || '';
   }
@@ -209,7 +229,8 @@ export class AppInitService {
       this.scouterService.fetchAllNotifications(receiverId).subscribe({
         next: (res: any) => {
           let notifications = [];
-          if (Array.isArray(res?.notifications)) notifications = res.notifications;
+          if (Array.isArray(res?.notifications))
+            notifications = res.notifications;
           else if (Array.isArray(res?.data)) notifications = res.data;
           else if (Array.isArray(res)) notifications = res;
           resolve(notifications);
@@ -284,5 +305,13 @@ export class AppInitService {
     localStorage.removeItem('notifications_cleared');
     localStorage.removeItem('pending_verification');
     window.dispatchEvent(new Event('userLoggedOut'));
+  }
+
+  private checkWalletProfileStatus(): void {
+    const walletProfileCreated = localStorage.getItem('walletProfileCreated');
+    if (walletProfileCreated === 'true') {
+      console.log('✅ Wallet profile already created');
+      // You can automatically redirect to wallet dashboard if needed
+    }
   }
 }
