@@ -192,7 +192,7 @@ export class CreateRecordPage implements OnInit {
   talentId: string | null = null;
   skills: any[] = [];
   receiverId: string | any = "";
-
+  uploadError: string = ''; // <-- new property for error messages
   // state
   isEditing = false; // true when a market profile already exists
   isLoading = false;
@@ -287,7 +287,7 @@ export class CreateRecordPage implements OnInit {
     this.loadSkillDropdown();
     this.fetchMyNotifications();
     this.clearNotifications();
-    // this.updateTalentProfile();
+     this.loadMarketOrTalentProfile();
   }
 
   // -------------------- NOTIFICATIONS --------------------
@@ -518,7 +518,8 @@ export class CreateRecordPage implements OnInit {
       this.toastr.error('Talent ID not found.');
       return;
     }
-
+    this.isLoading = true;   // start spinner
+    this.saveText = this.isEditing ? 'Updating...' : 'Creating...';
     // Validate basic fields (optional)
     if (!this.marketProfile.skillSets || this.marketProfile.skillSets.length === 0) {
       this.toastr.warning('Please add at least one skill.');
@@ -536,8 +537,8 @@ export class CreateRecordPage implements OnInit {
       pictorialDocumentations: this.marketProfile.pictorialDocumentations || []
     };
 
-    this.isLoading = true;
-    this.saveText = this.isEditing ? 'Updating...' : 'Creating...';
+    // this.isLoading = true;
+    // this.saveText = this.isEditing ? 'Updating...' : 'Creating...';
 
     const apiCall = this.isEditing
       ? this.endPointService.updateTalentMarketProfileData(payload, this.talentId!)
@@ -550,6 +551,8 @@ export class CreateRecordPage implements OnInit {
         this.isEditing = true;
         this.saveText = 'Update Record';
         this.isLoading = false;
+
+        this.loadMarketOrTalentProfile(); // reload profile to reflect changes
       },
       error: (err: any) => {
         console.error('Save error:', err);
@@ -583,22 +586,57 @@ export class CreateRecordPage implements OnInit {
     const file = input.files[0];
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'video/mp4'];
 
+    this.clearError(); // clear previous errors
+
     if (!allowedTypes.includes(file.type)) {
-      this.toastr.error('Only PNG/JPG/JPEG and MP4 are allowed.');
+      this.showError('Only PNG/JPG/JPEG and MP4 files are allowed.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      this.uploadedFiles.push({ base64, type: file.type });
-      this.marketProfile.pictorialDocumentations.push(base64);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width !== 828 || img.height !== 640) {
+            this.showError('Invalid Image Dimensions, Image must be exactly 828 x 640 pixels.');
+            return;
+          }
+          const base64 = reader.result as string;
+          this.uploadedFiles.push({ base64, type: file.type });
+          this.marketProfile.pictorialDocumentations.push(base64);
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // video
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        this.uploadedFiles.push({ base64, type: file.type });
+        this.marketProfile.pictorialDocumentations.push(base64);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   removeFile(index: number): void {
     this.uploadedFiles.splice(index, 1);
     this.marketProfile.pictorialDocumentations.splice(index, 1);
   }
-}
+
+  // Show inline error and auto-clear after 3 seconds
+  private showError(message: string) {
+    this.uploadError = message;
+    setTimeout(() => {
+      this.uploadError = '';
+    }, 3000);
+  }
+
+  private clearError() {
+    this.uploadError = '';
+  }
+ }
+
+

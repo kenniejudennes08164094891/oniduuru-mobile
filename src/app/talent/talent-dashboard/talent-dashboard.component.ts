@@ -80,18 +80,26 @@ export class TalentDashboardComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     console.log("ngOnInit has started running...");
 
+    // Load talentId from storage once
+    this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
+    console.log('Dashboard loaded with talentId:', this.talentId);
+
+    if (!this.talentId) {
+      console.warn('No talentId found. Redirecting to login.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.setTimeOfDay();
     this.getTalentDetails();
 
-    // 1. Load profile (API + store onboarding)
+    
+    await this.fetchTalentStats();
     await this.loadTalentProfile();
 
-    // 2. Parse onboarding and set new/existing user flags
     this.checkMarketProfileStatus();
-
     console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
 
-    // 3. Load dashboard depending on user type
     if (this.isNewUser) {
       this.prepareNewUserDashboard();
     } else {
@@ -101,10 +109,8 @@ export class TalentDashboardComponent implements OnInit {
       });
     }
 
-    // 4. Hide spinner after short delay
     setTimeout(() => (this.showSpinner = false), 900);
   }
-
 
 
   private prepareNewUserDashboard(): void {
@@ -288,59 +294,75 @@ export class TalentDashboardComponent implements OnInit {
   private async loadTalentProfile(): Promise<void> {
     console.log("✔️ loadTalentProfile() started");
 
-    console.log("loadTalentProfile() HAS STARTED...");
+    // 1. Get talentId safely
+    this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
+    console.log("Loaded talentId:", this.talentId);
 
-    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
-    console.log("talentId found:", talentId);
-    if (!talentId) return;
-     console.warn(" No talentId found. Skipping loadTalentProfile.");
-    
+    if (!this.talentId) {
+        console.warn("❌ No talentId found. Skipping loadTalentProfile.");
+        return;
+    }
+
     try {
-      const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(talentId));
-      console.log("FULL API RESPONSE:", res);
+        const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(this.talentId));
+        console.log("FULL API RESPONSE:", res);
 
-      if (res) {
-        // Get full name
+        if (!res || !res.details) {
+            console.warn("⚠️ Invalid response structure from API.");
+            return;
+        }
+
+        // 2. Save user name
         const name = res?.details?.user?.fullName;
         if (name) this.userName = name;
 
-        // Persist full profile (you MUST NOT remove this)
+        // 3. Persist profile for caching
         localStorage.setItem('talentProfile', JSON.stringify(res));
 
-        // Store normalized onboarding object
+        // 4. Extract raw onboarding
         const onboardingRaw =
-          res?.completeOnboarding ||
-          res?.details?.completeOnboarding ||
-          res?.details?.user?.completeOnboarding;
+            res?.completeOnboarding ||
+            res?.details?.completeOnboarding ||
+            res?.details?.user?.completeOnboarding;
 
         console.log("Raw onboarding from API:", onboardingRaw);
 
+        let onboardingObj: any = {};
+
+        // 5. Normalize onboarding
         if (onboardingRaw) {
-          try {
-            let onboardingObj;
-
-            // If API sent onboarding as a string
-            if (typeof onboardingRaw === "string") {
-              try {
-                onboardingObj = JSON.parse(onboardingRaw);
-              } catch {
-                onboardingObj = JSON.parse(JSON.parse(onboardingRaw));
-              }
-            } else {
-              onboardingObj = onboardingRaw;
+            try {
+                if (typeof onboardingRaw === "string") {
+                    // handle double encoded JSON
+                    onboardingObj = JSON.parse(onboardingRaw);
+                    if (typeof onboardingObj === "string") {
+                        onboardingObj = JSON.parse(onboardingObj);
+                    }
+                } else {
+                    onboardingObj = onboardingRaw;
+                }
+            } catch (err) {
+                console.error("❌ Failed to parse onboarding JSON:", err);
+                onboardingObj = {};
             }
-
-            sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
-            console.log("Saved completeOnboarding object:", onboardingObj);
-          } catch (err) {
-            console.error("Failed to parse onboarding from API", err);
-          }
         }
-      }
+
+        // 6. Ensure hasMarketProfile always exists
+        if (!("hasMarketProfile" in onboardingObj)) {
+            // Best fallback: treat OTP verified users as existing
+            onboardingObj.hasMarketProfile = onboardingObj.isOTPVerified === true;
+        }
+
+        console.log("Final normalized onboarding object:", onboardingObj);
+
+        // 7. Save final onboarding
+        sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
+
     } catch (error) {
-      console.error('Error fetching talent profile:', error);
+        console.error('❌ Error loading talent profile:', error);
     }
-  }
+}
+
 
 
   proceedToMarketProfile(): void {

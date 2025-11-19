@@ -109,13 +109,13 @@
 
   <!-- Tabs Navigation -->
   <div class="flex border-b border-gray-300 mt-6">
-    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-800" [ngClass]="activeTab === 'skills'
+    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-1500" [ngClass]="activeTab === 'skills'
       ? 'text-purple-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-purple-600'
       : 'text-gray-600'" (click)="setActiveTab('skills')">
       Skill Set
     </button>
 
-    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-800" [ngClass]="activeTab === 'docs'
+    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-1500" [ngClass]="activeTab === 'docs'
       ? 'text-purple-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-purple-600'
       : 'text-gray-600'" (click)="setActiveTab('docs')">
       Pics & Document
@@ -125,7 +125,7 @@
   <!-- Tab Content with Slide Transition -->
   <div class="relative overflow-hidden h-auto">
     <!-- Skill Set Tab -->
-    <div class="transition-all duration-200 ease-in-out"
+    <div class="transition-all duration-1500 ease-in-out"
       [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'skills', '-translate-x-full opacity-0 absolute': activeTab !== 'skills' }">
       <div *ngIf="activeTab === 'skills'" class="mt-4">
         <div *ngFor="let skill of marketProfile.skillSets; let i = index"
@@ -183,7 +183,7 @@
     </div>
 
     <!-- Pics & Document Tab -->
-    <div class="transition-all duration-200 ease-in-out"
+    <div class="transition-all duration-1500 ease-in-out"
       [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'docs', 'translate-x-full opacity-0 absolute': activeTab !== 'docs' }">
       <div *ngIf="activeTab === 'docs'" class="mt-4">
         <div class="bg-gray-100 text-sm text-gray-600 p-3 rounded mb-3">
@@ -194,7 +194,12 @@
 
         </div>
       </div>
-      <!-- Upload -->
+      <!-- Upload --> 
+
+       <div *ngIf="uploadError" class="text-red-500 text-sm mt-2">
+        {{ uploadError }}
+      </div>
+
       <label
         class="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-6 cursor-pointer">
         <ion-icon name="cloud-upload-outline" class="text-3xl mb-2 text-gray-500"></ion-icon>
@@ -226,10 +231,21 @@
   <!-- Pics & Document Tab -->
 
 
-  <button class="w-full bg-[#101828] text-white py-3 rounded mt-6" (click)="saveMarketProfile()" [disabled]="isLoading"
+  <button class="w-full bg-[#101828] text-white py-3 rounded mt-6 flex items-center justify-center gap-2"
+    (click)="saveMarketProfile()" [disabled]="isLoading"
     [attr.aria-label]="isNewUser ? 'Create Record' : 'Update Record'">
-    {{ isNewUser ? 'Create Record' : 'Update Record' }}
+
+    <ng-container *ngIf="isLoading">
+      <ion-spinner name="crescent" style="width: 20px; height: 20px;"></ion-spinner>
+      Saving...
+    </ng-container>
+
+    <ng-container *ngIf="!isLoading">
+      {{ isNewUser ? 'Create Record' : 'Update Record' }}
+    </ng-container>
+
   </button>
+
 
 
 
