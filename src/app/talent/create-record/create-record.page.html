@@ -53,7 +53,7 @@
           <!-- Bio text -->
           <div class="flex items-center gap-2">
             <!-- Bio text -->
-            <p class="text-gray-700">{{ bio }}</p>
+            <p class="text-gray-700">{{ marketProfile.valueProposition || bio }}</p>
 
             <!-- Pencil Icon -->
             <img src="assets/icon/pink-pencil.png" alt="Edit Bio" class="w-5 h-5 cursor-pointer"
@@ -226,14 +226,10 @@
   <!-- Pics & Document Tab -->
 
 
-  <button
-  class="w-full bg-[#101828] text-white py-3 rounded mt-6"
-  (click)="saveMarketProfile()"
-  [disabled]="isLoading"
-  [attr.aria-label]="isNewUser ? 'Create Record' : 'Update Record'"
->
-  {{ isNewUser ? 'Create Record' : 'Update Record' }}
-</button>
+  <button class="w-full bg-[#101828] text-white py-3 rounded mt-6" (click)="saveMarketProfile()" [disabled]="isLoading"
+    [attr.aria-label]="isNewUser ? 'Create Record' : 'Update Record'">
+    {{ isNewUser ? 'Create Record' : 'Update Record' }}
+  </button>
 
 
 
