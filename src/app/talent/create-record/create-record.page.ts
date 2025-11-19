@@ -203,6 +203,11 @@ export class CreateRecordPage implements OnInit {
   isBioEditorOpen = false;
   editedBio = '';
   bio = 'Sell yourself... Emphasizing your skills and achieving your skills to recruiters.';
+  // convenience computed property for template
+  get isNewUser(): boolean {
+    // A user is "new" for this page if we are not editing an existing market profile
+    return !this.isEditing;
+  }
 
   // Market Profile model that the template binds to (must match HTML)
   marketProfile: {
@@ -223,16 +228,16 @@ export class CreateRecordPage implements OnInit {
     phone: '09031251953',
     photo: ''
   };
-//   talentData = {
-//   email: '',
-//   fullName: '',
-//   phoneNumber: '',
-//   address: '',
-//   educationalBackground: '',
-//   skillSets: [],
-//   skillLevel: '',
-//   payRange: ''
-// };
+  //   talentData = {
+  //   email: '',
+  //   fullName: '',
+  //   phoneNumber: '',
+  //   address: '',
+  //   educationalBackground: '',
+  //   skillSets: [],
+  //   skillLevel: '',
+  //   payRange: ''
+  // };
 
 
   // uploaded files preview & payload content
@@ -247,20 +252,20 @@ export class CreateRecordPage implements OnInit {
   ) { }
   copied = false;
 
-copyPhone() {
-  navigator.clipboard.writeText(this.profile.phone).then(() => {
-    this.copied = true;
+  copyPhone() {
+    navigator.clipboard.writeText(this.profile.phone).then(() => {
+      this.copied = true;
 
-    // Hide checkmark after 2 seconds
-    setTimeout(() => {
-      this.copied = false;
-    }, 3000);
+      // Hide checkmark after 2 seconds
+      setTimeout(() => {
+        this.copied = false;
+      }, 3000);
 
-    // Optionally show a toast
-    this.toastr.success('Phone number copied to clipboard!'); 
-    
-  });
-}
+      // Optionally show a toast
+      this.toastr.success('Phone number copied to clipboard!');
+
+    });
+  }
 
   setActiveTab(tab: 'skills' | 'docs'): void {
     this.activeTab = tab;
@@ -284,7 +289,7 @@ copyPhone() {
     this.clearNotifications();
     // this.updateTalentProfile();
   }
-  
+
   // -------------------- NOTIFICATIONS --------------------
   fetchMyNotifications(): void {
     // Placeholder for notification fetching logic
@@ -339,14 +344,14 @@ copyPhone() {
     this.isBioEditorOpen = false;
   }
 
-//  updateTalentProfile(): void {
-//   if (!this.talentId) return;
+  //  updateTalentProfile(): void {
+  //   if (!this.talentId) return;
 
-//   this.endPointService.updateTalentProfile(this.talentId, this.talentData).subscribe({
-//     next: (res) => console.log('Updated:', res),
-//     error: (err) => console.error('Error:', err)
-//   });
-// }
+  //   this.endPointService.updateTalentProfile(this.talentId, this.talentData).subscribe({
+  //     next: (res) => console.log('Updated:', res),
+  //     error: (err) => console.error('Error:', err)
+  //   });
+  // }
 
 
   // -------------------- LOAD PROFILES --------------------
@@ -467,7 +472,7 @@ copyPhone() {
         this.isLoading = false;
       }
     });
-    
+
   }
 
 

@@ -2,12 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { Chart, registerables } from 'chart.js';
 import { Router } from '@angular/router';
-import { AuthService } from "../../services/auth.service";
+import { AuthService } from '../../services/auth.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
-import { PaginationParams } from 'src/app/models/mocks';
-import { Observable } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
+
 Chart.register(...registerables);
 
 @Component({
@@ -18,27 +17,55 @@ Chart.register(...registerables);
 })
 export class TalentDashboardComponent implements OnInit {
   // Spinner
-  loading: string = 'Loading...';
-  showSpinner: boolean = true;
-  currentYear: number = new Date().getFullYear();
-
+  loading = 'Loading...';
+  showSpinner = true;
+  currentYear = new Date().getFullYear();
 
   // User details
   talentStats: any = null;
-  talentId: string = '';
+  talentId = '';
 
-  userName: string = 'User';
-  timeOfDay: string = '';
-  timeIcon: string = '';
-  myIcon: string = imageIcons.infoIcon;
+  userName = 'User';
+  timeOfDay = '';
+  timeIcon = '';
+  myIcon = imageIcons.infoIcon;
 
   // Header scroll state
-  headerHidden: boolean = false;
-  scrollPosition: number = 0;
-  previousScrollPosition: number = 0;
+  headerHidden = false;
+  scrollPosition = 0;
+  previousScrollPosition = 0;
 
   // Wallet
-  walletBalance: number = 30000.0;
+  walletBalance = 0; // default zero, update from API if available
+  async routeToWallet(): Promise<void> {
+    await this.router.navigate(['/scouter/wallet-page']);
+  }
+
+  // onboarding flags
+  hasMarketProfile = false;
+  isNewUser = false;
+
+  // Dashboard data structures
+  dashboardCards = [
+    { title: 'Total Market Engagement', value: 0, status: '' },
+    { title: 'Total Offer Accepted', value: 0, status: 'active' },
+    { title: 'Total Offer Rejected', value: 0, status: 'inactive' },
+    { title: 'Total Offer Awaiting Acceptance', value: 0, status: 'pending' },
+  ];
+
+  dashboardStatCards: { title: string; value: number; status: string }[] = [];
+  percentageCircles: { size: number; color: string; percentage: number; title?: string }[] = [];
+
+  // Ratings chart data (fallback)
+  ratingsData: { date: string; yourRating: number; scouterRating: number }[] = [];
+
+  // Recent hires (fallback empty)
+  recentHires: { name: string; date: string; amount: number; avatar: string }[] = [];
+
+  // simple image object if you store a common NoData image
+  images = {
+    NoDataImage: 'assets/images/NoDataImage.svg' // adjust path to your project image
+  };
 
   constructor(
     private router: Router,
@@ -47,140 +74,73 @@ export class TalentDashboardComponent implements OnInit {
     private toastr: ToastrService
 
   ) { }
-  //async goToViewHires(): Promise<void> {…}
-  async goToViewHires(): Promise<void> {
-    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
 
-    if (!talentId) {
-      console.warn('talentId not found — navigating to view-hires without preloaded data');
-      await this.router.navigate(['/view-hires']);
-      return;
+  // ---------- REPLACE ngOnInit() ----------
+
+  async ngOnInit(): Promise<void> {
+    console.log("ngOnInit has started running...");
+
+    this.setTimeOfDay();
+    this.getTalentDetails();
+
+    // 1. Load profile (API + store onboarding)
+    await this.loadTalentProfile();
+
+    // 2. Parse onboarding and set new/existing user flags
+    this.checkMarketProfileStatus();
+
+    console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
+
+    // 3. Load dashboard depending on user type
+    if (this.isNewUser) {
+      this.prepareNewUserDashboard();
+    } else {
+      this.fetchTalentStats().catch((err) => {
+        console.error('fetchTalentStats failed:', err);
+        this.prepareNewUserDashboard();
+      });
     }
 
-    const paginationParams = { limit: 10, pageNo: 1 }; // Example pagination params
-    const base64JsonDecode = (b64: string) => {
-      try {
-        if (!b64) return null;
-        const binary = atob(b64);
-        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-        const jsonString = new TextDecoder().decode(bytes);
-        return JSON.parse(jsonString);
-      } catch (error) {
-        console.error('Error decoding base64 JSON:', error);
-        return null;
-      }
-    };
-
-    this.endpointService.fetchMarketsByTalent(talentId, paginationParams, '', '').subscribe({
-      next: (response: any) => {
-        const markets = base64JsonDecode(response?.details) || [];
-        this.router.navigate(['/view-hires'], { state: { markets } });
-      },
-      error: (error) => {
-        console.error('Error fetching markets by talent:', error);
-        this.router.navigate(['/view-hires']);
-      }
-    });
-  }
-  // ✅ Get user details (name) from localStorage or decoded auth data
-  getTalentDetails() {
-    try {
-      //Try to get saved profile first
-      const savedProfile = localStorage.getItem('talentProfile');
-      if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile);
-        console.log('Loaded talent profile from localStorage:', parsedProfile);
-
-        this.userName =
-          parsedProfile.fullName ||
-          parsedProfile.details?.user?.fullName ||
-          'User';
-
-        if (this.userName !== 'User') return; // Found name, stop here
-      }
-
-      // Otherwise, decode from token as fallback
-      const talentDetails = this.authService.decodeTalentDetails();
-      console.log("talent details>>", talentDetails);
-      console.log('Decoded Talent Details (fallback):', talentDetails);
-
-      this.userName =
-        talentDetails?.fullName ||
-        talentDetails?.details?.user?.fullName ||
-        'User';
-    } catch (error) {
-      console.error('Error loading talent details:', error);
-      this.userName = 'User';
-    }
-  }
-  private async loadTalentProfile(): Promise<void> {
-    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
-    if (!talentId) return;
-    try {
-      const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(talentId));
-      if (res) {
-        const name = res?.details?.fullName || res?.fullName;
-        if (name) this.userName = name;
-        // Optionally cache
-        localStorage.setItem('talentProfile', JSON.stringify(res));
-      }
-    } catch (err) {
-      console.error('Failed to load talent profile:', err);
-    }
+    // 4. Hide spinner after short delay
+    setTimeout(() => (this.showSpinner = false), 900);
   }
 
 
-  proceedToMarketProfile(): void {
-    const talentProfile = localStorage.getItem('user_data') || localStorage.getItem('user_profile_data');
-    const talentId = talentProfile ? JSON.parse(talentProfile)?.talentId : null;
 
-    if (!talentId) {
-      alert('Talent ID not found. Please log in again.');
-      return;
-    }
+  private prepareNewUserDashboard(): void {
+    // Ensure all dashboard values are zeroed for new users
+    this.dashboardCards = [
+      { title: 'Total Market Engagement', value: 0, status: '' },
+      { title: 'Total Offer Accepted', value: 0, status: 'active' },
+      { title: 'Total Offer Rejected', value: 0, status: 'inactive' },
+      { title: 'Total Offer Awaiting Acceptance', value: 0, status: 'pending' }
+    ];
 
-    this.router.navigate(['/create-record', talentId]);
+    // breakdown cards with 0%
+    this.dashboardStatCards = [
+      { title: 'Offers Accepted', value: 0, status: 'active' },
+      { title: 'Waiting Acceptance', value: 0, status: 'pending' },
+      { title: 'Offers Rejected', value: 0, status: 'inactive' }
+    ];
+
+    // concentric circles for the "Total Market by Percentage" visual
+    const baseSize = 120;
+    this.percentageCircles = this.dashboardStatCards
+      .map((card, index) => ({
+        size: baseSize + index * 40,
+        color: this.getPercentageStatusColor(card.status),
+        percentage: 0,
+        title: card.title
+      }))
+      .reverse();
+
+    // Ratings and recent hires stay empty arrays so UI shows "No Data Available"
+    this.ratingsData = [];
+    this.recentHires = [];
+    this.walletBalance = 0;
   }
 
-  // async goToViewHires(): Promise<void> {
-  //   await this.router.navigate(['/view-hires']);
-  // }
-
-  // Dashboard stats
-  dashboardCards = [
-    { title: 'Total Market Engagement', value: 21, status: '' },
-    { title: 'Total Offer Accepted', value: 18, status: 'active' },
-    { title: 'Total Offer Rejected', value: 1, status: 'pending' },
-    { title: 'Total Offer Awaiting Acceptance', value: 2, status: 'inactive' },
-  ];
-
-  dashboardStatCards: { title: string; value: number; status: string }[] = [];
-  percentageCircles: {
-    size: number;
-    color: string;
-    percentage: number;
-    title: string;
-  }[] = [];
-
-  // Ratings chart data
-  ratingsData = [
-    { date: '17/September/2024 8:15AM', yourRating: 5, scouterRating: 4 },
-    { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
-    { date: '17/September/2024 8:15AM', yourRating: 3, scouterRating: 4 },
-    { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
-  ];
-
-  // Recent hires data
-  recentHires: {
-    name: string;
-    date: string;
-    amount: number;
-    avatar: string;
-  }[] = [];
-
-  async routeToWallet(): Promise<void> {
-    await this.router.navigate(['/scouter/wallet-page']);
-  }
+  // fetch and build stats for existing user
   async fetchTalentStats(): Promise<void> {
     const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
     if (!talentId) {
@@ -189,12 +149,17 @@ export class TalentDashboardComponent implements OnInit {
     }
 
     try {
-      const response = await firstValueFrom(this.endpointService.fetchTalentStats(talentId));
+      const response: any = await firstValueFrom(this.endpointService.fetchTalentStats(talentId));
       console.log('Talent Stats Response:', response);
 
-      this.talentStats = response?.details || response;
+      this.talentStats = response?.details || response || {};
 
-      // ✅ Update dashboard cards dynamically
+      // Update wallet if backend returns it
+      if (this.talentStats?.walletBalance != null) {
+        this.walletBalance = this.talentStats.walletBalance;
+      }
+
+      // Build dashboard cards from real stats (safe fallback to 0)
       this.dashboardCards = [
         {
           title: 'Total Market Engagement',
@@ -215,116 +180,225 @@ export class TalentDashboardComponent implements OnInit {
           title: 'Total Offer Awaiting Acceptance',
           value: this.talentStats?.totalOffersAwaitingAcceptance || 0,
           status: 'pending'
-        },
+        }
       ];
 
-      // ✅ Calculate percentages for offers
+      // Calculate percentages (guarded)
       const totalOffers =
         (this.talentStats?.totalOffersAccepted || 0) +
         (this.talentStats?.totalOffersRejected || 0) +
         (this.talentStats?.totalOffersAwaitingAcceptance || 0);
 
-      const offersAcceptedPct = totalOffers ? (this.talentStats?.totalOffersAccepted / totalOffers) * 100 : 0;
-      const offersRejectedPct = totalOffers ? (this.talentStats?.totalOffersRejected / totalOffers) * 100 : 0;
-      const waitingAcceptancePct = totalOffers ? (this.talentStats?.totalOffersAwaitingAcceptance / totalOffers) * 100 : 0;
+      const offersAcceptedPct = totalOffers ? (this.talentStats.totalOffersAccepted / totalOffers) * 100 : 0;
+      const offersRejectedPct = totalOffers ? (this.talentStats.totalOffersRejected / totalOffers) * 100 : 0;
+      const waitingAcceptancePct = totalOffers ? (this.talentStats.totalOffersAwaitingAcceptance / totalOffers) * 100 : 0;
 
-      // ✅ Update donut chart data
       this.dashboardStatCards = [
-        { title: 'Offers Accepted', value: offersAcceptedPct, status: 'active' },
-        { title: 'Waiting Acceptance', value: waitingAcceptancePct, status: 'pending' },
-        { title: 'Offers Rejected', value: offersRejectedPct, status: 'inactive' },
+        { title: 'Offers Accepted', value: Math.round(offersAcceptedPct * 100) / 100, status: 'active' },
+        { title: 'Waiting Acceptance', value: Math.round(waitingAcceptancePct * 100) / 100, status: 'pending' },
+        { title: 'Offers Rejected', value: Math.round(offersRejectedPct * 100) / 100, status: 'inactive' }
       ];
 
-      // ✅ Rebuild concentric circles
+      // Build percentage circles
       const baseSize = 120;
       this.percentageCircles = this.dashboardStatCards
-        .map((card, index) => {
-          const size = baseSize + index * 40;
-          return {
-            size,
-            color: this.getPercentageStatusColor(card.status),
-            percentage: card.value,
-            title: card.title,
-          };
-        })
+        .map((card, index) => ({
+          size: baseSize + index * 40,
+          color: this.getPercentageStatusColor(card.status),
+          percentage: card.value,
+          title: card.title
+        }))
         .reverse();
 
-      // ✅ Refresh the ratings chart if your backend returns ratings
-      if (this.talentStats?.ratingsData) {
+      // If backend provides ratings
+      if (this.talentStats?.ratingsData && Array.isArray(this.talentStats.ratingsData)) {
         this.ratingsData = this.talentStats.ratingsData;
         this.initRatingsChart();
       }
 
+      // If backend provides recent hires (assumed decoded), set it
+      if (this.talentStats?.recentHires && Array.isArray(this.talentStats.recentHires)) {
+        this.recentHires = this.talentStats.recentHires;
+      }
     } catch (error) {
       console.error('Error fetching talent stats:', error);
       this.toastr.error('Unable to load dashboard statistics.');
+      // fallback to showing zeros (keep prepared new-user view)
+      this.prepareNewUserDashboard();
+    }
+  }
+
+  async goToViewHires(): Promise<void> {
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+    if (!talentId) {
+      console.warn('talentId not found — navigating to view-hires without preloaded data');
+      await this.router.navigate(['/view-hires']);
+      return;
+    }
+
+    const paginationParams = { limit: 10, pageNo: 1 };
+    const base64JsonDecode = (b64: string) => {
+      try {
+        if (!b64) return null;
+        const binary = atob(b64);
+        const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+        const jsonString = new TextDecoder().decode(bytes);
+        return JSON.parse(jsonString);
+      } catch (error) {
+        console.error('Error decoding base64 JSON:', error);
+        return null;
+      }
+    };
+
+    try {
+      this.endpointService.fetchMarketsByTalent(talentId, paginationParams, '', '').subscribe({
+        next: (response: any) => {
+          const markets = base64JsonDecode(response?.details) || [];
+          this.router.navigate(['/view-hires'], { state: { markets } });
+        },
+        error: (error) => {
+          console.error('Error fetching markets by talent:', error);
+          // navigate but view-hires should handle empty state
+          this.router.navigate(['/view-hires']);
+        }
+      });
+    } catch (err) {
+      console.error('Error while requesting markets:', err);
+      this.router.navigate(['/view-hires']);
+    }
+  }
+
+  // Get user name first from local cache or decoded token
+  getTalentDetails() {
+    try {
+      const savedProfile = localStorage.getItem('talentProfile');
+      if (savedProfile) {
+        const parsedProfile = JSON.parse(savedProfile);
+        this.userName = parsedProfile.fullName || parsedProfile.details?.user?.fullName || this.userName;
+        if (this.userName !== 'User') return;
+      }
+
+      const talentDetails = this.authService.decodeTalentDetails();
+      this.userName = talentDetails?.fullName || talentDetails?.details?.user?.fullName || this.userName;
+    } catch (error) {
+      console.error('Error loading talent details:', error);
+    }
+  }
+
+  private async loadTalentProfile(): Promise<void> {
+    console.log("✔️ loadTalentProfile() started");
+
+    console.log("loadTalentProfile() HAS STARTED...");
+
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+    console.log("talentId found:", talentId);
+    if (!talentId) return;
+     console.warn(" No talentId found. Skipping loadTalentProfile.");
+    
+    try {
+      const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(talentId));
+      console.log("FULL API RESPONSE:", res);
+
+      if (res) {
+        // Get full name
+        const name = res?.details?.user?.fullName;
+        if (name) this.userName = name;
+
+        // Persist full profile (you MUST NOT remove this)
+        localStorage.setItem('talentProfile', JSON.stringify(res));
+
+        // Store normalized onboarding object
+        const onboardingRaw =
+          res?.completeOnboarding ||
+          res?.details?.completeOnboarding ||
+          res?.details?.user?.completeOnboarding;
+
+        console.log("Raw onboarding from API:", onboardingRaw);
+
+        if (onboardingRaw) {
+          try {
+            let onboardingObj;
+
+            // If API sent onboarding as a string
+            if (typeof onboardingRaw === "string") {
+              try {
+                onboardingObj = JSON.parse(onboardingRaw);
+              } catch {
+                onboardingObj = JSON.parse(JSON.parse(onboardingRaw));
+              }
+            } else {
+              onboardingObj = onboardingRaw;
+            }
+
+            sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
+            console.log("Saved completeOnboarding object:", onboardingObj);
+          } catch (err) {
+            console.error("Failed to parse onboarding from API", err);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching talent profile:', error);
     }
   }
 
 
-  ngOnInit(): void {
-    this.setTimeOfDay();
-    this.getTalentDetails();
-    
+  proceedToMarketProfile(): void {
+    const talentProfile = localStorage.getItem('user_data') || localStorage.getItem('user_profile_data') || localStorage.getItem('talentProfile');
+    const talentId = talentProfile ? JSON.parse(talentProfile)?.talentId : null;
 
-    // Simulate spinner
-    setTimeout(() => (this.showSpinner = false), 1500);
-    this.fetchTalentStats();
-    // Donut chart percentages
-    // this.dashboardStatCards = [
-    //   { title: 'Offers Accepted', value: 85.71, status: 'active' },
-    //   { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
-    //   { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
-    // ];
+    if (!talentId) {
 
-    // // Build concentric circles
-    // const baseSize = 120;
-    // this.percentageCircles = this.dashboardStatCards
-    //   .map((card, index) => {
-    //     const size = baseSize + index * 40;
-    //     return {
-    //       size,
-    //       color: this.getPercentageStatusColor(card.status),
-    //       percentage: card.value,
-    //       title: card.title,
-    //     };
-    //   })
-    //   .reverse();
+      this.toastr.warning('Talent ID not found. Please log in again.');
+      return;
+    }
 
-    // Recent hires
-    this.recentHires = [
-      {
-        name: 'Adediji Samuel Oluwaseyi',
-        date: 'Oct 17, 2024, 8:25AM',
-        amount: 40000.0,
-        avatar: 'assets/images/portrait-african-american-man.jpg',
-      },
-      {
-        name: 'Kehinde Jude Omosehin',
-        date: 'Sep 22, 2024, 11:25AM',
-        amount: 400000.0,
-        avatar: 'assets/images/portrait-man-cartoon-style.jpg',
-      },
-      {
-        name: 'Adediji Samuel Oluwaseyi',
-        date: 'Sep 19, 2024, 8:15PM',
-        amount: 70000.0,
-        avatar: 'assets/images/portrait-man-cartoon-style.jpg',
-      },
-      {
-        name: 'Kehinde Jude Omosehin',
-        date: 'Sep 17, 2024, 9:45AM',
-        amount: 700000.0,
-        avatar: 'assets/images/portrait-african-american-man.jpg',
-      },
-    ];
-
-    this.initRatingsChart();
+    this.router.navigate(['/create-record', talentId]);
   }
 
+  // ----------  checkMarketProfileStatus() ----------
+  private checkMarketProfileStatus(): void {
+    const onboardingRaw = sessionStorage.getItem('completeOnboarding');
+
+    const parsed = this.parseOnboarding(onboardingRaw);
+
+    if (parsed && typeof parsed === 'object' && 'hasMarketProfile' in parsed) {
+      this.hasMarketProfile = Boolean(parsed.hasMarketProfile);
+      this.isNewUser = !this.hasMarketProfile;
+    } else {
+      this.hasMarketProfile = false;
+      this.isNewUser = true;
+    }
+
+    console.debug('Onboarding parsed:', parsed, 'hasMarketProfile:', this.hasMarketProfile, 'isNewUser:', this.isNewUser);
+  }
+  private parseOnboarding(raw: string | null): any {
+    if (!raw) return null;
+
+    try {
+      let parsed = JSON.parse(raw);
+
+      // Handle double-encoded JSON from API
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed);
+      }
+
+      return parsed;
+    } catch (err) {
+      console.error('Failed to parse completeOnboarding:', err, raw);
+      return null;
+    }
+  }
+  // ---------- initRatingsChart() ----------      
+
   private initRatingsChart(): void {
+    // only init the chart if there is rating data
+    if (!this.ratingsData || this.ratingsData.length === 0) return;
+
     const ctx = document.getElementById('ratingsChart') as HTMLCanvasElement;
     if (!ctx) return;
+
+    // Destroy existing chart instance if any - optional (not included here) - ensure duplicate charts don't stack
     new Chart(ctx, {
       type: 'bar',
       data: {
@@ -333,23 +407,23 @@ export class TalentDashboardComponent implements OnInit {
           {
             label: 'Your Ratings',
             data: this.ratingsData.map((r) => r.yourRating),
-            backgroundColor: '#3B82F6', // blue
+            backgroundColor: '#3B82F6'
           },
           {
             label: "Scouter's Ratings",
             data: this.ratingsData.map((r) => r.scouterRating),
-            backgroundColor: '#7C3AED', // purple
-          },
-        ],
+            backgroundColor: '#7C3AED'
+          }
+        ]
       },
       options: {
         indexAxis: 'y',
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          x: { min: 0, max: 6, ticks: { stepSize: 2 } },
-        },
-      },
+          x: { min: 0, max: 6, ticks: { stepSize: 1 } }
+        }
+      }
     });
   }
 
@@ -383,7 +457,7 @@ export class TalentDashboardComponent implements OnInit {
     const angleInRadians = ((percentage / 100) * 360 - 90) * (Math.PI / 180);
     return {
       x: center + radius * Math.cos(angleInRadians),
-      y: center + radius * Math.sin(angleInRadians),
+      y: center + radius * Math.sin(angleInRadians)
     };
   }
 
@@ -409,10 +483,14 @@ export class TalentDashboardComponent implements OnInit {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'active': return '#189537';
-      case 'pending': return '#FFA086';
-      case 'inactive': return '#CC0000';
-      default: return '#79797B';
+      case 'active':
+        return '#189537';
+      case 'pending':
+        return '#FFA086';
+      case 'inactive':
+        return '#CC0000';
+      default:
+        return '#79797B';
     }
   }
 
@@ -420,6 +498,3 @@ export class TalentDashboardComponent implements OnInit {
     return this.getStatusColor(status);
   }
 }
-// function firstValueFrom(arg0: Observable<any>): any {
-//   throw new Error('Function not implemented.');
-// }

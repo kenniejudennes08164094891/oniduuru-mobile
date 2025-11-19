@@ -25,7 +25,7 @@ export class AuthPage implements OnInit {
     private authService: AuthService,
     private toast: ToastsService,
     private endpointService: EndpointService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.initializeLoginForm();
@@ -121,6 +121,28 @@ export class AuthPage implements OnInit {
       next: (res) => {
         if (res?.access_token) {
           this.authService.setUserCredentialFromBackend(res);
+          // ⭐️ SAVE talentId for dashboard
+          const talentId = res?.details?.user?.talentId;
+          if (talentId) {
+            localStorage.setItem('talentId', talentId);
+            sessionStorage.setItem('talentId', talentId);
+            console.log(" Talent ID saved:", talentId);
+          } else {
+            console.warn(" No talentId found inside login response");
+          }
+          const onboardingRaw = res?.details?.user?.completeOnboarding;
+          if (onboardingRaw) {
+            try {
+              const onboardingObj = JSON.parse(onboardingRaw);
+              sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
+              console.log(" Saved onboarding from login:", onboardingObj);
+            } catch (e) {
+              console.error("Failed parsing onboarding at login:", e, onboardingRaw);
+            }
+          } else {
+            console.warn(" No completeOnboarding found inside login response");
+          }
+
           const email = this.loginForm.get('email')?.value;
           if (email) localStorage.setItem('registration_email', email);
 

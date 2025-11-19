@@ -7,8 +7,7 @@
 <ion-content fullscreen (ionScroll)="onContentScroll($event)">
   <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
     <!-- Header -->
-    <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
-    </app-talent-header>
+    <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden"></app-talent-header>
 
     <div class="container mx-auto px-4 py-6 flex-1">
       <!-- Greeting -->
@@ -19,41 +18,46 @@
             class="text-xl font-light text-black ">{{ userName }}</span></span>
       </div>
 
-      <!-- Dark Info Card -->
+      <!-- Dark Info Card - CREATE / MODIFY MARKET PROFILE -->
       <div class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden justify-center items-center">
         <div class="absolute inset-0 bg-black bg-opacity-70"></div>
         <div class="relative z-10 text-white">
           <div class="flex items-center gap-3 mb-3">
-            <!-- <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon> -->
             <img [src]="myIcon" alt="myIcon" class="h-7 w-7" />
             <span class="font-semibold text-[20px] leading-tight">
-              MODIFY MARKET PROFILE
+              {{ isNewUser ? 'CREATE MARKET PROFILE' : 'MODIFY MARKET PROFILE' }}
             </span>
           </div>
+
           <p class="text-gray-200 mb-4 text-base leading-relaxed">
-            You can update your market profile <br> here.
+            {{ isNewUser ? 'You can create your market profile here.' : 'You can update your market profile here.' }}
           </p>
-          <ion-button fill="clear"
-            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"  
-             (click)="proceedToMarketProfile()">
+
+          <ion-button *ngIf="isNewUser" fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+            (click)="proceedToMarketProfile()">
             Proceed
-            
+          </ion-button>
+
+          <ion-button *ngIf="!isNewUser" fill="clear"
+            class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
+            (click)="proceedToMarketProfile()">
+            Proceed
           </ion-button>
         </div>
+
         <!-- Wallet Balance Card -->
-        <div (click)="routeToWallet()" class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200 text-left z-50 relative mt-3">
+        <div (click)="routeToWallet()"
+          class="bg-white rounded-lg shadow-md p-6 mb-6 border border-gray-200 text-left z-50 relative mt-3">
           <p class="text-gray-500 text-sm mb-2">Wallet Balance</p>
-          <h2 class="text-3xl font-bold text-gray-900">₦30,000.00</h2>
+          <h2 class="text-3xl font-bold text-gray-900">₦{{ walletBalance | number : '1.0-2' }}</h2>
         </div>
       </div>
 
-
-
-      <!-- Dashboard Statistics -->
+      <!-- Dashboard Statistics (always visible but values depend on isNewUser) -->
       <div class="border py-6 px-3 mt-12">
-        <h3 class="text-xl font-semibold py-5 md:text-left">
-          Talent’s Dashboard Statistics
-        </h3>
+        <h3 class="text-xl font-semibold py-5 md:text-left">Talent’s Dashboard Statistics</h3>
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div *ngFor="let card of dashboardCards" class="dashboard-stat-card">
             <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
@@ -64,7 +68,7 @@
           </div>
         </div>
 
-        <!-- Donut Chart -->
+        <!-- Total Market by Percentage -->
         <div class="py-4 mt-5">
           <h3 class="text-xl font-semibold">Total Market by Percentage</h3>
         </div>
@@ -73,119 +77,93 @@
           <div class="w-full flex flex-col md:flex-row justify-center items-center gap-8">
             <!-- Left: Concentric Circles -->
             <div class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80">
-              <ng-container *ngFor="
-                  let circle of percentageCircles;
-                  let i = index;
-                  trackBy: trackByCircle
-                ">
+              <ng-container *ngFor="let circle of percentageCircles; let i = index; trackBy: trackByCircle">
                 <svg class="absolute" [attr.width]="circle.size" [attr.height]="circle.size" [style.zIndex]="100 - i">
-                  <!-- Grey background -->
                   <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" stroke="#e5e7eb"
                     stroke-width="8" />
 
-                  <!-- Progress -->
                   <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" [attr.stroke]="circle.color"
-                    stroke-width="8" [attr.stroke-dasharray]="
-                      getCircumference(circle.size / 2 - 8)
-                    " [attr.stroke-dashoffset]="
-                      getStrokeDashoffset(
-                        circle.size / 2 - 8,
-                        circle.percentage
-                      )
-                    " class="transition-all duration-700 ease-in-out" [attr.transform]="
-                      'rotate(-90, ' +
-                      circle.size / 2 +
-                      ', ' +
-                      circle.size / 2 +
-                      ')'
-                    " />
+                    stroke-width="8" [attr.stroke-dasharray]="getCircumference(circle.size / 2 - 8)"
+                    [attr.stroke-dashoffset]="getStrokeDashoffset(circle.size / 2 - 8, circle.percentage)"
+                    class="transition-all duration-700 ease-in-out"
+                    [attr.transform]="'rotate(-90, ' + circle.size / 2 + ', ' + circle.size / 2 + ')'">
+                  </circle>
 
-                  <!-- Progress Dot -->
-                  <circle [attr.cx]="
-                      getProgressDotPosition(
-                        circle.size / 2 - 8,
-                        circle.percentage,
-                        circle.size
-                      ).x
-                    " [attr.cy]="
-                      getProgressDotPosition(
-                        circle.size / 2 - 8,
-                        circle.percentage,
-                        circle.size
-                      ).y
-                    " r="5" [attr.fill]="circle.color" />
+                  <circle [attr.cx]="getProgressDotPosition(circle.size / 2 - 8, circle.percentage, circle.size).x"
+                    [attr.cy]="getProgressDotPosition(circle.size / 2 - 8, circle.percentage, circle.size).y" r="5"
+                    [attr.fill]="circle.color"></circle>
                 </svg>
               </ng-container>
             </div>
 
-            <!-- Right: Legend -->
+            <!-- Right: Percentage Breakdown -->
             <div class="donut-legend w-full md:w-auto">
-              <div *ngFor="let card of dashboardStatCards" class="donut-legend-item">
+              <div *ngFor="let card of dashboardStatCards"
+                class="donut-legend-item flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg mb-3">
                 <div class="flex items-center gap-3">
-                  <span class="donut-dot" [ngClass]="{
-                      accepted: card.status === 'active',
-                      pending: card.status === 'pending',
-                      rejected: card.status === 'inactive',
-                      engagement: card.status === ''
-                    }"></span>
-                  <span>{{ card.title }}</span>
+                  <span class="h-3 w-3 rounded-full flex-shrink-0"
+                    [ngStyle]="{ 'background-color': getPercentageStatusColor(card.status) }"></span>
+                  <span class="text-gray-700 text-sm font-medium whitespace-nowrap">{{ card.title }}</span>
                 </div>
-                <span>{{ card.value }}%</span>
+                <span class="text-lg font-semibold text-gray-900">{{ card.value }}%</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Ratings Chart (HTML/CSS Bars) -->
       <!-- Ratings Card -->
-      <div class="bg-white p-4 rounded-lg shadow mt-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">My Recent Market Ratings</h3>
+      <div class="border py-6 px-3 mt-12">
+        <h3 class="px-4 text-xl font-semibold">My Recent Market Rating</h3>
 
-        <canvas id="ratingsChart"></canvas>
-
-        <!-- Custom Legend -->
-        <div class="flex justify-center gap-6 mt-4">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-            <span class="text-sm text-gray-600">Your Ratings</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-purple-600"></span>
-            <span class="text-sm text-gray-600">Scouter’s Ratings</span>
+        <!-- New user: show No Data -->
+        <div *ngIf="isNewUser; else ratingChart" class="flex flex-col items-center mt-10">
+          <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
+          <div class="text-center space-y-2 mt-6">
+            <h3 class="text-[#000000] font-semibold text-[20px]">Oops! No Data Available</h3>
+            <p class="text-[#000000] text-[16px]">No record exists for now</p>
           </div>
         </div>
-      </div>
 
-      <!-- Recent Hires Card -->
-      <!-- Recent Hires Card -->
-      <div class="rounded-xl p-4 mt-6">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">My Recent Hires</h3>
-
-          <button (click)="goToViewHires()" class="bg-[#101828] text-white px-4 py-1 rounded-lg text-sm">
-            View All Hires
-          </button>
-        </div>
-
-
-        <!-- Hires List -->
-        <div *ngFor="let hire of recentHires" class="flex justify-between items-center py-3 border-b last:border-b-0">
-          <div class="flex items-center gap-3">
-            <!-- Avatar -->
-            <img [src]="hire.avatar" alt="{{ hire.name }}" class="w-10 h-10 rounded-full object-cover" />
-            <!-- Info -->
-            <div class="flex flex-col">
-              <span class="text-sm font-medium text-gray-900">{{ hire.name }}</span>
-              <span class="text-xs text-gray-500">{{ hire.date }}</span>
+        <ng-template #ratingChart>
+          <canvas id="ratingsChart"></canvas>
+          <div class="flex justify-center gap-6 mt-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+              <span class="text-sm text-gray-600">Your Ratings</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-purple-600"></span>
+              <span class="text-sm text-gray-600">Scouter’s Ratings</span>
             </div>
           </div>
-          <!-- Amount -->
-          <div class="text-gray-900 font-semibold">
-            ₦ {{ hire.amount | number : '1.0-2' }}
+        </ng-template>
+      </div>
+
+      <!-- Recent Hires -->
+      <div class="border py-6 px-3 mt-12">
+        <h3 class="px-4 text-xl font-semibold">My Recent Hires</h3>
+
+        <div *ngIf="isNewUser; else hiresList" class="flex flex-col items-center mt-10">
+          <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
+          <div class="text-center space-y-2 mt-6">
+            <h3 class="text-[#000000] font-semibold text-[20px]">Oops! No Data Available</h3>
+            <p class="text-[#000000] text-[16px]">No record exists for now</p>
           </div>
         </div>
+
+        <ng-template #hiresList>
+          <div *ngFor="let hire of recentHires" class="flex justify-between items-center py-3 border-b last:border-b-0">
+            <div class="flex items-center gap-3">
+              <img [src]="hire.avatar" alt="{{ hire.name }}" class="w-10 h-10 rounded-full object-cover" />
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-900">{{ hire.name }}</span>
+                <span class="text-xs text-gray-500">{{ hire.date }}</span>
+              </div>
+            </div>
+            <div class="text-gray-900 font-semibold">₦ {{ hire.amount | number : '1.0-2' }}</div>
+          </div>
+        </ng-template>
       </div>
     </div>
   </div>

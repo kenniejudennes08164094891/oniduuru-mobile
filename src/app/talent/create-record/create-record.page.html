@@ -16,7 +16,7 @@
         <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
         <div class="items-center">
           <span class="font-semibold text-[24px] leading-tight">
-            Create Market Profile
+            {{ isNewUser ? 'CREATE MARKET PROFILE' : 'MODIFY MARKET PROFILE' }}
           </span>
         </div>
       </div>
@@ -226,10 +226,15 @@
   <!-- Pics & Document Tab -->
 
 
-  <!-- Update Button -->
-  <button class="w-full bg-[#101828] text-white py-3 rounded mt-6" (click)="updateRecord()">
-    Create Record
-  </button>
+  <button
+  class="w-full bg-[#101828] text-white py-3 rounded mt-6"
+  (click)="saveMarketProfile()"
+  [disabled]="isLoading"
+  [attr.aria-label]="isNewUser ? 'Create Record' : 'Update Record'"
+>
+  {{ isNewUser ? 'Create Record' : 'Update Record' }}
+</button>
+
 
 
 </ion-content>

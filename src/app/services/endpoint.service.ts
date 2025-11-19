@@ -17,6 +17,12 @@ export class EndpointService {
     private authService: AuthService
   ) { }
 
+  public loginUser(user: any):Observable<any>{
+    let body = JSON.stringify(user);
+    let url = `${environment?.baseUrl}/${endpoints?.userLogin}`;
+    return this.http.post<any>(url, body, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+  }
+
   //  Talent Profile APIs
   public fetchTalentProfile(talentId: string): Observable<any> {
     const encodedTalentId = encodeURIComponent(talentId);
