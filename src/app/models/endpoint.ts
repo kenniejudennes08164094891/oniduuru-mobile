@@ -106,6 +106,7 @@ export const endpoints = {
   //wallets service
   validateMyBVN: 'api-service/verify-bvn',
   validateMyNIN: 'api-service/verify-nin',
+  verifyBusiness: 'api-service/v1/verify-business',
   getNubanBanks: 'api-service/get-nigerian-banks',
   verifyAcctNum: 'api-service/verify-account-number',
   createWalletProfile: 'wallets/v1/create-wallet-profile',

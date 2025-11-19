@@ -36,7 +36,7 @@
       </p>
     </div>
 
-    <div class="space-y-4 p-4 flex items-center justify-between">
+    <div class="p-4 flex items-center justify-between">
       <div class="flex items-center">
         <input
           type="radio"
@@ -96,7 +96,7 @@
     class="bg-white rounded-lg p-4"
   >
     <fieldset [disabled]="isFormLocked" class="space-y-6">
-      <!-- RC Number -->
+      <!-- RC Number with Verification Status -->
       <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
@@ -108,9 +108,27 @@
           name="rcNumber"
           [(ngModel)]="businessData.rcNumber"
           required
+          (input)="onRcNumberInput($event)"
           placeholder="RC-1234567"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          class="border px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300 transition-colors duration-300"
+          [class.border-green-500]="rcVerified === true"
+          [class.border-red-500]="rcVerified === false"
+          [class.border-gray-300]="rcVerified === null"
+          [class.border-blue-500]="rcVerifying"
         />
+
+        <!-- RC Verification Status -->
+        <div class="mt-1 space-y-1">
+          <p *ngIf="rcVerifying" class="text-sm text-blue-600">
+            🔍 Verifying RC number...
+          </p>
+          <p *ngIf="rcVerified === true" class="text-sm text-green-600">
+            ✅ RC number verified
+          </p>
+          <p *ngIf="rcVerified === false" class="text-sm text-red-600">
+            ❌ Invalid RC number
+          </p>
+        </div>
       </div>
 
       <!-- Company's Full Name -->
@@ -127,6 +145,7 @@
           required
           placeholder="Omosehin Kehinde Jude"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
         />
       </div>
 
@@ -147,7 +166,7 @@
         />
       </div>
 
-      <!-- Country Based -->
+      <!-- Country Based in Business Form -->
       <div class="relative dropdown-country">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
@@ -164,16 +183,46 @@
           placeholder="Select or search country"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
         />
+
+        <!-- Display selected country flag next to input -->
+        <div
+          *ngIf="businessData.country"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2"
+        >
+          <img
+            [src]="getCountryFlag(businessData.country)"
+            [alt]="businessData.country + ' flag'"
+            class="w-6 h-4 object-cover rounded"
+            onerror="this.style.display='none'"
+          />
+        </div>
+
         <ul
           *ngIf="showCountryDropdown"
           class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
         >
           <li
-            *ngFor="let country of filteredCountries"
-            (click)="selectBusinessCountry(country)"
-            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+            *ngFor="let countryName of filteredCountries"
+            (click)="selectBusinessCountry(countryName)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-3"
           >
-            {{ country }}
+            <!-- Country Flag -->
+            <img
+              [src]="getCountryFlag(countryName)"
+              [alt]="countryName + ' flag'"
+              class="w-6 h-4 object-cover rounded"
+              onerror="this.style.display='none'"
+            />
+            <!-- Country Name -->
+            <span>{{ countryName }}</span>
+          </li>
+
+          <!-- No results message -->
+          <li
+            *ngIf="filteredCountries.length === 0"
+            class="px-4 py-2 text-gray-500 text-sm"
+          >
+            No countries found
           </li>
         </ul>
       </div>
@@ -273,10 +322,61 @@
           required
           maxlength="10"
           pattern="^[0-9]{10}$"
+          #businessAccCtrl="ngModel"
           (input)="onBusinessAccountInput($event)"
-          placeholder="Input your Bank's account number"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          (blur)="validateBusinessAccount()"
+          placeholder="{{
+            !selectedBank ? 'Please select a bank first' : '8987659012'
+          }}"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px] transition-all duration-300"
+          [class.border-green-500]="businessAcctVerified === true"
+          [class.border-red-500]="businessAcctVerified === false"
+          [class.border-gray-300]="businessAcctVerified === null"
+          [class.border-blue-500]="businessAcctVerifying"
+          [class.bg-gray-100]="!businessData.bankName"
+          [class.text-gray-400]="!businessData.bankName"
+          [disabled]="!businessData.bankName"
         />
+
+        <!-- Bank selection requirement message -->
+        <div *ngIf="!businessData.bankName" class="mt-1">
+          <p class="text-amber-600 text-sm flex items-center">
+            <ion-icon name="information-circle" class="mr-1"></ion-icon>
+            Please select a bank first to enable account number input
+          </p>
+        </div>
+
+        <p
+          *ngIf="
+            (businessAccCtrl.invalid && businessAccCtrl.touched) ||
+            businessAcctError
+          "
+          class="text-red-500 text-sm mt-1"
+        >
+          {{ businessAcctError || "Account number must be exactly 10 digits." }}
+        </p>
+        <!-- account verification status -->
+        <!-- account verification status -->
+        <div *ngIf="businessAcctVerifying" class="text-sm text-[#B76A00] mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+
+        <p
+          *ngIf="businessAcctVerified === true"
+          class="text-sm text-green-600 mt-1"
+        >
+          ✅ Account number has been verified successfully! for
+          {{ businessAccountName ? " - " + businessAccountName : "" }}
+        </p>
+        <p
+          *ngIf="businessAcctVerified === false"
+          class="text-sm text-red-600 mt-1"
+        >
+          ❌ This Account Number does not exist
+        </p>
       </div>
 
       <!-- Company's Phone Number -->
@@ -294,6 +394,7 @@
           maxlength="11"
           placeholder="Auto populated field"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
         />
       </div>
 
@@ -347,10 +448,14 @@
       <button
         *ngIf="!isFormLocked"
         type="submit"
-        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2 transition-all duration-300"
+        [class.opacity-50]="!businessForm.valid"
+        [class.cursor-not-allowed]="!businessForm.valid"
+        [class.bg-gray-400]="!businessForm.valid"
+        [class.hover:bg-gray-400]="!businessForm.valid"
         [disabled]="!businessForm.valid"
       >
-        Save
+        {{ getBusinessSubmitButtonText() }}
       </button>
 
       <div
@@ -416,6 +521,7 @@
           placeholder="Victory Olorunda"
           #fullNameCtrl="ngModel"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
         />
         <p
           *ngIf="fullNameCtrl.invalid && fullNameCtrl.touched"
@@ -456,14 +562,13 @@
         </ul>
       </div>
 
-      <!-- BVN -->
-      <div class="relative dropdown-gender">
+      <!-- BVN Field with Enhanced Status -->
+      <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
         >
           BVN
         </label>
-
         <input
           type="text"
           name="bvn"
@@ -474,19 +579,51 @@
           pattern="^[0-9]{11}$"
           (input)="onBvnInput($event)"
           placeholder="Enter your BVN"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          class="border px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300 transition-colors duration-300"
+          [class.border-green-500]="bvnVerified === true"
+          [class.border-red-500]="bvnVerified === false"
+          [class.border-gray-300]="bvnVerified === null"
+          [class.border-blue-500]="bvnVerifying"
         />
 
-        <p
-          *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
-          class="text-red-500 text-sm mt-1"
-        >
-          BVN must be exactly 11 digits only.
-        </p>
+        <div class="mt-1 space-y-1">
+          <p
+            *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
+            class="text-red-500 text-sm"
+          >
+            BVN must be exactly 11 digits only.
+          </p>
+
+          <div
+            *ngIf="bvnVerifying"
+            class="flex items-center text-[#B76A00] text-sm"
+          >
+            <div
+              class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+            ></div>
+            Processing... ✍️
+          </div>
+
+          <div
+            *ngIf="bvnVerified === true"
+            class="flex items-center text-green-600 text-sm"
+          >
+            <ion-icon name="checkmark-circle" class="mr-1"></ion-icon>
+            ✅ BVN has been verified successfully! for {{ bvnFullName }}
+          </div>
+
+          <div
+            *ngIf="bvnVerified === false"
+            class="flex items-center text-red-600 text-sm"
+          >
+            ❌ Invalid BVN
+          </div>
+        </div>
       </div>
 
+      <!-- Similar enhancements for NIN and Account Number fields -->
       <!-- NIN -->
-      <div class="relative dropdown-gender">
+      <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
         >
@@ -504,6 +641,10 @@
           (input)="onNinInput($event)"
           placeholder="Enter your NIN"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          [class.border-green-500]="ninVerified === true"
+          [class.border-red-500]="ninVerified === false"
+          [class.border-gray-300]="ninVerified === null"
+          [class.border-blue-500]="ninVerifying"
         />
 
         <p
@@ -511,6 +652,19 @@
           class="text-red-500 text-sm mt-1"
         >
           NIN must be exactly 11 digits only.
+        </p>
+        <!-- NIN verification status -->
+        <div *ngIf="ninVerifying" class="text-sm text-gray-500 mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+        <p *ngIf="ninVerified === true" class="text-sm text-green-600 mt-1">
+          ✅ NIN has been verified successfully! for {{ ninFullName }}
+        </p>
+        <p *ngIf="ninVerified === false" class="text-sm text-red-600 mt-1">
+          ❌ Invalid NIN
         </p>
       </div>
 
@@ -563,7 +717,7 @@
         </ul>
       </div>
 
-      <!-- Country of Residence -->
+      <!-- Country of Residence with Flags -->
       <div class="relative dropdown-country">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
@@ -580,16 +734,46 @@
           placeholder="Select or search country"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
         />
+
+        <!-- Display selected country flag next to input -->
+        <div
+          *ngIf="selectedCountry"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2"
+        >
+          <img
+            [src]="getCountryFlag(selectedCountry)"
+            [alt]="selectedCountry + ' flag'"
+            class="w-6 h-4 object-cover rounded"
+            onerror="this.style.display='none'"
+          />
+        </div>
+
         <ul
           *ngIf="showCountryDropdown"
           class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
         >
           <li
-            *ngFor="let country of filteredCountries"
-            (click)="selectCountry(country)"
-            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+            *ngFor="let countryName of filteredCountries"
+            (click)="selectCountry(countryName)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-3"
           >
-            {{ country }}
+            <!-- Country Flag -->
+            <img
+              [src]="getCountryFlag(countryName)"
+              [alt]="countryName + ' flag'"
+              class="w-6 h-4 object-cover rounded"
+              onerror="this.style.display='none'"
+            />
+            <!-- Country Name -->
+            <span>{{ countryName }}</span>
+          </li>
+
+          <!-- No results message -->
+          <li
+            *ngIf="filteredCountries.length === 0"
+            class="px-4 py-2 text-gray-500 text-sm"
+          >
+            No countries found
           </li>
         </ul>
       </div>
@@ -673,9 +857,27 @@
           #savingsAccCtrl="ngModel"
           (input)="onSavingsAccInput($event)"
           (blur)="validateSavingsAcc()"
-          placeholder="8987659012"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+          placeholder="{{
+            !selectedBank ? 'Please select a bank first' : '8987659012'
+          }}"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px] transition-all duration-300"
+          [class.border-green-500]="acctVerified === true"
+          [class.border-red-500]="acctVerified === false"
+          [class.border-gray-300]="acctVerified === null"
+          [class.border-blue-500]="acctVerifying"
+          [class.bg-gray-100]="!selectedBank"
+          [class.text-gray-400]="!selectedBank"
+          [disabled]="!selectedBank"
         />
+
+        <!-- Bank selection requirement message -->
+        <div *ngIf="!selectedBank" class="mt-1">
+          <p class="text-amber-600 text-sm flex items-center">
+            <ion-icon name="information-circle" class="mr-1"></ion-icon>
+            Please select a bank first to enable account number input
+          </p>
+        </div>
+
         <p
           *ngIf="
             (savingsAccCtrl.invalid && savingsAccCtrl.touched) ||
@@ -684,6 +886,21 @@
           class="text-red-500 text-sm mt-1"
         >
           {{ savingsAccError || "Account number must be exactly 10 digits." }}
+        </p>
+        <!-- account verification status -->
+        <!-- account verification status -->
+        <div *ngIf="acctVerifying" class="text-sm text-[#B76A00] mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+        <p *ngIf="acctVerified === true" class="text-sm text-green-600 mt-1">
+          ✅ Account number has been verified successfully! for
+          {{ accountName ? " - " + accountName : "" }}
+        </p>
+        <p *ngIf="acctVerified === false" class="text-sm text-red-600 mt-1">
+          ❌ This Account Number does not exist
         </p>
       </div>
 
@@ -702,6 +919,7 @@
           placeholder="09021334559"
           (input)="onNumberInput($event)"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white"
+          readonly="true"
         />
         <p
           *ngIf="numberCtrl.invalid && numberCtrl.touched"
@@ -759,10 +977,14 @@
       <button
         *ngIf="!isFormLocked"
         type="submit"
-        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2 transition-all duration-300"
+        [class.opacity-50]="!profileForm.valid || savingsAccError"
+        [class.cursor-not-allowed]="!profileForm.valid || savingsAccError"
+        [class.bg-gray-400]="!profileForm.valid || savingsAccError"
+        [class.hover:bg-gray-400]="!profileForm.valid || savingsAccError"
         [disabled]="!profileForm.valid || savingsAccError"
       >
-        Save
+        {{ getIndividualSubmitButtonText() }}
       </button>
 
       <!-- Always show Return -->

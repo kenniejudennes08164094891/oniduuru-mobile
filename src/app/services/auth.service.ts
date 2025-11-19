@@ -47,7 +47,7 @@ export class AuthService {
   // ============ LOGIN ============
   loginUser(credentials: { email: string; password: string }): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.userLogin}`;
-    console.log('Making login request to:', url, credentials);
+    // console.log('Making login request to:', url, credentials);
 
     return this.http
       .post<any>(url, credentials, {

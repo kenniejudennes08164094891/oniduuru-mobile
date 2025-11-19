@@ -27,11 +27,12 @@
           Wallet Not Found
         </h3>
         <p class="text-gray-500 mb-6">
-          You haven't created a wallet profile yet. Create one to start using wallet features.
+          You haven't created a wallet profile yet. Create one to start using
+          wallet features.
         </p>
-        <ion-button 
-          (click)="navigateToWalletProfile()" 
-          fill="solid" 
+        <ion-button
+          (click)="navigateToWalletProfile()"
+          fill="solid"
           color="primary"
           class="mt-4"
         >
@@ -42,7 +43,10 @@
   </div>
 
   <!-- Error State -->
-  <div *ngIf="!loadingWallet && walletError && !walletNotFound" class="error-container">
+  <div
+    *ngIf="!loadingWallet && walletError && !walletNotFound"
+    class="error-container"
+  >
     <ion-icon name="warning-outline" class="error-icon"></ion-icon>
     <p>Unable to load wallet details</p>
     <ion-button (click)="refreshWalletData()" fill="solid" color="primary">
