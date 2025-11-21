@@ -115,7 +115,7 @@
       Skill Set
     </button>
 
-    <button class="flex-1 py-2 text-center font-medium text-sm relative transition-all duration-1500" [ngClass]="activeTab === 'docs'
+    <button class="flex-1 py-2 text-center font-medium text-sm relative  transition-all duration-[3500ms] ease-in-out" [ngClass]="activeTab === 'docs'
       ? 'text-purple-600 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-purple-600'
       : 'text-gray-600'" (click)="setActiveTab('docs')">
       Pics & Document
@@ -125,7 +125,8 @@
   <!-- Tab Content with Slide Transition -->
   <div class="relative overflow-hidden h-auto">
     <!-- Skill Set Tab -->
-    <div class="transition-all duration-1500 ease-in-out"
+   <div class="transition-all duration-[2000ms] ease-in-out"
+
       [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'skills', '-translate-x-full opacity-0 absolute': activeTab !== 'skills' }">
       <div *ngIf="activeTab === 'skills'" class="mt-4">
         <div *ngFor="let skill of marketProfile.skillSets; let i = index"
@@ -183,7 +184,7 @@
     </div>
 
     <!-- Pics & Document Tab -->
-    <div class="transition-all duration-1500 ease-in-out"
+   <div class="transition-all duration-[3500ms] ease-in-out"
       [ngClass]="{ 'translate-x-0 opacity-100': activeTab === 'docs', 'translate-x-full opacity-0 absolute': activeTab !== 'docs' }">
       <div *ngIf="activeTab === 'docs'" class="mt-4">
         <div class="bg-gray-100 text-sm text-gray-600 p-3 rounded mb-3">

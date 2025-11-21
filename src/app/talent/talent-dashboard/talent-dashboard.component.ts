@@ -6,6 +6,8 @@ import { AuthService } from '../../services/auth.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
 
 Chart.register(...registerables);
 
@@ -29,6 +31,12 @@ export class TalentDashboardComponent implements OnInit {
   timeOfDay = '';
   timeIcon = '';
   myIcon = imageIcons.infoIcon;
+
+  useMockData: boolean = environment.useMockData;
+  showMockBadge = false;
+
+  
+
 
   // Header scroll state
   headerHidden = false;
@@ -78,39 +86,205 @@ export class TalentDashboardComponent implements OnInit {
   // ---------- REPLACE ngOnInit() ----------
 
   async ngOnInit(): Promise<void> {
-    console.log("ngOnInit has started running...");
+  console.log("ngOnInit has started running...");
 
-    // Load talentId from storage once
-    this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
-    console.log('Dashboard loaded with talentId:', this.talentId);
+  // Load talentId from storage
+  this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
+  console.log('Dashboard loaded with talentId:', this.talentId);
 
-    if (!this.talentId) {
-      console.warn('No talentId found. Redirecting to login.');
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    this.setTimeOfDay();
-    this.getTalentDetails();
-
-    
-    await this.fetchTalentStats();
-    await this.loadTalentProfile();
-
-    this.checkMarketProfileStatus();
-    console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
-
-    if (this.isNewUser) {
-      this.prepareNewUserDashboard();
-    } else {
-      this.fetchTalentStats().catch((err) => {
-        console.error('fetchTalentStats failed:', err);
-        this.prepareNewUserDashboard();
-      });
-    }
-
-    setTimeout(() => (this.showSpinner = false), 900);
+  if (!this.talentId) {
+    console.warn('No talentId found. Redirecting to login.');
+    this.router.navigate(['/login']);
+    return;
   }
+
+  // Initialize UI + Profile datadata
+  this.setTimeOfDay();
+  this.getTalentDetails();
+  await this.loadTalentProfile();
+
+  // ✅ Unified logic (API + mock)
+  await this.loadDashboardData();
+
+  // Maintain onboarding handling
+  this.checkMarketProfileStatus();
+  console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
+
+  if (this.isNewUser) {
+    this.prepareNewUserDashboard();
+  }
+
+  // Spinner fade
+  setTimeout(() => (this.showSpinner = false), 900);
+}
+  // ---------- loadDashboardData() ----------  
+async loadDashboardData(): Promise<void> {
+  if (environment.useMockData) {
+    console.log('Mock mode active — using local dashboard data');
+    this.loadMockData();
+    return;
+  }
+  if (this.useMockData) {
+  this.showMockBadge = true;
+
+  // Automatically hide after 5 seconds
+  setTimeout(() => {
+    this.showMockBadge = false;
+  }, 5000);
+}
+
+
+  try {
+    console.log('Fetching live dashboard stats...');
+    await this.fetchTalentStats(); //  keeps your endpoint call
+  } catch (error) {
+    console.error('fetchTalentStats() failed:', error);
+    console.warn('Falling back to mock data for dashboard');
+    this.loadMockData();
+  }
+}
+private loadMockData(): void {
+  console.log(' Loading mock dashboard data...');
+
+  // Mock Dashboard Metrics
+  this.dashboardCards = [
+    { title: 'Total Market Engagement', value: 21, status: '' },
+    { title: 'Total Offer Accepted', value: 18, status: 'active' },
+    { title: 'Total Offer Rejected', value: 1, status: 'pending' },
+    { title: 'Total Offer Awaiting Acceptance', value: 2, status: 'inactive' },
+  ];
+
+  // Derived Percentage Stats
+  this.dashboardStatCards = [
+    { title: 'Offers Accepted', value: 85.71, status: 'active' },
+    { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
+    { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
+  ];
+
+  // Create Concentric Percentage Circles
+  const baseSize = 120;
+  this.percentageCircles = this.dashboardStatCards
+    .map((card, index) => {
+      const size = baseSize + index * 40;
+      return {
+        size,
+        color: this.getPercentageStatusColor(card.status),
+        percentage: card.value,
+        title: card.title,
+      };
+    })
+    .reverse();
+
+  // Mock Ratings
+  this.ratingsData = [
+    { date: '17/September/2024 8:15AM', yourRating: 5, scouterRating: 4 },
+    { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
+    { date: '18/September/2024 8:15AM', yourRating: 3, scouterRating: 4 },
+    { date: '18/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
+  ];
+
+  // Mock Recent Hires
+  this.recentHires = [
+    {
+      name: 'Adediji Samuel Oluwaseyi',
+      date: 'Oct 17, 2024, 8:25AM',
+      amount: 40000.0,
+      avatar: 'assets/images/portrait-african-american-man.jpg',
+    },
+    {
+      name: 'Kehinde Jude Omosehin',
+      date: 'Sep 17, 2024, 9:45AM',
+      amount: 700000.0,
+      avatar: 'assets/images/portrait-african-american-man.jpg',
+    },
+      {
+        name: 'Adediji Samuel Oluwaseyi',
+        date: 'Sep 19, 2024, 8:15PM',
+        amount: 70000.0,
+        avatar: 'assets/images/portrait-man-cartoon-style.jpg',
+      },
+        {
+        name: 'Kehinde Jude Omosehin',
+        date: 'Sep 22, 2024, 11:25AM',
+        amount: 400000.0,
+        avatar: 'assets/images/portrait-man-cartoon-style.jpg',
+      },
+      {
+        name: 'Adediji Samuel Oluwaseyi',
+        date: 'Sep 19, 2024, 8:15PM',
+        amount: 70000.0,
+        avatar: 'assets/images/portrait-man-cartoon-style.jpg',
+      },
+  ];
+
+  // Initialize Ratings Chart (Chart.js)
+  setTimeout(() => this.initRatingsChart(), 300);
+
+  // Mock Wallet
+  this.walletBalance = 30000.0;
+
+  // Hide Spinner a bit later
+  setTimeout(() => (this.showSpinner = false), 900);
+
+  console.log('✅ Mock data loaded successfully.');
+}
+
+
+
+
+  // private async loadDashboardData(): Promise<void> {
+  //   if (this.useMockData) {
+  //     console.log('Using mock data for dashboard stats');
+  //     // Simulated delay for loading effect
+  //     await new Promise((resolve) => setTimeout(resolve, 500));
+
+  //     // Mock data setup
+  //     this.dashboardCards = [
+  //       { title: 'Total Market Engagement', value: 15, status: '' },
+  //       { title: 'Total Offer Accepted', value: 7, status: 'active' },
+  //       { title: 'Total Offer Rejected', value: 5, status: 'inactive' },
+  //       { title: 'Total Offer Awaiting Acceptance', value: 3, status: 'pending' }
+  //     ];
+
+  //     this.dashboardStatCards = [
+  //       { title: 'Offers Accepted', value: 46.67, status: 'active' },
+  //       { title: 'Waiting Acceptance', value: 20.00, status: 'pending' },
+  //       { title: 'Offers Rejected', value: 33.33, status: 'inactive' }
+  //     ];
+
+  //     const baseSize = 120;
+  //     this.percentageCircles = this.dashboardStatCards
+  //       .map((card, index) => ({
+  //         size: baseSize + index * 40,
+  //         color: this.getPercentageStatusColor(card.status),
+  //         percentage: card.value,
+  //         title: card.title
+  //       }))
+  //       .reverse();
+
+  //     this.ratingsData = [
+  //       { date: 'Jan', yourRating: 4, scouterRating: 5 },
+  //       { date: 'Feb', yourRating: 5, scouterRating: 4 },
+  //       { date: 'Mar', yourRating: 3, scouterRating: 4 }
+  //     ];
+  //     this.initRatingsChart();
+
+  //     this.recentHires = [
+  //       { name: 'Company A', date: '2024-06-01', amount: 5000, avatar: 'assets/avatars/companyA.png' },
+  //       { name: 'Company B', date: '2024-05-15', amount: 3000, avatar: 'assets/avatars/companyB.png' }
+  //     ];
+
+  //     this.walletBalance = 8000;
+
+  //   } else {
+  //     console.log('Fetching real dashboard stats from API');
+  //     await this.fetchTalentStats();
+  //   }
+  // }
+
+  // prepare dashboard for new users with zeroed stats  
+
+  
 
 
   private prepareNewUserDashboard(): void {

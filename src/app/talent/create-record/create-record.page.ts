@@ -287,7 +287,7 @@ export class CreateRecordPage implements OnInit {
     this.loadSkillDropdown();
     this.fetchMyNotifications();
     this.clearNotifications();
-     this.loadMarketOrTalentProfile();
+    // this.updateTalentProfile();
   }
 
   // -------------------- NOTIFICATIONS --------------------

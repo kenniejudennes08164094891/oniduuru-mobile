@@ -1,5 +1,5 @@
 <ion-header>
-   <app-talent-header></app-talent-header>
+  <app-talent-header></app-talent-header>
 </ion-header>
 
 <ion-content class="ion-padding">
@@ -24,24 +24,33 @@
 
 
   <ng-container *ngIf="marketExpenditures && marketExpenditures.length > 0; else noExpenditure">
-    <!-- ✅ Show this if there are expenditures -->
-    <div class="bg-white px-10 py-6 shadow-xl rounded-xl">
-      <p>
-        You have {{ marketExpenditures.length }} expenditures in
-        {{ currentMonth }}.
-      </p>
+    <div class="bg-white px-10 py-6 shadow-xl rounded-xl overflow-hidden">
+      <div class="flex animate-marquee">
+        <p class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10">
+          You have {{ marketExpenditures.length }} expenditures in {{ currentMonth }}.
+        </p>
+        <p class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10">
+          You have {{ marketExpenditures.length }} expenditures in {{ currentMonth }}.
+        </p>
+      </div>
     </div>
   </ng-container>
 
-  <!-- ❌ If expenditures are empty, show this -->
   <ng-template #noExpenditure>
-    <div class="bg-[#CDD5DF33] px-10 py-6 shadow-xl rounded-xl">
-      <p>
-        Oops!....It appears there have been no market expenditures in this Month
-        of {{ currentMonth }}.
-      </p>
+    <div class="bg-[#CDD5DF33] px-10 py-6 shadow-xl rounded-xl overflow-hidden">
+      <div class="flex animate-marquee">
+        <p class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10">
+          Oops!....It appears there have been no market expenditures in this Month of {{ currentMonth }}.
+        </p>
+        <p class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10">
+          Oops!....It appears there have been no market expenditures in this Month of {{ currentMonth }}.
+        </p>
+      </div>
     </div>
   </ng-template>
+
+
+
   <!-- Section for Selected Category -->
   <div #categoryDisplaySection *ngIf="activeCategoryBtn" class="py-4 px-1">
     <h3 class="font-semibold text-lg mb-4">
@@ -156,7 +165,7 @@
           </thead>
 
           <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
-            <tr *ngFor="let hire of paginatedHires"  (click)="goToHireTransaction(hire.id)"
+            <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id)"
               class="hover:bg-gray-50 transition-colors cursor-pointer">
 
               <!-- Profile + Name -->

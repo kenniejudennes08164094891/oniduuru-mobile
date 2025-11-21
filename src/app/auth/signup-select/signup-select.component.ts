@@ -25,7 +25,7 @@ export class SignupSelectComponent implements OnInit {
 
   routeToTalentSignup(){
    setTimeout(() => {
-    this.router.navigate(['/talent/create-account'], {relativeTo: this.route});
+    this.router.navigate(['/talent/onboarding'], {relativeTo: this.route});
    }, 200)
   }
 

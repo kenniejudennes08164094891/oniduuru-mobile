@@ -1,7 +1,24 @@
-ion-content {
-  --background: #ffffff;
+.talent-input {
+  width: 100%;
+  height: 45px;
+  border: 1px solid #D0D5DD;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  background: white;
+  color: #101828;
 }
 
-ion-button {
-  @apply rounded-lg font-medium;
+.talent-input::placeholder {
+  color: #98A2B3;
+}
+
+.input-error {
+  border-color: #D92D20 !important;
+}
+
+.error-text {
+  color: #D92D20;
+  font-size: 12px;
+  margin-top: 4px;
 }

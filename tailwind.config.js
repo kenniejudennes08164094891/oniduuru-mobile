@@ -18,3 +18,19 @@ module.exports = {
   },
   plugins: [require('flowbite/plugin')],
 };
+// module.exports = {
+//   theme: {
+//     extend: {
+//       keyframes: {
+//         marqueeFast: {
+//           '0%': { transform: 'translateX(100%)' },
+//           '100%': { transform: 'translateX(-100%)' },
+//         },
+//       },
+//       animation: {
+//         marqueeFast: 'marqueeFast 5s linear infinite', // faster scroll, 5 seconds
+//       },
+//     },
+//   },
+//   plugins: [],
+// };

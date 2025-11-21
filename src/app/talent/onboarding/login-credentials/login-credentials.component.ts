@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, Input } from '@angular/core';
 
 @Component({
   selector: 'app-login-credentials',
@@ -8,20 +8,41 @@ export class LoginCredentialsComponent {
   @Output() next = new EventEmitter<void>();
   @Output() previous = new EventEmitter<void>();
 
-  email = '';
-  password = '';
-  confirmPassword = '';
+  @Input() email = '';
+  @Input() password = '';
+  @Input() confirmPassword = '';
 
-  formValid() {
-    return (
-      this.email &&
-      this.password &&
-      this.password === this.confirmPassword &&
-      this.password.length >= 8
-    );
+  emailTouched = false;
+  passwordTouched = false;
+  confirmPasswordTouched = false;
+
+  // ---------------- VALIDATIONS ----------------
+  emailValid() {
+    if (!this.email.trim()) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email);
   }
 
+  passwordValid() {
+    if (!this.password) return false;
+    // Password must contain 8+ chars, uppercase, lowercase, special char
+    const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
+    return pattern.test(this.password);
+  }
+
+  confirmPasswordValid() {
+    return this.confirmPassword === this.password && !!this.confirmPassword;
+  }
+
+  formValid() {
+    return this.emailValid() && this.passwordValid() && this.confirmPasswordValid();
+  }
+
+  // ---------------- HANDLERS ----------------
   onNext() {
+    this.emailTouched = true;
+    this.passwordTouched = true;
+    this.confirmPasswordTouched = true;
+
     if (this.formValid()) this.next.emit();
   }
 

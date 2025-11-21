@@ -8,6 +8,13 @@
   <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
     <!-- Header -->
     <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden"></app-talent-header>
+    <!-- 🧩 MOCK MODE BADGE -->
+    <div *ngIf="showMockBadge"
+      class="fixed top-3 right-3 bg-yellow-500 text-white px-3 py-1 rounded-lg shadow-lg text-xs z-50 transition-opacity duration-700 ease-in-out animate-pulse"
+      [ngClass]="{ 'opacity-0': !showMockBadge, 'opacity-100': showMockBadge }">
+      ⚠️ MOCK DATA ACTIVE
+    </div>
+
 
     <div class="container mx-auto px-4 py-6 flex-1">
       <!-- Greeting -->
@@ -142,7 +149,14 @@
 
       <!-- Recent Hires -->
       <div class="border py-6 px-3 mt-12">
-        <h3 class="px-4 text-xl font-semibold">My Recent Hires</h3>
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="px-4 text-xl font-semibold">My Recent Hires</h3>
+          <button (click)="goToViewHires()" class="bg-[#101828] text-white px-4 py-1 rounded-lg text-sm">
+            View All Hires
+            
+          </button>
+        </div>
+
 
         <div *ngIf="isNewUser; else hiresList" class="flex flex-col items-center mt-10">
           <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
@@ -151,7 +165,6 @@
             <p class="text-[#000000] text-[16px]">No record exists for now</p>
           </div>
         </div>
-
         <ng-template #hiresList>
           <div *ngFor="let hire of recentHires" class="flex justify-between items-center py-3 border-b last:border-b-0">
             <div class="flex items-center gap-3">
