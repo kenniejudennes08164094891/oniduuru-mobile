@@ -15,13 +15,17 @@ import { ScouterEndpointsService } from './services/scouter-endpoints.service';
 import { AuthService } from './services/auth.service';
 import { UserService } from './services/user.service';
 import { ToastsService } from './services/toasts.service';
+import { IonicStorageModule } from '@ionic/storage-angular';
+import { ChatPageComponent } from './pages/chat-page/chat-page.component';
+import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, ChatBotComponent],
   imports: [
     BrowserModule,
     IonicModule.forRoot(),
     AppRoutingModule,
+    IonicStorageModule.forRoot(),
     MaterialModule,
     BrowserAnimationsModule,
     HttpClientModule,
@@ -32,6 +36,7 @@ import { ToastsService } from './services/toasts.service';
       positionClass: 'toast-bottom-right',
       preventDuplicates: true,
     }),
+    ChatPageComponent,
   ],
   providers: [
     ScouterEndpointsService,
@@ -40,7 +45,11 @@ import { ToastsService } from './services/toasts.service';
     UserService,
     ToastsService,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptorService, multi: true },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: JwtInterceptorService,
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

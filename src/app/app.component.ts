@@ -1,6 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationStart } from '@angular/router';
-import { MenuController, Platform } from '@ionic/angular';
+
+import {
+  MenuController,
+  Platform,
+  IonApp,
+  IonMenu,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonRouterOutlet,
+} from '@ionic/angular';
 import { App as CapacitorApp } from '@capacitor/app';
 import { initFlowbite } from 'flowbite';
 import { AuthService } from './services/auth.service';
@@ -11,6 +25,7 @@ import { AppInitService } from './services/app-init.service';
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
+ 
 })
 export class AppComponent implements OnInit {
   constructor(

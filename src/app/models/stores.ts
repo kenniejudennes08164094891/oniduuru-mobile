@@ -43,6 +43,8 @@ export const imageIcons = {
   imageUploads: 'assets/images/imageIcon.svg',
   fileUploadIcon: '/assets/images/file_uploads.svg',
   reelIcon: 'assets/images/reel.svg',
+  ChatBotIcon: '/assets/icon/bot.png',
+
 };
 
 export const talentOnboardingTabItems: TabItems[] = [

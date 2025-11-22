@@ -1,0 +1,20 @@
+<!-- src/app/components/chat-bot/chat-bot.component.html -->
+<div class="fixed bottom-4 right-4 z-50">
+  <!-- Chat Button - Only show when user is authenticated and not on auth pages -->
+  <button
+    *ngIf="showChatButton"
+    (click)="openChat()"
+    [class.opacity-50]="!showChatButton"
+    [class.cursor-not-allowed]="!showChatButton"
+    class="w-14 h-14 bg-gradient-to-r shadow-2xl flex items-center justify-center"
+    [title]="
+      showChatButton ? 'Chat with Onflbééré' : 'Please login to access chat'
+    "
+  >
+    <img
+      [src]="images.ChatBotIcon"
+      alt="Chat with Òní Ìbéèrè"
+      class="w-10 h-10"
+    />
+  </button>
+</div>

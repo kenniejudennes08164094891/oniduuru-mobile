@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
-import {ActivatedRoute, Router} from "@angular/router";
+import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 @Component({
@@ -22,15 +22,21 @@ export class LogComplaintsPopupModalComponent extends BaseModal {
   ) {
     super(modalCtrl, platform);
   }
-  override async dismiss():Promise<void> {
-    this.location.back();
+
+  async closeModal(): Promise<void> {
+    // Add any custom logic here if needed
+    console.log('Closing complaints modal');
+
+    // Then dismiss properly
+    await this.dismiss();
   }
- async submitComplaint():Promise<void> {
+
+  async submitComplaint(): Promise<void> {
     if (this.complaintText.trim().length === 0) {
       return;
     }
     console.log('Complaint submitted:', this.complaintText);
 
-   await this.modalCtrl.dismiss({ complaint: this.complaintText }, 'confirm');
+    await this.modalCtrl.dismiss({ complaint: this.complaintText }, 'confirm');
   }
 }

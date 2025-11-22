@@ -139,4 +139,6 @@ export const endpoints = {
   // utils
   getAllCountryFlags: 'api-service/fetch-all-countries',
   cloudinaryGetSecrets: 'utility/v1/cloudinary/signature',
+
+  chatbot: 'api-service/v1/chatbot',
 };
