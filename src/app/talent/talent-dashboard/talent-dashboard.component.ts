@@ -188,7 +188,7 @@ private loadMockData(): void {
     {
       name: 'Adediji Samuel Oluwaseyi',
       date: 'Oct 17, 2024, 8:25AM',
-      amount: 40000.0,
+      amount: 400000.0,
       avatar: 'assets/images/portrait-african-american-man.jpg',
     },
     {
@@ -200,19 +200,19 @@ private loadMockData(): void {
       {
         name: 'Adediji Samuel Oluwaseyi',
         date: 'Sep 19, 2024, 8:15PM',
-        amount: 70000.0,
+        amount: 700000.0,
         avatar: 'assets/images/portrait-man-cartoon-style.jpg',
       },
         {
         name: 'Kehinde Jude Omosehin',
         date: 'Sep 22, 2024, 11:25AM',
-        amount: 400000.0,
+        amount: 480000.0,
         avatar: 'assets/images/portrait-man-cartoon-style.jpg',
       },
       {
         name: 'Adediji Samuel Oluwaseyi',
         date: 'Sep 19, 2024, 8:15PM',
-        amount: 70000.0,
+        amount: 780000.0,
         avatar: 'assets/images/portrait-man-cartoon-style.jpg',
       },
   ];
