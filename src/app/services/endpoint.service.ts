@@ -706,7 +706,7 @@ export class EndpointService {
   public fetchTalentStats(talentId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.talentDashboardStats}/${encodedTalentId}`;
-    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders })
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
   public fetchScouterMarketStatsWithTalent(talentId: string, scouterId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
