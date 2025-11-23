@@ -15,9 +15,15 @@ export class EndpointService {
     private http: HttpClient,
     private jwtInterceptor: JwtInterceptorService,
     private authService: AuthService
-  ) {}
+  ) { }
 
-  // ✅ Talent Profile APIs
+  public loginUser(user: any):Observable<any>{
+    let body = JSON.stringify(user);
+    let url = `${environment?.baseUrl}/${endpoints?.userLogin}`;
+    return this.http.post<any>(url, body, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+  }
+
+  //  Talent Profile APIs
   public fetchTalentProfile(talentId: string): Observable<any> {
     const encodedTalentId = encodeURIComponent(talentId);
     const url = `${environment.baseUrl}/${endpoints.fetchTalentProfile}/${encodedTalentId}`;
@@ -37,13 +43,14 @@ export class EndpointService {
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Skill Dropdown
+  // Skill Dropdown
   public fetchSkillDropdown(): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.fetchDropdownItems}`;
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
+ 
 
-  // ✅ Talent Market Profile APIs
+  // Talent Market Profile APIs
   public createTalentMarketProfileData(payload: any, talentId: string): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -85,7 +92,7 @@ export class EndpointService {
     });
   }
 
-  // ✅ Profile Picture APIs
+  //  Profile Picture APIs
   public uploadTalentPicture(data: any): Observable<any> {
     const body = JSON.stringify(data);
     const url = `${environment.baseUrl}/${endpoints.uploadTalentProfilePic}`;
@@ -110,7 +117,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Security Question APIs
+  //  Security Question APIs
   public createTalentSecurityQuestion(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.createTalentSecurityQuestions}`;
@@ -129,7 +136,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Cloudinary Helpers
+  //  Cloudinary Helpers
   public fetchUrlFromCloudinary(apiUrl: string, formData: FormData): Observable<any> {
     return this.http.post<any>(apiUrl, formData);
   }
@@ -139,7 +146,7 @@ export class EndpointService {
     return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
   }
 
-  // ✅ Talent Reel APIs
+  //  Talent Reel APIs
   public uploadTalentReel(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.uploadTalentReel}`;
@@ -157,5 +164,28 @@ export class EndpointService {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.replaceTalentReel}/${encodedTalentId}`;
     return this.http.patch<any>(url, body, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+  public fetchTalentStats(talentId: string): Observable<any> {
+    let encodedTalentId = encodeURIComponent(talentId);
+    let url = `${environment?.baseUrl}/${endpoints?.talentDashboardStats}/${encodedTalentId}`;
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+  public fetchScouterMarketStatsWithTalent(talentId: string, scouterId: string): Observable<any> {
+    let encodedTalentId = encodeURIComponent(talentId);
+    let encodedScouterId = encodeURIComponent(scouterId);
+    let url = `${environment?.baseUrl}/${endpoints?.scouterMarketWithTalent}/${encodedScouterId}/${encodedTalentId}`;
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+   public fetchMyNotifications(
+    receiverId?: any
+  ):Observable<any>{
+    let encodedReceiverId = encodeURIComponent(receiverId);
+    let url = `${environment?.baseUrl}/${endpoints?.getMyNotifications}?receiverId=${receiverId === undefined ? '' : receiverId?.trim()}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+  }
+   public clearMyNotifications(payload: any):Observable<any>{
+    const body = JSON.stringify(payload);
+    let url = `${environment?.baseUrl}/${endpoints?.clearMyNotifications}`;
+    return this.http.post<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
   }
 }

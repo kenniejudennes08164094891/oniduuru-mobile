@@ -1,26 +1,77 @@
-<form class="space-y-4">
-  <ion-select label="Skill Level" [(ngModel)]="skillLevel" name="skillLevel" placeholder="Select skill level">
-    <ion-select-option value="Beginner">Beginner</ion-select-option>
-    <ion-select-option value="Intermediate">Intermediate</ion-select-option>
-    <ion-select-option value="Expert">Expert</ion-select-option>
-  </ion-select>
+<form class="space-y-5 px-2" (submit)="$event.preventDefault()">
 
-  <ion-select label="Skill Set" [(ngModel)]="skillSet" name="skillSet" placeholder="Select skill set">
-    <ion-select-option value="Set 1">Set 1</ion-select-option>
-    <ion-select-option value="Set 2">Set 2</ion-select-option>
-    <ion-select-option value="Set 3">Set 3</ion-select-option>
-  </ion-select>
-
-  <ion-input placeholder="Educational Background" [(ngModel)]="education" name="education"></ion-input>
-
-  <ion-select label="Pay Range" [(ngModel)]="payRange" name="payRange" placeholder="Select pay range">
-    <ion-select-option value="₦10,000 - ₦50,000">₦10,000 - ₦50,000</ion-select-option>
-    <ion-select-option value="₦50,000 - ₦100,000">₦50,000 - ₦100,000</ion-select-option>
-    <ion-select-option value="₦100,000+">₦100,000+</ion-select-option>
-  </ion-select>
-
-  <div class="flex flex-col gap-2 mt-6">
-    <ion-button expand="block" color="dark" (click)="onNext()" [disabled]="!formValid()">Next</ion-button>
-    <ion-button expand="block" fill="outline" (click)="onPrevious()">Previous</ion-button>
+  <!-- Skill Level -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Skill Level</label>
+    <select [(ngModel)]="skillLevel" name="skillLevel" (blur)="skillLevelTouched = true" class="talent-input"
+      [ngClass]="{ 'input-error': skillLevelTouched && !skillLevelValid() }">
+      <option value="" disabled selected>Select skill level</option>
+      <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
+    </select>
+    <span *ngIf="skillLevelTouched && !skillLevelValid()" class="error-text">
+      Please select a skill level
+    </span>
   </div>
+
+  <!-- Skill Set (dynamic input) -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Enter Skills</label>
+    <div class="flex gap-2">
+      <input type="text" [(ngModel)]="newSkill" name="newSkill" placeholder="Type a skill and Add"
+        class="talent-input flex-1" />
+      <button type="button" class="px-4 py-2 bg-[#101828] text-white rounded-md" (click)="addSkill()">Add</button>
+    </div>
+    <div class="flex flex-wrap gap-2 mt-2">
+      <span *ngFor="let skill of skillSet.split(','); let i = index"
+        class="px-3 py-1 bg-[#E4E7EC] rounded-full text-sm flex items-center gap-2" [hidden]="!skill.trim()">
+        {{ skill.trim() }}
+        <button type="button" class="text-red-500 font-bold" (click)="removeSkill(i)">x</button>
+      </span>
+    </div>
+    <span *ngIf="skillSetTouched && !skillSetValid()" class="error-text">
+      Please add at least one skill
+    </span>
+  </div>
+
+
+  <!-- Education -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Educational Background</label>
+    <select [(ngModel)]="education" name="education" (blur)="educationTouched = true" class="talent-input"
+      [ngClass]="{ 'input-error': educationTouched && !educationValid() }">
+      <option value="" disabled selected>Select educational background</option>
+      <option *ngFor="let edu of educationLevels" [value]="edu">{{ edu }}</option>
+    </select>
+    <span *ngIf="educationTouched && !educationValid()" class="error-text">
+      Please select your education
+    </span>
+  </div>
+
+  <!-- Pay Range -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Pay Range</label>
+    <select [(ngModel)]="payRange" name="payRange" (blur)="payRangeTouched = true" class="talent-input"
+      [ngClass]="{ 'input-error': payRangeTouched && !payRangeValid() }">
+      <option value="" disabled selected>Select pay range</option>
+      <option *ngFor="let range of payRanges" [value]="range">{{ range }}</option>
+    </select>
+    <span *ngIf="payRangeTouched && !payRangeValid()" class="error-text">
+      Please select your expected pay range
+    </span>
+  </div>
+
+  <!-- Buttons -->
+  <div class="mt-8 space-y-3">
+    <button type="button" class="w-full py-3 rounded-md text-center font-medium transition-all"
+      [ngClass]="formValid() ? 'bg-[#101828] text-white' : 'bg-[#E4E7EC] text-[#98A2B3]'" [disabled]="!formValid()"
+      (click)="onNext()">
+      Next
+    </button>
+    <button type="button"
+      class="w-full py-3 rounded-md border border-[#D0D5DD] text-[#344054] bg-transparent font-medium"
+      (click)="onPrevious()">
+      Previous
+    </button>
+  </div>
+
 </form>

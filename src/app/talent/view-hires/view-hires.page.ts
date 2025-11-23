@@ -37,6 +37,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       return null;
     }
   }
+  
 
   async goToHireTransaction(hireId: string | number): Promise<any> {
     console.log('Clicked hire:', hireId); // 👈 test log
@@ -262,6 +263,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       default: return 'gray';
     }
   }
+
+  
 
   // ===== Search + Pagination =====
   get filteredAndSearchedHires() {

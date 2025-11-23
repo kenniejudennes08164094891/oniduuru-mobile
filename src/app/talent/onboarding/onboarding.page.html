@@ -1,16 +1,24 @@
 <ion-header class="shadow-none border-b border-gray-200">
   <ion-toolbar class="flex justify-between items-center px-4">
-    <div class="flex items-center gap-2">
-      <img src="assets/logo.svg" alt="logo" class="h-6" />
-      <h1 class="text-lg font-semibold">Oniduuruu</h1>
+    <div class="w-full flex justify-between items-center px-4 py-2">
+    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+
+    <div class="flex items-center gap-4">
+      <button
+        (click)="goBack()"
+        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white"
+      >
+        Back
+      </button>
     </div>
-    <ion-button fill="clear" (click)="goBack()">Back</ion-button>
+  </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="px-4 mt-4">
-  <h2 class="text-xl font-semibold mb-4">Create an account</h2>
-
+  <div class="py-4 px-4 bg-[#F1F1F1] text-[#101828] text-[24px]">
+    <span>Create an account</span>
+  </div>
   <!-- Tabs -->
   <div class="flex border-b border-gray-300 text-sm font-medium mb-6">
     <button

@@ -6,6 +6,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { PaginationParams } from 'src/app/models/mocks';
+import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'app-market-price-preposition',
   templateUrl: './market-price-preposition.page.html',
@@ -26,7 +27,8 @@ export class MarketPricePrepositionPage implements OnInit {
     private route: ActivatedRoute,
     private endpointService: EndpointService,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastr: ToastrService
   ) { }
 
   ngOnInit(): void {
@@ -77,16 +79,26 @@ export class MarketPricePrepositionPage implements OnInit {
       console.error('Talent ID not found in storage.');
       return;
     }
+
     const navState: any = (history && history.state) ? history.state : {};
     const scouterIdFromState = navState?.scouterId || navState?.hire?.scouterId;
     const scouterIdFromHire = (this.hire as any)?.scouterId;
-    const scouterId = scouterIdFromState || scouterIdFromHire || ''; 
+    const scouterId = scouterIdFromState || scouterIdFromHire || '';
+
+    // ✅ Save both IDs for use in Stats tab
+    sessionStorage.setItem('talentId', talentId);
+    if (scouterId) {
+      sessionStorage.setItem('scouterId', scouterId);
+    }
+
     const paginationParams = { limit: 10, pageNo: 1 };
+
     this.endpointService.fetchMarketsByTalent(talentId, paginationParams, '', scouterId).subscribe({
       next: (res: any) => {
         const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
-        // store list for template use
         this.marketItems = Array.isArray(decoded) ? decoded : [];
+
+        console.log('✅ Saved IDs for Stats tab:', { talentId, scouterId });
       },
       error: (err: any) => {
         console.error('Error fetching markets for market-price-preposition page:', err);
@@ -94,6 +106,7 @@ export class MarketPricePrepositionPage implements OnInit {
       }
     });
   }
+
   setRating(star: number) {
     if (!this.hire) return;
 
@@ -139,6 +152,7 @@ export class MarketPricePrepositionPage implements OnInit {
     const hireId = hire.id;
     const scouterId = hire.scouterId || ''; // example: 'scouter/4212/23November2024'
     // pass the hire and scouterId in navigation state
+     sessionStorage.setItem('scouterId', scouterId);
     this.router.navigate(['/talent/market-price-preposition', hireId], {
       state: { scouterId, hire }
     });

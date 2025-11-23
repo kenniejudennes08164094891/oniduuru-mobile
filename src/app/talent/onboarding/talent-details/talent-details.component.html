@@ -1,91 +1,93 @@
-<form class="space-y-4">
-  <ion-input
-    placeholder="Enter your first and last name"
-    [(ngModel)]="fullName"
-    name="fullName"
-    required
-  ></ion-input>
+<form class="space-y-5 px-2" (submit)="$event.preventDefault()">
 
-  <ion-input
-    placeholder="Enter your Phone Number"
-    [(ngModel)]="phone"
-    name="phone"
-    required
-  ></ion-input>
-
-  <ion-input
-    placeholder="Enter your Email Address"
-    [(ngModel)]="email"
-    name="email"
-    type="email"
-  ></ion-input>
-
-  <ion-input
-    placeholder="Enter your Location"
-    [(ngModel)]="location"
-    name="location"
-  ></ion-input>
-
-  <!-- Additional Password Field -->
-  <div class="mb-5">
-    <label
-      for="password"
-      class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-    >
-      Your password
-    </label>
+  <!-- Full Name -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Enter your Full Name</label>
     <input
-      type="password"
-      id="password"
-      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-             focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
-             dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
-             dark:focus:ring-blue-500 dark:focus:border-blue-500"
-      required
+      type="text"
+      [(ngModel)]="fullName"
+      name="fullName"
+      (blur)="fullNameTouched = true; sanitizeName()"
+      class="talent-input"
+      [ngClass]="{ 'input-error': fullNameTouched && !fullNameValid() }"
+      placeholder="Enter your full name"
     />
+    <span *ngIf="fullNameTouched && !fullNameValid()" class="text-red-500 text-sm mt-1">
+      Full name must be at least 3 characters
+    </span>
   </div>
 
-  <!-- Remember Me Checkbox -->
-  <div class="flex items-start mb-5">
-    <div class="flex items-center h-5">
-      <input
-        id="remember"
-        type="checkbox"
-        value=""
-        class="w-4 h-4 border border-gray-300 rounded-sm bg-gray-50 focus:ring-3 focus:ring-blue-300
-               dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600
-               dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"
-        required
-      />
-    </div>
-    <label
-      for="remember"
-      class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-    >
-      Remember me
-    </label>
+  <!-- Phone Number -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Enter your Phone Number</label>
+    <input
+      type="text"
+      [(ngModel)]="phone"
+      name="phone"
+      (blur)="phoneTouched = true; sanitizePhone()"
+      class="talent-input"
+      [ngClass]="{ 'input-error': phoneTouched && !phoneValid() }"
+      placeholder="e.g 09080103219"
+    />
+    <span *ngIf="phoneTouched && !phoneValid()" class="text-red-500 text-sm mt-1">
+      Please enter a valid number (at least 7 digits)
+    </span>
   </div>
 
-  <!-- Submit Buttons -->
-  <div class="flex flex-col gap-2 mt-6">
-    <ion-button
-      expand="block"
-      color="dark"
-      (click)="onNext()"
+  <!-- Email -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Enter your Email Address</label>
+    <input
+      type="email"
+      [(ngModel)]="email"
+      name="email"
+      (blur)="emailTouched = true"
+      class="talent-input"
+      [ngClass]="{ 'input-error': emailTouched && !emailValid() }"
+      placeholder="baba.saala@gmail.com"
+    />
+    <span *ngIf="emailTouched && !emailValid()" class="text-red-500 text-sm mt-1">
+      Please enter a valid email address
+    </span>
+  </div>
+
+  <!-- Location -->
+  <div class="flex flex-col">
+    <label class="text-sm font-medium text-[#344054] mb-1">Enter your Location</label>
+    <input
+      type="text"
+      [(ngModel)]="location"
+      name="location"
+      (blur)="locationTouched = true; sanitizeLocation()"
+      class="talent-input"
+      [ngClass]="{ 'input-error': locationTouched && !locationValid() }"
+      placeholder="Enter your location"
+    />
+    <span *ngIf="locationTouched && !locationValid()" class="text-red-500 text-sm mt-1">
+      Location must be at least 2 characters
+    </span>
+  </div>
+
+  <!-- Buttons -->
+  <div class="mt-8 space-y-3">
+    <!-- Next Button -->
+    <button
+      type="button"
+      class="w-full py-3 rounded-md text-center font-medium transition-all"
+      [ngClass]="formValid() ? 'bg-[#101828] text-white' : 'bg-[#E4E7EC] text-[#98A2B3]'"
       [disabled]="!formValid()"
+      (click)="onNext()"
     >
       Next
-    </ion-button>
-    <ion-button expand="block" fill="clear" color="medium">Cancel</ion-button>
-  </div>
+    </button>
 
-  <!-- Final Submit -->
-  <button
-    type="submit"
-    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300
-           font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center
-           dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-  >
-    Submit
-  </button>
+    <!-- Cancel Button -->
+    <button
+      type="button"
+      class="w-full py-3 rounded-md border border-[#D0D5DD] text-[#344054] bg-transparent font-medium"
+      (click)="onCancel()"
+    >
+      Cancel
+    </button>
+  </div>
 </form>
