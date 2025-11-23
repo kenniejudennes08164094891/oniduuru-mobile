@@ -141,6 +141,8 @@ export class AuthPage implements OnInit {
       error: (err) => {
         console.error('❌ Login error:', err);
         this.handleLoginError(err);
+        this.isLoading = false;
+        this.loginText = 'Login';
       },
       complete: () => {
         this.isLoading = false;
