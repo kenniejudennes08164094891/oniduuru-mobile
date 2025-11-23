@@ -186,7 +186,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 export class CreateRecordPage implements OnInit {
   headerHidden = false;
   talentId: string | null = null;
-
+  skills: any[] = []; 
   // state
   isEditing = false; // true when a market profile already exists
   isLoading = false;
@@ -242,6 +242,22 @@ export class CreateRecordPage implements OnInit {
       } else {
         this.toastr.error('Talent ID not found. Please log in again.');
         this.router.navigate(['/login']);
+      }
+    });
+    this.loadSkillDropdown();
+  }
+  // -------------------- SKILL DROPDOWN --------------------
+  skillOptions: string[] = [];
+  loadSkillDropdown(): void {
+    this.endPointService.fetchSkillDropdown().subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+        console.debug('Fetched skill dropdown:', res);
+        this.skillOptions = res?.details || [];
+      },
+      error: (err) => {
+        console.error('Error fetching skill dropdown:', err);
+        this.toastr.error('Unable to load skill options.');
       }
     });
   }

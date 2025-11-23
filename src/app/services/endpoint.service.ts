@@ -697,4 +697,17 @@ export class EndpointService {
       },
     ];
   }
+
+  fetchTalentStats(talentId: string): Observable<any> {
+    const encoded = encodeURIComponent(talentId);
+    const url = `${environment.baseUrl}/${endpoints.talentDashboardStats}/${encoded}`;
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
+
+  fetchScouterMarketStatsWithTalent(talentId: string, scouterId: string): Observable<any> {
+    const encodedTalent = encodeURIComponent(talentId);
+    const encodedScouter = encodeURIComponent(scouterId);
+    const url = `${environment.baseUrl}/${endpoints.scouterMarketWithTalent}/${encodedScouter}/${encodedTalent}`;
+    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+  }
 }

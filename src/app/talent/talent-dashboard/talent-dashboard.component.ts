@@ -6,6 +6,8 @@ import { AuthService } from "../../services/auth.service";
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { PaginationParams } from 'src/app/models/mocks';
 import { Observable } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { firstValueFrom } from 'rxjs';
 Chart.register(...registerables);
 
 @Component({
@@ -19,6 +21,11 @@ export class TalentDashboardComponent implements OnInit {
   loading: string = 'Loading...';
   showSpinner: boolean = true;
   currentYear: number = new Date().getFullYear();
+
+
+  // User details
+  talentStats: any = null;
+  talentId: string = '';
 
   userName: string = 'User';
   timeOfDay: string = '';
@@ -37,6 +44,7 @@ export class TalentDashboardComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private endpointService: EndpointService,
+    private toastr: ToastrService
 
   ) { }
   //async goToViewHires(): Promise<void> {…}
@@ -77,7 +85,7 @@ export class TalentDashboardComponent implements OnInit {
   // ✅ Get user details (name) from localStorage or decoded auth data
   getTalentDetails() {
     try {
-      // 1️⃣ Try to get saved profile first
+      //Try to get saved profile first
       const savedProfile = localStorage.getItem('talentProfile');
       if (savedProfile) {
         const parsedProfile = JSON.parse(savedProfile);
@@ -88,10 +96,10 @@ export class TalentDashboardComponent implements OnInit {
           parsedProfile.details?.user?.fullName ||
           'User';
 
-        if (this.userName !== 'User') return; // ✅ Found name, stop here
+        if (this.userName !== 'User') return; // Found name, stop here
       }
 
-      // 2️⃣ Otherwise, decode from token as fallback
+      // Otherwise, decode from token as fallback
       const talentDetails = this.authService.decodeTalentDetails();
       console.log("talent details>>", talentDetails);
       console.log('Decoded Talent Details (fallback):', talentDetails);
@@ -173,34 +181,115 @@ export class TalentDashboardComponent implements OnInit {
   async routeToWallet(): Promise<void> {
     await this.router.navigate(['/scouter/wallet-page']);
   }
+  async fetchTalentStats(): Promise<void> {
+    const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
+    if (!talentId) {
+      console.warn('Talent ID not found, skipping stats fetch');
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(this.endpointService.fetchTalentStats(talentId));
+      console.log('Talent Stats Response:', response);
+
+      this.talentStats = response?.details || response;
+
+      // ✅ Update dashboard cards dynamically
+      this.dashboardCards = [
+        {
+          title: 'Total Market Engagement',
+          value: this.talentStats?.totalMarketEngagement || 0,
+          status: ''
+        },
+        {
+          title: 'Total Offer Accepted',
+          value: this.talentStats?.totalOffersAccepted || 0,
+          status: 'active'
+        },
+        {
+          title: 'Total Offer Rejected',
+          value: this.talentStats?.totalOffersRejected || 0,
+          status: 'inactive'
+        },
+        {
+          title: 'Total Offer Awaiting Acceptance',
+          value: this.talentStats?.totalOffersAwaitingAcceptance || 0,
+          status: 'pending'
+        },
+      ];
+
+      // ✅ Calculate percentages for offers
+      const totalOffers =
+        (this.talentStats?.totalOffersAccepted || 0) +
+        (this.talentStats?.totalOffersRejected || 0) +
+        (this.talentStats?.totalOffersAwaitingAcceptance || 0);
+
+      const offersAcceptedPct = totalOffers ? (this.talentStats?.totalOffersAccepted / totalOffers) * 100 : 0;
+      const offersRejectedPct = totalOffers ? (this.talentStats?.totalOffersRejected / totalOffers) * 100 : 0;
+      const waitingAcceptancePct = totalOffers ? (this.talentStats?.totalOffersAwaitingAcceptance / totalOffers) * 100 : 0;
+
+      // ✅ Update donut chart data
+      this.dashboardStatCards = [
+        { title: 'Offers Accepted', value: offersAcceptedPct, status: 'active' },
+        { title: 'Waiting Acceptance', value: waitingAcceptancePct, status: 'pending' },
+        { title: 'Offers Rejected', value: offersRejectedPct, status: 'inactive' },
+      ];
+
+      // ✅ Rebuild concentric circles
+      const baseSize = 120;
+      this.percentageCircles = this.dashboardStatCards
+        .map((card, index) => {
+          const size = baseSize + index * 40;
+          return {
+            size,
+            color: this.getPercentageStatusColor(card.status),
+            percentage: card.value,
+            title: card.title,
+          };
+        })
+        .reverse();
+
+      // ✅ Refresh the ratings chart if your backend returns ratings
+      if (this.talentStats?.ratingsData) {
+        this.ratingsData = this.talentStats.ratingsData;
+        this.initRatingsChart();
+      }
+
+    } catch (error) {
+      console.error('Error fetching talent stats:', error);
+      this.toastr.error('Unable to load dashboard statistics.');
+    }
+  }
+
 
   ngOnInit(): void {
     this.setTimeOfDay();
     this.getTalentDetails();
 
+
     // Simulate spinner
     setTimeout(() => (this.showSpinner = false), 1500);
-
+    this.fetchTalentStats();
     // Donut chart percentages
-    this.dashboardStatCards = [
-      { title: 'Offers Accepted', value: 85.71, status: 'active' },
-      { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
-      { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
-    ];
+    // this.dashboardStatCards = [
+    //   { title: 'Offers Accepted', value: 85.71, status: 'active' },
+    //   { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
+    //   { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
+    // ];
 
-    // Build concentric circles
-    const baseSize = 120;
-    this.percentageCircles = this.dashboardStatCards
-      .map((card, index) => {
-        const size = baseSize + index * 40;
-        return {
-          size,
-          color: this.getPercentageStatusColor(card.status),
-          percentage: card.value,
-          title: card.title,
-        };
-      })
-      .reverse();
+    // // Build concentric circles
+    // const baseSize = 120;
+    // this.percentageCircles = this.dashboardStatCards
+    //   .map((card, index) => {
+    //     const size = baseSize + index * 40;
+    //     return {
+    //       size,
+    //       color: this.getPercentageStatusColor(card.status),
+    //       percentage: card.value,
+    //       title: card.title,
+    //     };
+    //   })
+    //   .reverse();
 
     // Recent hires
     this.recentHires = [
@@ -331,6 +420,4 @@ export class TalentDashboardComponent implements OnInit {
     return this.getStatusColor(status);
   }
 }
-function firstValueFrom(arg0: Observable<any>): any {
-  throw new Error('Function not implemented.');
-}
+

@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  baseUrl: 'https://oniduuru-staging.shoftafrica.com'
+  baseUrl: 'http://localhost:7000'//'https://oniduuru-staging.shoftafrica.com'
 };

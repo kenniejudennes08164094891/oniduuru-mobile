@@ -69,8 +69,8 @@ export class AuthPage implements OnInit {
 
       if (params['message']) {
         this.toast.openSnackBar(params['message'], 'success');
-        setTimeout(() => {
-          this.router.navigate([], {
+        setTimeout(async () => {
+         await this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {},
             replaceUrl: true,
@@ -96,7 +96,7 @@ export class AuthPage implements OnInit {
         }
       },
       error: (err) => {
-        console.error('❌ Error fetching profile picture:', err);
+        console.error('Error fetching profile picture:', err);
       },
     });
   }
@@ -141,6 +141,8 @@ export class AuthPage implements OnInit {
       error: (err) => {
         console.error('❌ Login error:', err);
         this.handleLoginError(err);
+        this.isLoading = false;
+        this.loginText = 'Login';
       },
       complete: () => {
         this.isLoading = false;
@@ -241,14 +243,14 @@ export class AuthPage implements OnInit {
     console.groupEnd();
   }
 
-  private navigateByRole(role: string) {
+  private async navigateByRole(role: string) {
     const routes: Record<string, string> = {
       scouter: '/scouter/dashboard',
       talent: '/talent/dashboard',
       admin: '/admin/dashboard',
     };
     const route = routes[role] || '/auth/login';
-    this.router.navigateByUrl(route, { replaceUrl: true });
+   await this.router.navigateByUrl(route, { replaceUrl: true });
   }
 
   togglePasswordVisibility() {
@@ -256,8 +258,8 @@ export class AuthPage implements OnInit {
     this.passwordFieldType = this.showEye ? 'text' : 'password';
   }
 
-  signupSelect(): void {
-    this.router.navigate(['/auth/signup-select'], {
+ async signupSelect(): Promise<void> {
+   await this.router.navigate(['/auth/signup-select'], {
       relativeTo: this.route,
     });
   }
