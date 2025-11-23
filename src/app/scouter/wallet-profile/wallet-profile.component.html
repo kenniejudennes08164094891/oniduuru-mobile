@@ -5,14 +5,16 @@
 <ion-content class="ion-padding space-y-10">
   <!-- Top card -->
   <div
-    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 overflow-hidden"
   >
     <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
     <div class="relative z-10 text-white">
       <div class="flex items-start gap-3">
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight"> Viki ,</span>
+          <span class="font-medium text-[24px] leading-tight">
+            {{ userName }},
+          </span>
           <p class="text-gray-200 text-lg leading-relaxed">
             Quickly Create or View Your Wallet Profile
           </p>
@@ -21,7 +23,457 @@
     </div>
   </div>
 
-  <form #profileForm="ngForm" (ngSubmit)="onSubmit(profileForm)">
+  <!-- Profile Type Selection -->
+  <div class="bg-white mb-6">
+    <div
+      class="flex items-center gap-3 mb-4 text-[#B76A00] bg-[#FFF7E6] border border-[#F2C97D] p-4 rounded-xl"
+    >
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <h3 class="text-lg text-[#B76A00] font-semibold">Action Required:</h3>
+      <p class="text-[#B76A00]">
+        You'd need to set up your wallet now to start receiving payments, making
+        transactions, and enjoying full platform access.
+      </p>
+    </div>
+
+    <div class="p-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <input
+          type="radio"
+          id="business"
+          name="profileType"
+          value="business"
+          [(ngModel)]="profileType"
+          class="h-4 w-4 text-[#CC0000] focus:ring-[#CC0000] border-gray-300"
+        />
+        <label
+          for="business"
+          class="ml-3 block text-sm font-medium text-[#101828]"
+        >
+          I am operating as a registered business
+        </label>
+      </div>
+
+      <div class="flex items-center">
+        <input
+          type="radio"
+          id="individual"
+          name="profileType"
+          value="individual"
+          [(ngModel)]="profileType"
+          class="h-4 w-4 text-[#CC0000] focus:ring-[#CC0000] shadow-xl shadow-[#CC0000] border-gray-300"
+        />
+        <label
+          for="individual"
+          class="ml-3 block text-sm font-medium text-[#101828]"
+        >
+          I am operating as an independent individual
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State - Shows when no profile type is selected -->
+  <div *ngIf="!profileType" class="bg-white rounded-lg p-8 text-center">
+    <div class="flex flex-col items-center justify-center py-10">
+      <img
+        class="w-[232px] h-[246px]"
+        [src]="images.NoDataImage"
+        alt="No Data "
+      />
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">
+        No Data Available
+      </h3>
+      <p class="text-gray-500 mb-6">Oops!..No record exists for now.</p>
+    </div>
+  </div>
+
+  <!-- Business Form -->
+  <form
+    *ngIf="profileType === 'business'"
+    #businessForm="ngForm"
+    (ngSubmit)="onBusinessSubmit(businessForm)"
+    class="bg-white rounded-lg p-4"
+  >
+    <fieldset [disabled]="isFormLocked" class="space-y-6">
+      <!-- RC Number with Verification Status -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          RC Number
+        </label>
+        <input
+          type="text"
+          name="rcNumber"
+          [(ngModel)]="businessData.rcNumber"
+          required
+          (input)="onRcNumberInput($event)"
+          placeholder="RC-1234567"
+          class="border px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300 transition-colors duration-300"
+          [class.border-green-500]="rcVerified === true"
+          [class.border-red-500]="rcVerified === false"
+          [class.border-gray-300]="rcVerified === null"
+          [class.border-blue-500]="rcVerifying"
+        />
+
+        <!-- RC Verification Status -->
+        <div class="mt-1 space-y-1">
+          <p *ngIf="rcVerifying" class="text-sm text-blue-600">
+            🔍 Verifying RC number...
+          </p>
+          <p *ngIf="rcVerified === true" class="text-sm text-green-600">
+            ✅ RC number verified
+          </p>
+          <p *ngIf="rcVerified === false" class="text-sm text-red-600">
+            ❌ Invalid RC number
+          </p>
+        </div>
+      </div>
+
+      <!-- Company's Full Name -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Company's Full Name
+        </label>
+        <input
+          type="text"
+          name="companyName"
+          [(ngModel)]="businessData.companyName"
+          required
+          placeholder="Omosehin Kehinde Jude"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
+        />
+      </div>
+
+      <!-- Company's Nature of Business -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Company's Nature of Business
+        </label>
+        <input
+          type="text"
+          name="natureOfBusiness"
+          [(ngModel)]="businessData.natureOfBusiness"
+          required
+          placeholder="Input the job you do for a living."
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+      </div>
+
+      <!-- Country Based in Business Form -->
+      <div class="relative dropdown-country">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Country Based
+        </label>
+        <input
+          type="text"
+          name="country"
+          required
+          [(ngModel)]="businessData.country"
+          (focus)="showCountryDropdown = true; showBankDropdown = false"
+          (input)="filterCountries($event)"
+          placeholder="Select or search country"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+
+        <!-- Display selected country flag next to input -->
+        <div
+          *ngIf="businessData.country"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2"
+        >
+          <img
+            [src]="getCountryFlag(businessData.country)"
+            [alt]="businessData.country + ' flag'"
+            class="w-6 h-4 object-cover rounded"
+            onerror="this.style.display='none'"
+          />
+        </div>
+
+        <ul
+          *ngIf="showCountryDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let countryName of filteredCountries"
+            (click)="selectBusinessCountry(countryName)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-3"
+          >
+            <!-- Country Flag -->
+            <img
+              [src]="getCountryFlag(countryName)"
+              [alt]="countryName + ' flag'"
+              class="w-6 h-4 object-cover rounded"
+              onerror="this.style.display='none'"
+            />
+            <!-- Country Name -->
+            <span>{{ countryName }}</span>
+          </li>
+
+          <!-- No results message -->
+          <li
+            *ngIf="filteredCountries.length === 0"
+            class="px-4 py-2 text-gray-500 text-sm"
+          >
+            No countries found
+          </li>
+        </ul>
+      </div>
+
+      <!-- Bank Name -->
+      <div class="relative dropdown-bank">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Bank Name
+        </label>
+        <input
+          type="text"
+          name="bankName"
+          required
+          [(ngModel)]="businessData.bankName"
+          (focus)="showBankDropdown = true; showCountryDropdown = false"
+          (input)="filterBanks($event)"
+          placeholder="Select or search bank"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+        />
+        <ul
+          *ngIf="showBankDropdown"
+          class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
+        >
+          <li
+            *ngFor="let bank of filteredBanks"
+            (click)="selectBusinessBank(bank)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+          >
+            {{ bank }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Add this debug section temporarily in your template -->
+      <!-- <div
+        *ngIf="email"
+        class="bg-green-50 border border-green-200 p-3 rounded-md mb-4"
+      >
+        <p class="text-green-800 text-sm">
+          ✅ Email successfully bound: <strong>{{ email }}</strong>
+        </p>
+      </div> -->
+
+      <!-- <div
+        *ngIf="!email"
+        class="bg-yellow-50 border border-yellow-200 p-3 rounded-md mb-4"
+      >
+        <p class="text-yellow-800 text-sm">
+          ⚠️ No email found. Checking user data sources...
+        </p>
+        <button
+          (click)="debugUserData()"
+          class="text-blue-600 underline text-xs mt-2"
+        >
+          Debug User Data
+        </button>
+      </div> -->
+
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Company's Email
+        </label>
+        <input
+          type="email"
+          name="companyEmail"
+          [(ngModel)]="businessData.companyEmail"
+          required
+          email
+          placeholder="Auto populated field"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          [class.bg-gray-100]="businessData.companyEmail"
+          [readonly]="true"
+        />
+        <!-- <p
+          *ngIf="businessData.companyEmail"
+          class="text-green-500 text-sm mt-1"
+        >
+          ✅ Auto-populated from your account
+        </p> -->
+      </div>
+
+      <!-- Company's Account Number -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Company's Account Number
+        </label>
+        <input
+          type="text"
+          name="accountNumber"
+          [(ngModel)]="businessData.accountNumber"
+          required
+          maxlength="10"
+          pattern="^[0-9]{10}$"
+          #businessAccCtrl="ngModel"
+          (input)="onBusinessAccountInput($event)"
+          (blur)="validateBusinessAccount()"
+          placeholder="{{
+            !selectedBank ? 'Please select a bank first' : '8987659012'
+          }}"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px] transition-all duration-300"
+          [class.border-green-500]="businessAcctVerified === true"
+          [class.border-red-500]="businessAcctVerified === false"
+          [class.border-gray-300]="businessAcctVerified === null"
+          [class.border-blue-500]="businessAcctVerifying"
+          [class.bg-gray-100]="!businessData.bankName"
+          [class.text-gray-400]="!businessData.bankName"
+          [disabled]="!businessData.bankName"
+        />
+
+        <!-- Bank selection requirement message -->
+        <div *ngIf="!businessData.bankName" class="mt-1">
+          <p class="text-amber-600 text-sm flex items-center">
+            <ion-icon name="information-circle" class="mr-1"></ion-icon>
+            Please select a bank first to enable account number input
+          </p>
+        </div>
+
+        <p
+          *ngIf="
+            (businessAccCtrl.invalid && businessAccCtrl.touched) ||
+            businessAcctError
+          "
+          class="text-red-500 text-sm mt-1"
+        >
+          {{ businessAcctError || "Account number must be exactly 10 digits." }}
+        </p>
+        <!-- account verification status -->
+        <!-- account verification status -->
+        <div *ngIf="businessAcctVerifying" class="text-sm text-[#B76A00] mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+
+        <p
+          *ngIf="businessAcctVerified === true"
+          class="text-sm text-green-600 mt-1"
+        >
+          ✅ Account number has been verified successfully! for
+          {{ businessAccountName ? " - " + businessAccountName : "" }}
+        </p>
+        <p
+          *ngIf="businessAcctVerified === false"
+          class="text-sm text-red-600 mt-1"
+        >
+          ❌ This Account Number does not exist
+        </p>
+      </div>
+
+      <!-- Company's Phone Number -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Company's Phone Number
+        </label>
+        <input
+          type="tel"
+          name="companyPhone"
+          [(ngModel)]="businessData.companyPhone"
+          required
+          maxlength="11"
+          placeholder="Auto populated field"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
+        />
+      </div>
+
+      <!-- Upload CAC Certificate -->
+      <div class="relative">
+        <label
+          class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
+        >
+          Upload a screenshot of the company's CAC certificate
+        </label>
+        <div
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white"
+        >
+          <input
+            type="file"
+            name="cacCertificate"
+            (change)="onFileSelected($event)"
+            accept="image/*,.pdf"
+            class="w-full"
+          />
+        </div>
+      </div>
+
+      <!-- Date of Incorporation -->
+      <div class="relative w-full">
+        <label
+          class="bg-white absolute -top-2 p-1 left-3 text-[10px] text-[#717E95]"
+        >
+          Date of Incorporation
+        </label>
+        <div
+          class="flex items-center border border-[#D9DCE5] w-full shadow-lg rounded-md bg-white px-2 sm:px-3 md:px-4 py-3 md:py-4"
+        >
+          <ion-icon
+            name="calendar-clear-outline"
+            class="text-gray-400 mr-2"
+          ></ion-icon>
+          <input
+            type="date"
+            name="incorporationDate"
+            [(ngModel)]="businessData.incorporationDate"
+            required
+            class="flex-1 focus:outline-none text-[14px] bg-transparent border-none placeholder:text-gray-300"
+          />
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Buttons for Business Form -->
+    <div class="space-y-3 mt-10">
+      <button
+        *ngIf="!isFormLocked"
+        type="submit"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2 transition-all duration-300"
+        [class.opacity-50]="!businessForm.valid"
+        [class.cursor-not-allowed]="!businessForm.valid"
+        [class.bg-gray-400]="!businessForm.valid"
+        [class.hover:bg-gray-400]="!businessForm.valid"
+        [disabled]="!businessForm.valid"
+      >
+        {{ getBusinessSubmitButtonText() }}
+      </button>
+
+      <div
+        (click)="goBack()"
+        class="w-full text-center mx-auto border border-[#101828] text-black rounded-md py-2"
+      >
+        Cancel
+      </div>
+    </div>
+  </form>
+
+  <!-- Individual Form -->
+  <form
+    *ngIf="profileType === 'individual'"
+    #profileForm="ngForm"
+    (ngSubmit)="onSubmit(profileForm)"
+    class="bg-white rounded-lg p-4"
+  >
     <fieldset [disabled]="isFormLocked" class="space-y-6">
       <!-- Title (Dropdown) -->
       <div class="relative dropdown-title">
@@ -69,6 +521,7 @@
           placeholder="Victory Olorunda"
           #fullNameCtrl="ngModel"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          readonly="true"
         />
         <p
           *ngIf="fullNameCtrl.invalid && fullNameCtrl.touched"
@@ -109,14 +562,13 @@
         </ul>
       </div>
 
-      <!-- BVN -->
-      <div class="relative dropdown-gender">
+      <!-- BVN Field with Enhanced Status -->
+      <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
         >
           BVN
         </label>
-
         <input
           type="text"
           name="bvn"
@@ -127,19 +579,51 @@
           pattern="^[0-9]{11}$"
           (input)="onBvnInput($event)"
           placeholder="Enter your BVN"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          class="border px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300 transition-colors duration-300"
+          [class.border-green-500]="bvnVerified === true"
+          [class.border-red-500]="bvnVerified === false"
+          [class.border-gray-300]="bvnVerified === null"
+          [class.border-blue-500]="bvnVerifying"
         />
 
-        <p
-          *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
-          class="text-red-500 text-sm mt-1"
-        >
-          BVN must be exactly 11 digits only.
-        </p>
+        <div class="mt-1 space-y-1">
+          <p
+            *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
+            class="text-red-500 text-sm"
+          >
+            BVN must be exactly 11 digits only.
+          </p>
+
+          <div
+            *ngIf="bvnVerifying"
+            class="flex items-center text-[#B76A00] text-sm"
+          >
+            <div
+              class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+            ></div>
+            Processing... ✍️
+          </div>
+
+          <div
+            *ngIf="bvnVerified === true"
+            class="flex items-center text-green-600 text-sm"
+          >
+            <ion-icon name="checkmark-circle" class="mr-1"></ion-icon>
+            ✅ BVN has been verified successfully! for {{ bvnFullName }}
+          </div>
+
+          <div
+            *ngIf="bvnVerified === false"
+            class="flex items-center text-red-600 text-sm"
+          >
+            ❌ Invalid BVN
+          </div>
+        </div>
       </div>
 
+      <!-- Similar enhancements for NIN and Account Number fields -->
       <!-- NIN -->
-      <div class="relative dropdown-gender">
+      <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
         >
@@ -157,6 +641,10 @@
           (input)="onNinInput($event)"
           placeholder="Enter your NIN"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          [class.border-green-500]="ninVerified === true"
+          [class.border-red-500]="ninVerified === false"
+          [class.border-gray-300]="ninVerified === null"
+          [class.border-blue-500]="ninVerifying"
         />
 
         <p
@@ -164,6 +652,19 @@
           class="text-red-500 text-sm mt-1"
         >
           NIN must be exactly 11 digits only.
+        </p>
+        <!-- NIN verification status -->
+        <div *ngIf="ninVerifying" class="text-sm text-gray-500 mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+        <p *ngIf="ninVerified === true" class="text-sm text-green-600 mt-1">
+          ✅ NIN has been verified successfully! for {{ ninFullName }}
+        </p>
+        <p *ngIf="ninVerified === false" class="text-sm text-red-600 mt-1">
+          ❌ Invalid NIN
         </p>
       </div>
 
@@ -176,6 +677,7 @@
         <input
           type="text"
           name="occupation"
+          [(ngModel)]="occupation"
           required
           placeholder="Product Designer"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
@@ -215,7 +717,7 @@
         </ul>
       </div>
 
-      <!-- Country of Residence -->
+      <!-- Country of Residence with Flags -->
       <div class="relative dropdown-country">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
@@ -232,16 +734,46 @@
           placeholder="Select or search country"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
         />
+
+        <!-- Display selected country flag next to input -->
+        <div
+          *ngIf="selectedCountry"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2"
+        >
+          <img
+            [src]="getCountryFlag(selectedCountry)"
+            [alt]="selectedCountry + ' flag'"
+            class="w-6 h-4 object-cover rounded"
+            onerror="this.style.display='none'"
+          />
+        </div>
+
         <ul
           *ngIf="showCountryDropdown"
           class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto"
         >
           <li
-            *ngFor="let country of filteredCountries"
-            (click)="selectCountry(country)"
-            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+            *ngFor="let countryName of filteredCountries"
+            (click)="selectCountry(countryName)"
+            class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm flex items-center gap-3"
           >
-            {{ country }}
+            <!-- Country Flag -->
+            <img
+              [src]="getCountryFlag(countryName)"
+              [alt]="countryName + ' flag'"
+              class="w-6 h-4 object-cover rounded"
+              onerror="this.style.display='none'"
+            />
+            <!-- Country Name -->
+            <span>{{ countryName }}</span>
+          </li>
+
+          <!-- No results message -->
+          <li
+            *ngIf="filteredCountries.length === 0"
+            class="px-4 py-2 text-gray-500 text-sm"
+          >
+            No countries found
           </li>
         </ul>
       </div>
@@ -277,12 +809,13 @@
         </ul>
       </div>
 
-      <!-- Email -->
+      <!-- Individual Form Email Field -->
       <div class="relative">
         <label
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
-          >Email</label
         >
+          Email
+        </label>
         <input
           type="email"
           name="email"
@@ -290,8 +823,10 @@
           required
           email
           #emailCtrl="ngModel"
-          placeholder="vikiwest@gmail.com"
+          placeholder="Auto-populated email"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300"
+          [class.bg-gray-100]="email"
+          [readonly]="!!email"
         />
         <p
           *ngIf="emailCtrl.invalid && emailCtrl.touched"
@@ -299,6 +834,10 @@
         >
           Please enter a valid email.
         </p>
+        <!-- Show success message when email is auto-populated -->
+        <!-- <p *ngIf="email && emailCtrl.valid" class="text-green-500 text-sm mt-1">
+          ✅ Email auto-populated from your profile
+        </p> -->
       </div>
 
       <!-- Savings Account Number -->
@@ -318,9 +857,27 @@
           #savingsAccCtrl="ngModel"
           (input)="onSavingsAccInput($event)"
           (blur)="validateSavingsAcc()"
-          placeholder="8987659012"
-          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px]"
+          placeholder="{{
+            !selectedBank ? 'Please select a bank first' : '8987659012'
+          }}"
+          class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white focus:outline-none placeholder:text-gray-300 placeholder:text-[14px] text-[14px] transition-all duration-300"
+          [class.border-green-500]="acctVerified === true"
+          [class.border-red-500]="acctVerified === false"
+          [class.border-gray-300]="acctVerified === null"
+          [class.border-blue-500]="acctVerifying"
+          [class.bg-gray-100]="!selectedBank"
+          [class.text-gray-400]="!selectedBank"
+          [disabled]="!selectedBank"
         />
+
+        <!-- Bank selection requirement message -->
+        <div *ngIf="!selectedBank" class="mt-1">
+          <p class="text-amber-600 text-sm flex items-center">
+            <ion-icon name="information-circle" class="mr-1"></ion-icon>
+            Please select a bank first to enable account number input
+          </p>
+        </div>
+
         <p
           *ngIf="
             (savingsAccCtrl.invalid && savingsAccCtrl.touched) ||
@@ -329,6 +886,21 @@
           class="text-red-500 text-sm mt-1"
         >
           {{ savingsAccError || "Account number must be exactly 10 digits." }}
+        </p>
+        <!-- account verification status -->
+        <!-- account verification status -->
+        <div *ngIf="acctVerifying" class="text-sm text-[#B76A00] mt-1">
+          <div
+            class="animate-spin rounded-full h-3 w-3 border-b-2 border-[#B76A00] mr-2"
+          ></div>
+          Processing... ✍️
+        </div>
+        <p *ngIf="acctVerified === true" class="text-sm text-green-600 mt-1">
+          ✅ Account number has been verified successfully! for
+          {{ accountName ? " - " + accountName : "" }}
+        </p>
+        <p *ngIf="acctVerified === false" class="text-sm text-red-600 mt-1">
+          ❌ This Account Number does not exist
         </p>
       </div>
 
@@ -347,6 +919,7 @@
           placeholder="09021334559"
           (input)="onNumberInput($event)"
           class="border border-[#D9DCE5] px-3 py-4 w-full shadow-lg rounded-md bg-white"
+          readonly="true"
         />
         <p
           *ngIf="numberCtrl.invalid && numberCtrl.touched"
@@ -404,10 +977,14 @@
       <button
         *ngIf="!isFormLocked"
         type="submit"
-        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
+        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2 transition-all duration-300"
+        [class.opacity-50]="!profileForm.valid || savingsAccError"
+        [class.cursor-not-allowed]="!profileForm.valid || savingsAccError"
+        [class.bg-gray-400]="!profileForm.valid || savingsAccError"
+        [class.hover:bg-gray-400]="!profileForm.valid || savingsAccError"
         [disabled]="!profileForm.valid || savingsAccError"
       >
-        Save
+        {{ getIndividualSubmitButtonText() }}
       </button>
 
       <!-- Always show Return -->
@@ -417,74 +994,6 @@
       >
         Return
       </div>
-
-      <!-- Update Record (Unlock button) only after save -->
-      <!-- <button
-        *ngIf="isFormLocked"
-        type="button"
-        (click)="triggerOtpStep()"
-        class="w-full mx-auto bg-[#101828] text-white rounded-md py-2"
-      >
-        Update Record
-      </button> -->
     </div>
   </form>
 </ion-content>
-
-<!-- OTP TEMPLATE -->
-<!-- <ion-modal [isOpen]="isOtpStep" (didDismiss)="isOtpStep = false">
-  <ng-template>
-    <ion-content class="ion-padding">
-      <div class="bg-[#EDF0F4] py-6 text-center rounded-lg mt-3 space-y-1">
-        <h2 class="text-[20px] text-[#101828] font-semibold">Unlock Form</h2>
-        <p class="text-[16px] text-[#101828]">OTP Verification</p>
-      </div>
-
-      <p class="py-6 text-[#101828] text-[16px]">
-        Enter the OTP sent to your email/phone to unlock the form.
-      </p>
-
-      <div class="flex justify-center gap-3 my-6">
-        <input
-          *ngFor="let digit of otpArray; let i = index"
-          type="text"
-          maxlength="1"
-          class="w-12 h-12 text-[24px] text-center border border-[#D0D5DD] rounded-lg"
-          [(ngModel)]="otp[i]"
-          name="otp{{ i }}"
-          (input)="moveToNext($event, i)"
-        />
-      </div>
-
-      <p class="text-center text-sm text-[#101828]">
-        Didn’t receive a code?
-        <span *ngIf="countdown > 0">
-          Retry in <strong>{{ countdown }}</strong
-          >s
-        </span>
-        <a
-          *ngIf="countdown === 0"
-          href="#"
-          (click)="triggerOtpStep()"
-          class="text-blue-600 underline"
-          >Resend OTP</a
-        >
-      </p>
-
-      <div class="mt-6 space-y-3">
-        <button
-          class="w-full bg-[#101828] text-white rounded-md py-2"
-          (click)="verifyOtp()"
-        >
-          Verify & Unlock
-        </button>
-        <button
-          class="w-full border border-[#101828] rounded-md py-2"
-          (click)="isOtpStep = false"
-        >
-          Cancel
-        </button>
-      </div>
-    </ion-content>
-  </ng-template>
-</ion-modal> -->

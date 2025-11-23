@@ -53,3 +53,23 @@
 //ion-input-password-toggle {
 //  color: black !important;
 //}
+
+/* src/global.scss - Add this section */
+
+/* DISABLE IONIC TRANSITIONS FOR CHAT PAGE */
+app-chat-page.ion-page {
+  --animate-duration: 0ms !important;
+}
+
+/* Force immediate page transitions for chat */
+ion-router-outlet app-chat-page.ion-page {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Remove any built-in Ionic animations */
+.ion-page-invisible,
+.ion-page-hidden {
+  display: none !important;
+  opacity: 0 !important;
+}

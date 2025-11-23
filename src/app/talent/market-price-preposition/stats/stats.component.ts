@@ -136,7 +136,7 @@ export class StatsComponent {
           ],
         };
       },
-      error: (err) => {
+      error: (err:any) => {
         this.isLoading = false;
         console.error('Error fetching stats:', err);
         this.toastr.error('Failed to load market stats.');

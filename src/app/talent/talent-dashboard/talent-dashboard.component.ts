@@ -35,13 +35,11 @@ export class TalentDashboardComponent implements OnInit {
   useMockData: boolean = environment.useMockData;
   showMockBadge = false;
 
-  
-
-
   // Header scroll state
-  headerHidden = false;
-  scrollPosition = 0;
-  previousScrollPosition = 0;
+  headerHidden: boolean = false;
+  scrollPosition: number = 0;
+  previousScrollPosition: number = 0;
+
 
   // Wallet
   walletBalance = 0; // default zero, update from API if available
@@ -86,124 +84,124 @@ export class TalentDashboardComponent implements OnInit {
   // ---------- REPLACE ngOnInit() ----------
 
   async ngOnInit(): Promise<void> {
-  console.log("ngOnInit has started running...");
+    console.log("ngOnInit has started running...");
 
-  // Load talentId from storage
-  this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
-  console.log('Dashboard loaded with talentId:', this.talentId);
+    // Load talentId from storage
+    this.talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId') || '';
+    console.log('Dashboard loaded with talentId:', this.talentId);
 
-  if (!this.talentId) {
-    console.warn('No talentId found. Redirecting to login.');
-    this.router.navigate(['/login']);
-    return;
+    if (!this.talentId) {
+      console.warn('No talentId found. Redirecting to login.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Initialize UI + Profile datadata
+    this.setTimeOfDay();
+    this.getTalentDetails();
+    await this.loadTalentProfile();
+
+    // ✅ Unified logic (API + mock)
+    await this.loadDashboardData();
+
+    // Maintain onboarding handling
+    this.checkMarketProfileStatus();
+    console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
+
+    if (this.isNewUser) {
+      this.prepareNewUserDashboard();
+    }
+
+    // Spinner fade
+    setTimeout(() => (this.showSpinner = false), 900);
   }
+  // ---------- loadDashboardData() ----------
+  async loadDashboardData(): Promise<void> {
+    if (environment.useMockData) {
+      console.log('Mock mode active — using local dashboard data');
+      this.loadMockData();
+      return;
+    }
+    if (this.useMockData) {
+      this.showMockBadge = true;
 
-  // Initialize UI + Profile datadata
-  this.setTimeOfDay();
-  this.getTalentDetails();
-  await this.loadTalentProfile();
+      // Automatically hide after 5 seconds
+      setTimeout(() => {
+        this.showMockBadge = false;
+      }, 5000);
+    }
 
-  // ✅ Unified logic (API + mock)
-  await this.loadDashboardData();
 
-  // Maintain onboarding handling
-  this.checkMarketProfileStatus();
-  console.warn('User onboarding state -> isNewUser:', this.isNewUser, 'hasMarketProfile:', this.hasMarketProfile);
-
-  if (this.isNewUser) {
-    this.prepareNewUserDashboard();
+    try {
+      console.log('Fetching live dashboard stats...');
+      await this.fetchTalentStats(); //  keeps your endpoint call
+    } catch (error) {
+      console.error('fetchTalentStats() failed:', error);
+      console.warn('Falling back to mock data for dashboard');
+      this.loadMockData();
+    }
   }
+  private loadMockData(): void {
+    console.log(' Loading mock dashboard data...');
 
-  // Spinner fade
-  setTimeout(() => (this.showSpinner = false), 900);
-}
-  // ---------- loadDashboardData() ----------  
-async loadDashboardData(): Promise<void> {
-  if (environment.useMockData) {
-    console.log('Mock mode active — using local dashboard data');
-    this.loadMockData();
-    return;
-  }
-  if (this.useMockData) {
-  this.showMockBadge = true;
+    // Mock Dashboard Metrics
+    this.dashboardCards = [
+      { title: 'Total Market Engagement', value: 21, status: '' },
+      { title: 'Total Offer Accepted', value: 18, status: 'active' },
+      { title: 'Total Offer Rejected', value: 1, status: 'pending' },
+      { title: 'Total Offer Awaiting Acceptance', value: 2, status: 'inactive' },
+    ];
 
-  // Automatically hide after 5 seconds
-  setTimeout(() => {
-    this.showMockBadge = false;
-  }, 5000);
-}
+    // Derived Percentage Stats
+    this.dashboardStatCards = [
+      { title: 'Offers Accepted', value: 85.71, status: 'active' },
+      { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
+      { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
+    ];
 
+    // Create Concentric Percentage Circles
+    const baseSize = 120;
+    this.percentageCircles = this.dashboardStatCards
+      .map((card, index) => {
+        const size = baseSize + index * 40;
+        return {
+          size,
+          color: this.getPercentageStatusColor(card.status),
+          percentage: card.value,
+          title: card.title,
+        };
+      })
+      .reverse();
 
-  try {
-    console.log('Fetching live dashboard stats...');
-    await this.fetchTalentStats(); //  keeps your endpoint call
-  } catch (error) {
-    console.error('fetchTalentStats() failed:', error);
-    console.warn('Falling back to mock data for dashboard');
-    this.loadMockData();
-  }
-}
-private loadMockData(): void {
-  console.log(' Loading mock dashboard data...');
+    // Mock Ratings
+    this.ratingsData = [
+      { date: '17/September/2024 8:15AM', yourRating: 5, scouterRating: 4 },
+      { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
+      { date: '18/September/2024 8:15AM', yourRating: 3, scouterRating: 4 },
+      { date: '18/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
+    ];
 
-  // Mock Dashboard Metrics
-  this.dashboardCards = [
-    { title: 'Total Market Engagement', value: 21, status: '' },
-    { title: 'Total Offer Accepted', value: 18, status: 'active' },
-    { title: 'Total Offer Rejected', value: 1, status: 'pending' },
-    { title: 'Total Offer Awaiting Acceptance', value: 2, status: 'inactive' },
-  ];
-
-  // Derived Percentage Stats
-  this.dashboardStatCards = [
-    { title: 'Offers Accepted', value: 85.71, status: 'active' },
-    { title: 'Waiting Acceptance', value: 9.25, status: 'pending' },
-    { title: 'Offers Rejected', value: 4.76, status: 'inactive' },
-  ];
-
-  // Create Concentric Percentage Circles
-  const baseSize = 120;
-  this.percentageCircles = this.dashboardStatCards
-    .map((card, index) => {
-      const size = baseSize + index * 40;
-      return {
-        size,
-        color: this.getPercentageStatusColor(card.status),
-        percentage: card.value,
-        title: card.title,
-      };
-    })
-    .reverse();
-
-  // Mock Ratings
-  this.ratingsData = [
-    { date: '17/September/2024 8:15AM', yourRating: 5, scouterRating: 4 },
-    { date: '17/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
-    { date: '18/September/2024 8:15AM', yourRating: 3, scouterRating: 4 },
-    { date: '18/September/2024 8:25AM', yourRating: 3, scouterRating: 5 },
-  ];
-
-  // Mock Recent Hires
-  this.recentHires = [
-    {
-      name: 'Adediji Samuel Oluwaseyi',
-      date: 'Oct 17, 2024, 8:25AM',
-      amount: 400000.0,
-      avatar: 'assets/images/portrait-african-american-man.jpg',
-    },
-    {
-      name: 'Kehinde Jude Omosehin',
-      date: 'Sep 17, 2024, 9:45AM',
-      amount: 700000.0,
-      avatar: 'assets/images/portrait-african-american-man.jpg',
-    },
+    // Mock Recent Hires
+    this.recentHires = [
+      {
+        name: 'Adediji Samuel Oluwaseyi',
+        date: 'Oct 17, 2024, 8:25AM',
+        amount: 400000.0,
+        avatar: 'assets/images/portrait-african-american-man.jpg',
+      },
+      {
+        name: 'Kehinde Jude Omosehin',
+        date: 'Sep 17, 2024, 9:45AM',
+        amount: 700000.0,
+        avatar: 'assets/images/portrait-african-american-man.jpg',
+      },
       {
         name: 'Adediji Samuel Oluwaseyi',
         date: 'Sep 19, 2024, 8:15PM',
         amount: 700000.0,
         avatar: 'assets/images/portrait-man-cartoon-style.jpg',
       },
-        {
+      {
         name: 'Kehinde Jude Omosehin',
         date: 'Sep 22, 2024, 11:25AM',
         amount: 480000.0,
@@ -215,19 +213,19 @@ private loadMockData(): void {
         amount: 780000.0,
         avatar: 'assets/images/portrait-man-cartoon-style.jpg',
       },
-  ];
+    ];
 
-  // Initialize Ratings Chart (Chart.js)
-  setTimeout(() => this.initRatingsChart(), 300);
+    // Initialize Ratings Chart (Chart.js)
+    setTimeout(() => this.initRatingsChart(), 300);
 
-  // Mock Wallet
-  this.walletBalance = 30000.0;
+    // Mock Wallet
+    this.walletBalance = 30000.0;
 
-  // Hide Spinner a bit later
-  setTimeout(() => (this.showSpinner = false), 900);
+    // Hide Spinner a bit later
+    setTimeout(() => (this.showSpinner = false), 900);
 
-  console.log('✅ Mock data loaded successfully.');
-}
+    console.log('✅ Mock data loaded successfully.');
+  }
 
 
 
@@ -282,9 +280,9 @@ private loadMockData(): void {
   //   }
   // }
 
-  // prepare dashboard for new users with zeroed stats  
+  // prepare dashboard for new users with zeroed stats
 
-  
+
 
 
   private prepareNewUserDashboard(): void {
@@ -473,69 +471,69 @@ private loadMockData(): void {
     console.log("Loaded talentId:", this.talentId);
 
     if (!this.talentId) {
-        console.warn("❌ No talentId found. Skipping loadTalentProfile.");
-        return;
+      console.warn("❌ No talentId found. Skipping loadTalentProfile.");
+      return;
     }
 
     try {
-        const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(this.talentId));
-        console.log("FULL API RESPONSE:", res);
+      const res: any = await firstValueFrom(this.endpointService.fetchTalentProfile(this.talentId));
+      console.log("FULL API RESPONSE:", res);
 
-        if (!res || !res.details) {
-            console.warn("⚠️ Invalid response structure from API.");
-            return;
-        }
+      if (!res || !res.details) {
+        console.warn("⚠️ Invalid response structure from API.");
+        return;
+      }
 
-        // 2. Save user name
-        const name = res?.details?.user?.fullName;
-        if (name) this.userName = name;
+      // 2. Save user name
+      const name = res?.details?.user?.fullName;
+      if (name) this.userName = name;
 
-        // 3. Persist profile for caching
-        localStorage.setItem('talentProfile', JSON.stringify(res));
+      // 3. Persist profile for caching
+      localStorage.setItem('talentProfile', JSON.stringify(res));
 
-        // 4. Extract raw onboarding
-        const onboardingRaw =
-            res?.completeOnboarding ||
-            res?.details?.completeOnboarding ||
-            res?.details?.user?.completeOnboarding;
+      // 4. Extract raw onboarding
+      const onboardingRaw =
+        res?.completeOnboarding ||
+        res?.details?.completeOnboarding ||
+        res?.details?.user?.completeOnboarding;
 
-        console.log("Raw onboarding from API:", onboardingRaw);
+      console.log("Raw onboarding from API:", onboardingRaw);
 
-        let onboardingObj: any = {};
+      let onboardingObj: any = {};
 
-        // 5. Normalize onboarding
-        if (onboardingRaw) {
-            try {
-                if (typeof onboardingRaw === "string") {
-                    // handle double encoded JSON
-                    onboardingObj = JSON.parse(onboardingRaw);
-                    if (typeof onboardingObj === "string") {
-                        onboardingObj = JSON.parse(onboardingObj);
-                    }
-                } else {
-                    onboardingObj = onboardingRaw;
-                }
-            } catch (err) {
-                console.error("❌ Failed to parse onboarding JSON:", err);
-                onboardingObj = {};
+      // 5. Normalize onboarding
+      if (onboardingRaw) {
+        try {
+          if (typeof onboardingRaw === "string") {
+            // handle double encoded JSON
+            onboardingObj = JSON.parse(onboardingRaw);
+            if (typeof onboardingObj === "string") {
+              onboardingObj = JSON.parse(onboardingObj);
             }
+          } else {
+            onboardingObj = onboardingRaw;
+          }
+        } catch (err) {
+          console.error("❌ Failed to parse onboarding JSON:", err);
+          onboardingObj = {};
         }
+      }
 
-        // 6. Ensure hasMarketProfile always exists
-        if (!("hasMarketProfile" in onboardingObj)) {
-            // Best fallback: treat OTP verified users as existing
-            onboardingObj.hasMarketProfile = onboardingObj.isOTPVerified === true;
-        }
+      // 6. Ensure hasMarketProfile always exists
+      if (!("hasMarketProfile" in onboardingObj)) {
+        // Best fallback: treat OTP verified users as existing
+        onboardingObj.hasMarketProfile = onboardingObj.isOTPVerified === true;
+      }
 
-        console.log("Final normalized onboarding object:", onboardingObj);
+      console.log("Final normalized onboarding object:", onboardingObj);
 
-        // 7. Save final onboarding
-        sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
+      // 7. Save final onboarding
+      sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
 
     } catch (error) {
-        console.error('❌ Error loading talent profile:', error);
+      console.error('❌ Error loading talent profile:', error);
     }
-}
+  }
 
 
 
@@ -585,7 +583,7 @@ private loadMockData(): void {
       return null;
     }
   }
-  // ---------- initRatingsChart() ----------      
+  // ---------- initRatingsChart() ----------
 
   private initRatingsChart(): void {
     // only init the chart if there is rating data

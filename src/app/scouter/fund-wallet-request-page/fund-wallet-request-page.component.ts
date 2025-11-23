@@ -3,8 +3,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { deposit as depositMocks } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { Deposit } from 'src/app/models/mocks';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// import jsPDF from 'jspdf';
+import * as html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-fund-wallet-request-page',
@@ -17,6 +17,8 @@ export class FundWalletRequestPageComponent implements OnInit {
   deposits: Deposit[] = depositMocks; // full list
   deposit?: Deposit; // selected deposit
   referenceId: string = '';
+
+  isLoading = false;
 
   constructor(private router: Router, private route: ActivatedRoute) {
     const nav = this.router.getCurrentNavigation();
@@ -44,21 +46,29 @@ export class FundWalletRequestPageComponent implements OnInit {
   }
 
   async downloadReceipt() {
-    const element = document.getElementById('receipt');
-    if (!element) {
-      console.error('Receipt element not found');
-      return;
+    this.isLoading = true;
+
+    try {
+      const element = document.getElementById('receipt');
+      if (!element) {
+        console.error('Receipt element not found');
+        return;
+      }
+
+      const canvas = await (html2canvas as any)(element, {
+        scale: 3,
+        useCORS: true,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `deposit-receipt-${this.referenceId}.png`;
+      link.click();
+    } catch (error) {
+      console.error('Download error:', error);
+    } finally {
+      this.isLoading = false; // stop spinner
     }
-
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/png');
-
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`deposit-receipt-${this.referenceId}.pdf`);
   }
 }

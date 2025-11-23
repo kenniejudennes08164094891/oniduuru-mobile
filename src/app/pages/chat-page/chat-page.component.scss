@@ -1,0 +1,102 @@
+/* src/app/pages/chat-page/chat-page.component.scss */
+.chatBotPageHeaderBg {
+  background-image: url("/assets/images/Log-complaint-background.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  --background: transparent;
+  
+
+  
+  /* COMPLETELY DISABLE ALL TRANSITIONS */
+  transition: none !important;
+  animation: none !important;
+  -webkit-transition: none !important;
+  -webkit-animation: none !important;
+}
+
+/* Custom toolbar styling for taller header */
+ion-toolbar.chatBotPageHeaderBg {
+  --background: transparent;
+  --border-width: 0;
+
+  
+  /* Ensure content is properly aligned */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Make header content stand out on the background */
+ion-header.chatBotPageHeaderBg {
+  background: transparent;
+ 
+
+  ion-toolbar {
+    --background: transparent;
+    --color: white;
+    height: 30%;
+    min-height: 4rem;
+
+    ion-title {
+      color: white;
+      font-weight: bold;
+      font-size: 1.25rem; /* text-xl */
+    }
+
+    ion-button {
+      --color: white;
+      --background: transparent;
+    }
+  }
+}
+
+/* DISABLE IONIC PAGE TRANSITIONS FOR CHAT PAGE */
+:host {
+  --transition: none !important;
+  --animation: none !important;
+}
+
+/* Force immediate removal when page is hidden */
+:host(.ion-page-hidden) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: none !important;
+}
+
+/* Adjust content positioning to account for the taller header background */
+ion-content {
+  --background: #f9fafb;
+  --padding-top: 8rem; /* Match header height */
+}
+
+/* Custom scrollbar for messages */
+.messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 transparent;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 20px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background-color: #a0aec0;
+}
+
+/* Glass effect for the icon container */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}

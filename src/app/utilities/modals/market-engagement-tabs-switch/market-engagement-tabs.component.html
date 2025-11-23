@@ -28,10 +28,14 @@
 <div *ngIf="activeTab === 'engagements'">
   <!-- 👇 Pass event up -->
   <app-market-engagements-table 
-    (hireSelected)="hireSelected.emit($event)">
+    (hireSelected)="onHireClick($event)">
   </app-market-engagements-table>
 </div>
 
 <div *ngIf="activeTab === 'stats'">
-  <app-market-stats></app-market-stats>
+  <!-- ✅ PASS THE SELECTED HIRE TO STATS COMPONENT -->
+  <app-market-stats
+    [selectedHire]="selectedHire"
+    (hireSelected)="hireSelected.emit($event)"
+  ></app-market-stats>
 </div>

@@ -40,20 +40,38 @@ export class MarketEngagementsTableComponent {
       return;
     }
 
-    this.scouterService
-      .getAllMarketsByScouter(scouterId, {
-        limit: 10, // FIX: Maximum allowed by API
-        pageNo: 1,
-      })
-      .subscribe({
-        next: (response) => {
-          this.hires = response.data || [];
-        },
-        error: (error) => {
-          console.error('❌ Error loading market engagements:', error);
-          this.hires = [];
-        },
-      });
+    // 🚨 PRODUCTION: Uncomment this block and comment the mock data block below
+    // this.scouterService
+    //   .getAllMarketsByScouter(scouterId, {
+    //     limit: 10,
+    //     pageNo: 1,
+    //   })
+    //   .subscribe({
+    //     next: (response) => {
+    //       this.hires = response.data || [];
+    //     },
+    //     error: (error) => {
+    //       console.error('❌ Error loading market engagements:', error);
+    //       this.hires = [];
+    //       // 🚨 DEVELOPMENT: Fallback to mock data when API fails
+    //       this.loadMockData();
+    //     },
+    //   });
+
+    // 🚨 DEVELOPMENT: Comment this block in production
+    this.loadMockData();
+  }
+
+  // 🚨 DEVELOPMENT: Add this method for mock data
+  private loadMockData() {
+    this.hires = MockRecentHires.map((hire) => ({
+      ...hire,
+      jobDescription: hire.jobDescription ?? '',
+      yourComment: hire.yourComment ?? '',
+      yourRating: hire.yourRating ?? 0,
+      talentComment: hire.talentComment ?? '',
+      talentRating: hire.talentRating ?? 0,
+    }));
   }
 
   async openHireModal(hire: any) {
@@ -106,6 +124,20 @@ export class MarketEngagementsTableComponent {
 
   prevPage() {
     if (this.currentPage > 1) this.currentPage--;
+  }
+
+  // Add this method to MarketEngagementsTableComponent
+  onRatingUpdated(updateData: { hireId: string; rating: number }) {
+    // Update the local hires array with the new rating
+    const hireIndex = this.hires.findIndex((h) => h.id === updateData.hireId);
+    if (hireIndex !== -1) {
+      this.hires[hireIndex].yourRating = updateData.rating;
+    }
+
+    // If the selected hire is open in modal, update it too
+    if (this.selectedHire?.id === updateData.hireId) {
+      this.selectedHire.yourRating = updateData.rating;
+    }
   }
 
   getFormattedAmount(amount: number): string {

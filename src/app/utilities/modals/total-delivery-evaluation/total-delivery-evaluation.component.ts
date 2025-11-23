@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-total-delivery-evaluation',
@@ -12,6 +14,10 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
   @Input() hire: any;
   @Input() isModalOpen: boolean = false;
   @Output() close = new EventEmitter<void>();
+  @Output() ratingUpdated = new EventEmitter<{
+    hireId: string;
+    rating: number;
+  }>();
 
   // Form state
   comment: string = '';
@@ -19,17 +25,27 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
   paymentOption: string = 'wallet';
   attachments: File[] = [];
   location: string = '';
+  isLoading: boolean = false;
 
-  constructor(private toastController: ToastController) {}
+  constructor(
+    private toastController: ToastController,
+    private scouterService: ScouterEndpointsService,
+    private authService: AuthService
+  ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Initialize rating with existing value if available
+    if (this.hire?.yourRating) {
+      this.rating = this.hire.yourRating;
+    }
+  }
 
-  async showToast(message: string) {
+  async showToast(message: string, color: string = 'danger') {
     const toast = await this.toastController.create({
       message,
-      duration: 2000, // 2 seconds
+      duration: 2000,
       position: 'top',
-      color: 'danger', // red for error
+      color,
     });
     toast.present();
   }
@@ -40,14 +56,11 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
 
   // Rating logic
   setRating(star: number) {
-    if (!this.hire) return;
+    this.rating = star;
 
-    this.hire.yourRating = star;
-
-    // update mock array so it persists if needed
-    const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
-    if (index !== -1) {
-      MockRecentHires[index].yourRating = star;
+    // Update local hire object for immediate UI feedback
+    if (this.hire) {
+      this.hire.yourRating = star;
     }
   }
 
@@ -68,30 +81,70 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
     this.location = loc;
   }
 
-  // Submit comment
-  submitEvaluation() {
-    // if (!this.comment.trim()) {
-    //   this.showToast('Please write a comment before submitting!');
-    //   return;
-    // }
+  // Submit comment to API
+  async submitEvaluation() {
+    if (!this.hire?.id) {
+      this.showToast('Invalid hire data');
+      return;
+    }
 
-    const evaluationData = {
-      hire: this.hire,
-      comment: this.comment,
+    if (this.rating === 0) {
+      this.showToast('Please provide a rating before submitting!');
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId) {
+      this.showToast('User not authenticated');
+      return;
+    }
+
+    this.isLoading = true;
+
+    const payload = {
+      scouterId: scouterId,
+      remark: this.comment.trim() || 'No comment provided',
       rating: this.rating,
-      paymentOption: this.paymentOption,
-      attachments: this.attachments,
-      location: this.location,
     };
 
-    console.log('Evaluation Submitted:', evaluationData);
+    this.scouterService.updateMarketComment(this.hire.id, payload).subscribe({
+      next: (response) => {
+        console.log('✅ Evaluation submitted successfully:', response);
 
-    // Reset modal state
+        // Update mock data for development consistency
+        const index = MockRecentHires.findIndex((h) => h.id === this.hire?.id);
+        if (index !== -1) {
+          MockRecentHires[index].yourRating = this.rating;
+          MockRecentHires[index].yourComment = this.comment;
+        }
+
+        // Emit event to parent components
+        this.ratingUpdated.emit({
+          hireId: this.hire.id,
+          rating: this.rating,
+        });
+
+        this.showToast('Evaluation submitted successfully!', 'success');
+        this.resetForm();
+        this.closeModal();
+      },
+      error: (error) => {
+        console.error('❌ Failed to submit evaluation:', error);
+        this.showToast(error.message || 'Failed to submit evaluation');
+      },
+      complete: () => {
+        this.isLoading = false;
+      },
+    });
+  }
+
+  private resetForm() {
     this.comment = '';
     this.rating = 0;
     this.paymentOption = 'wallet';
     this.attachments = [];
     this.location = '';
-    this.closeModal();
   }
 }

@@ -1,9 +1,13 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { IonContent } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
-import { Clipboard } from '@angular/cdk/clipboard'; // <-- Angular CDK Clipboard
+import { Clipboard } from '@angular/cdk/clipboard';
 import { ToastController } from '@ionic/angular';
 import { ChartOptions, ChartData } from 'chart.js';
+import { EndpointService } from 'src/app/services/endpoint.service';
+import { AuthService } from 'src/app/services/auth.service';
+import { UserService } from 'src/app/services/user.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-wallet-page',
@@ -17,13 +21,17 @@ export class WalletPageComponent implements OnInit {
 
   headerHidden: boolean = false;
   images = imageIcons;
-  userName = 'Viki West';
-  walletBalance: number = 170000;
-  accountNumber: string = '0447429947';
+  userName: string = 'Loading...';
+  walletBalance: number = 0;
+  accountNumber: string = 'Loading...';
   balanceHidden: boolean = false;
 
-  copied: boolean = false; // track icon state
+  // Additional wallet data
+  totalDeposit: number = 0;
+  totalWithdrawal: number = 0;
+  totalTransfer: number = 0;
 
+  copied: boolean = false;
   filterOpen: boolean = false;
   selectedFilter: string = 'Last 10 years';
   years: string[] = [
@@ -39,48 +47,278 @@ export class WalletPageComponent implements OnInit {
     '2016',
   ];
 
+  loadingWallet = false;
+  walletError = false;
+  walletNotFound = false; // New flag for wallet not created
+
   constructor(
     private clipboard: Clipboard,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private endpointService: EndpointService,
+    private authService: AuthService,
+    private userService: UserService,
+    private router: Router
   ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.initializeUserData();
+  }
 
+  async ngAfterViewInit(): Promise<void> {
+    await this.fetchWalletDetails();
+  }
+
+  /**
+   * Initialize user data from various sources
+   */
+  private initializeUserData(): void {
+    // Try to get user data from multiple sources
+    const currentUser = this.authService.getCurrentUser();
+    const userProfile = this.userService.getProfileData();
+    const localStorageUser = JSON.parse(
+      localStorage.getItem('user_data') || '{}'
+    );
+
+    // Set username from available sources
+    this.userName = this.extractUserName(
+      currentUser,
+      userProfile,
+      localStorageUser
+    );
+  }
+
+  /**
+   * Extract username from multiple data sources
+   */
+  private extractUserName(...userDataSources: any[]): string {
+    for (const userData of userDataSources) {
+      if (!userData) continue;
+
+      const nameCandidates = [
+        userData.fullName,
+        userData.name,
+        userData.username,
+        userData.user?.fullName,
+        userData.user?.name,
+        userData.user?.username,
+        userData.details?.user?.fullName,
+        userData.details?.user?.name,
+        `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+      ];
+
+      const validName = nameCandidates.find(
+        (name) => name && typeof name === 'string' && name.trim().length > 0
+      );
+
+      if (validName) {
+        return validName;
+      }
+    }
+    return 'User'; // Fallback
+  }
+
+  /**
+   * Fetch wallet details from API with proper parameters
+   */
+  private async fetchWalletDetails(): Promise<void> {
+    try {
+      this.loadingWallet = true;
+      this.walletError = false;
+      this.walletNotFound = false;
+
+      const { walletId, uniqueId } = this.getUserIdentifiers();
+
+      this.endpointService.fetchMyWallet(walletId, uniqueId).subscribe({
+        next: (res: any) => {
+          this.handleWalletResponse(res);
+          this.loadingWallet = false;
+        },
+        error: (err: any) => {
+          this.handleWalletError(err);
+          this.loadingWallet = false;
+        },
+      });
+    } catch (err) {
+      console.error('Unexpected error in fetchWalletDetails:', err);
+      this.loadingWallet = false;
+      this.walletError = true;
+    }
+  }
+
+  /**
+   * Extract walletId and uniqueId from user data
+   */
+  private getUserIdentifiers(): {
+    walletId: string | null;
+    uniqueId: string | null;
+  } {
+    const currentUser = this.authService.getCurrentUser();
+    const userProfile = this.userService.getProfileData();
+    const localStorageUser = JSON.parse(
+      localStorage.getItem('user_data') || '{}'
+    );
+
+    const userData = currentUser || userProfile || localStorageUser;
+
+    // Extract walletId from various possible locations
+    const walletId =
+      userData?.walletId ||
+      userData?.wallet?.id ||
+      userData?.walletAccountNumber ||
+      userData?.user?.walletId;
+
+    // Extract uniqueId (scouterId or talentId) from various possible locations
+    const uniqueId =
+      userData?.uniqueId ||
+      userData?.id ||
+      userData?.userId ||
+      userData?.scouterId ||
+      userData?.talentId ||
+      userData?.user?.uniqueId ||
+      userData?.user?.id;
+
+    console.log('User identifiers:', { walletId, uniqueId, userData });
+    return { walletId, uniqueId };
+  }
+
+  /**
+   * Handle successful wallet API response
+   */
+  private handleWalletResponse(res: any): void {
+    // Check if wallet was not found (special case)
+    if (res?.walletNotFound) {
+      this.walletNotFound = true;
+      console.log('Wallet profile not created yet');
+      return;
+    }
+
+    if (res && res.data) {
+      const walletData = res.data;
+
+      // Update wallet information
+      this.walletBalance = Number(walletData.balance) || 0;
+      this.accountNumber =
+        walletData.accountNumber || walletData.accountNumber || 'Not available';
+
+      // Update user name from wallet data if available
+      if (walletData.walletName || walletData.accountName) {
+        this.userName = walletData.walletName || walletData.accountName;
+      }
+
+      // Update transaction totals if available
+      if (walletData.totalDeposit !== undefined) {
+        this.totalDeposit = Number(walletData.totalDeposit) || 0;
+      }
+      if (walletData.totalWithdrawal !== undefined) {
+        this.totalWithdrawal = Number(walletData.totalWithdrawal) || 0;
+      }
+      if (walletData.totalTransfer !== undefined) {
+        this.totalTransfer = Number(walletData.totalTransfer) || 0;
+      }
+
+      console.log('Wallet data loaded successfully:', walletData);
+    } else {
+      console.warn('No wallet data found in response:', res);
+      this.walletError = true;
+    }
+  }
+
+  /**
+   * Handle wallet API errors
+   */
+  private handleWalletError(err: any): void {
+    console.error('Error fetching wallet details:', err);
+
+    // Check if it's a "wallet not found" error
+    if (err.status === 400 && err.error?.message === 'Wallet not found') {
+      this.walletNotFound = true;
+      this.walletError = false;
+    } else {
+      this.walletError = true;
+      this.walletNotFound = false;
+      this.showToast(
+        'Unable to load wallet details. Please try again later.',
+        'danger'
+      );
+    }
+  }
+
+  /**
+   * Navigate to wallet profile creation
+   */
+  navigateToWalletProfile(): void {
+    this.router.navigate(['/scouter/wallet-page/wallet-profile']);
+  }
+
+  /**
+   * Show toast message
+   */
+  private async showToast(
+    message: string,
+    color: string = 'primary'
+  ): Promise<void> {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'bottom',
+    });
+    await toast.present();
+  }
+
+  // Existing methods remain the same...
   toggleBalance() {
     this.balanceHidden = !this.balanceHidden;
   }
 
   copyAccountNumber() {
-    this.clipboard.copy(this.accountNumber);
-    this.copied = true;
-    // this.showToast('Account number copied!');
+    if (this.accountNumber && this.accountNumber !== 'Loading...') {
+      this.clipboard.copy(this.accountNumber);
+      this.copied = true;
+      this.showToast('Account number copied!', 'success');
 
-    // reset icon back after 2 seconds
-    setTimeout(() => {
-      this.copied = false;
-    }, 2000);
+      setTimeout(() => {
+        this.copied = false;
+      }, 2000);
+    }
   }
-
-  // async showToast(message: string) {
-  //   const toast = await this.toastCtrl.create({
-  //     message,
-  //     duration: 2000,
-  //     color: 'success',
-  //     position: 'bottom',
-  //   });
-  //   toast.present();
-  // }
 
   toggleFilter() {
     this.filterOpen = !this.filterOpen;
 
     if (this.filterOpen) {
-      // give Angular time to render the dropdown
       setTimeout(() => {
         const yOffset = this.dropdownSection.nativeElement.offsetTop;
-        this.content.scrollToPoint(0, yOffset, 500); // smooth scroll
+        this.content.scrollToPoint(0, yOffset, 500);
       }, 50);
     }
+  }
+
+  selectFilter(year: string) {
+    this.selectedFilter = year;
+    this.filterOpen = false;
+
+    const [deposits, withdrawals, transfers] = this.transactionData[year] || [
+      [],
+      [],
+      [],
+    ];
+    this.monthlyBarChartData.datasets[0].data = deposits;
+    this.monthlyBarChartData.datasets[1].data = withdrawals;
+    this.monthlyBarChartData.datasets[2].data = transfers;
+
+    this.monthlyBarChartData = { ...this.monthlyBarChartData };
+  }
+
+  /**
+   * Refresh wallet data
+   */
+  refreshWalletData(event?: any): void {
+    this.fetchWalletDetails().finally(() => {
+      if (event) {
+        event.target.complete();
+      }
+    });
   }
 
   // Store different datasets per year
@@ -137,20 +375,6 @@ export class WalletPageComponent implements OnInit {
     ],
     // add more years here
   };
-
-  selectFilter(year: string) {
-    this.selectedFilter = year;
-    this.filterOpen = false;
-
-    // update chart with the selected year's dataset
-    const [deposits, withdrawals, transfers] = this.transactionData[year];
-    this.monthlyBarChartData.datasets[0].data = deposits;
-    this.monthlyBarChartData.datasets[1].data = withdrawals;
-    this.monthlyBarChartData.datasets[2].data = transfers;
-
-    // trigger Angular change detection for chart.js
-    this.monthlyBarChartData = { ...this.monthlyBarChartData };
-  }
 
   // --- MONTHLY BAR CHART ---
   monthlyBarChartData: ChartData<'bar'> = {

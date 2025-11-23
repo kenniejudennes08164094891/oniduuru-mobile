@@ -20,9 +20,16 @@ import { TransferFundsRequestPageComponent } from './scouter/transfer-funds-requ
 import { AuthRedirectGuard } from './guard/auth.guard';
 import { LoginGuard } from './guard/login.guard';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
+import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
+
+  {
+    path: 'chat',
+    component: ChatPageComponent,
+    data: { animation: 'chatPage' },
+  },
 
   {
     path: 'welcome-page',
@@ -71,7 +78,7 @@ const routes: Routes = [
     loadChildren: () =>
       import(
         './talent/market-price-preposition/market-price-preposition.module'
-        ).then((m) => m.MarketPricePrepositionPageModule),
+      ).then((m) => m.MarketPricePrepositionPageModule),
   },
   {
     path: 'utilities',
@@ -79,22 +86,58 @@ const routes: Routes = [
       import('./utilities/utilities.module').then((m) => m.UtilitiesPageModule),
   },
   { path: 'scouter/profile', component: ProfilePageComponent },
-  { path: 'scouter/account-activation', component: AccountActivationPageComponent },
+  {
+    path: 'scouter/account-activation',
+    component: AccountActivationPageComponent,
+  },
   { path: 'scouter/view-hires', component: ViewAllHiresPageComponent },
   { path: 'scouter/hire-talent', component: HireTalentPageComponent },
   { path: 'scouter/wallet-page', component: WalletPageComponent },
-  { path: 'scouter/market-engagement-market-price-preparation/:id', component: MarketEngagementMarketPricePreparationComponent },
-  { path: 'scouter/wallet-page/wallet-profile', component: WalletProfileComponent },
+  {
+    path: 'scouter/market-engagement-market-price-preparation/:id',
+    component: MarketEngagementMarketPricePreparationComponent,
+  },
+  {
+    path: 'scouter/wallet-page/wallet-profile',
+    component: WalletProfileComponent,
+  },
   { path: 'scouter/wallet-page/fund-wallet', component: FundWalletComponent },
-  { path: 'scouter/wallet-page/fund-wallet/fund-wallet-request/:id', component: FundWalletRequestPageComponent },
-  { path: 'scouter/wallet-page/withdraw-funds', component: WithdrawFundComponent },
-  { path: 'scouter/wallet-page/withdraw-funds/withdraw-funds-request/:id', component: WithdrawFundsRequestPageComponent },
-  { path: 'scouter/wallet-page/fund-transfer', component: FundTransferComponent },
-  { path: 'scouter/wallet-page/fund-transfer/fund-transfer-request/:id', component: TransferFundsRequestPageComponent },
-  { path: 'scouter/hire-talent/welcome-to-oniduuru', component: WelcomeToOniduuruMarketplacePageComponent },
-  { path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents', component: ViewAllTalentsPageComponent },
-  { path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location', component: ViewTalentsLocationPageComponent },
-  { path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location/conclude-hiring', component: ConcludeYourHiringProcessPageComponent },
+  {
+    path: 'scouter/wallet-page/fund-wallet/fund-wallet-request/:id',
+    component: FundWalletRequestPageComponent,
+  },
+  {
+    path: 'scouter/wallet-page/withdraw-funds',
+    component: WithdrawFundComponent,
+  },
+  {
+    path: 'scouter/wallet-page/withdraw-funds/withdraw-funds-request/:id',
+    component: WithdrawFundsRequestPageComponent,
+  },
+  {
+    path: 'scouter/wallet-page/fund-transfer',
+    component: FundTransferComponent,
+  },
+  {
+    path: 'scouter/wallet-page/fund-transfer/fund-transfer-request/:id',
+    component: TransferFundsRequestPageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru',
+    component: WelcomeToOniduuruMarketplacePageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents',
+    component: ViewAllTalentsPageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location',
+    component: ViewTalentsLocationPageComponent,
+  },
+  {
+    path: 'scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location/conclude-hiring',
+    component: ConcludeYourHiringProcessPageComponent,
+  },
 ];
 
 @NgModule({

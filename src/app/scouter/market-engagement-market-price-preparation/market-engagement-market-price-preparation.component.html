@@ -3,25 +3,36 @@
 </ion-header>
 
 <ion-content class="ion-padding" *ngIf="hire">
-  <!-- Top Section -->
-  <div
-    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden bg-gradient-to-r from-[#000343] to-[#1f2937]"
-  >
-    <div class="absolute inset-0 opacity-10 bg-pattern z-0"></div>
-    <div class="relative z-10 text-white">
-      <div class="flex items-start gap-3">
-        <img
-          [src]="images.ViewHireFolderIcon"
-          alt="Hire Icon"
-          class="h-10 w-10"
-        />
-        <div>
-          <span class="font-medium text-[24px] leading-tight">{{
-            userName
-          }}</span>
-          <p class="text-gray-300 text-sm leading-relaxed">
-            View your hires with scouter stated above
-          </p>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-10">
+    <div class="text-center">
+      <ion-spinner></ion-spinner>
+      <p class="mt-2 text-gray-600">Loading hire details...</p>
+    </div>
+  </div>
+
+  <!-- Content when data is loaded -->
+  <div *ngIf="hire && !isLoading">
+    <!-- Top Section -->
+    <div
+      class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden bg-gradient-to-r from-[#000343] to-[#1f2937]"
+    >
+      <div class="absolute inset-0 opacity-10 bg-pattern z-0"></div>
+      <div class="relative z-10 text-white">
+        <div class="flex items-start gap-3">
+          <img
+            [src]="images.ViewHireFolderIcon"
+            alt="Hire Icon"
+            class="h-10 w-10"
+          />
+          <div>
+            <span class="font-medium text-[24px] leading-tight">{{
+              userName
+            }}</span>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              View your hires with talent stated above
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -62,7 +73,7 @@
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
         <ion-icon
           name="star"
-          (click)="setRating(star)"
+          (click)="updateRating(star)"
           [class.text-yellow-500]="star <= hire.yourRating"
           [class.text-gray-400]="star > hire.yourRating"
           class="cursor-pointer text-xl"
@@ -118,6 +129,21 @@
     </div>
   </div>
 
-  <app-market-engagement-tabs (hireSelected)="setSelectedHire($event)">
+  <!-- In your market-engagement-market-price-preparation.component.html -->
+  <app-market-engagement-tabs
+    [initialHire]="hire"
+    (hireSelected)="setSelectedHire($event)"
+  >
   </app-market-engagement-tabs>
+
+  <!-- Error State -->
+  <div *ngIf="!hire && !isLoading" class="text-center py-10">
+    <p class="text-gray-600">Unable to load hire details.</p>
+    <button
+      (click)="loadHireDetails(route.snapshot.paramMap.get('id') || '')"
+      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+    >
+      Retry
+    </button>
+  </div>
 </ion-content>
