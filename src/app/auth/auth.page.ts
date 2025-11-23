@@ -69,8 +69,8 @@ export class AuthPage implements OnInit {
 
       if (params['message']) {
         this.toast.openSnackBar(params['message'], 'success');
-        setTimeout(() => {
-          this.router.navigate([], {
+        setTimeout(async () => {
+         await this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {},
             replaceUrl: true,
@@ -96,7 +96,7 @@ export class AuthPage implements OnInit {
         }
       },
       error: (err) => {
-        console.error('❌ Error fetching profile picture:', err);
+        console.error('Error fetching profile picture:', err);
       },
     });
   }
