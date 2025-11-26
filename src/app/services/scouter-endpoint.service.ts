@@ -38,64 +38,91 @@ export class ScouterEndpointsService {
   // In your scouter-endpoints.service.ts
   createScouterProfile(payload: any): Observable<any> {
     return this.http.post<any>(
-      `${this.baseUrl}/${endpoints.onboardScouter}`, // ✅ USING CONSTANT
+      `${this.baseUrl}/${endpoints.onboardScouter}`,
       payload
       // { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
     );
   }
 
-  // In scouter-endpoints.service.ts - FIXED OTP METHODS
+ // In scouter-endpoints.service.ts - FIX THE OTP METHODS
 
-  // In scouter-endpoints.service.ts - FIXED OTP METHODS
+resendOtp(payload: {
+  email?: string;
+  phoneNumber?: string;
+}): Observable<any> {
+  console.log('🔄 Sending OTP to:', payload.email);
+  
+  // Try both GET and POST methods since API documentation might be inconsistent
+  const url = `${this.baseUrl}/${endpoints.resendOTP}`;
+  
+  // Method 1: Try POST first (more common for OTP)
+  return this.http.post<any>(url, payload, {
+    headers: this.jwtInterceptor.customHttpHeaders
+  }).pipe(
+    catchError((postError) => {
+      console.warn('❌ POST method failed, trying GET:', postError);
+      
+      // Method 2: Fallback to GET with query params
+      let params = new HttpParams();
+      if (payload.email) {
+        params = params.set('email', payload.email);
+      }
+      if (payload.phoneNumber) {
+        params = params.set('phoneNumber', payload.phoneNumber);
+      }
+      
+      return this.http.get<any>(url, {
+        params,
+        headers: this.jwtInterceptor.customHttpHeaders
+      });
+    }),
+    timeout(15000),
+    tap(response => console.log('✅ OTP sent successfully:', response)),
+    catchError((finalError) => {
+      console.error('❌ All OTP methods failed:', finalError);
+      return throwError(() => finalError);
+    })
+  );
+}
 
-  resendOtp(payload: {
-    email?: string;
-    phoneNumber?: string;
-  }): Observable<any> {
-    // Convert payload to query parameters
-    let params = new HttpParams();
-
-    if (payload.email) {
-      params = params.set('email', payload.email);
-    }
-
-    if (payload.phoneNumber) {
-      params = params.set('phoneNumber', payload.phoneNumber);
-    }
-
-    console.log('🔍 Resend OTP GET Query Params:', params.toString());
-
-    // Use GET method as per API documentation
-    return this.http.get<any>(`${this.baseUrl}/${endpoints.resendOTP}`, {
-      params,
-    });
-  }
-
-  verifyOtp(payload: {
-    otp: string;
-    email?: string;
-    phoneNumber?: string;
-  }): Observable<any> {
-    // Convert payload to query parameters
-    let params = new HttpParams().set('otp', payload.otp);
-
-    if (payload.email) {
-      params = params.set('email', payload.email);
-    }
-
-    if (payload.phoneNumber) {
-      params = params.set('phoneNumber', payload.phoneNumber);
-    }
-
-    console.log('🔍 Verify OTP Query Params:', params.toString());
-
-    // Use POST method as per API documentation
-    return this.http.post<any>(
-      `${this.baseUrl}/${endpoints.verifyOTP}`,
-      {}, // Empty body since we're using query params
-      { params }
-    );
-  }
+verifyOtp(payload: {
+  otp: string;
+  email?: string;
+  phoneNumber?: string;
+}): Observable<any> {
+  console.log('🔐 Verifying OTP:', payload.otp, 'for:', payload.email);
+  
+  const url = `${this.baseUrl}/${endpoints.verifyOTP}`;
+  
+  // Try POST with payload in body (most common)
+  return this.http.post<any>(url, payload, {
+    headers: this.jwtInterceptor.customHttpHeaders
+  }).pipe(
+    catchError((postError) => {
+      console.warn('❌ POST verification failed, trying with query params:', postError);
+      
+      // Fallback: POST with query params
+      let params = new HttpParams().set('otp', payload.otp);
+      if (payload.email) {
+        params = params.set('email', payload.email);
+      }
+      if (payload.phoneNumber) {
+        params = params.set('phoneNumber', payload.phoneNumber);
+      }
+      
+      return this.http.post<any>(url, {}, { 
+        params,
+        headers: this.jwtInterceptor.customHttpHeaders 
+      });
+    }),
+    timeout(15000),
+    tap(response => console.log('✅ OTP verified successfully:', response)),
+    catchError((finalError) => {
+      console.error('❌ All OTP verification methods failed:', finalError);
+      return throwError(() => finalError);
+    })
+  );
+}
 
   // ============ PROFILE MANAGEMENT ============
 
@@ -388,7 +415,7 @@ export class ScouterEndpointsService {
 
   // ============ PROFILE PICTURE MANAGEMENT ============
 
-  // ✅ FIX: Use POST for both upload and replace to avoid CORS issues
+  // Use POST for both upload and replace to avoid CORS issues
 
   public uploadScouterPicture(data: any): Observable<any> {
     // Normalize payload and strip any data URL prefix
@@ -1018,29 +1045,3 @@ export class ScouterEndpointsService {
       );
   }
 }
-
-// When adding new endpoints to your services, follow this pattern:
-
-// In scouter-endpoints.service.ts
-// yourNewMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourNewEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customHttpHeaders,
-//   });
-// }
-
-// // For public endpoints (no auth required)
-// yourPublicMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourPublicEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-//   });
-// }
-
-// // For file uploads
-// uploadFile(data: FormData): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.uploadFile}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customFormDataHttpHeaders,
-//   });
-// }
