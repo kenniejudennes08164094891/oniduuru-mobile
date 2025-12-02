@@ -3,5 +3,9 @@ ion-content {
 }
 
 ion-button {
-  @apply rounded-lg font-medium;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+ion-content {
+  --padding-bottom: 90px; /* ensures content never hides under footer */
 }

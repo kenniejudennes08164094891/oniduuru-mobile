@@ -1,9 +1,13 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-talent-details',
   templateUrl: './talent-details.component.html',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
 })
 export class TalentDetailsComponent {
   @Output() next = new EventEmitter<void>();
@@ -62,13 +66,11 @@ export class TalentDetailsComponent {
 
   // ----------------- HANDLERS -----------------
   onNext() {
-    // mark all touched
     this.fullNameTouched = true;
     this.phoneTouched = true;
     this.emailTouched = true;
     this.locationTouched = true;
 
-    // sanitize before validation
     this.sanitizeName();
     this.sanitizePhone();
     this.sanitizeLocation();
@@ -79,6 +81,6 @@ export class TalentDetailsComponent {
   }
 
   onCancel() {
-    this.router.navigate(['/welcome-page']);
+    this.router.navigate(['/auth/login']);
   }
 }

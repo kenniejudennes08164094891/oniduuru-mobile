@@ -15,7 +15,7 @@
   "dependencies": {
     "@angular/animations": "16.2.12",
     "@angular/cdk": "^16.2.14",
-    "@angular/common": "16.2.12",
+    "@angular/common": "^16.2.12",
     "@angular/compiler": "16.2.12",
     "@angular/core": "16.2.12",
     "@angular/forms": "16.2.12",
@@ -23,7 +23,7 @@
     "@angular/material": "^16.2.14",
     "@angular/platform-browser": "16.2.12",
     "@angular/platform-browser-dynamic": "16.2.12",
-    "@angular/router": "16.2.12",
+    "@angular/router": "^16.2.12",
     "@capacitor/app": "^7.1.0",
     "@capacitor/core": "7.4.3",
     "@capacitor/haptics": "7.0.2",

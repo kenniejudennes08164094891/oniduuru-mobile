@@ -11,11 +11,44 @@ import { ToastController } from '@ionic/angular';
 import { UserService } from './user.service';
 import { AppInitService } from './app-init.service';
 import { ToastsService } from './toasts.service';
+export interface verifyOTP {
+  otp: string;
+  phoneNumber: string;
+  email: string;
+}
+
+export interface resendOTP {
+  phoneNumber: string;
+  email: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  public verifyOTP(otpParams: verifyOTP): Observable<any> {
+  const url =
+    `${environment?.baseUrl}/${endpoints?.verifyOTP}` +
+    `?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
+
+  return this.http.post<any>(
+    url,
+    {}, 
+    { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
+  );
+}
+
+public resendOTP(resendParams: resendOTP): Observable<any> {
+  const url =
+    `${environment?.baseUrl}/${endpoints?.resendOTP}` +
+    `?phoneNumber=${resendParams?.phoneNumber}&email=${resendParams?.email}`;
+
+  return this.http.get<any>(
+    url,
+    { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
+  );
+}
+
   private baseUrl = environment.baseUrl;
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();

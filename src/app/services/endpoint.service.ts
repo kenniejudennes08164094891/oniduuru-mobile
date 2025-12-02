@@ -5,7 +5,7 @@ import { JwtInterceptorService } from './jwt-interceptor.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
-import { PaginationParams } from 'src/app/models/mocks';
+import { PaginationParams, resendOTP, verifyOTP } from 'src/app/models/mocks';
 
 @Injectable({
   providedIn: 'root',
@@ -725,5 +725,14 @@ export class EndpointService {
     const body = JSON.stringify(payload);
     let url = `${environment?.baseUrl}/${endpoints?.clearMyNotifications}`;
     return this.http.post<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
+  }
+   public verifyOTP(otpParams: verifyOTP):Observable<any>{
+    let url = `${environment?.baseUrl}/${endpoints?.verifyOTP}?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
+    return this.http.post<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+  }
+
+  public resendOTP(resendParams: resendOTP):Observable<any>{
+    let url = `${environment?.baseUrl}/${endpoints?.resendOTP}?phoneNumber=${resendParams?.phoneNumber}&email=${resendParams?.email}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
   }
 }
