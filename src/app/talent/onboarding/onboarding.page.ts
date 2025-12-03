@@ -17,7 +17,7 @@ export class OnboardingPage {
     private router: Router,
     private toastCtrl: ToastController,
     private talentService: TalentService
-  ) {}
+  ) { }
 
   // ------------------- STEPS -------------------
   steps = ['Talent Details', 'Other Details', 'Login Credentials', 'Verify OTP'];
@@ -189,56 +189,56 @@ export class OnboardingPage {
   // ------------------- API: CREATE TALENT PROFILE -------------------
   isSubmitting = false;
 
-submitTalentProfile() {
-  if (this.isSubmitting) return;
-  this.isSubmitting = true;
-  this.error = '';
+  submitTalentProfile() {
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+    this.error = '';
 
-  const payload = {
-    email: this.emailLogin,
-    password: this.password,
-    fullName: this.fullName,
-    phoneNumber: this.phone,
-    address: this.location,
-    educationalBackground: this.education,
-    skillSets: this.skillSets,
-    skillLevel: this.skillLevel,
-    payRange: this.payRange
-  };
+    const payload = {
+      email: this.emailLogin,
+      password: this.password,
+      fullName: this.fullName,
+      phoneNumber: this.phone,
+      address: this.location,
+      educationalBackground: this.education,
+      skillSets: this.skillSets,
+      skillLevel: this.skillLevel,
+      payRange: this.payRange
+    };
 
-  this.talentService.createTalentProfile(payload).subscribe({
-    next: (res) => {
-      this.isSubmitting = false;
-      // MOVE TO OTP STEP immediately on success
-      this.currentStep = 3;
-      this.startTimer();
-    },
-    error: (err) => {
-      this.isSubmitting = false;
-      
-    const backendMsg = err?.error?.message?.toString()?.toLowerCase() ?? '';
+    this.talentService.createTalentProfile(payload).subscribe({
+      next: (res) => {
+        this.isSubmitting = false;
+        // MOVE TO OTP STEP immediately on success
+        this.currentStep = 3;
+        this.startTimer();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
 
-    if (backendMsg.includes('email')) {
-      this.showToast('Email already exists. Please use another email.');
-    } else if (backendMsg.includes('phone')) {
-      this.showToast('Phone number already in use. Please use another number.');
-    } else {
-      this.showToast(err?.error?.message ?? 'Failed to create profile');
-    }
-      console.error('Onboard Talent Error:', err);
-      this.error = err.error?.message || 'Failed to create profile. Try again later.';
-    }
-  });
-}
+        const backendMsg = err?.error?.message?.toString()?.toLowerCase() ?? '';
+
+        if (backendMsg.includes('email')) {
+          this.showToast('Email already exists. Please use another email.');
+        } else if (backendMsg.includes('phone')) {
+          this.showToast('Phone number already in use. Please use another number.');
+        } else {
+          this.showToast(err?.error?.message ?? 'Failed to create profile');
+        }
+        console.error('Onboard Talent Error:', err);
+        this.error = err.error?.message || 'Failed to create profile. Try again later.';
+      }
+    });
+  }
   async showToast(message: string) {
-  const toast = await this.toastCtrl.create({
-    message,
-    duration: 3000,
-    position: 'top',
-    color: 'danger'
-  });
-  toast.present();
-}
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      position: 'top',
+      color: 'danger'
+    });
+    toast.present();
+  }
 
 
 
@@ -341,5 +341,8 @@ submitTalentProfile() {
 
   handleCancel() {
     this.router.navigate(['/auth/login']);
+  }
+  handleWelcomeBack() {
+    this.router.navigate(['/auth/welcome-page']);
   }
 }

@@ -2,7 +2,7 @@
   <div class="w-full flex justify-between items-center px-4 py-2">
     <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
     <div class="flex items-center gap-4">
-      <button (click)="handleCancel()" class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
+      <button (click)="handleWelcomeBack()" class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
         Back
       </button>
     </div>
@@ -124,7 +124,7 @@
         </select>
       </div>
 
-      <div class="flex flex-col space-y-2 mb-4">
+      <div class="flex flex-col space-y-2 mb-32">
         <label class=" font-medium text-[#000000] mt-4 mb-1">Pay Range</label>
         <select name="payRange" [(ngModel)]="payRange" (blur)="payRangeTouched = true"
           [ngClass]="{'border-grey-500': payRangeTouched && !payRange}"
