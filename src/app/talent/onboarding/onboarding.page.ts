@@ -215,11 +215,31 @@ submitTalentProfile() {
     },
     error: (err) => {
       this.isSubmitting = false;
+      
+    const backendMsg = err?.error?.message?.toString()?.toLowerCase() ?? '';
+
+    if (backendMsg.includes('email')) {
+      this.showToast('Email already exists. Please use another email.');
+    } else if (backendMsg.includes('phone')) {
+      this.showToast('Phone number already in use. Please use another number.');
+    } else {
+      this.showToast(err?.error?.message ?? 'Failed to create profile');
+    }
       console.error('Onboard Talent Error:', err);
       this.error = err.error?.message || 'Failed to create profile. Try again later.';
     }
   });
 }
+  async showToast(message: string) {
+  const toast = await this.toastCtrl.create({
+    message,
+    duration: 3000,
+    position: 'top',
+    color: 'danger'
+  });
+  toast.present();
+}
+
 
 
   // ------------------- API: VERIFY OTP -------------------
