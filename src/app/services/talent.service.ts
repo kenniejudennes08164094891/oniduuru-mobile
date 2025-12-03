@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { endpoints } from '../models/endpoint';
@@ -9,38 +9,46 @@ import { endpoints } from '../models/endpoint';
 })
 export class TalentService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // Create Talent Profile
   createTalentProfile(talent: any): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.onboardTalent}`;
-    return this.http.post(url, talent, {
-      headers: { 'No-Auth': 'true' }
+    return this.http.post<any>(url, talent, {
+      headers: new HttpHeaders({
+        "No-Auth": "true",
+        "Content-Type": "application/json"
+      })
     });
   }
-
   // Verify OTP
   verifyOTP(params: { otp: string; phoneNumber: string; email: string }): Observable<any> {
-    const url =
-      `${environment.baseUrl}/${endpoints.verifyOTP}` +
-      `?otp=${params.otp}` +
-      `&phoneNumber=${params.phoneNumber}` +
-      `&email=${params.email}`;
 
-    return this.http.post(url, {}, {
-      headers: { 'No-Auth': 'true' }
+    const url = `${environment.baseUrl}/${endpoints.verifyOTP}`;
+
+    const queryParams = new HttpParams()
+      .set("otp", params.otp)
+      .set("phoneNumber", params.phoneNumber)
+      .set("email", params.email);
+
+    return this.http.post<any>(url, {}, {
+      headers: new HttpHeaders({ "No-Auth": "true" }),
+      params: queryParams
     });
   }
 
   // Resend OTP
   resendOTP(params: { phoneNumber: string; email: string }): Observable<any> {
-    const url =
-      `${environment.baseUrl}/${endpoints.resendOTP}` +
-      `?phoneNumber=${params.phoneNumber}` +
-      `&email=${params.email}`;
 
-    return this.http.get(url, {
-      headers: { 'No-Auth': 'true' }
+    const url = `${environment.baseUrl}/${endpoints.resendOTP}`;
+
+    const queryParams = new HttpParams()
+      .set("phoneNumber", params.phoneNumber)
+      .set("email", params.email);
+
+    return this.http.get<any>(url, {
+      headers: new HttpHeaders({ "No-Auth": "true" }),
+      params: queryParams
     });
   }
 }

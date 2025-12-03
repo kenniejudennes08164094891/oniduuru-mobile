@@ -187,7 +187,13 @@ export class OnboardingPage {
   }
 
   // ------------------- API: CREATE TALENT PROFILE -------------------
- submitTalentProfile() {
+  isSubmitting = false;
+
+submitTalentProfile() {
+  if (this.isSubmitting) return;
+  this.isSubmitting = true;
+  this.error = '';
+
   const payload = {
     email: this.emailLogin,
     password: this.password,
@@ -202,11 +208,13 @@ export class OnboardingPage {
 
   this.talentService.createTalentProfile(payload).subscribe({
     next: (res) => {
+      this.isSubmitting = false;
       // MOVE TO OTP STEP immediately on success
       this.currentStep = 3;
       this.startTimer();
     },
     error: (err) => {
+      this.isSubmitting = false;
       console.error('Onboard Talent Error:', err);
       this.error = err.error?.message || 'Failed to create profile. Try again later.';
     }

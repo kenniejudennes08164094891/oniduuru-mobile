@@ -63,13 +63,13 @@
         </div>
 
         <div class="flex flex-col space-y-3 mt-32">
-          <button (click)="handleNextStep()" [disabled]="!isTalentDetailsValid"
+          <button type="button" (click)="handleNextStep()" [disabled]="!isTalentDetailsValid"
             [ngClass]="!isTalentDetailsValid ? 'opacity-40 cursor-not-allowed' : ''"
             class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium">
             Next
           </button>
 
-          <button (click)="handleCancel()"
+          <button type="button" (click)="handleCancel()"
             class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium">
             Cancel
           </button>
@@ -135,12 +135,12 @@
       </div>
 
       <div class="flex flex-col space-y-3 mt-32 ">
-        <button (click)="handleNextStep()" [disabled]="!isOtherDetailsValid"
+        <button type="button" (click)="handleNextStep()" [disabled]="!isOtherDetailsValid"
           [ngClass]="!isOtherDetailsValid ? 'opacity-40 cursor-not-allowed' : ''"
           class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
           Next
         </button>
-        <button (click)="handlePreviousStep()"
+        <button type="button" (click)="handlePreviousStep()"
           class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
           Previous
         </button>
@@ -183,12 +183,12 @@
         characters.</p>
 
       <div class="flex flex-col space-y-3 mt-32  ">
-        <button (click)="handleNextStep()" [disabled]="!isLoginCredentialsValid"
+        <button type="button" (click)="handleNextStep()" [disabled]="isSubmitting || !isLoginCredentialsValid"
           [ngClass]="!isLoginCredentialsValid ? 'opacity-40 cursor-not-allowed' : ''"
           class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
           Next
         </button>
-        <button (click)="handlePreviousStep()"
+        <button type="button" (click)="handlePreviousStep()"
           class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
           Previous
         </button>
@@ -208,18 +208,18 @@
 
       <p class="text-sm text-gray-500">
         Didn’t get the code?
-        <button (click)="resendOtp()" type="button" class="text-blue-600 underline">
+        <button type="button" (click)="resendOtp()" class="text-blue-600 underline">
           Resend OTP
         </button>
       </p>
 
       <div class="flex flex-col mt-32 space-y-3 justify-between ">
-        <button (click)="verifyOtp()" [disabled]="!isOtpValid"
+        <button type="button" (click)="verifyOtp()" [disabled]="!isOtpValid"
           [ngClass]="!isOtpValid ? 'opacity-40 cursor-not-allowed' : ''"
           class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
           Verify OTP
         </button>
-        <button (click)="handlePreviousStep()"
+        <button type="button" (click)="handlePreviousStep()"
           class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
           Previous
         </button>
