@@ -1266,32 +1266,38 @@ export class ScouterEndpointsService {
         })
       );
   }
+
+  reconsiderOffer(payload: {
+    scouterId: string;
+    talentId: string;
+    marketId?: string;
+    newAmount: number;
+    newJobDescription: string;
+    newStartDate: string;
+    additionalComments?: string;
+  }): Observable<any> {
+    const url = `${this.baseUrl}/${endpoints.reconsiderOffer}`;
+
+    console.log('🔄 Reconsidering offer:', payload);
+
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Offer reconsidered successfully:', response)
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to reconsider offer:', error);
+          return throwError(
+            () =>
+              new Error(error.error?.message || 'Failed to reconsider offer')
+          );
+        })
+      );
+  }
 }
 
 // THIS IS UP TO DATE
-
-// When adding new endpoints to your services, follow this pattern:
-
-// In scouter-endpoints.service.ts
-// yourNewMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourNewEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customHttpHeaders,
-//   });
-// }
-
-// // For public endpoints (no auth required)
-// yourPublicMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourPublicEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-//   });
-// }
-
-// // For file uploads
-// uploadFile(data: FormData): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.uploadFile}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customFormDataHttpHeaders,
-//   });
-// }

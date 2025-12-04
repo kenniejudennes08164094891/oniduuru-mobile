@@ -130,11 +130,20 @@
   </div>
 
   <!-- In your market-engagement-market-price-preparation.component.html -->
+  <!-- In your market-engagement-market-price-preparation.component.html -->
   <app-market-engagement-tabs
     [initialHire]="hire"
-    (hireSelected)="setSelectedHire($event)"
+    (hireSelected)="onTableHireClick($event)"
   >
   </app-market-engagement-tabs>
+
+  <app-total-delivery-evaluation
+    *ngIf="isTotalDeliveryModalOpen"
+    [hire]="selectedModalHire || hire"
+    [isModalOpen]="isTotalDeliveryModalOpen"
+    (close)="closeTotalDeliveryModal()"
+    (ratingUpdated)="onRatingUpdated($event)"
+  ></app-total-delivery-evaluation>
 
   <!-- Error State -->
   <div *ngIf="!hire && !isLoading" class="text-center py-10">

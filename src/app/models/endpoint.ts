@@ -141,4 +141,6 @@ export const endpoints = {
   cloudinaryGetSecrets: 'utility/v1/cloudinary/signature',
 
   chatbot: 'api-service/v1/chatbot',
+
+  reconsiderOffer: 'market/v1/reconsider-offer', // Add this
 };

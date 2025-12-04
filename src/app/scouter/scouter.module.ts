@@ -56,7 +56,9 @@ import { TransferFundsRequestPageComponent } from './transfer-funds-request-page
 
 import { RouterModule } from '@angular/router';
 import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
-import {AuthPageModule} from "../auth/auth.module";
+import { AuthPageModule } from '../auth/auth.module';
+import { ReconsiderConfirmationModalComponent } from '../utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
+import { ReconsiderOfferModalComponent } from '../utilities/modals/reconsider-offer-modal/reconsider-offer-modal.component';
 
 @NgModule({
   imports: [
@@ -119,9 +121,11 @@ import {AuthPageModule} from "../auth/auth.module";
     FundWalletRequestPageComponent,
     WithdrawFundsRequestPageComponent,
     TransferFundsRequestPageComponent,
+    ReconsiderConfirmationModalComponent,
+    ReconsiderOfferModalComponent,
   ],
   exports: [TotalDeliveryEvaluationComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA], // 👈 ADD THIS LINE HERE TOO
-  providers: [AuthPageModule]
+  providers: [AuthPageModule],
 })
 export class ScouterPageModule {}
