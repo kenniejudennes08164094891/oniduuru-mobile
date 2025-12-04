@@ -22,6 +22,7 @@ import { LoginGuard } from './guard/login.guard';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 
+
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
 
@@ -42,13 +43,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./auth/auth.module').then((m) => m.AuthPageModule),
   },
-  {
-    path: 'talent/onboarding',
-    loadChildren: () =>
-      import('./talent/onboarding/onboarding.module').then(
-        (m) => m.OnboardingPageModule
-      ),
-  },
+ {
+  path: 'talent/onboarding',
+  loadComponent: () =>
+    import('./talent/onboarding/onboarding.page').then(m => m.OnboardingPage)
+},
   {
     path: 'scouter',
     loadChildren: () =>

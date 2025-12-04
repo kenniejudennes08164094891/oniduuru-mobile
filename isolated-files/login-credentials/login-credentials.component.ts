@@ -1,8 +1,12 @@
 import { Component, EventEmitter, Output, Input } from '@angular/core';
-
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-login-credentials',
   templateUrl: './login-credentials.component.html',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
 })
 export class LoginCredentialsComponent {
   @Output() next = new EventEmitter<void>();
@@ -12,11 +16,12 @@ export class LoginCredentialsComponent {
   @Input() password = '';
   @Input() confirmPassword = '';
 
+  constructor(private router: Router) {}
+
   emailTouched = false;
   passwordTouched = false;
   confirmPasswordTouched = false;
 
-  // ---------------- VALIDATIONS ----------------
   emailValid() {
     if (!this.email.trim()) return false;
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email);
@@ -24,7 +29,6 @@ export class LoginCredentialsComponent {
 
   passwordValid() {
     if (!this.password) return false;
-    // Password must contain 8+ chars, uppercase, lowercase, special char
     const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
     return pattern.test(this.password);
   }
@@ -37,13 +41,17 @@ export class LoginCredentialsComponent {
     return this.emailValid() && this.passwordValid() && this.confirmPasswordValid();
   }
 
-  // ---------------- HANDLERS ----------------
   onNext() {
     this.emailTouched = true;
     this.passwordTouched = true;
     this.confirmPasswordTouched = true;
 
-    if (this.formValid()) this.next.emit();
+    if (this.formValid()) {
+      // Instead of this.next.emit()
+      this.router.navigate(['/auth/verify-otp'], {
+        queryParams: { email: this.email }
+      });
+    }
   }
 
   onPrevious() {

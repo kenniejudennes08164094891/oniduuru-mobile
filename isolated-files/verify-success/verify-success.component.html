@@ -1,0 +1,35 @@
+<div class="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+
+  <!-- Success Icon -->
+  <div class="w-20 h-20 rounded-full bg-[#D1FADF] flex items-center justify-center mb-4">
+    <ion-icon name="checkmark-circle" class="text-[#12B76A] text-5xl"></ion-icon>
+  </div>
+
+  <!-- Title -->
+  <h2 class="text-[22px] font-semibold text-[#101828] mb-2">
+    You have been verified successfully
+  </h2>
+
+  <!-- Subtitle -->
+  <p class="text-[#667085] text-sm mb-1">
+    You have successfully been onboarded
+  </p>
+
+  <p class="text-[#98A2B3] text-sm mb-6">
+    Kindly proceed to login.
+  </p>
+
+  <!-- Buttons -->
+  <button
+    class="w-full py-3 rounded-md bg-[#0A8A41] text-white font-medium mb-3"
+    (click)="goToLogin()">
+    Login
+  </button>
+
+  <button
+    class="w-full py-3 rounded-md border border-[#D0D5DD] bg-white text-[#344054] font-medium"
+    (click)="cancel()">
+    Cancel
+  </button>
+
+</div>

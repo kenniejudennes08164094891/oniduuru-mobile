@@ -39,10 +39,13 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initializeOtpForm();
     this.loadUserData();
+    const email = this.route.snapshot.queryParamMap.get('email');
+  console.log("Email passed:", email);
   }
 
   ngOnDestroy() {
     clearInterval(this.timer);
+    
   }
 
   private initializeOtpForm() {

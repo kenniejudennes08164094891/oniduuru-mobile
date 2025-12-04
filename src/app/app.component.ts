@@ -4,16 +4,16 @@ import { Router, NavigationStart } from '@angular/router';
 import {
   MenuController,
   Platform,
-  IonApp,
-  IonMenu,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonRouterOutlet,
+  // IonApp,
+  // IonMenu,
+  // IonHeader,
+  // IonToolbar,
+  // IonTitle,
+  // IonContent,
+  // IonList,
+  // IonItem,
+  // IonLabel,
+  // IonRouterOutlet,
 } from '@ionic/angular';
 import { App as CapacitorApp } from '@capacitor/app';
 import { initFlowbite } from 'flowbite';
@@ -34,7 +34,17 @@ export class AppComponent implements OnInit {
     private platform: Platform,
     private authService: AuthService,
     private userService: UserService,
-    private appInitService: AppInitService
+    private appInitService: AppInitService,
+    // private ionApp: IonApp,
+    // private ionMenu: IonMenu,
+    // private ionHeader: IonHeader,
+    // private ionToolbar: IonToolbar,
+    // private ionTitle: IonTitle,
+    // private ionContent: IonContent,
+    // private ionList: IonList,
+    // private ionItem: IonItem,
+    // private ionLabel: IonLabel,
+    // private ionRouterOutlet: IonRouterOutlet
   ) {
     document.body.classList.remove('dark');
   }
@@ -79,7 +89,7 @@ export class AppComponent implements OnInit {
   }
 
   async navigateAndCloseMenu(route: string) {
-    await this.menuCtrl.close('scouter-menu');
+    await this.menuCtrl.close('scouhttp://localhost:4200/ter-menu');
 
     if (route === '/scouter/dashboard') {
       if (!this.authService.validateStoredToken()) {
