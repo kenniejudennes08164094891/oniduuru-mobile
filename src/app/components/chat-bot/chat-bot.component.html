@@ -1,20 +1,29 @@
-<!-- src/app/components/chat-bot/chat-bot.component.html -->
-<div class="fixed bottom-4 right-4 z-50">
+<div
+  class="fixed z-50"
+  [style.transform]="'translate(' + position.x + 'px, ' + position.y + 'px)'"
+  [class.cursor-grab]="!isDragging && showChatButton"
+  [class.cursor-grabbing]="isDragging && showChatButton"
+  [class.transition-transform]="!isDragging"
+>
   <!-- Chat Button - Only show when user is authenticated and not on auth pages -->
   <button
     *ngIf="showChatButton"
     (click)="openChat()"
+    (mousedown)="onMouseDown($event)"
+    (touchstart)="onTouchStart($event)"
     [class.opacity-50]="!showChatButton"
     [class.cursor-not-allowed]="!showChatButton"
-    class="w-14 h-14 bg-gradient-to-r shadow-2xl flex items-center justify-center"
+    class="w-14 h-14 bg-gradient-to-r shadow-2xl flex items-center justify-center touch-none select-none draggable-chat-button"
     [title]="
-      showChatButton ? 'Chat with Onflbééré' : 'Please login to access chat'
+      showChatButton
+        ? 'Chat with Onflbééré (Drag to move)'
+        : 'Please login to access chat'
     "
   >
     <img
       [src]="images.ChatBotIcon"
       alt="Chat with Òní Ìbéèrè"
-      class="w-10 h-10"
+      class="w-10 h-10 pointer-events-none"
     />
   </button>
 </div>

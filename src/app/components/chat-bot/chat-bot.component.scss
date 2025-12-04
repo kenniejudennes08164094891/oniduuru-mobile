@@ -36,3 +36,22 @@ button {
 .dragging {
   cursor: grabbing !important;
 }
+
+
+.draggable-chat-button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  // Add a subtle shadow when dragging
+  &.dragging {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Ensure the button has proper z-index and doesn't interfere with other elements
+.fixed {
+  z-index: 9999;
+}
