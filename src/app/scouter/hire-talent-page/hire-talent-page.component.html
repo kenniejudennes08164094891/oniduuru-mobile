@@ -18,37 +18,47 @@
     To ensure the security of your information, we require an OTP verification
     to authorize your talent hiring. Please complete this step to proceed.
   </p>
-  <p class="text-[12px] px-1 text-[#101828]">
-    Enter the OTP that was sent to your email address or phone number.
+  
+  <!-- Starred Email Display -->
+  <div class=" mb-4">
+    <p class="text-[14px] text-[#101828] text-center">
+      OTP sent to: <strong class="text-blue-600">{{ starredEmail }}</strong>
+    </p>
+  </div>
+
+  <p class="text-[12px] px-1 text-[#101828] mb-4">
+    Enter the 4-digit OTP that was sent to your email address.
   </p>
 
   <!-- OTP Input Boxes -->
   <div class="flex justify-center gap-3 my-6">
     <input
       *ngFor="let digit of otpArray; let i = index"
-      type="number"
+      type="tel"
       inputmode="numeric"
+      pattern="[0-9]*"
       maxlength="1"
       placeholder="0"
-      class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] placeholder:text-[#D0D5DD] placeholder:text-[48px]"
+      class="w-16 h-16 text-[32px] text-center border-2 border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-[#D0D5DD] transition-all"
       [(ngModel)]="otp[i]"
       (input)="onOtpInput($event, i)"
       (keydown)="onKeyDown($event, i)"
+      (paste)="onPaste($event)"
+      [disabled]="countdown === 0"
     />
   </div>
 
   <!-- Countdown -->
-  <p class="text-center text-sm text-[#101828]">
-    Didn’t receive a code?
-    <span *ngIf="countdown > 0">
-      Re-initiate OTP process in <strong>{{ countdown }}</strong
-      >s
+  <p class="text-center text-sm text-[#101828] mb-6">
+    Didn't receive a code?
+    <span *ngIf="countdown > 0" class="text-gray-600">
+      Resend OTP in <strong>{{ countdown }}</strong>s
     </span>
     <a
       *ngIf="countdown === 0"
       href="#"
-      class="text-blue-600 underline"
-      (click)="resendOtp()"
+      class="text-blue-600 underline font-medium"
+      (click)="resendOtp(); $event.preventDefault()"
       >Resend OTP</a
     >
   </p>
@@ -56,10 +66,10 @@
   <!-- Action Buttons -->
   <div class="mt-6 space-y-3">
     <button
-      class="flex justify-center bg-white border-[1px] border-solid border-[#101828] rounded-lg w-full py-2 text-[#101828] font-medium cursor-pointer"
+      class="flex justify-center bg-white border-2 border-solid border-[#101828] rounded-lg w-full py-3 text-[#101828] font-medium cursor-pointer hover:bg-gray-50 transition-colors"
       (click)="goToDashboard()"
     >
-      Route Back
+      Back to Dashboard
     </button>
   </div>
 </ion-content>

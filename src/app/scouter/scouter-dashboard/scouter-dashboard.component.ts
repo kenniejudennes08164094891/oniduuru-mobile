@@ -8,6 +8,7 @@ import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-scouter-dashboard',
@@ -56,7 +57,8 @@ export class ScouterDashboardComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private scouterEndpointsService: ScouterEndpointsService
+    private scouterEndpointsService: ScouterEndpointsService,
+    private toastService: ToastsService
   ) {}
 
   ngOnInit(): void {
@@ -333,7 +335,28 @@ export class ScouterDashboardComponent implements OnInit {
   async goToViewHires(): Promise<void> {
     await this.router.navigate(['/scouter/view-hires']);
   }
+
   async goToHireTalent(): Promise<void> {
+    // Get user email
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        const email = parsedUser.email || parsedUser.details?.user?.email;
+
+        if (email) {
+          // Call OTP endpoint (fire and forget - don't wait for response)
+          this.scouterEndpointsService.resendOtp({ email }).subscribe({
+            next: (response) => console.log('✅ OTP sent:', response),
+            error: (error) => console.error('❌ OTP failed:', error),
+          });
+        }
+      } catch (error) {
+        console.error('Error getting user email:', error);
+      }
+    }
+
+    // Navigate to hire talent page
     await this.router.navigate(['/scouter/hire-talent']);
   }
 

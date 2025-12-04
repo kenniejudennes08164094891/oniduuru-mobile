@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-// import { ToastController } from '@ionic/angular';
 import { NavController, AnimationController } from '@ionic/angular';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { AuthService } from 'src/app/services/auth.service'; // Add AuthService
 
 @Component({
   selector: 'app-hire-talent-page',
@@ -12,33 +13,138 @@ import { ToastsService } from 'src/app/services/toasts.service';
 })
 export class HireTalentPageComponent implements OnInit {
   headerHidden: boolean = false;
-
-  otpArray = new Array(4); // 4-digit OTP
+  otpArray = new Array(4);
   otp: string[] = new Array(4).fill('');
   countdown: number = 120;
   private timer: any;
+  userEmail: string = '';
+  starredEmail: string = '';
 
   constructor(
     private router: Router,
-
     private navCtrl: NavController,
     private toastService: ToastsService,
-    private animationCtrl: AnimationController
+    private animationCtrl: AnimationController,
+    private scouterEndpointsService: ScouterEndpointsService,
+    private authService: AuthService // Add AuthService
   ) {}
 
   ngOnInit() {
+    this.loadUserEmail();
+    this.sendInitialOtp(); // Send OTP automatically when page loads
     this.startCountdown();
+    
     setTimeout(() => {
       const firstInput = document.querySelector('input') as HTMLInputElement;
       if (firstInput) firstInput.focus();
     }, 0);
   }
 
-  // Handle OTP input
+  private loadUserEmail(): void {
+    // Method 1: Try to get from current user
+    const currentUser = this.authService.getCurrentUser();
+    console.log('🔍 Current user from AuthService:', currentUser);
+    
+    if (currentUser?.email) {
+      this.userEmail = currentUser.email;
+      this.starredEmail = this.getStarredEmail(currentUser.email);
+      console.log('✅ Email from AuthService:', this.userEmail);
+      return;
+    }
+
+    // Method 2: Try localStorage
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        console.log('🔍 User data from localStorage:', parsedUser);
+        
+        // Try multiple possible email fields
+        this.userEmail = parsedUser.email || 
+                        parsedUser.details?.user?.email || 
+                        parsedUser.details?.email || 
+                        parsedUser.user?.email || 
+                        '';
+        
+        if (this.userEmail) {
+          this.starredEmail = this.getStarredEmail(this.userEmail);
+          console.log('✅ Email from localStorage:', this.userEmail);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+
+    // Method 3: Try registration email
+    const registrationEmail = localStorage.getItem('registration_email');
+    if (registrationEmail) {
+      this.userEmail = registrationEmail;
+      this.starredEmail = this.getStarredEmail(registrationEmail);
+      console.log('✅ Email from registration:', this.userEmail);
+      return;
+    }
+
+    console.warn('❌ No email found in any storage location');
+    this.userEmail = '';
+    this.starredEmail = 'user@example.com'; // Fallback
+  }
+
+  // Helper method to create starred email (e.g., j****@gmail.com)
+  private getStarredEmail(email: string): string {
+    if (!email || !email.includes('@')) {
+      return 'u****@example.com';
+    }
+    
+    const [localPart, domain] = email.split('@');
+    if (localPart.length <= 2) {
+      return `${localPart.charAt(0)}****@${domain}`;
+    }
+    
+    const firstChar = localPart.charAt(0);
+    const lastChar = localPart.charAt(localPart.length - 1);
+    return `${firstChar}****${lastChar}@${domain}`;
+  }
+
+  // Send OTP automatically when page loads - IMPROVED
+  private sendInitialOtp(): void {
+    if (!this.userEmail) {
+      console.warn('❌ No email found for automatic OTP');
+      this.toastService.openSnackBar('No email found. Please contact support.', 'danger');
+      return;
+    }
+
+    console.log('🔄 Sending initial OTP to:', this.userEmail);
+    
+    this.scouterEndpointsService.resendOtp({ email: this.userEmail }).subscribe({
+      next: (response) => {
+        console.log('✅ Initial OTP sent successfully:', response);
+        this.toastService.openSnackBar(`OTP sent to ${this.starredEmail}`, 'success');
+      },
+      error: (error) => {
+        console.error('❌ Failed to send initial OTP:', error);
+        
+        let errorMessage = 'Failed to send OTP. Please try again.';
+        if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.status === 0) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (error?.status === 404) {
+          errorMessage = 'OTP service unavailable. Please contact support.';
+        }
+        
+        this.toastService.openSnackBar(errorMessage, 'danger');
+      }
+    });
+  }
+
+  // Rest of your methods with improved error handling
   onOtpInput(event: any, index: number) {
     const input = event.target;
 
-    // move to next input if not last
+    // Only allow numbers
+    input.value = input.value.replace(/[^0-9]/g, '');
+
     if (input.value && index < this.otpArray.length - 1) {
       const nextInput = input.nextElementSibling as HTMLInputElement;
       if (nextInput) {
@@ -46,22 +152,9 @@ export class HireTalentPageComponent implements OnInit {
       }
     }
 
-    // Auto-submit when last box filled
     const enteredOtp = this.otp.join('');
     if (enteredOtp.length === this.otpArray.length && !this.otp.includes('')) {
       this.verifyOtp();
-      this.navCtrl.navigateForward('/scouter/hire-talent/welcome-to-oniduuru', {
-        animated: true,
-        animation: (baseEl, opts) => {
-          const animation = this.animationCtrl
-            .create()
-            .addElement(baseEl.querySelector('.ion-page'))
-            .duration(400)
-            .fromTo('opacity', '0', '1');
-
-          return animation;
-        },
-      });
     }
   }
 
@@ -69,7 +162,6 @@ export class HireTalentPageComponent implements OnInit {
     this.router.navigate(['/scouter/dashboard']);
   }
 
-  // Handle key events (backspace, arrow keys)
   onKeyDown(event: KeyboardEvent, index: number) {
     if (event.key === 'Backspace' && !this.otp[index] && index > 0) {
       const prevInput = (event.target as HTMLInputElement)
@@ -80,7 +172,6 @@ export class HireTalentPageComponent implements OnInit {
     }
   }
 
-  // Start countdown
   startCountdown() {
     this.countdown = 120;
     clearInterval(this.timer);
@@ -93,40 +184,122 @@ export class HireTalentPageComponent implements OnInit {
     }, 1000);
   }
 
-  // Resend OTP
+  // Resend OTP - IMPROVED
   resendOtp() {
-    // console.log('Resend OTP triggered');
+    if (!this.userEmail) {
+      this.toastService.openSnackBar('No email found for OTP', 'danger');
+      return;
+    }
 
-    this.startCountdown();
+    console.log('🔄 Resending OTP to:', this.userEmail);
+    
+    this.scouterEndpointsService.resendOtp({ email: this.userEmail }).subscribe({
+      next: (response) => {
+        console.log('✅ OTP resent successfully:', response);
+        this.toastService.openSnackBar(`OTP resent to ${this.starredEmail}`, 'success');
+        this.startCountdown();
+      },
+      error: (error) => {
+        console.error('❌ Failed to resend OTP:', error);
+        
+        let errorMessage = 'Failed to resend OTP. Please try again.';
+        if (error?.error?.message) {
+          errorMessage = error.error.message;
+        }
+        
+        this.toastService.openSnackBar(errorMessage, 'danger');
+      }
+    });
   }
 
-  // Verify OTP
+  // Verify OTP - IMPROVED
   async verifyOtp() {
     const enteredOtp = this.otp.join('');
-    // console.log('Entered OTP:', enteredOtp);
+    
+    if (enteredOtp.length !== 4) {
+      this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'danger');
+      return;
+    }
 
-    if (enteredOtp.length === 4) {
-      // since your otpArray is 4
-      // console.log('OTP Verified ✅');
-      // const toast = await this.toast.create({
-      //   message: 'OTP Verified ✅',
-      //   duration: 2000,
-      //   color: 'success',
-      //   position: 'bottom',
-      // });
-      // await toast.present();
-      this.toastService.openSnackBar('OTP Verified ✅', 'success');
+    if (!this.userEmail) {
+      this.toastService.openSnackBar('No email found for verification', 'danger');
+      return;
+    }
 
-      // this.router.navigate(['/scouter/view-hires']);
-    } else {
-      // const toast = await this.toast.create({
-      //   message: 'Incomplete OTP ❌',
-      //   duration: 2000,
-      //   color: 'danger',
-      //   position: 'bottom',
-      // });
-      // await toast.present();
-      this.toastService.openSnackBar('Incomplete OTP ❌', 'danger');
+    console.log('🔐 Verifying OTP:', enteredOtp, 'for email:', this.userEmail);
+
+    this.scouterEndpointsService.verifyOtp({
+      otp: enteredOtp,
+      email: this.userEmail
+    }).subscribe({
+      next: (response) => {
+        console.log('✅ OTP verified successfully:', response);
+        this.toastService.openSnackBar('OTP Verified ✅', 'success');
+        
+        // Navigate to next page after successful verification
+        this.navigateToNextPage();
+      },
+      error: (error) => {
+        console.error('❌ OTP verification failed:', error);
+        
+        let errorMessage = 'Invalid OTP. Please try again.';
+        if (error?.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error?.status === 401) {
+          errorMessage = 'OTP expired. Please request a new one.';
+        } else if (error?.status === 400) {
+          errorMessage = 'Invalid OTP format.';
+        }
+        
+        this.toastService.openSnackBar(errorMessage, 'danger');
+        
+        // Clear OTP fields on failure
+        this.otp = new Array(4).fill('');
+        setTimeout(() => {
+          const firstInput = document.querySelector('input') as HTMLInputElement;
+          if (firstInput) firstInput.focus();
+        }, 100);
+      }
+    });
+  }
+
+
+  // Add this method to your component for paste support
+onPaste(event: ClipboardEvent): void {
+  event.preventDefault();
+  const pastedData = event.clipboardData?.getData('text').trim() || '';
+  const numbers = pastedData.replace(/[^0-9]/g, '').split('').slice(0, 4);
+  
+  numbers.forEach((num, index) => {
+    if (index < this.otp.length) {
+      this.otp[index] = num;
+    }
+  });
+  
+  // Auto-submit if we have 4 digits
+  if (numbers.length === 4) {
+    setTimeout(() => this.verifyOtp(), 100);
+  }
+}
+
+  private navigateToNextPage(): void {
+    this.navCtrl.navigateForward('/scouter/hire-talent/welcome-to-oniduuru', {
+      animated: true,
+      animation: (baseEl, opts) => {
+        const animation = this.animationCtrl
+          .create()
+          .addElement(baseEl.querySelector('.ion-page'))
+          .duration(400)
+          .fromTo('opacity', '0', '1');
+        return animation;
+      },
+    });
+  }
+
+  // Add cleanup
+  ngOnDestroy() {
+    if (this.timer) {
+      clearInterval(this.timer);
     }
   }
 }

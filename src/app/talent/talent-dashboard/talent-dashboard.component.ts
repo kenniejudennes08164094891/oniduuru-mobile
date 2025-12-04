@@ -32,7 +32,7 @@ export class TalentDashboardComponent implements OnInit {
   timeIcon = '';
   myIcon = imageIcons.infoIcon;
 
-  useMockData: boolean = environment.useMockData;
+  useMockData: boolean = true;
   showMockBadge = false;
 
   // Header scroll state
@@ -117,7 +117,7 @@ export class TalentDashboardComponent implements OnInit {
   }
   // ---------- loadDashboardData() ----------
   async loadDashboardData(): Promise<void> {
-    if (environment.useMockData) {
+    if (this.useMockData) {
       console.log('Mock mode active — using local dashboard data');
       this.loadMockData();
       return;

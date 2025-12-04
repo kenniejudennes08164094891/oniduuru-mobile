@@ -7,7 +7,11 @@
 </div>
 
 <!-- Always show content but make it invisible during loading -->
-<ion-content fullscreen (ionScroll)="onContentScroll($event)">
+<ion-content
+  fullscreen
+  (ionScroll)="onContentScroll($event)"
+  class="safe-area-content"
+>
   <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
     <app-scouter-header
       [class.header-hidden]="headerHidden"

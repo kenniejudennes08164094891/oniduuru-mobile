@@ -132,3 +132,44 @@ a {
 
   margin: auto; /* centers modal both vertically and horizontally */
 }
+
+/* Angular Material Snackbar Safe Area Fixes */
+.safe-area-snackbar {
+  margin-bottom: var(--ion-safe-area-bottom, 0px) !important;
+  bottom: var(--ion-safe-area-bottom, 0px) !important;
+
+  /* Ensure it's above other content */
+  z-index: 10000 !important;
+
+  /* Mobile-friendly sizing */
+  @media (max-width: 768px) {
+    max-width: 90vw !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+}
+
+/* Override Material Snackbar positioning */
+.mat-mdc-snack-bar-container {
+  &.safe-area-snackbar {
+    position: relative !important;
+
+    .mdc-snackbar {
+      &__surface {
+        min-width: auto !important;
+      }
+
+      &__label {
+        padding: 0 !important;
+      }
+    }
+  }
+}
+
+/* Ensure toast component handles safe areas */
+app-toast {
+  display: block;
+  position: relative;
+}

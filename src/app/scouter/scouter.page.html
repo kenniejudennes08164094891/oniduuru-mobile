@@ -1,20 +1,22 @@
 <ion-header class="bg-white">
-  <div class="w-full flex justify-between items-center px-4 py-2">
-    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+  <ion-toolbar>
+    <div class="w-full flex justify-between items-center px-4 py-2">
+      <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
 
-    <div class="flex items-center gap-4">
-      <button
-        (click)="goBack()"
-        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white"
-      >
-        Back
-      </button>
+      <div class="flex items-center gap-4">
+        <button
+          (click)="goBack()"
+          class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white"
+        >
+          Back
+        </button>
+      </div>
     </div>
-  </div>
+  </ion-toolbar>
 </ion-header>
 
 <!-- Scrollable full page -->
-<ion-content [fullscreen]="true" class="">
+<ion-content [fullscreen]="true" class="ion-padding-top">
   <!-- Title Section -->
   <div class="py-4 px-4 bg-[#F1F1F1] text-[#101828] text-[24px]">
     <span>Create an account</span>
@@ -34,7 +36,7 @@
           *ngIf="errorMessage"
           class="bg-red-100 text-red-700 px-3 py-2 rounded-md mb-3 text-sm"
         > -->
-          <!-- ⚠️ {{ errorMessage }} -->
+        <!-- ⚠️ {{ errorMessage }} -->
         <!-- </div> -->
         <!-- STEP 1 -->
         <form

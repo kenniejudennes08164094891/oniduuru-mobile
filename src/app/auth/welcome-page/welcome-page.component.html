@@ -1,18 +1,17 @@
 <body>
-  <ion-header [translucent]="false">
-    <mat-toolbar
-      class="flex justify-between items-center shadow-lg px-4 navbar h-20"
-    >
-      <span class="text-lg font-semibold">∯ Oniduuru</span>
-      <div class="flex gap-3">
-        <button (click)="routeToLoginScreen()" mat-button class="text-sm">
-          Sign In
-        </button>
-        <!-- <button (click)="signupSelect()" mat-button class="text-sm">
-          Create Account
-        </button> -->
-      </div>
-    </mat-toolbar>
+  <ion-header [translucent]="false" class="ion-no-border">
+    <ion-toolbar class="[--background:transparent]">
+      <mat-toolbar
+        class="flex justify-between items-center shadow-lg px-4 navbar h-20 ion-padding-top"
+      >
+        <span class="text-lg font-semibold">∯ Oniduuru</span>
+        <div class="flex gap-3">
+          <button (click)="routeToLoginScreen()" mat-button class="text-sm">
+            Sign In
+          </button>
+        </div>
+      </mat-toolbar>
+    </ion-toolbar>
   </ion-header>
 
   <ion-content class="h-screen [--background:transparent] p-0">
