@@ -1,7 +1,7 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
-import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
+import { IonApp, IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { MaterialModule } from './shared/material-module';
@@ -43,6 +43,7 @@ import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
     JwtInterceptorService,
     AuthService,
     UserService,
+    IonApp,
     ToastsService,
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     {

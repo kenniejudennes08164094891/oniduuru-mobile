@@ -20,7 +20,7 @@ export class JwtInterceptorService implements HttpInterceptor {
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   /** Retrieves token from localStorage */
   public getToken(): string | null {
@@ -156,6 +156,9 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/auth/resendOTP',
       '/auth/forgot-passwords',
       '/auth/verify-user-email',
+      '/talent/v1/create-talent-profile',
+      '/talent/v1/verify-otp',
+      '/talent/v1/resend-otp',
       '/scouter/create-scouter-profile',
       '/scouter/resend-otp',
       '/scouter/verify-otp',
@@ -181,6 +184,10 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/get-profile-picture',
       '/get-profile-image',
       '/profile-picture',
+      '/talent/v1/get-profile-picture',
+      '/talent/v1/upload-profile-picture',
+      '/talent/v1/update-profile-picture',
+      '/talent/v1/delete-talent-picture',
       '/scouters/v1/get-profile-picture',
       '/scouters/v1/upload-profile-picture',
       '/scouters/v1/update-profile-picture',
