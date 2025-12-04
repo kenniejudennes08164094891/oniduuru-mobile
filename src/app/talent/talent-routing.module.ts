@@ -8,7 +8,7 @@ import { TalentPage } from './talent.page';
 import { TalentDashboardComponent } from "./talent-dashboard/talent-dashboard.component";
 import { LogComplaintsPopupModalComponent } from 'src/app/utilities/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
 import { ProfilePageComponent } from "./profile-page/profile-page.component";
-
+import { OnboardingPage } from './onboarding/onboarding.page';
 const routes: Routes = [
   {
     path: 'create-account',
@@ -22,9 +22,15 @@ const routes: Routes = [
     ]
   },
   {
+    path: 'onboarding',
+    component: OnboardingPage
+  },
+  {
     path: 'dashboard',
     component: TalentDashboardComponent
   },
+   // ✅ Add this so /talent/onboarding works
+  
   {
     path: 'profile-page',
     component: ProfilePageComponent

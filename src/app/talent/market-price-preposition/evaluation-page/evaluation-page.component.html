@@ -1,3 +1,93 @@
-<p>
-  evaluation-page works!
-</p>
+<ion-header>
+  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+  </app-talent-header>
+
+  <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+    <!-- Dark overlay -->
+    <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+
+    <!-- Content on top -->
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3">
+        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
+        <div class="items-center">
+          <p class="text-gray-200 text-lg leading-relaxed">
+            Evaluation on scouter's intergrity
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-header>
+<ion-content class="ion-padding">
+
+  <div class="text-block">
+    <p>
+      Pls evaluate the quality of the artisan’s work.
+      Remember, comments to the talents should follow our
+      <a href="#" (click)="$event.preventDefault()">Community Guidelines</a>.
+    </p>
+
+    <p class="job-desc">
+      <span class="label">Scouter Job Description:</span>
+      <span class="value">{{ jobDescription }}</span>
+    </p>
+  </div>
+
+  <ion-card class="comment-card">
+    <ion-card-content>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+
+        <ion-textarea
+          formControlName="comment"
+          autoGrow="true"
+          class="comment-textarea"
+          placeholder="Please write a comment on your level of satisfactory work delivered by {{ scouterName }} on this role....">
+        </ion-textarea>
+
+        <!-- bottom toolbar inside card -->
+        <div class="attachment-row">
+          <ion-button fill="clear" size="small">
+            <ion-icon name="attach-outline"></ion-icon>
+          </ion-button>
+
+          <ion-button fill="clear" size="small">
+            <ion-icon name="location-outline"></ion-icon>
+          </ion-button>
+
+          <ion-button fill="clear" size="small">
+            <ion-icon name="image-outline"></ion-icon>
+          </ion-button>
+        </div>
+
+        <!-- Rating row -->
+        <div class="rating-row">
+          <span class="rating-label">Your Rating:</span>
+
+          <div class="stars">
+            <button
+              type="button"
+              *ngFor="let s of stars; let i = index"
+              (click)="setRating(i + 1)"
+              class="star-btn">
+              <ion-icon
+                [name]="(i + 1) <= form.value.rating ? 'star' : 'star-outline'">
+              </ion-icon>
+            </button>
+          </div>
+        </div>
+
+        <ion-button
+          expand="block"
+          class="submit-btn"
+          type="submit"
+          [disabled]="isSubmitDisabled">
+          Post comment
+        </ion-button>
+      </form>
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>
