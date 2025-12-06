@@ -1,6 +1,7 @@
+<!-- reconsider-confirmation-modal.component.html -->
 <div
   *ngIf="isModalOpen"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 mt-16 p-4"
+  class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4"
   (click)="closeModal()"
 >
   <div
@@ -11,7 +12,7 @@
     <div
       class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
     >
-      <h2 class="text-lg font-bold text-white">Reconsider Offer</h2>
+      <h2 class="text-lg font-bold text-white">Reconsideration of Declined Offer</h2>
       <button (click)="closeModal()" class="text-white hover:text-gray-700">
         ✕
       </button>

@@ -7,7 +7,8 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ModalController } from '@ionic/angular';
 import { ReconsiderOfferModalComponent } from 'src/app/utilities/modals/reconsider-offer-modal/reconsider-offer-modal.component';
 import { ReconsiderConfirmationModalComponent } from 'src/app/utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
-import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component'; // Add this import
+import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-market-engagement-market-price-preparation',
@@ -17,29 +18,31 @@ import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market
 })
 export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   @ViewChild(MarketEngagementsTableComponent)
-  marketTableComponent!: MarketEngagementsTableComponent; // Add this
+  marketTableComponent!: MarketEngagementsTableComponent;
 
   hire: MockPayment | undefined;
   images = imageIcons;
   userName: string = 'Viki West';
   isLoading: boolean = false;
   private previousTalentId: string | null = null;
-  private modalAlreadyShownForTalent: Set<string> = new Set(); // Track shown modals
 
   // Modal states
   isTotalDeliveryModalOpen: boolean = false;
+  isReconsiderModalOpen: boolean = false;
+  isReconsiderOfferModalOpen: boolean = false;
   selectedModalHire: any = null;
+  selectedTalentForReconsider: any = null;
+
   private shouldOpenModalOnLoad: boolean = false;
   private modalTypeToOpen: string = '';
 
   constructor(
     public route: ActivatedRoute,
-
-    // PASSED TALENT ID AS QUERY PARAMETER IN THIS COMPONENT
     private scouterService: ScouterEndpointsService,
     private router: Router,
     private authService: AuthService,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private toastService: ToastsService
   ) {}
 
   ngOnInit() {
@@ -51,10 +54,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         // Check if talent changed
         if (this.previousTalentId !== talentId) {
           this.previousTalentId = talentId;
-
-          // Check navigation state for modal opening
           this.checkNavigationState();
-
           this.loadHireDetails(talentId);
         }
       }
@@ -62,7 +62,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   }
 
   private checkNavigationState() {
-    // Get navigation state from router
     const navigation = this.router.getCurrentNavigation();
     if (navigation?.extras?.state) {
       const state = navigation.extras.state as any;
@@ -71,7 +70,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         this.shouldOpenModalOnLoad = true;
         this.modalTypeToOpen = state.modalType || '';
         this.selectedModalHire = state.hireData;
-
         console.log('Modal should open after load:', this.modalTypeToOpen);
       }
     }
@@ -79,7 +77,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
   loadHireDetails(talentId: string) {
     this.isLoading = true;
-    this.modalAlreadyShownForTalent.clear();
 
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
@@ -109,13 +106,10 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
             // Check if we need to open a modal after loading
             if (this.shouldOpenModalOnLoad) {
               this.openModalAfterDataLoad();
-            } else if (hireData.offerStatus === 'Offer Rejected') {
-              this.showReconsiderModal(hireData);
             }
           } else {
             this.loadMockData(talentId);
 
-            // Even with mock data, try to open modal if requested
             if (this.shouldOpenModalOnLoad) {
               setTimeout(() => {
                 this.openModalAfterDataLoad();
@@ -128,7 +122,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
           console.error('❌ Error loading hire details:', error);
           this.loadMockData(talentId);
 
-          // Even with error, try to open modal if requested
           if (this.shouldOpenModalOnLoad) {
             setTimeout(() => {
               this.openModalAfterDataLoad();
@@ -143,10 +136,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   private openModalAfterDataLoad() {
     console.log('Opening modal after data load:', this.modalTypeToOpen);
 
-    // Reset flag first
     this.shouldOpenModalOnLoad = false;
-
-    // Use the hire data from state or current hire
     const hireToUse = this.selectedModalHire || this.hire;
 
     if (!hireToUse) {
@@ -154,81 +144,211 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       return;
     }
 
-    // Small delay to ensure UI is rendered
     setTimeout(() => {
       if (this.modalTypeToOpen === 'reconsider') {
-        this.showReconsiderModal(hireToUse);
+        this.openReconsiderModal(hireToUse);
       } else if (this.modalTypeToOpen === 'total-delivery') {
         this.openTotalDeliveryModal(hireToUse);
       }
 
-      // Reset modal type
       this.modalTypeToOpen = '';
     }, 300);
   }
 
-  // 🔥 NEW: Method to check if modal should be shown
-  private showReconsiderModalIfNeeded(hire: any) {
-    const talentId = hire.id || hire.talentId;
+  // Handle table hire click
+  onTableHireClick(hire: MockPayment) {
+    console.log('📋 Table hire clicked:', hire.name);
 
-    // Check if modal was already shown for this talent
-    if (this.modalAlreadyShownForTalent.has(talentId)) {
-      console.log(`Modal already shown for talent ${talentId}, skipping`);
+    const navigationExtras: NavigationExtras = {
+      state: {
+        shouldOpenModal: true,
+        modalType: this.getModalTypeForHire(hire),
+        hireData: hire,
+      },
+    };
+
+    this.router.navigate(
+      ['/scouter/market-engagement-market-price-preparation', hire.id],
+      navigationExtras
+    );
+  }
+
+  private getModalTypeForHire(hire: any): string {
+    if (hire.offerStatus === 'Offer Rejected') {
+      return 'reconsider';
+    } else if (hire.offerStatus === 'Offer Accepted') {
+      return 'total-delivery';
+    }
+    return 'none'; // No modal for other statuses
+  }
+
+  // Open modals based on status
+  openTotalDeliveryModal(hire: any) {
+    console.log('Opening Total Delivery Modal for:', hire.name);
+
+    if (hire.offerStatus !== 'Offer Accepted') {
+      console.log(`${hire.offerStatus} - not opening total delivery modal`);
       return;
     }
 
-    // Mark this talent as having modal shown
-    this.modalAlreadyShownForTalent.add(talentId);
-
-    // Show modal after a delay to ensure UI is loaded
-    setTimeout(() => {
-      this.showReconsiderModal(hire);
-    }, 800);
+    this.selectedModalHire = hire;
+    this.isTotalDeliveryModalOpen = true;
   }
 
-  private loadMockData(talentId: string) {
-    // Fallback to mock data when API fails or returns no results
-    const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
-    if (mock) {
-      this.hire = {
-        ...mock,
-        jobDescription: mock.jobDescription ?? '',
-        yourComment: mock.yourComment ?? '',
-        yourRating: mock.yourRating ?? 0,
-        talentComment: mock.talentComment ?? '',
-        talentRating: mock.talentRating ?? 0,
-      } as MockPayment;
-      this.userName = this.hire?.name || 'Unknown Talent';
-    } else {
-      console.error('❌ No mock data found for talent ID:', talentId);
-      // Create a fallback hire object to prevent template errors
-      this.hire = this.createFallbackHire(talentId);
+  debugModalStates() {
+    console.log('🔍 Modal States:', {
+      isReconsiderModalOpen: this.isReconsiderModalOpen,
+      isReconsiderOfferModalOpen: this.isReconsiderOfferModalOpen,
+      selectedTalentForReconsider: this.selectedTalentForReconsider
+        ? this.selectedTalentForReconsider.name
+        : 'null',
+    });
+  }
+
+  // Call debug in relevant places
+  openReconsiderModal(hire: any) {
+    console.log('Opening Reconsider Modal for:', hire.name);
+
+    if (hire.offerStatus !== 'Offer Rejected') {
+      console.log(`${hire.offerStatus} - not opening reconsider modal`);
+      return;
     }
+
+    this.selectedTalentForReconsider = hire;
+    this.isReconsiderModalOpen = true;
+
+    // Debug
+    this.debugModalStates();
+  }
+  // Modal close handlers
+  closeTotalDeliveryModal() {
+    this.isTotalDeliveryModalOpen = false;
+    this.selectedModalHire = null;
   }
 
-  private createFallbackHire(talentId: string): MockPayment {
-    return {
-      id: talentId,
-      profilePic: 'assets/images/default-avatar.png',
-      name: 'Unknown Talent',
-      email: 'No email available',
-      date: new Date().toLocaleDateString(),
-      startDate: 'N/A',
-      amount: 0,
-      offerStatus: 'Awaiting Acceptance',
-      status: 'Pending',
-      jobDescription: 'No job description available',
-      yourComment: '',
-      yourRating: 0,
-      talentComment: '',
-      talentRating: 0,
-    } as MockPayment;
+  closeReconsiderModal() {
+    console.log('Closing all reconsider modals');
+    this.isReconsiderModalOpen = false;
+    this.isReconsiderOfferModalOpen = false;
+    this.selectedTalentForReconsider = null;
   }
 
+  // Reconsider modal handlers
+  onReconsiderConfirmed() {
+    console.log('Reconsider confirmed, opening offer form modal');
+
+    // Close confirmation modal first
+    this.isReconsiderModalOpen = false;
+
+    // Then open the offer form modal
+    setTimeout(() => {
+      this.isReconsiderOfferModalOpen = true;
+      console.log(
+        'Offer form modal should now be open:',
+        this.isReconsiderOfferModalOpen
+      );
+    }, 50); // Small delay to ensure DOM updates
+  }
+
+  onReconsiderCancelled() {
+    console.log('Reconsider cancelled');
+    this.closeReconsiderModal();
+  }
+
+  onReconsiderSubmitted(offerData: any) {
+    console.log('Reconsidered offer submitted:', offerData);
+
+    // Update local hire data
+    if (this.hire && this.hire.id === offerData.talentId) {
+      this.hire = {
+        ...this.hire,
+        amount: offerData.amount,
+        jobDescription: offerData.jobDescription,
+        startDate: offerData.startDate,
+        offerStatus: 'Awaiting Acceptance',
+        status: 'Pending',
+      };
+    }
+
+    // Show success message
+    this.toastService.openSnackBar(
+      `Revised offer sent to ${offerData.talentName}. Status updated to "Awaiting Acceptance".`,
+      'success'
+    );
+
+    this.closeReconsiderModal();
+
+    // Make the API call to reconsider the offer
+    this.reconsiderOfferAPI(offerData);
+  }
+
+  private reconsiderOfferAPI(offerData: any) {
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId || !this.selectedTalentForReconsider) return;
+
+    // Prepare payload according to the endpoint specification
+    const payload = {
+      hireStatus: 'awaiting-acceptance',
+      amountToPay: offerData.amount.toString(),
+      jobDescription: offerData.jobDescription,
+      startDate: this.formatDateOfHire(new Date(offerData.startDate)),
+      dateOfHire: this.formatDateOfHire(new Date()),
+      satisFactoryCommentByScouter: JSON.stringify({
+        scouterId: scouterId,
+        dateOfComment: this.formatDateOfHire(new Date()),
+        remark: '(Proposal Reconsidered)',
+        rating: 0,
+      }),
+    };
+
+    // Get the marketHireId from the selected talent
+    const marketHireId =
+      this.selectedTalentForReconsider.marketHireId ||
+      this.selectedTalentForReconsider.id;
+
+    // Call the PATCH endpoint
+    this.scouterService
+      .toggleMarketOffer(payload, {
+        talentId: offerData.talentId,
+        scouterId: scouterId,
+        marketHireId: marketHireId,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Offer reconsidered successfully:', response);
+          this.toastService.openSnackBar(
+            'Offer reconsidered successfully!',
+            'success'
+          );
+        },
+        error: (error) => {
+          console.error('❌ Failed to reconsider offer:', error);
+          this.toastService.openSnackBar(
+            error?.error?.message || 'Failed to reconsider offer',
+            'error'
+          );
+        },
+      });
+  }
+
+  private formatDateOfHire(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  // Other existing methods...
   updateRating(star: number) {
     if (!this.hire) return;
 
-    const hire = this.hire; // capture local reference
+    const hire = this.hire;
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
@@ -250,184 +370,73 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         console.log('✅ Rating updated successfully:', response);
         hire.yourRating = star;
 
-        // Update mock data for consistency in development
         const index = MockRecentHires.findIndex((h) => h.id === hire.id);
         if (index !== -1) {
           MockRecentHires[index].yourRating = star;
         }
 
-        // Optional: Show success feedback
         this.showSuccessFeedback('Rating updated successfully!');
       },
       error: (error) => {
         console.error('❌ Failed to update rating:', error);
         this.showErrorFeedback('Failed to update rating');
-        // Optionally revert the UI change
       },
     });
   }
 
-  private showSuccessFeedback(message: string) {
-    // You can implement toast or other feedback mechanism here
-    console.log('✅', message);
-  }
-
-  private showErrorFeedback(message: string) {
-    // You can implement toast or other feedback mechanism here
-    console.error('❌', message);
-  }
-
-  setSelectedHire(hire: MockPayment) {
-    console.log('🔄 Setting selected hire:', hire.name);
-    this.hire = hire;
-    this.userName = hire.name;
-
-    // Update URL to reflect selected talent
-    this.router.navigate(
-      ['/scouter/market-engagement-market-price-preparation', hire.id],
-      {
-        queryParams: {
-          fromTable: 'true',
-          timestamp: Date.now(), // Prevent browser caching
-        },
-        replaceUrl: true, // Replace current URL instead of pushing
-      }
-    );
-
-    // 🔥 FIX: Don't show modal here - it will be triggered by route change
-    // The route subscription will handle it
-  }
-
-  onTableHireClick(hire: MockPayment) {
-    console.log('📋 Table hire clicked:', hire.name);
-
-    // Create navigation state to open modal after navigation
-    const navigationExtras: NavigationExtras = {
-      state: {
-        shouldOpenModal: true,
-        modalType: this.getModalTypeForHire(hire),
-        hireData: hire,
-      },
-    };
-
-    // Navigate to the talent detail page
-    this.router.navigate(
-      ['/scouter/market-engagement-market-price-preparation', hire.id],
-      navigationExtras
-    );
-  }
-
-  private getModalTypeForHire(hire: any): string {
-    if (hire.offerStatus === 'Offer Rejected') {
-      return 'reconsider';
-    } else if (hire.offerStatus === 'Offer Accepted') {
-      return 'total-delivery';
-    }
-    return 'none';
-  }
-
-  openTotalDeliveryModal(hire: any) {
-    console.log('Opening Total Delivery Modal for:', hire.name);
-
-    // Check hire status
-    if (hire.offerStatus === 'Offer Rejected') {
-      this.showReconsiderModal(hire);
-      return;
-    }
-
-    if (hire.offerStatus !== 'Offer Accepted') {
-      console.log(`${hire.offerStatus} - not opening modal`);
-      return;
-    }
-
-    // Set modal data and open
-    this.selectedModalHire = hire;
-    this.isTotalDeliveryModalOpen = true;
-  }
-
-  closeTotalDeliveryModal() {
-    this.isTotalDeliveryModalOpen = false;
-    this.selectedModalHire = null;
-  }
-
   onRatingUpdated(updateData: { hireId: string; rating: number }) {
-    // Update local hire data
     if (this.hire && this.hire.id === updateData.hireId) {
       this.hire.yourRating = updateData.rating;
     }
 
-    // Update table data if available
     if (this.marketTableComponent) {
       this.marketTableComponent.onRatingUpdated(updateData);
     }
   }
 
-  async showReconsiderModal(hire: any) {
-    // Check if modal is already open
-    const existingModal = await this.modalCtrl.getTop();
-    if (existingModal) {
-      console.log('Modal already open, skipping');
-      return;
-    }
-
-    const modal = await this.modalCtrl.create({
-      component: ReconsiderConfirmationModalComponent,
-      componentProps: {
-        talentName: hire.name,
-      },
-      cssClass: 'auto-height-modal',
-      backdropDismiss: false, // Prevent accidental dismissal
-    });
-
-    await modal.present();
-
-    const { data } = await modal.onWillDismiss();
-
-    if (data?.confirmed) {
-      await this.showReconsiderOfferForm(hire);
-    }
+  private showSuccessFeedback(message: string) {
+    console.log('✅', message);
   }
 
-  async showReconsiderOfferForm(hire: any) {
-    const modal = await this.modalCtrl.create({
-      component: ReconsiderOfferModalComponent,
-      componentProps: {
-        talentId: hire.id,
-        talentName: hire.name,
-        originalAmount: hire.amount,
-        originalJobDescription: hire.jobDescription,
-      },
-      cssClass: 'reconsider-offer-modal',
-      backdropDismiss: false,
-    });
-
-    await modal.present();
-
-    const { data } = await modal.onWillDismiss();
-
-    if (data?.success) {
-      this.handleReconsideredOffer(data.data);
-    }
+  private showErrorFeedback(message: string) {
+    console.error('❌', message);
   }
 
-  private handleReconsideredOffer(offerData: any) {
-    // Update local hire data
-    if (this.hire && this.hire.id === offerData.talentId) {
+  private loadMockData(talentId: string) {
+    const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
+    if (mock) {
       this.hire = {
-        ...this.hire,
-        amount: offerData.amount,
-        jobDescription: offerData.jobDescription,
-        startDate: offerData.startDate,
-        offerStatus: 'Awaiting Acceptance',
-        status: 'Pending',
-      };
+        ...mock,
+        jobDescription: mock.jobDescription ?? '',
+        yourComment: mock.yourComment ?? '',
+        yourRating: mock.yourRating ?? 0,
+        talentComment: mock.talentComment ?? '',
+        talentRating: mock.talentRating ?? 0,
+      } as MockPayment;
+      this.userName = this.hire?.name || 'Unknown Talent';
+    } else {
+      console.error('❌ No mock data found for talent ID:', talentId);
+      this.hire = this.createFallbackHire(talentId);
     }
+  }
 
-    // Show success message
-    console.log('Offer reconsidered:', offerData);
-
-    // Make API call to update offer
-    this.updateReconsideredOffer(offerData);
+  private createFallbackHire(talentId: string): MockPayment {
+    return {
+      id: talentId,
+      profilePic: 'assets/images/default-avatar.png',
+      name: 'Unknown Talent',
+      email: 'No email available',
+      date: new Date().toLocaleDateString(),
+      startDate: 'N/A',
+      amount: 0,
+      offerStatus: 'Awaiting Acceptance',
+      status: 'Pending',
+      jobDescription: 'No job description available',
+      yourComment: '',
+      yourRating: 0,
+      talentComment: '',
+      talentRating: 0,
+    } as MockPayment;
   }
 
   private updateReconsideredOffer(offerData: any) {

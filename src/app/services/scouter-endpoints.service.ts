@@ -1267,33 +1267,44 @@ export class ScouterEndpointsService {
       );
   }
 
-  reconsiderOffer(payload: {
-    scouterId: string;
-    talentId: string;
-    marketId?: string;
-    newAmount: number;
-    newJobDescription: string;
-    newStartDate: string;
-    additionalComments?: string;
-  }): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.reconsiderOffer}`;
+  /**
+   * Toggle market offer status (for reconsidering offers)
+   * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
+   */
+  toggleMarketOffer(
+    payload: any,
+    params: {
+      talentId: string;
+      scouterId: string;
+      marketHireId: string;
+    }
+  ): Observable<any> {
+    const encodedTalentId = encodeURIComponent(params.talentId);
+    const encodedScouterId = encodeURIComponent(params.scouterId);
+    const encodedMarketHireId = encodeURIComponent(params.marketHireId);
 
-    console.log('🔄 Reconsidering offer:', payload);
+    const url = `${this.baseUrl}/${endpoints.toggleMarketOffer}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+
+    console.log('🔄 Toggling market offer status:', {
+      url,
+      payload,
+      params,
+    });
 
     return this.http
-      .post<any>(url, payload, {
+      .patch<any>(url, payload, {
         headers: this.jwtInterceptor.customHttpHeaders,
       })
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Offer reconsidered successfully:', response)
+          console.log('✅ Market offer toggled successfully:', response)
         ),
         catchError((error) => {
-          console.error('❌ Failed to reconsider offer:', error);
+          console.error('❌ Failed to toggle market offer:', error);
           return throwError(
             () =>
-              new Error(error.error?.message || 'Failed to reconsider offer')
+              new Error(error.error?.message || 'Failed to update offer status')
           );
         })
       );

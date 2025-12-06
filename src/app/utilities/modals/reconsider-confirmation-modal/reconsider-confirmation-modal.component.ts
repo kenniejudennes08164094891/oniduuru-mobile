@@ -7,14 +7,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 })
 export class ReconsiderConfirmationModalComponent {
   @Input() talentName: string = '';
-  @Input() isModalOpen: boolean = false; // Add this
+  @Input() isModalOpen: boolean = false;
   @Output() confirmed = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
-  @Output() close = new EventEmitter<void>(); // Add this
+  @Output() close = new EventEmitter<void>();
 
   onConfirm() {
+    // this.closeModal();
     this.confirmed.emit();
-    this.closeModal();
   }
 
   onCancel() {
