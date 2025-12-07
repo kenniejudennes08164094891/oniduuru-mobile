@@ -69,15 +69,24 @@ export class MarketEngagementsTableComponent implements OnInit {
       })
       .subscribe({
         next: (response) => {
-          console.log('API Response:', response);
+          console.log('📊 API Response (RAW):', response);
 
-          if (
-            response?.data &&
-            Array.isArray(response.data) &&
-            response.data.length > 0
-          ) {
-            console.log('✅ API returned data, count:', response.data.length);
-            this.hires = response.data;
+          if (response?.data && Array.isArray(response.data)) {
+            console.log('📊 First item details:', response.data[0]);
+            console.log('📊 Available fields:', Object.keys(response.data[0]));
+
+            this.hires = response.data.map((item: any) => ({
+              // Log each item to see what IDs are available
+              ...item,
+              _debug: {
+                hasMarketHireId: !!item.marketHireId,
+                hasTalentIdWithDate: !!item.talentIdWithDate,
+                hasMarketId: !!item.marketId,
+                hasTalentId: !!item.talentId,
+                hasId: !!item.id,
+              },
+            }));
+
             this.checkForRejectedOfferOnDataLoad();
           } else {
             console.warn('⚠️ API returned empty data, using mock data');
@@ -94,7 +103,6 @@ export class MarketEngagementsTableComponent implements OnInit {
         },
       });
   }
-
   private loadMockData() {
     console.log('📊 Loading mock data...');
 
@@ -219,6 +227,29 @@ export class MarketEngagementsTableComponent implements OnInit {
   onReconsiderSubmitted(offerData: any) {
     console.log('Reconsidered offer submitted from table:', offerData);
 
+    // Get scouter ID
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    // Format the satisfactory comment for backend
+    const currentDate = new Date();
+    const formattedCurrentDate = this.formatDateForPayload(currentDate);
+
+    const satisfactoryCommentData = {
+      scouterId: scouterId,
+      dateOfComment: formattedCurrentDate,
+      remark: offerData.satisfactoryComment,
+      rating: offerData.satisfactoryRating,
+    };
+
+    // Prepare payload for backend API
+    const backendPayload = {
+      ...offerData.backendPayload,
+      satisFactoryCommentByScouter: JSON.stringify(satisfactoryCommentData),
+    };
+
+    console.log('Final backend payload:', backendPayload);
+
     // Update the local hire data
     const index = this.hires.findIndex((h) => h.id === offerData.talentId);
     if (index !== -1) {
@@ -238,49 +269,65 @@ export class MarketEngagementsTableComponent implements OnInit {
       'success'
     );
 
+    // ✅ CALL API with updated payload
+    this.reconsiderOfferAPI(backendPayload, offerData);
+
+    // ✅ THEN close modals and clear references
     this.isReconsiderOfferModalOpen = false;
     this.selectedTalentForReconsider = null;
-
-    // Make API call
-    this.reconsiderOfferAPI(offerData);
   }
 
-  private reconsiderOfferAPI(offerData: any) {
+  // Update the reconsiderOfferAPI method
+  private reconsiderOfferAPI(payload: any, offerData: any) {
+    console.log('🔥 API CALL FIRING!', {
+      payload,
+      scouterId: this.authService.getCurrentUser()?.scouterId,
+      selectedTalent: this.selectedTalentForReconsider,
+    });
+
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId || !this.selectedTalentForReconsider) return;
 
-    // Prepare payload
-    const payload = {
-      hireStatus: 'awaiting-acceptance',
-      amountToPay: offerData.amount.toString(),
-      jobDescription: offerData.jobDescription,
-      startDate: this.formatDate(new Date(offerData.startDate)),
-      dateOfHire: this.formatDate(new Date()),
-      satisFactoryCommentByScouter: JSON.stringify({
+    const talentData = this.selectedTalentForReconsider;
+
+    // Check if we have proper IDs from the backend
+    if (!talentData.marketHireId || !talentData.talentIdWithDate) {
+      console.error('❌ Missing required IDs for reconsider offer:', {
+        marketHireId: talentData.marketHireId,
+        talentIdWithDate: talentData.talentIdWithDate,
+      });
+      this.toastService.openSnackBar(
+        'Cannot reconsider offer: Missing required data. Please refresh and try again.',
+        'error'
+      );
+      return;
+    }
+
+    console.log('✅ Sending reconsider offer with:', {
+      payload,
+      params: {
+        talentId: talentData.talentIdWithDate,
         scouterId: scouterId,
-        dateOfComment: this.formatDate(new Date()),
-        remark: '(Proposal Reconsidered)',
-        rating: 0,
-      }),
-    };
+        marketHireId: talentData.marketHireId,
+      },
+    });
 
-    // Get the marketHireId
-    const marketHireId =
-      this.selectedTalentForReconsider.marketHireId ||
-      this.selectedTalentForReconsider.id;
-
-    // Call the service
+    // Call the PATCH endpoint
     this.scouterService
-      .toggleMarketOffer(payload, {
-        talentId: offerData.talentId,
+      .toggleMarketStatus(payload, {
+        talentId: talentData.talentIdWithDate,
         scouterId: scouterId,
-        marketHireId: marketHireId,
+        marketHireId: talentData.marketHireId,
       })
       .subscribe({
         next: (response) => {
           console.log('✅ Offer reconsidered successfully:', response);
+          this.toastService.openSnackBar(
+            'Offer reconsidered successfully!',
+            'success'
+          );
         },
         error: (error) => {
           console.error('❌ Failed to reconsider offer:', error);
@@ -292,16 +339,17 @@ export class MarketEngagementsTableComponent implements OnInit {
       });
   }
 
-  // Helper method
-  private formatDate(date: Date): string {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return date.toLocaleDateString('en-US', options);
+  // Helper method for date formatting in payload
+  private formatDateForPayload(date: Date): string {
+    // Try this format if the current one doesn't work:
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+    // Or: return date.toISOString(); // If backend expects ISO format
   }
 
   closeReconsiderModal() {

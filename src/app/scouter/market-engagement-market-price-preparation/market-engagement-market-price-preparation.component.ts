@@ -276,44 +276,78 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       'success'
     );
 
-    this.closeReconsiderModal();
-
-    // Make the API call to reconsider the offer
+    // ✅ CALL API FIRST
     this.reconsiderOfferAPI(offerData);
+
+    // ✅ THEN close modal
+    this.closeReconsiderModal();
   }
 
   private reconsiderOfferAPI(offerData: any) {
+    console.log('🔥 API CALL FIRING!', {
+      offerData,
+      scouterId: this.authService.getCurrentUser()?.scouterId,
+      selectedTalent: this.selectedTalentForReconsider,
+    });
+
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId || !this.selectedTalentForReconsider) return;
 
+    // ✅ Get the actual market hire data
+    const talentData = this.selectedTalentForReconsider;
+
+    // ✅ Check if we have proper IDs
+    if (!talentData.marketHireId || !talentData.talentIdWithDate) {
+      console.error('❌ Missing required IDs for reconsider offer:', {
+        marketHireId: talentData.marketHireId,
+        talentIdWithDate: talentData.talentIdWithDate,
+      });
+      this.toastService.openSnackBar(
+        'Cannot reconsider offer: Missing required data. Please refresh and try again.',
+        'error'
+      );
+      return;
+    }
+
     // Prepare payload according to the endpoint specification
+    const currentDate = new Date();
+    const formattedCurrentDate = this.formatDateForPayload(currentDate);
+    const formattedStartDate = this.formatDateForPayload(
+      new Date(offerData.startDate)
+    );
+
     const payload = {
       hireStatus: 'awaiting-acceptance',
       amountToPay: offerData.amount.toString(),
       jobDescription: offerData.jobDescription,
-      startDate: this.formatDateOfHire(new Date(offerData.startDate)),
-      dateOfHire: this.formatDateOfHire(new Date()),
+      startDate: formattedStartDate,
+      dateOfHire: formattedCurrentDate,
       satisFactoryCommentByScouter: JSON.stringify({
         scouterId: scouterId,
-        dateOfComment: this.formatDateOfHire(new Date()),
+        dateOfComment: formattedCurrentDate,
         remark: '(Proposal Reconsidered)',
         rating: 0,
       }),
     };
 
-    // Get the marketHireId from the selected talent
-    const marketHireId =
-      this.selectedTalentForReconsider.marketHireId ||
-      this.selectedTalentForReconsider.id;
+    console.log('✅ Sending reconsider offer with:', {
+      payload,
+      params: {
+        talentId: talentData.talentIdWithDate,
+        scouterId: scouterId,
+        marketHireId: talentData.marketHireId,
+      },
+    });
 
     // Call the PATCH endpoint
     this.scouterService
-      .toggleMarketOffer(payload, {
-        talentId: offerData.talentId,
+      .toggleMarketStatus(payload, {
+        // ✅ Use correct method name
+        talentId: talentData.talentIdWithDate,
         scouterId: scouterId,
-        marketHireId: marketHireId,
+        marketHireId: talentData.marketHireId,
       })
       .subscribe({
         next: (response) => {
@@ -333,15 +367,17 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       });
   }
 
-  private formatDateOfHire(date: Date): string {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    };
-    return date.toLocaleDateString('en-US', options);
+  // Helper method
+  private formatDateForPayload(date: Date): string {
+    // Try this format if the current one doesn't work:
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+    // Or: return date.toISOString(); // If backend expects ISO format
   }
 
   // Other existing methods...

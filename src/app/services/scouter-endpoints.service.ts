@@ -1023,13 +1023,13 @@ export class ScouterEndpointsService {
       );
   }
 
-  // Helper method to transform API response to match your MockPayment interface
   private transformMarketResponse(response: any): any {
     if (!response) return { data: [], total: 0 };
 
     // Transform the API response to match your frontend structure
     const transformedData =
       response.data?.map((item: any) => ({
+        // Basic fields
         id: item.talentId || item.id || Math.random().toString(),
         profilePic: item.profilePicture || 'assets/images/default-avatar.png',
         name: item.talentName || 'Unknown Talent',
@@ -1044,12 +1044,23 @@ export class ScouterEndpointsService {
         offerStatus: this.mapStatus(item.status),
         status: this.mapActiveStatus(item.status),
 
+        // ✅ CRITICAL: Get the actual backend IDs for reconsider endpoint
+        marketHireId: item.marketHireId || item.marketId || item.id,
+
+        // ✅ Construct talentId with date format: "talent/ID/Date"
+        talentIdWithDate:
+          item.talentIdWithDate ||
+          this.constructTalentIdWithDate(item.talentId, item.createdAt),
+
         // Additional fields for the detail view
         jobDescription: item.jobDescription || 'No description provided',
         yourComment: item.scouterComment || '',
         yourRating: item.scouterRating || 0,
         talentComment: item.talentComment || '',
         talentRating: item.talentRating || 0,
+
+        // ✅ Store original backend data for debugging
+        _originalData: item,
       })) || [];
 
     return {
@@ -1058,6 +1069,22 @@ export class ScouterEndpointsService {
       currentPage: response.currentPage || 1,
       totalPages: response.totalPages || 1,
     };
+  }
+
+  // Helper to construct talentId with date format
+  private constructTalentIdWithDate(
+    talentId: string,
+    createdAt: string
+  ): string {
+    if (!talentId) return '';
+
+    const date = createdAt ? new Date(createdAt) : new Date();
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+
+    return `talent/${talentId}/${day}${month}${year}`;
+    // Or return `talent/${talentId}/${day}-${month}-${year}` based on your backend
   }
 
   private mapStatus(
@@ -1267,28 +1294,68 @@ export class ScouterEndpointsService {
       );
   }
 
+  // Add to scouter-endpoints.service.ts
   /**
    * Toggle market offer status (for reconsidering offers)
    * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
    */
-  toggleMarketOffer(
-    payload: any,
+  // scouter-endpoints.service.ts
+
+  toggleMarketStatus(
+    payload: {
+      hireStatus: string;
+      amountToPay: string;
+      dateOfHire: string;
+      jobDescription: string;
+      startDate: string;
+      satisFactoryCommentByScouter: string;
+    },
     params: {
       talentId: string;
       scouterId: string;
       marketHireId: string;
     }
   ): Observable<any> {
-    const encodedTalentId = encodeURIComponent(params.talentId);
-    const encodedScouterId = encodeURIComponent(params.scouterId);
+    // Extract numeric talent ID
+    const extractNumericId = (id: string): string => {
+      if (!id) return id;
+
+      // If ID contains slashes, take the first numeric part
+      if (id.includes('/')) {
+        const parts = id.split('/');
+        const numericPart = parts.find((part) => /^\d+$/.test(part));
+        return numericPart || id;
+      }
+
+      // If it's already numeric, return as is
+      if (/^\d+$/.test(id)) {
+        return id;
+      }
+
+      return id;
+    };
+
+    // Use numeric IDs for talent and scouter
+    const numericTalentId = extractNumericId(params.talentId);
+    const numericScouterId = extractNumericId(params.scouterId);
+
+    // Keep marketHireId as is since it's a composite ID
+    const encodedTalentId = encodeURIComponent(numericTalentId);
+    const encodedScouterId = encodeURIComponent(numericScouterId);
     const encodedMarketHireId = encodeURIComponent(params.marketHireId);
 
-    const url = `${this.baseUrl}/${endpoints.toggleMarketOffer}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+    const url = `${this.baseUrl}/${endpoints.toggleMarketStatus}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
 
     console.log('🔄 Toggling market offer status:', {
       url,
       payload,
-      params,
+      params: {
+        originalTalentId: params.talentId,
+        numericTalentId,
+        originalScouterId: params.scouterId,
+        numericScouterId,
+        marketHireId: params.marketHireId,
+      },
     });
 
     return this.http
@@ -1302,6 +1369,36 @@ export class ScouterEndpointsService {
         ),
         catchError((error) => {
           console.error('❌ Failed to toggle market offer:', error);
+
+          // If numeric ID fails, try with the original format
+          if (error.status === 404 && numericTalentId !== params.talentId) {
+            console.log('🔄 Retrying with original talent ID format...');
+            return this.http
+              .patch<any>(
+                `${this.baseUrl}/${
+                  endpoints.toggleMarketStatus
+                }/${encodeURIComponent(params.talentId)}/${encodeURIComponent(
+                  params.scouterId
+                )}/${encodedMarketHireId}`,
+                payload,
+                { headers: this.jwtInterceptor.customHttpHeaders }
+              )
+              .pipe(
+                timeout(15000),
+                tap((response) => console.log('✅ Retry succeeded:', response)),
+                catchError((retryError) => {
+                  console.error('❌ Retry also failed:', retryError);
+                  return throwError(
+                    () =>
+                      new Error(
+                        retryError.error?.message ||
+                          'Failed to update offer status'
+                      )
+                  );
+                })
+              );
+          }
+
           return throwError(
             () =>
               new Error(error.error?.message || 'Failed to update offer status')

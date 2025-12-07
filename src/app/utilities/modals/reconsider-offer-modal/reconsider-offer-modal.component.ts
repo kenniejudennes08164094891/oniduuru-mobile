@@ -1,3 +1,4 @@
+// reconsider-offer-modal.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -29,6 +30,15 @@ export class ReconsiderOfferModalComponent implements OnInit {
 
   // For formatted amount display
   formattedAmount: string = '';
+
+  // Rating options for the satisfactory comment
+  ratingOptions = [
+    { value: 1, label: '1 Star - Very Poor' },
+    { value: 2, label: '2 Stars - Poor' },
+    { value: 3, label: '3 Stars - Average' },
+    { value: 4, label: '4 Stars - Good' },
+    { value: 5, label: '5 Stars - Excellent' },
+  ];
 
   constructor(private fb: FormBuilder) {
     const today = new Date();
@@ -67,6 +77,19 @@ export class ReconsiderOfferModalComponent implements OnInit {
         ],
       ],
       startDate: [tomorrowStr, [Validators.required]],
+      // NEW: Satisfactory comment by scouter fields
+      satisfactoryComment: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(10),
+          Validators.maxLength(500),
+        ],
+      ],
+      satisfactoryRating: [
+        4,
+        [Validators.required, Validators.min(1), Validators.max(5)],
+      ],
     });
 
     // Set up amount formatting
@@ -77,6 +100,8 @@ export class ReconsiderOfferModalComponent implements OnInit {
       amountValue: this.offerForm.get('amount')?.value,
       jobDescriptionValue: this.offerForm.get('jobDescription')?.value,
       startDateValue: this.offerForm.get('startDate')?.value,
+      satisfactoryComment: this.offerForm.get('satisfactoryComment')?.value,
+      satisfactoryRating: this.offerForm.get('satisfactoryRating')?.value,
     });
   }
 
@@ -174,7 +199,6 @@ export class ReconsiderOfferModalComponent implements OnInit {
   }
 
   // Handle amount focus - show raw number for editing
-  // Update onAmountFocus to properly handle the input
   onAmountFocus(event: any) {
     const input = event.target;
     const amountControl = this.offerForm.get('amount');
@@ -185,7 +209,6 @@ export class ReconsiderOfferModalComponent implements OnInit {
   }
 
   // Handle amount blur - format with commas
-  // Update onAmountBlur
   onAmountBlur(event: any) {
     const input = event.target;
     const amountControl = this.offerForm.get('amount');
@@ -222,6 +245,29 @@ export class ReconsiderOfferModalComponent implements OnInit {
     this.offerForm.get('amount')?.markAsTouched();
   }
 
+  // Helper to format the satisfactory comment for backend
+  private formatSatisfactoryComment(scouterId: string): string {
+    const comment = this.offerForm.get('satisfactoryComment')?.value || '';
+    const rating = this.offerForm.get('satisfactoryRating')?.value || 4;
+    const currentDate = new Date().toLocaleString('en-US', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const commentData = {
+      scouterId: scouterId,
+      dateOfComment: currentDate,
+      remark: comment,
+      rating: rating,
+    };
+
+    return JSON.stringify(commentData);
+  }
+
   onSubmit() {
     console.log('Form submission attempted:', {
       valid: this.offerForm.valid,
@@ -230,9 +276,16 @@ export class ReconsiderOfferModalComponent implements OnInit {
       amountErrors: this.offerForm.get('amount')?.errors,
       jobDescriptionErrors: this.offerForm.get('jobDescription')?.errors,
       startDateErrors: this.offerForm.get('startDate')?.errors,
+      satisfactoryCommentErrors: this.offerForm.get('satisfactoryComment')
+        ?.errors,
+      satisfactoryRatingErrors:
+        this.offerForm.get('satisfactoryRating')?.errors,
       amountValue: this.offerForm.get('amount')?.value,
       jobDescriptionValue: this.offerForm.get('jobDescription')?.value,
       startDateValue: this.offerForm.get('startDate')?.value,
+      satisfactoryCommentValue: this.offerForm.get('satisfactoryComment')
+        ?.value,
+      satisfactoryRatingValue: this.offerForm.get('satisfactoryRating')?.value,
     });
 
     if (this.offerForm.valid) {
@@ -240,29 +293,67 @@ export class ReconsiderOfferModalComponent implements OnInit {
 
       // Get the amount value
       const amount = this.offerForm.get('amount')?.value;
+      const startDate = this.offerForm.get('startDate')?.value;
+      const jobDescription = this.offerForm.get('jobDescription')?.value;
+      const satisfactoryComment = this.offerForm.get(
+        'satisfactoryComment'
+      )?.value;
+      const satisfactoryRating =
+        this.offerForm.get('satisfactoryRating')?.value;
+
+      // Get current date for dateOfHire
+      const currentDate = new Date();
+      const formattedCurrentDate = this.formatDateForPayload(currentDate);
+      const formattedStartDate = this.formatDateForPayload(new Date(startDate));
 
       const offerData = {
-        ...this.offerForm.value,
+        // Form data
         amount: amount,
+        jobDescription: jobDescription,
+        startDate: startDate,
+        satisfactoryComment: satisfactoryComment,
+        satisfactoryRating: satisfactoryRating,
+
+        // Original data
         talentId: this.talentId,
         talentName: this.talentName,
         originalAmount: this.originalAmount,
         originalJobDescription: this.originalJobDescription,
         newStatus: 'Awaiting Acceptance',
+
+        // Backend API payload structure
+        backendPayload: {
+          hireStatus: 'awaiting-acceptance',
+          amountToPay: amount.toString(),
+          jobDescription: jobDescription,
+          startDate: formattedStartDate,
+          dateOfHire: formattedCurrentDate,
+          // This will be populated by the parent component with scouterId
+          satisFactoryCommentByScouter: '', // Placeholder, will be filled by parent
+        },
       };
 
       console.log('Submitting revised offer:', offerData);
 
-      // Simulate API call
-      setTimeout(() => {
-        this.submitted.emit(offerData);
-        this.closeModal();
-        this.isSubmitting = false;
-      }, 1500);
+      // Emit the form data to parent component
+      this.submitted.emit(offerData);
+      this.closeModal();
+      this.isSubmitting = false;
     } else {
       // Mark all fields as touched to show validation errors
       this.markFormGroupTouched(this.offerForm);
     }
+  }
+
+  // Helper method for date formatting in backend payload
+  private formatDateForPayload(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
   }
 
   // Helper method to mark all form controls as touched
@@ -276,6 +367,18 @@ export class ReconsiderOfferModalComponent implements OnInit {
     });
   }
 
+  // Add this method to the component class
+  getRatingDescription(rating: number): string {
+    const descriptions: { [key: number]: string } = {
+      1: 'Very Poor - Significant issues with the reconsideration',
+      2: 'Poor - Needs substantial improvement',
+      3: 'Average - Acceptable reconsideration terms',
+      4: 'Good - Satisfactory revised offer',
+      5: 'Excellent - Highly satisfactory reconsideration',
+    };
+    return descriptions[rating] || 'No rating selected';
+  }
+
   onCancel() {
     this.cancelled.emit();
     this.closeModal();
@@ -283,5 +386,12 @@ export class ReconsiderOfferModalComponent implements OnInit {
 
   closeModal() {
     this.close.emit();
+  }
+
+  // Helper method to generate star display
+  getStars(rating: number): string[] {
+    return Array(5)
+      .fill(0)
+      .map((_, index) => (index < rating ? '★' : '☆'));
   }
 }
