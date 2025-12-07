@@ -32,7 +32,7 @@ export class AccountActivationPageComponent implements OnInit {
     });
   }
 
- async routeBack() {
+ async routeBack():Promise<void> {
    await this.router.navigate(['/scouter/dashboard']);
   }
 
