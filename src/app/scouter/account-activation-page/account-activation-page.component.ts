@@ -36,7 +36,7 @@ export class AccountActivationPageComponent implements OnInit {
    await this.router.navigate(['/scouter/dashboard']);
   }
 
-  async openUploadScreenshotPopup() {
+  async openUploadScreenshotPopup():Promise<void> {
     const modal = await this.modalCtrl.create({
       component: UploadScreenshotPopupModalComponent,
       cssClass: 'upload-screenshot-modal',
