@@ -1,9 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { ModalController } from '@ionic/angular';
+import { ReconsiderOfferModalComponent } from 'src/app/utilities/modals/reconsider-offer-modal/reconsider-offer-modal.component';
+import { ReconsiderConfirmationModalComponent } from 'src/app/utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
+import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-market-engagement-market-price-preparation',
@@ -12,24 +17,61 @@ import { AuthService } from 'src/app/services/auth.service';
   standalone: false,
 })
 export class MarketEngagementMarketPricePreparationComponent implements OnInit {
+  @ViewChild(MarketEngagementsTableComponent)
+  marketTableComponent!: MarketEngagementsTableComponent;
+
   hire: MockPayment | undefined;
   images = imageIcons;
   userName: string = 'Viki West';
   isLoading: boolean = false;
+  private previousTalentId: string | null = null;
+
+  // Modal states
+  isTotalDeliveryModalOpen: boolean = false;
+  isReconsiderModalOpen: boolean = false;
+  isReconsiderOfferModalOpen: boolean = false;
+  selectedModalHire: any = null;
+  selectedTalentForReconsider: any = null;
+
+  private shouldOpenModalOnLoad: boolean = false;
+  private modalTypeToOpen: string = '';
 
   constructor(
     public route: ActivatedRoute,
-
-    // PASSED TALENT ID AS QUERY PARAMETER IN THIS COMPONENT
     private scouterService: ScouterEndpointsService,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private modalCtrl: ModalController,
+    private toastService: ToastsService
   ) {}
 
   ngOnInit() {
-    const talentId = this.route.snapshot.paramMap.get('id');
-    if (talentId) {
-      this.loadHireDetails(talentId);
+    // Subscribe to route param changes
+    this.route.paramMap.subscribe((params) => {
+      const talentId = params.get('id');
+
+      if (talentId) {
+        // Check if talent changed
+        if (this.previousTalentId !== talentId) {
+          this.previousTalentId = talentId;
+          this.checkNavigationState();
+          this.loadHireDetails(talentId);
+        }
+      }
+    });
+  }
+
+  private checkNavigationState() {
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation?.extras?.state) {
+      const state = navigation.extras.state as any;
+
+      if (state.shouldOpenModal && state.hireData) {
+        this.shouldOpenModalOnLoad = true;
+        this.modalTypeToOpen = state.modalType || '';
+        this.selectedModalHire = state.hireData;
+        console.log('Modal should open after load:', this.modalTypeToOpen);
+      }
     }
   }
 
@@ -45,47 +87,322 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       return;
     }
 
-    console.log(
-      '🔍 Fetching hire details for talent:',
-      talentId,
-      'scouter:',
-      scouterId
-    );
+    console.log('🔍 Loading hire details for talent:', talentId);
 
-    // Use GET with talentId as query parameter
     this.scouterService
       .getAllMarketsByScouter(scouterId, {
         talentId: talentId,
-        limit: 10, // Include limit as required by API
+        limit: 10,
       })
       .subscribe({
         next: (response) => {
           console.log('✅ Hire details response:', response);
 
           if (response?.data && response.data.length > 0) {
-            // Take the first result (should be the specific talent engagement)
-            this.hire = response.data[0];
-            this.userName = this.hire?.name || 'Unknown Talent';
-            console.log('✅ Hire data loaded:', this.hire);
+            const hireData = response.data[0];
+            this.hire = hireData;
+            this.userName = hireData?.name || 'Unknown Talent';
+
+            // Check if we need to open a modal after loading
+            if (this.shouldOpenModalOnLoad) {
+              this.openModalAfterDataLoad();
+            }
           } else {
-            console.warn(
-              '⚠️ No market engagement found for this talent, using mock data'
-            );
             this.loadMockData(talentId);
+
+            if (this.shouldOpenModalOnLoad) {
+              setTimeout(() => {
+                this.openModalAfterDataLoad();
+              }, 500);
+            }
           }
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('❌ Error loading hire details from API:', error);
-          console.log('🔄 Falling back to mock data...');
+          console.error('❌ Error loading hire details:', error);
           this.loadMockData(talentId);
+
+          if (this.shouldOpenModalOnLoad) {
+            setTimeout(() => {
+              this.openModalAfterDataLoad();
+            }, 500);
+          }
+
           this.isLoading = false;
         },
       });
   }
 
+  private openModalAfterDataLoad() {
+    console.log('Opening modal after data load:', this.modalTypeToOpen);
+
+    this.shouldOpenModalOnLoad = false;
+    const hireToUse = this.selectedModalHire || this.hire;
+
+    if (!hireToUse) {
+      console.warn('No hire data available for modal');
+      return;
+    }
+
+    setTimeout(() => {
+      if (this.modalTypeToOpen === 'reconsider') {
+        this.openReconsiderModal(hireToUse);
+      } else if (this.modalTypeToOpen === 'total-delivery') {
+        this.openTotalDeliveryModal(hireToUse);
+      }
+
+      this.modalTypeToOpen = '';
+    }, 300);
+  }
+
+  // Handle table hire click
+  onTableHireClick(hire: MockPayment) {
+    console.log('📋 Table hire clicked:', hire.name);
+
+    const navigationExtras: NavigationExtras = {
+      state: {
+        shouldOpenModal: true,
+        modalType: this.getModalTypeForHire(hire),
+        hireData: hire,
+      },
+    };
+
+    this.router.navigate(
+      ['/scouter/market-engagement-market-price-preparation', hire.id],
+      navigationExtras
+    );
+  }
+
+  private getModalTypeForHire(hire: any): string {
+    if (hire.offerStatus === 'Offer Rejected') {
+      return 'reconsider';
+    } else if (hire.offerStatus === 'Offer Accepted') {
+      return 'total-delivery';
+    }
+    return 'none'; // No modal for other statuses
+  }
+
+  // Open modals based on status
+  openTotalDeliveryModal(hire: any) {
+    console.log('Opening Total Delivery Modal for:', hire.name);
+
+    if (hire.offerStatus !== 'Offer Accepted') {
+      console.log(`${hire.offerStatus} - not opening total delivery modal`);
+      return;
+    }
+
+    this.selectedModalHire = hire;
+    this.isTotalDeliveryModalOpen = true;
+  }
+
+  debugModalStates() {
+    console.log('🔍 Modal States:', {
+      isReconsiderModalOpen: this.isReconsiderModalOpen,
+      isReconsiderOfferModalOpen: this.isReconsiderOfferModalOpen,
+      selectedTalentForReconsider: this.selectedTalentForReconsider
+        ? this.selectedTalentForReconsider.name
+        : 'null',
+    });
+  }
+
+  // Call debug in relevant places
+  openReconsiderModal(hire: any) {
+    console.log('Opening Reconsider Modal for:', hire.name);
+
+    if (hire.offerStatus !== 'Offer Rejected') {
+      console.log(`${hire.offerStatus} - not opening reconsider modal`);
+      return;
+    }
+
+    this.selectedTalentForReconsider = hire;
+    this.isReconsiderModalOpen = true;
+
+    // Debug
+    this.debugModalStates();
+  }
+  // Modal close handlers
+  closeTotalDeliveryModal() {
+    this.isTotalDeliveryModalOpen = false;
+    this.selectedModalHire = null;
+  }
+
+  closeReconsiderModal() {
+    console.log('Closing all reconsider modals');
+    this.isReconsiderModalOpen = false;
+    this.isReconsiderOfferModalOpen = false;
+    this.selectedTalentForReconsider = null;
+  }
+
+  // Reconsider modal handlers
+  onReconsiderConfirmed() {
+    console.log('Reconsider confirmed, opening offer form modal');
+
+    // Close confirmation modal first
+    this.isReconsiderModalOpen = false;
+
+    // Then open the offer form modal
+    setTimeout(() => {
+      this.isReconsiderOfferModalOpen = true;
+      console.log(
+        'Offer form modal should now be open:',
+        this.isReconsiderOfferModalOpen
+      );
+    }, 50); // Small delay to ensure DOM updates
+  }
+
+  onReconsiderCancelled() {
+    console.log('Reconsider cancelled');
+    this.closeReconsiderModal();
+  }
+
+  onReconsiderSubmitted(offerData: any) {
+    console.log('Reconsidered offer submitted:', offerData);
+
+    // Update local hire data
+    if (this.hire && this.hire.id === offerData.talentId) {
+      this.hire = {
+        ...this.hire,
+        amount: offerData.amount,
+        jobDescription: offerData.jobDescription,
+        startDate: offerData.startDate,
+        offerStatus: 'Awaiting Acceptance',
+        status: 'Pending',
+      };
+    }
+
+    // Show success message
+    this.toastService.openSnackBar(
+      `Revised offer sent to ${offerData.talentName}. Status updated to "Awaiting Acceptance".`,
+      'success'
+    );
+
+    this.closeReconsiderModal();
+
+    // Make the API call to reconsider the offer
+    this.reconsiderOfferAPI(offerData);
+  }
+
+  private reconsiderOfferAPI(offerData: any) {
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId || !this.selectedTalentForReconsider) return;
+
+    // Prepare payload according to the endpoint specification
+    const payload = {
+      hireStatus: 'awaiting-acceptance',
+      amountToPay: offerData.amount.toString(),
+      jobDescription: offerData.jobDescription,
+      startDate: this.formatDateOfHire(new Date(offerData.startDate)),
+      dateOfHire: this.formatDateOfHire(new Date()),
+      satisFactoryCommentByScouter: JSON.stringify({
+        scouterId: scouterId,
+        dateOfComment: this.formatDateOfHire(new Date()),
+        remark: '(Proposal Reconsidered)',
+        rating: 0,
+      }),
+    };
+
+    // Get the marketHireId from the selected talent
+    const marketHireId =
+      this.selectedTalentForReconsider.marketHireId ||
+      this.selectedTalentForReconsider.id;
+
+    // Call the PATCH endpoint
+    this.scouterService
+      .toggleMarketOffer(payload, {
+        talentId: offerData.talentId,
+        scouterId: scouterId,
+        marketHireId: marketHireId,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Offer reconsidered successfully:', response);
+          this.toastService.openSnackBar(
+            'Offer reconsidered successfully!',
+            'success'
+          );
+        },
+        error: (error) => {
+          console.error('❌ Failed to reconsider offer:', error);
+          this.toastService.openSnackBar(
+            error?.error?.message || 'Failed to reconsider offer',
+            'error'
+          );
+        },
+      });
+  }
+
+  private formatDateOfHire(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  // Other existing methods...
+  updateRating(star: number) {
+    if (!this.hire) return;
+
+    const hire = this.hire;
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId) {
+      console.error('❌ No scouter ID found');
+      return;
+    }
+
+    const payload = {
+      scouterId: scouterId,
+      remark: hire.yourComment || 'Rating updated via detail page',
+      rating: star,
+    };
+
+    console.log('⭐ Updating rating for hire:', hire.id, 'to:', star);
+
+    this.scouterService.updateMarketComment(hire.id, payload).subscribe({
+      next: (response) => {
+        console.log('✅ Rating updated successfully:', response);
+        hire.yourRating = star;
+
+        const index = MockRecentHires.findIndex((h) => h.id === hire.id);
+        if (index !== -1) {
+          MockRecentHires[index].yourRating = star;
+        }
+
+        this.showSuccessFeedback('Rating updated successfully!');
+      },
+      error: (error) => {
+        console.error('❌ Failed to update rating:', error);
+        this.showErrorFeedback('Failed to update rating');
+      },
+    });
+  }
+
+  onRatingUpdated(updateData: { hireId: string; rating: number }) {
+    if (this.hire && this.hire.id === updateData.hireId) {
+      this.hire.yourRating = updateData.rating;
+    }
+
+    if (this.marketTableComponent) {
+      this.marketTableComponent.onRatingUpdated(updateData);
+    }
+  }
+
+  private showSuccessFeedback(message: string) {
+    console.log('✅', message);
+  }
+
+  private showErrorFeedback(message: string) {
+    console.error('❌', message);
+  }
+
   private loadMockData(talentId: string) {
-    // Fallback to mock data when API fails or returns no results
     const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
     if (mock) {
       this.hire = {
@@ -99,7 +416,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       this.userName = this.hire?.name || 'Unknown Talent';
     } else {
       console.error('❌ No mock data found for talent ID:', talentId);
-      // Create a fallback hire object to prevent template errors
       this.hire = this.createFallbackHire(talentId);
     }
   }
@@ -123,65 +439,25 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     } as MockPayment;
   }
 
-  updateRating(star: number) {
-    if (!this.hire) return;
-
-    const hire = this.hire; // capture local reference
+  private updateReconsideredOffer(offerData: any) {
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId) {
-      console.error('❌ No scouter ID found');
-      return;
-    }
+    if (!scouterId) return;
 
-    const payload = {
-      scouterId: scouterId,
-      remark: hire.yourComment || 'Rating updated via detail page',
-      rating: star,
-    };
-
-    console.log('⭐ Updating rating for hire:', hire.id, 'to:', star);
-
-    this.scouterService.updateMarketComment(hire.id, payload).subscribe({
-      next: (response) => {
-        console.log('✅ Rating updated successfully:', response);
-        hire.yourRating = star;
-
-        // Update mock data for consistency in development
-        const index = MockRecentHires.findIndex((h) => h.id === hire.id);
-        if (index !== -1) {
-          MockRecentHires[index].yourRating = star;
-        }
-
-        // Optional: Show success feedback
-        this.showSuccessFeedback('Rating updated successfully!');
-      },
-      error: (error) => {
-        console.error('❌ Failed to update rating:', error);
-        this.showErrorFeedback('Failed to update rating');
-        // Optionally revert the UI change
-      },
-    });
-  }
-
-  private showSuccessFeedback(message: string) {
-    // You can implement toast or other feedback mechanism here
-    console.log('✅', message);
-  }
-
-  private showErrorFeedback(message: string) {
-    // You can implement toast or other feedback mechanism here
-    console.error('❌', message);
-  }
-
-  setSelectedHire(hire: MockPayment) {
-    console.log('🔄 MarketPricePrep: Setting selected hire:', hire.name);
-    this.hire = hire;
-    this.userName = hire.name;
-
-    // If you want to update the URL when a new hire is selected from the table:
-    this.router.navigate(['/scouter/market-engagement-market-price-preparation', hire.id]);
+    // Implement your API call here
+    // this.scouterService.reconsiderOffer({
+    //   scouterId: scouterId,
+    //   talentId: offerData.talentId,
+    //   ...offerData
+    // }).subscribe({
+    //   next: (response) => {
+    //     console.log('Offer reconsidered successfully');
+    //   },
+    //   error: (error) => {
+    //     console.error('Failed to reconsider offer:', error);
+    //   }
+    // });
   }
 
   getFormattedAmount(amount: number): string {

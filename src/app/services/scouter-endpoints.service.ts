@@ -1266,32 +1266,49 @@ export class ScouterEndpointsService {
         })
       );
   }
+
+  /**
+   * Toggle market offer status (for reconsidering offers)
+   * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
+   */
+  toggleMarketOffer(
+    payload: any,
+    params: {
+      talentId: string;
+      scouterId: string;
+      marketHireId: string;
+    }
+  ): Observable<any> {
+    const encodedTalentId = encodeURIComponent(params.talentId);
+    const encodedScouterId = encodeURIComponent(params.scouterId);
+    const encodedMarketHireId = encodeURIComponent(params.marketHireId);
+
+    const url = `${this.baseUrl}/${endpoints.toggleMarketOffer}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+
+    console.log('🔄 Toggling market offer status:', {
+      url,
+      payload,
+      params,
+    });
+
+    return this.http
+      .patch<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Market offer toggled successfully:', response)
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to toggle market offer:', error);
+          return throwError(
+            () =>
+              new Error(error.error?.message || 'Failed to update offer status')
+          );
+        })
+      );
+  }
 }
 
 // THIS IS UP TO DATE
-
-// When adding new endpoints to your services, follow this pattern:
-
-// In scouter-endpoints.service.ts
-// yourNewMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourNewEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customHttpHeaders,
-//   });
-// }
-
-// // For public endpoints (no auth required)
-// yourPublicMethod(data: any): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.yourPublicEndpoint}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-//   });
-// }
-
-// // For file uploads
-// uploadFile(data: FormData): Observable<any> {
-//   const url = `${this.baseUrl}/${endpoints.uploadFile}`;
-//   return this.http.post<any>(url, data, {
-//     headers: this.jwtInterceptor.customFormDataHttpHeaders,
-//   });
-// }

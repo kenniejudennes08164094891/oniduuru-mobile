@@ -173,3 +173,39 @@ app-toast {
   display: block;
   position: relative;
 }
+
+
+
+/* In your global styles or component styles */
+.reconsider-modal {
+  --height: auto;
+  --max-height: 90vh;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --backdrop-opacity: 0.5;
+}
+
+.reconsider-offer-modal {
+  --height: auto;
+  --max-height: 90vh;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --backdrop-opacity: 0.5;
+}
+
+/* Style the modal backdrop */
+ion-modal.reconsider-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Style the modal wrapper */
+ion-modal.reconsider-modal::part(content) {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Make sure Ionic icons are loaded */
+ion-icon {
+  font-size: 24px;
+}

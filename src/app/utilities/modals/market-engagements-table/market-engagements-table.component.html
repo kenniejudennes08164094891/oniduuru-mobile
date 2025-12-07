@@ -124,10 +124,34 @@
   </button>
 </div>
 
-<!-- Modal -->
+<!-- In market-engagements-table.component.html -->
+<!-- After the pagination section -->
+
+<!-- Total Delivery Evaluation Modal -->
 <app-total-delivery-evaluation
   [hire]="selectedHire"
   [isModalOpen]="isModalOpen"
   (close)="closeModal()"
   (ratingUpdated)="onRatingUpdated($event)"
 ></app-total-delivery-evaluation>
+
+<!-- Reconsider Confirmation Modal -->
+<app-reconsider-confirmation-modal
+  [talentName]="selectedTalentForReconsider?.name || ''"
+  [isModalOpen]="isReconsiderModalOpen"
+  (confirmed)="onReconsiderConfirmed()"
+  (cancelled)="onReconsiderCancelled()"
+  (close)="closeReconsiderModal()"
+></app-reconsider-confirmation-modal>
+
+<!-- Reconsider Offer Form Modal -->
+<app-reconsider-offer-modal
+  [talentId]="selectedTalentForReconsider?.id || ''"
+  [talentName]="selectedTalentForReconsider?.name || ''"
+  [originalAmount]="selectedTalentForReconsider?.amount || 0"
+  [originalJobDescription]="selectedTalentForReconsider?.jobDescription || ''"
+  [isModalOpen]="isReconsiderOfferModalOpen"
+  (submitted)="onReconsiderSubmitted($event)"
+  (cancelled)="closeReconsiderModal()"
+  (close)="closeReconsiderModal()"
+></app-reconsider-offer-modal>
