@@ -1,0 +1,257 @@
+<!-- reconsider-offer-modal.component.html -->
+<div
+  *ngIf="isModalOpen"
+  class="fixed inset-0 z-[9998] flex items-center justify-center bg-black bg-opacity-50 p-4"
+  (click)="closeModal()"
+>
+  <div
+    class="bg-white rounded-lg shadow-lg w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- HEADER - Updated title -->
+    <div
+      class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+    >
+      <h2 class="text-lg font-bold text-white">
+        Reconsideration of Declined Offer
+      </h2>
+      <button (click)="closeModal()" class="text-white hover:text-gray-700">
+        ✕
+      </button>
+    </div>
+
+    <!-- SCROLLABLE BODY -->
+    <div class="p-6 space-y-6 overflow-y-auto flex-1">
+      <!-- Instruction -->
+      <div>
+        <p class="text-sm text-[#79797B] mb-4">
+          Please revise the offer details to make it more appealing to
+          <span class="font-semibold text-blue-600">{{ talentName }}</span
+          >.
+          <br />
+          All fields marked with * are required.
+        </p>
+      </div>
+
+      <!-- Original Offer Summary -->
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h4 class="font-medium text-gray-700 mb-3">Original Offer:</h4>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-600">Amount:</p>
+            <p class="font-medium">{{ originalAmount | currency : "₦ " }}</p>
+          </div>
+          <div>
+            <p class="text-gray-600">Job Description:</p>
+            <p class="font-medium truncate">
+              {{ originalJobDescription | slice : 0 : 30 }}...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="offerForm" (ngSubmit)="onSubmit()">
+        <!-- Amount Field with formatting -->
+        <div class="mb-4">
+          <label
+            class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between"
+          >
+            <span>Revised Amount *</span>
+            <span class="text-xs text-gray-500">Minimum: ₦ 1,000</span>
+          </label>
+          <div class="relative">
+            <span
+              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium"
+              >₦</span
+            >
+            <input
+              type="text"
+              [ngModel]="formattedAmount"
+              (ngModelChange)="onAmountInputChange($event)"
+              (focus)="onAmountFocus($event)"
+              (blur)="onAmountBlur($event)"
+              [ngModelOptions]="{ standalone: true }"
+              class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-medium"
+              placeholder="Enter revised amount"
+              #amountInput
+            />
+          </div>
+
+          <!-- Validation Error Messages -->
+          <div
+            *ngIf="
+              offerForm.get('amount')?.invalid &&
+              offerForm.get('amount')?.touched
+            "
+            class="text-red-500 text-xs mt-2 space-y-1"
+          >
+            <!-- Minimum amount error -->
+            <div
+              *ngIf="offerForm.get('amount')?.errors?.['min']"
+              class="flex items-center gap-1"
+            >
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Please enter a valid amount (minimum ₦ 1,000)</span>
+            </div>
+
+            <!-- Required error -->
+            <div
+              *ngIf="offerForm.get('amount')?.errors?.['required']"
+              class="flex items-center gap-1"
+            >
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>Amount is required</span>
+            </div>
+
+            <!-- Custom validation: Amount too low error -->
+            <div
+              *ngIf="offerForm.get('amount')?.errors?.['amountTooLow']"
+              class="flex items-center gap-1"
+            >
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>
+                Revised amount cannot be lower than original offer (₦{{ offerForm.get('amount')?.errors?.['amountTooLow']?.requiredAmount | number
+                }}). Minimum allowed: ₦{{ offerForm.get('amount')?.errors?.['amountTooLow']?.requiredAmount | number }}
+              </span>
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1">
+            Minimum: ₦1,000 • Must be equal to or greater than original offer
+            (₦{{ originalAmount | number }})
+          </p>
+        </div>
+        <!-- Job Description (pre-filled with original text) -->
+        <div class="mb-4">
+          <label
+            class="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between"
+          >
+            <span>Revised Job Description *</span>
+            <span class="text-xs text-gray-500"
+              >{{
+                offerForm.get("jobDescription")?.value?.length || 0
+              }}/500</span
+            >
+          </label>
+          <textarea
+            formControlName="jobDescription"
+            rows="4"
+            class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            placeholder="Improve or edit the job description to make it more appealing..."
+            maxlength="500"
+          ></textarea>
+          <div
+            *ngIf="
+              offerForm.get('jobDescription')?.invalid &&
+              offerForm.get('jobDescription')?.touched
+            "
+            class="text-red-500 text-xs mt-2 flex items-center gap-1"
+          >
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>Job description is required (minimum 20 characters)</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">
+            Current job description:
+            {{ offerForm.get("jobDescription")?.value?.slice(0, 50) }}...
+          </p>
+        </div>
+
+        <!-- Start Date -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            New Start Date *
+          </label>
+          <div class="relative">
+            <ion-icon
+              name="calendar-outline"
+              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            ></ion-icon>
+            <input
+              type="date"
+              formControlName="startDate"
+              class="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              [min]="today"
+            />
+          </div>
+          <div
+            *ngIf="
+              offerForm.get('startDate')?.invalid &&
+              offerForm.get('startDate')?.touched
+            "
+            class="text-red-500 text-xs mt-2 flex items-center gap-1"
+          >
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>Please select a valid future date</span>
+          </div>
+        </div>
+
+        <!-- Summary of Changes -->
+        <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
+          <h4 class="font-medium text-blue-700 mb-2 flex items-center gap-2">
+            <ion-icon name="information-circle-outline"></ion-icon>
+            Summary of Changes
+          </h4>
+          <ul class="text-sm text-blue-700 space-y-1">
+            <li
+              *ngIf="offerForm.get('amount')?.value !== originalAmount"
+              class="flex items-center gap-2"
+            >
+              <ion-icon
+                name="checkmark-circle-outline"
+                class="text-green-500"
+              ></ion-icon>
+              Amount changed from {{ originalAmount | currency : "₦ " }} to
+              {{ offerForm.get("amount")?.value | currency : "₦ " }}
+            </li>
+            <li
+              *ngIf="
+                offerForm.get('jobDescription')?.value !==
+                originalJobDescription
+              "
+              class="flex items-center gap-2"
+            >
+              <ion-icon
+                name="checkmark-circle-outline"
+                class="text-green-500"
+              ></ion-icon>
+              Job description has been revised
+            </li>
+            <li class="flex items-center gap-2">
+              <ion-icon name="calendar-outline"></ion-icon>
+              New start date:
+              {{ offerForm.get("startDate")?.value | date : "mediumDate" }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-4 border-t border-gray-200">
+          <button
+            type="button"
+            (click)="onCancel()"
+            class="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <ion-icon name="close-circle-outline"></ion-icon>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="offerForm.invalid || isSubmitting"
+            class="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            <ion-icon
+              *ngIf="!isSubmitting"
+              name="paper-plane-outline"
+            ></ion-icon>
+            <ion-icon
+              *ngIf="isSubmitting"
+              name="refresh-outline"
+              class="animate-spin"
+            ></ion-icon>
+            {{ isSubmitting ? "Sending Offer..." : "Send Revised Offer" }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

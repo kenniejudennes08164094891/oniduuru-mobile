@@ -130,11 +130,41 @@
   </div>
 
   <!-- In your market-engagement-market-price-preparation.component.html -->
+  <!-- In your market-engagement-market-price-preparation.component.html -->
   <app-market-engagement-tabs
     [initialHire]="hire"
-    (hireSelected)="setSelectedHire($event)"
+    (hireSelected)="onTableHireClick($event)"
   >
   </app-market-engagement-tabs>
+
+  <app-total-delivery-evaluation
+    *ngIf="isTotalDeliveryModalOpen"
+    [hire]="selectedModalHire || hire"
+    [isModalOpen]="isTotalDeliveryModalOpen"
+    (close)="closeTotalDeliveryModal()"
+    (ratingUpdated)="onRatingUpdated($event)"
+  ></app-total-delivery-evaluation>
+
+  <!-- Reconsider Confirmation Modal -->
+  <app-reconsider-confirmation-modal
+    [talentName]="selectedTalentForReconsider?.name || ''"
+    [isModalOpen]="isReconsiderModalOpen"
+    (confirmed)="onReconsiderConfirmed()"
+    (cancelled)="onReconsiderCancelled()"
+    (close)="closeReconsiderModal()"
+  ></app-reconsider-confirmation-modal>
+
+  <!-- Reconsider Offer Form Modal -->
+  <app-reconsider-offer-modal
+    [talentId]="selectedTalentForReconsider?.id || ''"
+    [talentName]="selectedTalentForReconsider?.name || ''"
+    [originalAmount]="selectedTalentForReconsider?.amount || 0"
+    [originalJobDescription]="selectedTalentForReconsider?.jobDescription || ''"
+    [isModalOpen]="isReconsiderOfferModalOpen"
+    (submitted)="onReconsiderSubmitted($event)"
+    (cancelled)="onReconsiderCancelled()"
+    (close)="closeReconsiderModal()"
+  ></app-reconsider-offer-modal>
 
   <!-- Error State -->
   <div *ngIf="!hire && !isLoading" class="text-center py-10">

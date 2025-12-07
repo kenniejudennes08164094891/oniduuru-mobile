@@ -25,10 +25,10 @@
 </div>
 
 <!-- TAB CONTENT -->
+<!-- In market-engagement-tabs.component.html -->
 <div *ngIf="activeTab === 'engagements'">
-  <!-- 👇 Pass event up -->
-  <app-market-engagements-table 
-    (hireSelected)="onHireClick($event)">
+  <!-- Pass both events -->
+  <app-market-engagements-table (hireSelected)="onHireClick($event)">
   </app-market-engagements-table>
 </div>
 

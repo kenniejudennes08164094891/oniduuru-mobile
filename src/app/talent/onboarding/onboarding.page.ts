@@ -1,15 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, ToastController } from '@ionic/angular';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgClass } from '@angular/common';
 import { TalentService } from 'src/app/services/talent.service';
 
 @Component({
   selector: 'app-onboarding',
   templateUrl: './onboarding.page.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonicModule, NgClass],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], // Add this line
+
   styleUrls: ['./onboarding.page.scss'],
 })
 export class OnboardingPage {
@@ -17,10 +19,15 @@ export class OnboardingPage {
     private router: Router,
     private toastCtrl: ToastController,
     private talentService: TalentService
-  ) { }
+  ) {}
 
   // ------------------- STEPS -------------------
-  steps = ['Talent Details', 'Other Details', 'Login Credentials', 'Verify OTP'];
+  steps = [
+    'Talent Details',
+    'Other Details',
+    'Login Credentials',
+    'Verify OTP',
+  ];
   currentStep = 0;
 
   getProgressWidth() {
@@ -47,7 +54,8 @@ export class OnboardingPage {
 
   // ------------------- OTHER DETAILS -------------------
   skillLevel = '';
-  skillSet = '';
+  skillSets: string[] = [];
+  skillSetInput = '';
   education = '';
   payRange = '';
 
@@ -73,9 +81,6 @@ export class OnboardingPage {
     '₦500,000 - ₦1,000,000',
     'Above ₦1,000,000',
   ];
-
-  skillSets: string[] = [];
-  skillSetInput = '';
 
   addSkill() {
     const trimmed = this.skillSetInput.trim();
@@ -113,6 +118,10 @@ export class OnboardingPage {
   otp: string[] = ['', '', '', ''];
   timer: number = 120;
   error: string = '';
+
+  // Add these missing properties
+  isSubmitting = false;
+  showSuccessPopup = false;
 
   ngOnInit() {
     // Timer should only run on OTP step
@@ -163,6 +172,7 @@ export class OnboardingPage {
     return this.otp.every((d) => d !== '');
   }
 
+  // ------------------- OTP METHODS -------------------
   maskedEmail() {
     if (!this.emailLogin) return '';
     const parts = this.emailLogin.split('@');
@@ -187,8 +197,6 @@ export class OnboardingPage {
   }
 
   // ------------------- API: CREATE TALENT PROFILE -------------------
-  isSubmitting = false;
-
   submitTalentProfile() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
@@ -203,7 +211,7 @@ export class OnboardingPage {
       educationalBackground: this.education,
       skillSets: this.skillSets,
       skillLevel: this.skillLevel,
-      payRange: this.payRange
+      payRange: this.payRange,
     };
 
     this.talentService.createTalentProfile(payload).subscribe({
@@ -221,26 +229,28 @@ export class OnboardingPage {
         if (backendMsg.includes('email')) {
           this.showToast('Email already exists. Please use another email.');
         } else if (backendMsg.includes('phone')) {
-          this.showToast('Phone number already in use. Please use another number.');
+          this.showToast(
+            'Phone number already in use. Please use another number.'
+          );
         } else {
           this.showToast(err?.error?.message ?? 'Failed to create profile');
         }
         console.error('Onboard Talent Error:', err);
-        this.error = err.error?.message || 'Failed to create profile. Try again later.';
-      }
+        this.error =
+          err.error?.message || 'Failed to create profile. Try again later.';
+      },
     });
   }
+
   async showToast(message: string) {
     const toast = await this.toastCtrl.create({
       message,
       duration: 3000,
       position: 'top',
-      color: 'danger'
+      color: 'danger',
     });
     toast.present();
   }
-
-
 
   // ------------------- API: VERIFY OTP -------------------
   verifyOtp() {
@@ -299,8 +309,6 @@ export class OnboardingPage {
   }
 
   // ------------------- SUCCESS POPUP -------------------
-  showSuccessPopup = false;
-
   showPopup() {
     this.showSuccessPopup = true;
   }
@@ -335,13 +343,11 @@ export class OnboardingPage {
   handlePreviousStep() {
     this.previousStep();
   }
-  // goBack() {
-  //   this.router.navigate(['/auth/login']);
-  // }
 
   handleCancel() {
     this.router.navigate(['/auth/login']);
   }
+
   handleWelcomeBack() {
     this.router.navigate(['/auth/welcome-page']);
   }

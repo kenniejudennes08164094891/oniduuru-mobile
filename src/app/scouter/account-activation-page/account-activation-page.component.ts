@@ -32,8 +32,8 @@ export class AccountActivationPageComponent implements OnInit {
     });
   }
 
-  routeBack() {
-    this.router.navigate(['/scouter/dashboard']);
+ async routeBack():Promise<void> {
+   await this.router.navigate(['/scouter/dashboard']);
   }
 
   async openUploadScreenshotPopup() {

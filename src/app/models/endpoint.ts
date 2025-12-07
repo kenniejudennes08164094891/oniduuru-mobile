@@ -141,4 +141,5 @@ export const endpoints = {
   cloudinaryGetSecrets: 'utility/v1/cloudinary/signature',
 
   chatbot: 'api-service/v1/chatbot',
+
 };

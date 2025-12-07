@@ -20,14 +20,10 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy {
   @Output() backPressed = new EventEmitter<void>();
 
   private backButtonListener: any;
-
   activeTab: 'engagements' | 'stats' = 'engagements';
-
-  // ✅ PROPERLY MANAGE SELECTED HIRE STATE
   selectedHire: MockPayment | undefined;
 
-  // ✅ ACCEPT INITIAL HIRE AND SET IT AS SELECTED
-  @Input() 
+  @Input()
   set initialHire(hire: MockPayment | undefined) {
     if (hire && !this.selectedHire) {
       this.selectedHire = hire;
@@ -58,10 +54,10 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy {
   onHireClick(hire: MockPayment) {
     console.log('🔄 Tabs: Hire selected from table:', hire.name);
     
-    // ✅ UPDATE THE SELECTED HIRE
+    // Update the selected hire
     this.selectedHire = hire;
     
-    // ✅ EMIT TO PARENT (MarketPricePreparationComponent)
+    // Emit to parent (MarketPricePreparationComponent)
     this.hireSelected.emit(hire);
   }
 
