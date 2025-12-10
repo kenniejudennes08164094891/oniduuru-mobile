@@ -586,7 +586,7 @@ export class CreateRecordPage implements OnInit {
     const file = input.files[0];
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'video/mp4'];
 
-    this.clearError(); // clear previous errors
+    this.clearError(); // remove previous errors
 
     if (!allowedTypes.includes(file.type)) {
       this.showError('Only PNG/JPG/JPEG and MP4 files are allowed.');
