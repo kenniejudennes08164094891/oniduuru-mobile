@@ -116,6 +116,7 @@ export class OnboardingPage {
 
   // ------------------- VERIFY OTP -------------------
   otp: string[] = ['', '', '', ''];
+  otpFields = new Array(4);
   timer: number = 120;
   error: string = '';
 

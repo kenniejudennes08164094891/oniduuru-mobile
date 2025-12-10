@@ -45,28 +45,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   }
   ngOnInit() : void {
     this.loadTalentName();
-    //    // 1) Prefer navigation state (set by dashboard)
-    // const navMarkets = (history.state && history.state.markets) ? history.state.markets : null;
-    // if (Array.isArray(navMarkets) && navMarkets.length) {
-    //   this.initialPaginatedHires = navMarkets;
-    //   this.paginatedHiresData = navMarkets;
-    //   sessionStorage.setItem('lastMarkets', JSON.stringify(navMarkets)); // optional
-    //   return;
-    // }
-
-    // 2) Try sessionStorage fallback
-    // const cached = sessionStorage.getItem('lastMarkets');
-    // if (cached) {
-    //   try {
-    //     this.initialPaginatedHires = JSON.parse(cached);
-    //     this.paginatedHiresData = this.initialPaginatedHires;
-    //     console.log("cached>>>",this.initialPaginatedHires);
-    //     return;
-    //   } catch { /* ignore */ }
-    // }
-
-
-    // 3) Final fallback: call API directly
+    //  Final fallback: call API directly
     if (!this.talentId) return;
     const paginationParams: PaginationParams = { limit: 10, pageNo: 1 };
     this.endpointService.fetchMarketsByTalent(this.talentId, paginationParams, '', '').subscribe({
