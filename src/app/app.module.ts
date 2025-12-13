@@ -18,6 +18,7 @@ import { ToastsService } from './services/toasts.service';
 import { IonicStorageModule } from '@ionic/storage-angular';
 import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
+import { DebugInterceptor } from './interceptors/debug.interceptor';
 
 @NgModule({
   declarations: [AppComponent, ChatBotComponent],
@@ -49,6 +50,11 @@ import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
     {
       provide: HTTP_INTERCEPTORS,
       useClass: JwtInterceptorService,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: DebugInterceptor,
       multi: true,
     },
   ],

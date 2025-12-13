@@ -8,18 +8,36 @@
 
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
-    <!-- Loading State for Profile -->
-    <!-- <div *ngIf="isLoadingProfile" class="minimal-loading">
-      <div class="minimal-spinner"></div>
-      <p class="minimal-text">Loading profile...</p>
+    <!-- Debug buttons (optional) -->
+    <!-- <div class="fixed top-20 right-4 flex flex-col gap-2 z-50">
+      <button
+        (click)="runDebug()"
+        class="bg-red-500 text-white p-3 rounded-full shadow-lg hover:bg-red-600 transition"
+        title="Debug Network"
+      >
+        🐛 Debug
+      </button>
+
+      <button
+        (click)="reloadComponent()"
+        class="bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition"
+        title="Reload Component"
+      >
+        🔄 Reload
+      </button>
     </div> -->
 
-    <div class="space-y-4 mt-10">
-      <!-- *ngIf="!isLoadingProfile" -->
+    <!-- Loading State for Profile -->
+    <div *ngIf="isLoadingProfile" class="minimal-loading">
+      <div class="minimal-spinner"></div>
+      <p class="minimal-text">Loading profile...</p>
+    </div>
+
+    <div class="space-y-4 mt-10" *ngIf="!isLoadingProfile">
       <!-- Security Question Banner -->
       <div
         class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
-        *ngIf="securityQuestions.length === 0"
+        *ngIf="securityQuestionCount === 0"
       >
         <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
         <div class="relative z-10 text-white">
@@ -79,11 +97,10 @@
       <div class="p-6">
         <!-- Profile Picture -->
         <p class="mt-3 pb-3 text-gray-600" #profilePicture>Profile Picture</p>
-        <!-- In your template - update the profile picture section -->
         <div class="flex flex-col mb-6">
-          <!-- Show profile picture container ALWAYS -->
           <div
-            class="w-28 h-28 rounded-full border-4 border-gray-600 flex items-center justify-center"
+            (click)="openProfileImagePicker(); $event.stopPropagation()"
+            class="w-28 h-28 rounded-full border-4 border-gray-600 flex items-center justify-center cursor-pointer hover:border-gray-700 transition-colors"
           >
             <div
               class="w-24 h-24 rounded-full border-4 border-white bg-gray-200 flex items-center justify-center relative overflow-hidden"
@@ -115,21 +132,6 @@
                 class="hidden"
                 (change)="onFileSelected($event)"
               />
-              <!-- Camera icon - show when NOT editing (standalone upload) -->
-              <div
-                class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
-                (click)="openProfileImagePicker(); $event.stopPropagation()"
-                *ngIf="!isEditing"
-                title="Change profile picture"
-                role="button"
-                aria-label="Change profile picture"
-              >
-                <ion-icon
-                  name="camera-outline"
-                  class="text-gray-700 text-base"
-                ></ion-icon>
-              </div>
-
               <!-- Edit pencil icon - show when editing -->
               <div
                 class="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 bg-white p-1 rounded-full cursor-pointer w-7 h-7 flex items-center justify-center shadow-md border border-gray-300"
@@ -214,6 +216,7 @@
             class="w-full border-none rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md transition-colors"
           />
         </div>
+
         <!-- Password -->
         <div class="mb-4">
           <label class="block text-gray-600 text-sm mb-2">Password</label>
@@ -261,7 +264,7 @@
             [class.bg-gray-100]="!isEditing"
             [class.cursor-not-allowed]="!isEditing"
           >
-            <!-- Selected Tags - FIXED: Use proper ngFor with trackBy -->
+            <!-- Selected Tags -->
             <ng-container
               *ngIf="selectedOrgTypes && selectedOrgTypes.length > 0"
             >
@@ -333,7 +336,7 @@
         />
       </div>
 
-      <!-- Pay Range - FINAL SIMPLIFIED VERSION -->
+      <!-- Pay Range -->
       <div class="mb-4">
         <label class="block text-gray-600 text-sm mb-2">Pay Range</label>
         <input
@@ -352,7 +355,6 @@
 
       <!-- Action Buttons -->
       <div class="space-y-4 py-8">
-        <!-- In your profile-page.component.html -->
         <button
           class="bg-[#101828] rounded-lg w-full py-3 text-white font-medium cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
           (click)="openConfirmationPopup()"
@@ -389,67 +391,163 @@
     </div>
 
     <div class="mb-4 px-6 py-6" *ngIf="!isLoadingProfile">
-      <label class="block text-gray-600 text-sm mb-2">
-        You're advised to create up to 5 security questions for account recovery
+      <label class="block text-gray-600 text-sm mb-4">
+        You're advised to create up to {{ maxSecurityQuestions }} security
+        questions for account recovery. You currently have
+        {{ securityQuestions.length }} question{{
+          securityQuestions.length !== 1 ? "s" : ""
+        }}.
       </label>
 
-      <!-- Loading State -->
-      <div *ngIf="isLoadingSecurityQuestions" class="text-center py-4">
-        <p>Loading security questions...</p>
+      <!-- Status Indicator -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <ion-icon
+              name="information-circle-outline"
+              class="text-blue-600"
+            ></ion-icon>
+            <span class="text-blue-800 text-sm font-medium">
+              {{ securityQuestions.length }}/{{ maxSecurityQuestions }}
+              questions
+            </span>
+          </div>
+          <div
+            *ngIf="securityQuestions.length < maxSecurityQuestions"
+            class="text-blue-600 text-sm"
+          >
+            You can add
+            {{ maxSecurityQuestions - securityQuestions.length }} more
+          </div>
+        </div>
       </div>
 
-      <!-- Display saved questions -->
-      <div
-        *ngIf="
-          !isLoadingSecurityQuestions &&
-          securityQuestions.length > 0 &&
-          !isEditingSecurityQuestions
-        "
-        class="space-y-4 mb-4"
+      <!-- Error Message Display -->
+      <!-- <div
+        *ngIf="securityQuestionErrorMessage"
+        class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
       >
-        <div
-          *ngFor="let qa of securityQuestions; let i = index"
-          class="p-4 border rounded-lg shadow-sm bg-white relative group"
-        >
-          <div
-            class="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            *ngIf="isEditing"
-          >
-            <button
-              (click)="editQuestion(i)"
-              class="text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50 transition"
-              title="Edit question"
-            >
-              <ion-icon name="pencil-outline" class="text-lg"></ion-icon>
-            </button>
-            <button
-              (click)="deleteQuestion(i)"
-              class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition"
-              title="Delete question"
-            >
-              <ion-icon name="trash-outline" class="text-lg"></ion-icon>
-            </button>
+        <div class="flex items-center gap-2 text-red-700">
+          <ion-icon name="warning-outline"></ion-icon>
+          <span class="text-sm">{{ securityQuestionErrorMessage }}</span>
+        </div>
+      </div> -->
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingSecurityQuestions" class="text-center py-8">
+        <div class="flex flex-col items-center justify-center">
+          <div class="relative">
+            <div
+              class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#101828]"
+            ></div>
+            <ion-icon
+              name="shield-checkmark-outline"
+              class="absolute inset-0 m-auto text-lg text-[#101828]"
+            ></ion-icon>
           </div>
+          <p class="text-gray-500 mt-4">Loading security questions...</p>
+        </div>
+      </div>
 
-          <label class="block text-gray-600 text-sm mb-2 font-medium">
-            Question {{ i + 1 }}
-          </label>
-          <input
-            type="text"
-            [value]="qa.question"
-            readonly
-            class="w-full border border-gray-300 rounded-md px-4 py-2 mb-3 bg-gray-50 text-gray-700 focus:outline-none cursor-not-allowed"
-          />
+      <!-- Security Questions Display Section -->
+      <div
+        class="space-y-4 mb-6"
+        *ngIf="securityQuestions.length > 0 && !isEditingSecurityQuestions"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-700">
+            Your Security Questions
+          </h3>
+          <div class="text-sm">
+            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+              {{ totalQuestionsCount }}/{{ maxSecurityQuestions }}
+            </span>
+          </div>
+        </div>
 
-          <label class="block text-gray-600 text-sm mb-2 font-medium">
-            Answer {{ i + 1 }}
-          </label>
-          <input
-            type="password"
-            [value]="qa.answer"
-            readonly
-            class="w-full border border-gray-300 rounded-md px-4 py-2 bg-gray-50 text-gray-700 focus:outline-none cursor-not-allowed"
-          />
+        <div class="space-y-4">
+          <div
+            *ngFor="let qa of securityQuestions; let i = index"
+            class="p-4 border border-gray-200 rounded-lg bg-white hover:border-gray-300 transition-colors"
+          >
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex items-center gap-2">
+                <div
+                  class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"
+                >
+                  <span class="text-gray-600 font-semibold text-xs">{{
+                    i + 1
+                  }}</span>
+                </div>
+                <span class="text-xs text-blue-500" *ngIf="qa.isHashed">
+                  🔐 Secured
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  (click)="editQuestion(i)"
+                  class="text-blue-500 hover:text-blue-700 p-1.5 rounded-full hover:bg-blue-50 transition"
+                  title="Edit question"
+                >
+                  <ion-icon name="create-outline" class="text-lg"></ion-icon>
+                </button>
+                <button
+                  (click)="deleteQuestion(i)"
+                  class="text-red-500 hover:text-red-700 p-1.5 rounded-full hover:bg-red-50 transition"
+                  title="Delete question"
+                >
+                  <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Question -->
+            <label class="block text-gray-600 text-sm mb-2 font-medium">
+              Question {{ i + 1 }}
+            </label>
+            <div class="p-3 bg-gray-50 rounded border border-gray-100 mb-3">
+              <p class="text-gray-700">{{ qa.question }}</p>
+            </div>
+
+            <!-- Answer -->
+            <label class="block text-gray-600 text-sm mb-2 font-medium">
+              Answer {{ i + 1 }}
+            </label>
+            <div class="relative">
+              <div
+                class="p-3 bg-gray-50 rounded border border-gray-100 flex items-center justify-between hover:bg-gray-100 transition-colors cursor-pointer"
+                (click)="toggleAnswerVisibility(i)"
+              >
+                <span class="text-gray-500 tracking-wider">
+                  {{ getDisplayAnswer(qa) }}
+                </span>
+                <button
+                  type="button"
+                  class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-200"
+                  [class.text-blue-500]="qa.showAnswer"
+                >
+                  <ion-icon
+                    [name]="qa.showAnswer ? 'eye-off-outline' : 'eye-outline'"
+                    class="text-lg"
+                  ></ion-icon>
+                </button>
+              </div>
+
+              <!-- Info for hashed answers -->
+              <div
+                *ngIf="qa.showAnswer && qa.isHashed"
+                class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700"
+              >
+                <div class="flex items-center gap-2">
+                  <ion-icon
+                    name="shield-checkmark-outline"
+                    class="text-blue-600"
+                  ></ion-icon>
+                  <span>Secured answer - for verification purposes only</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -472,101 +570,249 @@
         </p>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex gap-2 mb-4 flex-wrap">
+      <!-- Action Buttons (View Mode) -->
+      <div class="flex gap-2 mb-6" *ngIf="!isEditingSecurityQuestions">
         <button
-          class="bg-[#101828] rounded-lg px-4 py-2 text-white text-sm font-medium cursor-pointer flex items-center gap-2"
+          class="bg-[#101828] hover:bg-[#0d141f] rounded-lg px-5 py-2.5 text-white text-sm font-medium cursor-pointer flex items-center gap-2 transition-colors"
           (click)="toggleEditSecurityQuestions()"
         >
-          <ion-icon
-            [name]="
-              isEditingSecurityQuestions ? 'close-outline' : 'add-outline'
-            "
-          ></ion-icon>
+          <ion-icon name="add-outline" class="text-base"></ion-icon>
           {{
-            isEditingSecurityQuestions
-              ? "Cancel Editing"
-              : securityQuestions.length > 0
-              ? "Edit Questions"
-              : "Add Questions"
+            securityQuestions.length > 0 ? "Edit Questions" : "Create Questions"
           }}
         </button>
 
         <button
-          *ngIf="securityQuestions.length > 0 && !isEditingSecurityQuestions"
-          class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium cursor-pointer flex items-center gap-2"
-          (click)="addMoreQuestions()"
-          [disabled]="securityQuestions.length >= 5"
+          *ngIf="
+            securityQuestions.length > 0 &&
+            securityQuestions.length < maxSecurityQuestions
+          "
+          class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg px-5 py-2.5 text-sm font-medium cursor-pointer flex items-center gap-2 transition-colors"
+          (click)="toggleEditSecurityQuestions()"
         >
-          <ion-icon name="add-outline"></ion-icon>
-          + Add More Questions
+          <ion-icon name="add-circle-outline" class="text-base"></ion-icon>
+          Add More
         </button>
       </div>
 
       <!-- Edit/Add Questions Form -->
       <div class="space-y-6" *ngIf="isEditingSecurityQuestions">
-        <div
-          *ngFor="let qa of tempSecurityQuestions; let i = index"
-          class="p-4 border rounded-lg shadow-sm bg-white relative"
-        >
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-gray-600 text-sm font-medium">
-              Question {{ i + 1 }}
-            </label>
-            <button
-              *ngIf="tempSecurityQuestions.length > 1"
-              class="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
-              (click)="removeQuestion(i)"
-            >
-              <ion-icon name="trash-outline"></ion-icon>
-              Remove
-            </button>
+        <!-- Information Box -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <ion-icon
+              name="information-circle-outline"
+              class="text-blue-600 text-xl mt-0.5"
+            ></ion-icon>
+            <div>
+              <p class="text-blue-800 font-medium mb-1">Important:</p>
+              <ul class="text-blue-600 text-sm space-y-1">
+                <li>• Questions: Minimum 5 characters</li>
+                <li>• Answers: Minimum 3 characters</li>
+                <li>• Answers are case-insensitive</li>
+                <li>• Maximum {{ maxSecurityQuestions }} questions</li>
+                <li *ngIf="securityQuestions.length > 0">
+                  • Leave answer blank to keep existing secured answer
+                </li>
+              </ul>
+            </div>
           </div>
-
-          <input
-            type="text"
-            placeholder="e.g., What was your first pet's name?"
-            [(ngModel)]="qa.question"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
-          />
-
-          <label class="block text-gray-600 text-sm mb-2 font-medium">
-            Answer {{ i + 1 }}
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your answer"
-            [(ngModel)]="qa.answer"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm placeholder:text-gray-400"
-          />
         </div>
 
-        <!-- Add new Question button -->
-        <button
-          class="bg-gray-200 rounded-lg px-4 py-2 text-sm font-medium w-full cursor-pointer flex items-center justify-center gap-2"
-          (click)="addNewQuestion()"
-          [disabled]="tempSecurityQuestions.length >= 5"
-        >
-          <ion-icon name="add-outline"></ion-icon>
-          + Add New Question
-        </button>
+        <!-- Questions Form -->
+        <div class="space-y-4">
+          <div
+            *ngFor="let qa of tempSecurityQuestions; let tIdx = index"
+            [attr.data-question-index]="tIdx"
+            class="p-4 border border-gray-300 rounded-lg bg-white"
+          >
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"
+                >
+                  <span class="text-gray-600 font-semibold text-sm">{{
+                    tIdx + 1
+                  }}</span>
+                </div>
+                <label class="block text-gray-700 text-sm font-medium">
+                  Question {{ tIdx + 1 }}
+                </label>
+              </div>
+              <button
+                *ngIf="tempSecurityQuestions.length > 1"
+                class="text-red-500 hover:text-red-700 text-sm flex items-center gap-1.5 px-3 py-1.5 rounded hover:bg-red-50 transition"
+                (click)="removeQuestion(tIdx)"
+                [disabled]="isSavingSecurityQuestions"
+                type="button"
+              >
+                <ion-icon name="trash-outline" class="text-base"></ion-icon>
+                Remove
+              </button>
+            </div>
 
-        <!-- Save Questions Button -->
+            <!-- Question Input -->
+            <div class="mb-3">
+              <input
+                type="text"
+                placeholder="e.g., What was your first pet's name?"
+                [(ngModel)]="qa.question"
+                [disabled]="isSavingSecurityQuestions"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
+                [class.border-red-300]="hasInvalidQuestion(qa)"
+              />
+              <div class="flex justify-between items-center mt-1.5">
+                <span
+                  class="text-xs"
+                  [class.text-red-500]="hasInvalidQuestion(qa)"
+                  [class.text-gray-400]="!hasInvalidQuestion(qa)"
+                >
+                  {{ getQuestionValidationMessage(qa) }}
+                </span>
+                <span class="text-xs text-gray-400">
+                  {{ qa.question?.length || 0 }} chars
+                </span>
+              </div>
+            </div>
+
+            <!-- Answer Input -->
+            <div>
+              <label class="block text-gray-700 text-sm font-medium mb-2">
+                Answer {{ tIdx + 1 }}
+                <span
+                  class="text-gray-400 font-normal text-xs"
+                  *ngIf="!qa.isHashed"
+                >
+                  (will be secured)
+                </span>
+                <span
+                  class="text-blue-500 font-normal text-xs"
+                  *ngIf="qa.isHashed && qa.originalAnswer"
+                >
+                  (leave blank to keep existing answer)
+                </span>
+              </label>
+              <div class="relative">
+                <input
+                  [type]="qa.showAnswer ? 'text' : 'password'"
+                  [placeholder]="
+                    qa.isHashed && qa.originalAnswer
+                      ? 'Enter new answer or leave blank'
+                      : 'Enter your answer'
+                  "
+                  [(ngModel)]="qa.answer"
+                  [disabled]="isSavingSecurityQuestions"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed transition"
+                  [class.border-blue-300]="
+                    qa.isHashed && qa.originalAnswer && !qa.answer
+                  "
+                />
+                <button
+                  type="button"
+                  (click)="toggleEditAnswerVisibility(tIdx)"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-200"
+                  [disabled]="isSavingSecurityQuestions"
+                  [class.text-blue-500]="qa.showAnswer"
+                  [title]="qa.showAnswer ? 'Hide answer' : 'Show answer'"
+                >
+                  <ion-icon
+                    [name]="qa.showAnswer ? 'eye-off-outline' : 'eye-outline'"
+                    class="text-lg"
+                  ></ion-icon>
+                </button>
+              </div>
+              <!-- Reveal existing hashed answer section -->
+              <div
+                *ngIf="
+                  qa.isHashed &&
+                  qa.originalAnswer &&
+                  (qa.answer === '' || qa.masked)
+                "
+                class="mt-2 flex items-center gap-2"
+              >
+                <input
+                  type="password"
+                  placeholder="Enter current answer to reveal"
+                  [(ngModel)]="qa.revealAttempt"
+                  [disabled]="qa.verifyInProgress || isSavingSecurityQuestions"
+                  class="flex-1 border border-gray-300 rounded-lg px-3 py-2 placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  (click)="verifyExistingAnswer(tIdx)"
+                  [disabled]="qa.verifyInProgress || isSavingSecurityQuestions"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm"
+                >
+                  <span *ngIf="!qa.verifyInProgress">Verify</span>
+                  <span *ngIf="qa.verifyInProgress">Verifying...</span>
+                </button>
+              </div>
+              <div *ngIf="qa.revealed" class="mt-1 text-sm text-green-600">
+                ✅ Answer verified and revealed for editing
+              </div>
+              <div class="flex justify-between items-center mt-1.5">
+                <span
+                  class="text-xs"
+                  [class.text-red-500]="hasInvalidAnswer(qa)"
+                  [class.text-gray-400]="!hasInvalidAnswer(qa)"
+                >
+                  {{ getAnswerValidationMessage(qa) }}
+                </span>
+                <span class="text-xs text-gray-400">
+                  {{ qa.answer?.length || 0 }} chars
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add New Question Button -->
         <button
-          class="bg-[#101828] rounded-lg w-full py-3 text-white font-medium cursor-pointer mt-4 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          (click)="saveSecurityQuestions()"
-          [disabled]="!canSaveSecurityQuestions() || isLoadingSecurityQuestions"
+          class="bg-gray-100 hover:bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-sm font-medium w-full cursor-pointer flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="addNewQuestion()"
+          [disabled]="
+            tempSecurityQuestions.length >= maxSecurityQuestions ||
+            isSavingSecurityQuestions
+          "
+          type="button"
         >
-          <ion-icon
-            name="save-outline"
-            *ngIf="!isLoadingSecurityQuestions"
-          ></ion-icon>
-          <span *ngIf="isLoadingSecurityQuestions">Saving...</span>
-          <span *ngIf="!isLoadingSecurityQuestions">
-            {{ securityQuestions.length > 0 ? "Update" : "Save" }} Security
-            Questions
+          <ion-icon name="add-circle-outline" class="text-lg"></ion-icon>
+          Add Another Question
+          <span class="text-xs text-gray-500 ml-1">
+            ({{ tempSecurityQuestions.length }}/{{ maxSecurityQuestions }})
           </span>
         </button>
+
+        <!-- Action buttons -->
+        <div
+          class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200"
+        >
+          <button
+            class="bg-[#101828] hover:bg-[#0d141f] rounded-lg flex-1 py-3 text-white font-medium cursor-pointer flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            (click)="saveSecurityQuestions()"
+            [disabled]="
+              !canSaveSecurityQuestions() || isSavingSecurityQuestions
+            "
+            type="button"
+          >
+            <ion-icon
+              name="save-outline"
+              *ngIf="!isSavingSecurityQuestions"
+            ></ion-icon>
+            <span>{{
+              isSavingSecurityQuestions ? "Saving..." : "Save All Questions"
+            }}</span>
+          </button>
+
+          <button
+            class="bg-transparent border border-gray-300 hover:bg-gray-50 rounded-lg flex-1 py-3 text-gray-600 font-medium cursor-pointer transition-colors"
+            (click)="cancelEditSecurityQuestions()"
+            [disabled]="isSavingSecurityQuestions"
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   </div>

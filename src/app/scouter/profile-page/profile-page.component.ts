@@ -1,3 +1,4 @@
+// src/app/scouter/pages/profile-page/profile-page.component.ts
 import {
   Component,
   OnInit,
@@ -5,10 +6,12 @@ import {
   ElementRef,
   OnDestroy,
   ChangeDetectorRef,
+  NgZone,
 } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { IonContent, ModalController } from '@ionic/angular';
+import { HttpClient } from '@angular/common/http';
 import { UpdateProfileConfirmationPopupModalComponent } from 'src/app/utilities/modals/update-profile-confirmation-popup-modal/update-profile-confirmation-popup-modal.component';
 import { UserService } from 'src/app/services/user.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
@@ -16,11 +19,24 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { Subject, Subscription } from 'rxjs';
 import * as bcrypt from 'bcryptjs';
-import { filter, takeUntil } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
+import { switchMap } from 'rxjs/operators';
+import { endpoints } from 'src/app/models/endpoint';
 
 interface SecurityQuestion {
+  id?: string;
   question: string;
   answer: string;
+  isHashed?: boolean;
+  showAnswer?: boolean;
+  originalAnswer?: string; // Store the original answer
+  // For edit/reveal flow
+  revealAttempt?: string;
+  revealed?: boolean;
+  verifyInProgress?: boolean;
+  masked?: boolean;
+  createdAt?: string;
 }
 
 @Component({
@@ -38,7 +54,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   @ViewChild('securityQuestionsSection', { read: ElementRef })
   securityQuestionsSection!: ElementRef;
 
-  // Component State - SIMPLIFIED like working component
+  // Component State
   isEditingSecurityQuestions = false;
   tempSecurityQuestions: SecurityQuestion[] = [{ question: '', answer: '' }];
   currentYear: number = new Date().getFullYear();
@@ -46,9 +62,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   profileImage: string | null = null;
   selectedFile: File | null = null;
-  scouterId: string = ''; // CHANGED: Use string like working component
-  isEditing = false; // CHANGED: Default to false (view mode)
-  saveButtonText = 'Update Profile'; // CHANGED: Default to Update
+  scouterId: string = '';
+  isEditing = false;
+  saveButtonText = 'Update Profile';
   hasExistingProfilePicture = false;
   isLoadingSecurityQuestions = false;
   editingQuestionIndex: number | null = null;
@@ -59,7 +75,20 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   isLoadingProfile = false;
   isSavingProfile = false;
 
-  // Profile Data - SIMPLIFIED like working component
+  maxSecurityQuestions = 5;
+  securityQuestionCount = 0;
+  isSavingSecurityQuestions = false;
+  isDeletingQuestion = false;
+  securityQuestionErrorMessage = '';
+
+  // Track subscriptions for cleanup
+  private subscriptions: Subscription[] = [];
+
+  // Mask displayed for existing hashed answers in inputs
+  private readonly ANSWER_MASK = '••••••••';
+  private destroy$ = new Subject<void>();
+
+  // Profile Data
   profileData = {
     fullName: '',
     phoneNumber: '',
@@ -71,8 +100,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     profileImage: '',
   };
 
-  private destroy$ = new Subject<void>();
-
   constructor(
     private router: Router,
     private location: Location,
@@ -81,172 +108,343 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     public userService: UserService,
     private endpointService: ScouterEndpointsService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
-    // Simple debug first
-    this.simpleDebug();
+    console.log('🚀 ProfilePageComponent Initializing');
 
-    // Get scouterId FIRST like working component
-    this.initializeScouterId();
+    // Run initialization inside Angular zone
+    this.ngZone.run(() => {
+      this.initializeScouterId();
 
-    // Debug profile picture state
-    this.debugProfilePicture();
+      if (this.scouterId) {
+        this.loadDataWithTracking();
+      } else {
+        console.error('❌ No scouterId found, cannot load data');
+        this.isLoadingProfile = false;
+        this.cdr.detectChanges();
+      }
 
-    // Load data immediately after getting scouterId
-    this.loadInitialData();
+      // Subscribe to profile data updates
+      const profileSub = this.userService.profileData$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((profile) => {
+          if (profile) {
+            this.bindUserProfile(profile);
+          }
+        });
 
-    // Subscribe to profile data updates
-    this.userService.profileData$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((profile) => {
-        if (profile) {
-          this.bindUserProfile(profile);
-        }
-      });
-  }
+      this.subscriptions.push(profileSub);
 
-  // Add this method to debug the actual backend response
-  private debugBackendResponse(apiResponse: any): void {
-    // console.log('🔍 DEBUG BACKEND RESPONSE STRUCTURE:');
-    // console.log('Full response:', apiResponse);
-    // console.log('Response keys:', Object.keys(apiResponse || {}));
-    // console.log('Has data:', !!apiResponse?.data);
-    // console.log('Has details:', !!apiResponse?.details);
-    // console.log('Has organizationType:', !!apiResponse?.organizationType);
-    // console.log('organizationType value:', apiResponse?.organizationType);
-    // console.log('organizationType type:', typeof apiResponse?.organizationType);
-    //
-    // if (apiResponse?.data) {
-    //   console.log('Data keys:', Object.keys(apiResponse.data));
-    //   console.log('Data organizationType:', apiResponse.data?.organizationType);
-    // }
-    //
-    // if (apiResponse?.details) {
-    //   console.log('Details keys:', Object.keys(apiResponse.details));
-    //   console.log(
-    //     'Details organizationType:',
-    //     apiResponse.details?.organizationType
-    //   );
-    // }
-  }
-
-  // Add this method to debug current form state
-  debugFormState(): void {
-    // console.log('🐛 CURRENT FORM STATE:');
-    // console.log('profileData:', this.profileData);
-    // console.log('selectedOrgTypes:', this.selectedOrgTypes);
-    // console.log('isEditing:', this.isEditing);
-    // console.log('isSavingProfile:', this.isSavingProfile);
-
-    // Check if form fields have the right values
-    const formFields = [
-      'fullName',
-      'phoneNumber',
-      'email',
-      'location',
-      'scoutingPurpose',
-      'payRange',
-      'organizationTypes',
-    ];
-
-    formFields.forEach((field) => {
-      // console.log(
-      //   `📝 ${field}:`,
-      //   this.profileData[field as keyof typeof this.profileData]
-      // );
+      // Test network connectivity after initialization
+      setTimeout(() => {
+        this.testNetworkConnectivity();
+      }, 1000);
     });
   }
 
-  // Debug profile picture state
-  private debugProfilePicture(): void {
-    // console.log('🐛 PROFILE PICTURE DEBUG:');
+  private loadDataWithTracking(): void {
+    console.log('📊 Loading data with tracking for scouterId:', this.scouterId);
 
-    // Check localStorage
-    const cachedImage = localStorage.getItem('profile_image');
-    // console.log('📦 Cached image in localStorage:', !!cachedImage);
-    if (cachedImage) {
-      // console.log('📦 Cached image length:', cachedImage.length);
-      // console.log(
-      //   '📦 Cached image starts with:',
-      //   cachedImage.substring(0, 50) + '...'
-      // );
-    }
+    this.isLoadingProfile = true;
+    this.cdr.detectChanges();
 
-    // Check current state
-    // console.log('🖼️ Current profileImage:', !!this.profileImage);
-    // console.log(
-    //   '📸 hasExistingProfilePicture:',
-    //   this.hasExistingProfilePicture
-    // );
-    //console.log('🆔 scouterId:', this.scouterId);
+    // Clear any existing subscriptions
+    this.clearSubscriptions();
 
-    // Check UserService state
-    // console.log(
-    //   '👤 UserService profile image:',
-    //   !!this.userService.getProfileImage()
-    // );
+    // Set a timeout for the entire loading process
+    const loadingTimeout = setTimeout(() => {
+      console.log('⏰ Profile loading timed out');
+      this.handleNetworkError();
+    }, 30000); // 30 second timeout
+
+    // Load profile data
+    const profileSub = this.endpointService
+      .fetchScouterProfile(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          clearTimeout(loadingTimeout);
+          console.log('✅ Profile data received');
+          this.handleProfileResponse(res);
+          this.isLoadingProfile = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          clearTimeout(loadingTimeout);
+          console.error('❌ Profile data error:', err);
+
+          // Check if it's a timeout or network error
+          if (err.message?.includes('Timeout') || err.name === 'TimeoutError') {
+            this.handleNetworkError();
+          } else {
+            this.handleProfileError(err);
+            this.isLoadingProfile = false;
+          }
+          this.cdr.detectChanges();
+        },
+      });
+
+    // Load profile picture
+    const pictureSub = this.loadProfilePicture();
+
+    // Load security questions WITH ANSWERS
+    setTimeout(() => {
+      this.loadSecurityQuestionsWithAnswers();
+    }, 2000);
+
+    // Store subscriptions
+    this.subscriptions.push(profileSub, pictureSub);
+
+    console.log(`📊 Started ${this.subscriptions.length} data loads`);
   }
 
-  // Simple debug without JSON parsing issues
-  private simpleDebug(): void {
-    //console.log('🔍 SIMPLE AUTH DEBUG:');
+  /**
+   * Use the FULL scouter ID as-is
+   * The backend expects: "scouter/5042/28September2025"
+   */
+  private getCleanScouterId(scouterId: string): string {
+    if (!scouterId) return '';
 
-    // Check user_data only
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        // console.log('💾 user_data found:', {
-        //   email: parsed?.email,
-        //   'details.email': parsed?.details?.email,
-        //   'details.user.email': parsed?.details?.user?.email,
-        //   'details.session.email': parsed?.details?.session?.email,
-        // });
-      } catch (e) {
-        console.log('💾 user_data (raw):', userData);
-      }
-    } else {
-      console.log('💾 user_data: Not found');
+    console.log('🔧 Getting scouter ID for API:', scouterId);
+
+    // Return the FULL scouter ID as-is
+    return scouterId.trim();
+  }
+
+  // ==================== DEBUG & DIAGNOSTIC METHODS ====================
+
+  runDebug(): void {
+    console.clear();
+    console.group('🐛 PROFILE PAGE DEBUG');
+
+    console.log('1️⃣ COMPONENT STATE:');
+    console.log('- scouterId:', this.scouterId);
+    console.log('- isEditing:', this.isEditing);
+    console.log('- isLoadingProfile:', this.isLoadingProfile);
+    console.log('- hasExistingProfilePicture:', this.hasExistingProfilePicture);
+    console.log('- profileData:', this.profileData);
+    console.log('- selectedOrgTypes:', this.selectedOrgTypes);
+
+    console.log('2️⃣ AUTHENTICATION STATE:');
+    console.log('- Token exists:', !!localStorage.getItem('access_token'));
+    console.log('- User data exists:', !!localStorage.getItem('user_data'));
+
+    console.log('3️⃣ NETWORK STATE:');
+    console.log('- Backend URL:', environment.baseUrl);
+    console.log('- Online status:', navigator.onLine);
+
+    console.log('4️⃣ TEST REQUESTS:');
+    this.testNetworkConnectivity();
+
+    console.groupEnd();
+  }
+
+  private testNetworkConnectivity(): void {
+    console.log('🧪 Testing network connectivity...');
+
+    // Test 1: Simple fetch to verify network
+    fetch('https://httpbin.org/get')
+      .then(() => console.log('✅ Internet connectivity: OK'))
+      .catch(() => console.log('❌ Internet connectivity: FAILED'));
+
+    // Test 2: Test backend endpoint directly
+    this.testBackendDirectly();
+  }
+
+  private testBackendDirectly(): void {
+    const token = localStorage.getItem('access_token');
+    const testUrl = `${environment.baseUrl}/health`;
+
+    if (!token) {
+      console.log('❌ No token for backend test');
+      return;
     }
 
-    // Check auth service
+    console.log('🔗 Testing backend:', testUrl);
+
+    fetch(testUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (response) => {
+        console.log(
+          `🔗 Backend response: ${response.status} ${response.statusText}`
+        );
+        const text = await response.text();
+        console.log('🔗 Response:', text.substring(0, 200));
+      })
+      .catch((error) => {
+        console.error('🔗 Backend test failed:', error);
+      });
+  }
+
+  // ==================== CORE INITIALIZATION ====================
+
+  private initializeScouterId(): void {
+    console.log('🆔 Initializing scouterId...');
+
     const userDetails = this.authService.decodeScouterDetails();
-    // console.log('🔐 Auth Service:', {
-    //   email: userDetails?.email,
-    //   'details.email': userDetails?.details?.email,
-    //   'details.user.email': userDetails?.details?.user?.email,
-    //   'details.session.email': userDetails?.details?.session?.email,
-    // });
+    this.scouterId =
+      userDetails?.details?.user?.scouterId || userDetails?.scouterId || '';
 
-    // Check registration email
-    const regEmail = localStorage.getItem('registration_email');
-    console.log('📧 Registration email:', regEmail);
+    console.log('✅ ScouterId initialized:', {
+      scouterId: this.scouterId,
+      cleanScouterId: this.getCleanScouterId(this.scouterId),
+      hasSlash: this.scouterId.includes('/'),
+      hasEncodedSlash: this.scouterId.includes('%2F'),
+    });
+
+    if (!this.scouterId) {
+      console.error('❌ No scouterId found in auth service');
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          this.scouterId =
+            parsed?.scouterId || parsed?.details?.user?.scouterId || '';
+          console.log('🔄 Found scouterId in localStorage:', this.scouterId);
+        } catch (e) {
+          console.error('❌ Error parsing user_data:', e);
+        }
+      }
+    }
+
+    if (!this.scouterId) {
+      this.toastService.openSnackBar('User not authenticated', 'error');
+      setTimeout(() => this.redirectToLogin(), 1000);
+    }
   }
 
-  // Direct method to get email - no debugging
-  private getEmailDirectly(): string {
-    // 1. Try localStorage user_data first
-    const userDataStr = localStorage.getItem('user_data');
-    if (userDataStr) {
+  private clearSubscriptions(): void {
+    this.subscriptions.forEach((sub) => {
+      if (sub && !sub.closed) {
+        sub.unsubscribe();
+      }
+    });
+    this.subscriptions = [];
+  }
+
+  private handleNetworkError(): void {
+    console.log('🌐 Network error detected, trying offline mode...');
+
+    // Try to load from localStorage
+    const cachedProfile = localStorage.getItem('user_profile_data');
+    const userData = localStorage.getItem('user_data');
+
+    if (cachedProfile || userData) {
+      this.isLoadingProfile = false;
+
+      if (cachedProfile) {
+        try {
+          const profile = JSON.parse(cachedProfile);
+          this.bindUserProfile(profile);
+          console.log('✅ Loaded profile from cache');
+        } catch (e) {
+          console.error('❌ Error parsing cached profile:', e);
+        }
+      }
+
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          this.initializeWithUserProfileData();
+          console.log('✅ Loaded profile from user_data');
+        } catch (e) {
+          console.error('❌ Error parsing user_data:', e);
+        }
+      }
+
+      this.toastService.openSnackBar(
+        'Using cached profile data. Some features may be limited.',
+        'warning'
+      );
+    } else {
+      this.toastService.openSnackBar(
+        'Unable to load profile. Please check your internet connection.',
+        'error'
+      );
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private handleProfileResponse(res: any): void {
+    console.log('📥 Profile response structure:', {
+      hasData: !!res,
+      hasDetails: !!res?.details,
+      hasDataField: !!res?.data,
+      keys: res ? Object.keys(res) : [],
+    });
+
+    const userData = res?.details || res?.data?.details || res?.data || res;
+
+    if (userData) {
+      console.log('✅ Found user data in response');
+
+      // Ensure email is populated
+      if (!userData.email) {
+        userData.email = this.extractEmailFromAllSources();
+        console.log('📧 Injected email:', userData.email);
+      }
+
+      this.bindUserProfile(userData);
+      this.updateEditStateBasedOnProfile(userData);
+    } else {
+      console.warn('⚠️ No user data in response, using local data');
+      this.initializeWithUserProfileData();
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private handleProfileError(err: any): void {
+    console.error('❌ Profile load failed:', {
+      status: err.status,
+      message: err.message,
+      error: err.error,
+    });
+
+    if (err.status === 401) {
+      this.toastService.openSnackBar(
+        'Session expired. Please login again.',
+        'error'
+      );
+      this.redirectToLogin();
+    } else {
+      this.toastService.openSnackBar('Failed to load profile data', 'warning');
+      this.initializeWithUserProfileData();
+    }
+  }
+
+  // ==================== DATA BINDING ====================
+
+  private extractEmailFromAllSources(): string {
+    console.log('🔍 Extracting email from all sources...');
+
+    // 1. localStorage user_data
+    const storedUserData = localStorage.getItem('user_data');
+    if (storedUserData) {
       try {
-        const userData = JSON.parse(userDataStr);
+        const parsed = JSON.parse(storedUserData);
         const email =
-          userData?.email ||
-          userData?.details?.email ||
-          userData?.details?.user?.email ||
-          userData?.details?.session?.email;
+          parsed?.email ||
+          parsed?.details?.email ||
+          parsed?.details?.user?.email ||
+          parsed?.details?.session?.email;
         if (email) {
           console.log('✅ Email found in localStorage:', email);
           return email;
         }
       } catch (e) {
-        console.log('❌ Could not parse user_data');
+        console.error('❌ Error parsing user_data:', e);
       }
     }
 
-    // 2. Try auth service
+    // 2. Auth Service
     const userDetails = this.authService.decodeScouterDetails();
     if (userDetails) {
       const email =
@@ -260,7 +458,14 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 3. Try registration email
+    // 3. Current user
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.email) {
+      console.log('✅ Email found in current user:', currentUser.email);
+      return currentUser.email;
+    }
+
+    // 4. Registration email
     const regEmail = localStorage.getItem('registration_email');
     if (regEmail) {
       console.log('✅ Email found in registration:', regEmail);
@@ -271,257 +476,13 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  // Test the update endpoint
-  testEndpoint(): void {
-    if (!this.scouterId) {
-      console.error('❌ No scouterId for testing');
-      return;
-    }
-
-    const testPayload = {
-      fullName: 'Test User ' + Date.now(),
-      phoneNumber: '08012345678',
-      email: this.profileData.email || 'test@example.com',
-      location: 'Test Location',
-      scoutingPurpose: 'Testing',
-      organizationType: ['TEST'], // send array
-      payRange: '50k',
-    };
-
-    console.log('🧪 TESTING ENDPOINT WITH:', testPayload);
-
-    this.endpointService
-      .updateScouterProfile(this.scouterId, testPayload)
-      .subscribe({
-        next: (res) => {
-          console.log('✅ TEST SUCCESS:', res);
-          this.toastService.openSnackBar(
-            'Endpoint test successful!',
-            'success'
-          );
-        },
-        error: (err) => {
-          console.error('❌ TEST FAILED:', err);
-          this.toastService.openSnackBar(
-            'Endpoint test failed: ' + err.message,
-            'error'
-          );
-        },
-      });
-  }
-
-  // Add this method to test the backend directly
-  testBackendEndpointDirectly(): void {
-    if (!this.scouterId) return;
-
-    const testPayload = {
-      fullName: 'TEST USER ' + Date.now(),
-      phoneNumber: '08000000000',
-      email: this.profileData.email,
-      location: 'Test Location',
-      scoutingPurpose: 'Testing',
-      organizationType: ['TEST'], // send array
-      payRange: '100k',
-    };
-
-    console.log('🧪 DIRECT BACKEND TEST:', testPayload);
-
-    // Use fetch API to see raw response
-    fetch(
-      `https://oniduuru-staging.shoftafrica.com/scouters/v1/edit-scouter-profile/${encodeURIComponent(
-        this.scouterId
-      )}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify(testPayload),
-      }
-    )
-      .then((response) => {
-        console.log('🔍 RAW RESPONSE STATUS:', response.status);
-        console.log('🔍 RAW RESPONSE HEADERS:', response.headers);
-        return response.text(); // Get raw text to see what's actually returned
-      })
-      .then((text) => {
-        console.log('🔍 RAW RESPONSE BODY:', text);
-        try {
-          const json = JSON.parse(text);
-          console.log('🔍 PARSED RESPONSE:', json);
-        } catch (e) {
-          console.log('🔍 RESPONSE IS NOT JSON:', text);
-        }
-      })
-      .catch((error) => {
-        console.error('🔍 FETCH ERROR:', error);
-      });
-  }
-
-  // ==================== CORE METHODS - MATCHING WORKING FLOW ====================
-
-  private initializeScouterId(): void {
-    // MATCHING: Use the same approach as working component
-    const userDetails = this.authService.decodeScouterDetails();
-    this.scouterId =
-      userDetails?.details?.user?.scouterId || userDetails?.scouterId || '';
-
-    console.log('✅ ScouterId initialized:', this.scouterId);
-
-    if (!this.scouterId) {
-      console.error('❌ No scouterId found');
-      this.redirectToLogin();
-      return;
-    }
-  }
-
-  private loadInitialData(): void {
-    if (!this.scouterId) {
-      console.error('❌ Cannot load data: No scouterId');
-      return;
-    }
-
-    this.isLoadingProfile = true;
-
-    // Load all data in parallel like working component
-    this.loadUserProfileData();
-    this.loadProfilePicture();
-    this.loadSecurityQuestions();
-  }
-
-  private loadUserProfileData(): void {
-    this.endpointService.fetchScouterProfile(this.scouterId).subscribe({
-      next: (res: any) => {
-        this.isLoadingProfile = false;
-        console.log('📥 Profile response:', res);
-
-        // MATCHING: Extract data like working component
-        const userData = res?.details || res?.data?.details || res?.data || res;
-
-        if (userData) {
-          // If backend doesn't return email, inject it from auth sources
-          if (!userData.email) {
-            const authEmail = this.extractEmailFromAllSources();
-            userData.email = authEmail;
-            console.log('📧 Injected email from auth sources:', authEmail);
-          }
-
-          this.bindUserProfile(userData);
-          this.updateEditStateBasedOnProfile(userData);
-        } else {
-          this.initializeWithUserProfileData();
-        }
-      },
-      error: (err) => {
-        this.isLoadingProfile = false;
-        console.error('❌ Profile load error:', err);
-        this.initializeWithUserProfileData();
-
-        if (err.status === 401) {
-          this.toastService.openSnackBar(
-            'Session expired. Please login again.',
-            'error'
-          );
-          this.redirectToLogin();
-        }
-      },
-    });
-  }
-
-  // Helper method to extract email from all possible sources
-  private extractEmailFromAllSources(): string {
-    // 1. localStorage user_data
-    const storedUserData = localStorage.getItem('user_data');
-    if (storedUserData) {
-      try {
-        const parsed = JSON.parse(storedUserData);
-        const email =
-          parsed?.email ||
-          parsed?.details?.email ||
-          parsed?.details?.user?.email ||
-          parsed?.details?.session?.email;
-        if (email) return email;
-      } catch (e) {
-        console.error('❌ Error parsing user_data:', e);
-      }
-    }
-
-    // 2. Auth Service
-    const userDetails = this.authService.decodeScouterDetails();
-    if (userDetails) {
-      const email =
-        userDetails?.email ||
-        userDetails?.details?.email ||
-        userDetails?.details?.user?.email ||
-        userDetails?.details?.session?.email;
-      if (email) return email;
-    }
-
-    // 3. User Service
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser?.email) return currentUser.email;
-
-    // 4. Registration email
-    const regEmail = localStorage.getItem('registration_email');
-    if (regEmail) return regEmail;
-
-    return '';
-  }
-
-  // ==================== FIXED EMAIL EXTRACTION ====================
-
-  // Add this method to test email extraction
-  testEmailExtraction(): void {
-    console.log('🧪 TESTING EMAIL EXTRACTION FROM ALL SOURCES:');
-
-    // 1. localStorage user_data
-    const storedUserData = localStorage.getItem('user_data');
-    if (storedUserData) {
-      try {
-        const parsed = JSON.parse(storedUserData);
-        console.log('📧 From localStorage user_data:');
-        console.log('- Direct email:', parsed?.email);
-        console.log('- details.email:', parsed?.details?.email);
-        console.log('- details.user.email:', parsed?.details?.user?.email);
-        console.log(
-          '- details.session.email:',
-          parsed?.details?.session?.email
-        );
-      } catch (e) {
-        console.error('❌ Error parsing user_data:', e);
-      }
-    }
-
-    // 2. Auth Service
-    const userDetails = this.authService.decodeScouterDetails();
-    console.log('📧 From Auth Service:');
-    console.log('- Direct email:', userDetails?.email);
-    console.log('- details.email:', userDetails?.details?.email);
-    console.log('- details.user.email:', userDetails?.details?.user?.email);
-    console.log(
-      '- details.session.email:',
-      userDetails?.details?.session?.email
-    );
-
-    // 3. User Service
-    const currentUser = this.authService.getCurrentUser();
-    console.log('📧 From User Service:', currentUser?.email);
-
-    // 4. Registration email
-    const regEmail = localStorage.getItem('registration_email');
-    console.log('📧 Registration email:', regEmail);
-  }
-
-  // MATCHING: Initialize with user profile data like working component
   private initializeWithUserProfileData(): void {
     console.log('🔄 Initializing with user profile data...');
 
-    // Use direct email extraction
-    const email = this.getEmailDirectly();
-    console.log('📧 FINAL EXTRACTED EMAIL:', email);
+    const email = this.extractEmailFromAllSources();
+    console.log('📧 Extracted email:', email);
 
-    // Try to get user data structure
+    // Get user data from localStorage or auth
     let userData = null;
     const userDataStr = localStorage.getItem('user_data');
     if (userDataStr) {
@@ -532,7 +493,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       }
     }
 
-    // If no userData from localStorage, try auth service
     if (!userData) {
       userData = this.authService.decodeScouterDetails();
     }
@@ -557,30 +517,13 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.bindUserProfile(profile);
   }
 
-  // Add this to your component as a fallback
-  private getEmailFromUserService(): string {
-    const currentUser = this.authService.getCurrentUser();
-    return currentUser?.email || '';
-  }
-
   private bindUserProfile(user: any): void {
-    console.log('🔍 Binding user profile:', user);
+    console.log('🔗 Binding user profile data');
 
-    // Parse organization types exactly like working component
+    // Parse organization types
     const orgTypes = this.parseOrganizationTypes(user.organizationType);
 
-    // Extract email from multiple possible locations
-    const email =
-      user?.email ||
-      user?.details?.email ||
-      user?.details?.session?.email ||
-      user?.details?.user?.email ||
-      this.getEmailFromUserService() ||
-      '';
-
-    console.log('📧 FINAL Email extraction:', email);
-
-    // CRITICAL FIX: Update ALL profile data fields, not just some
+    // CRITICAL: Update ALL profile data fields
     this.profileData = {
       fullName:
         user.fullName ||
@@ -590,7 +533,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         user.phoneNumber ||
         user.details?.user?.phoneNumber ||
         this.profileData.phoneNumber,
-      email: email || this.profileData.email,
+      email: user.email || this.profileData.email,
       location:
         user.location ||
         user.details?.user?.location ||
@@ -611,25 +554,20 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         this.profileData.profileImage,
     };
 
-    // Update selectedOrgTypes only if we have valid new data
+    // Update selectedOrgTypes
     if (orgTypes.length > 0) {
       this.selectedOrgTypes = [...orgTypes];
     }
 
     console.log('✅ Profile data bound:', this.profileData);
-    console.log('✅ Selected org types:', this.selectedOrgTypes);
     this.cdr.detectChanges();
   }
 
   private parseOrganizationTypes(orgType: any): string[] {
-    console.log('🔍 PARSING ORGANIZATION TYPES - RAW INPUT:', orgType);
-
     if (!orgType) return [];
 
     try {
-      // If it's a string that looks like JSON, parse it
       if (typeof orgType === 'string') {
-        // Remove any extra quotes or escaping
         const cleanString = orgType.replace(/\\"/g, '"');
 
         if (
@@ -644,7 +582,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           }
         }
 
-        // Handle comma-separated string
         if (cleanString.includes(',')) {
           return cleanString
             .split(',')
@@ -652,11 +589,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
             .filter((item) => item !== '');
         }
 
-        // Single value
         return cleanString.trim() ? [cleanString.trim()] : [];
       }
 
-      // If it's already an array
       if (Array.isArray(orgType)) {
         return orgType.filter(
           (item) => item && typeof item === 'string' && item.trim() !== ''
@@ -669,33 +604,29 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     return [];
   }
 
-  private tryDecodeString(str: string): string {
-    try {
-      // Try URL decoding first
-      return decodeURIComponent(escape(atob(str)));
-    } catch {
-      return str;
-    }
-  }
-
   private updateEditStateBasedOnProfile(profile: any): void {
-    // MATCHING: Determine edit state based on profile completeness
     const hasCompleteProfile =
       profile.fullName && profile.phoneNumber && profile.email;
 
-    // Default to view mode if profile is complete, edit mode if incomplete
     this.isEditing = !hasCompleteProfile;
     this.saveButtonText = this.isEditing ? 'Save Profile' : 'Update Profile';
 
-    console.log('🔄 Edit state:', {
+    console.log('🔄 Edit state updated:', {
       isEditing: this.isEditing,
       hasCompleteProfile,
+      fullName: !!profile.fullName,
+      phoneNumber: !!profile.phoneNumber,
+      email: !!profile.email,
     });
+
+    this.cdr.detectChanges();
   }
 
-  // ==================== PROFILE OPERATIONS - MATCHING WORKING FLOW ====================
+  // ==================== PROFILE OPERATIONS ====================
 
   public saveProfile(): void {
+    console.log('💾 Starting profile save...');
+
     if (!this.scouterId) {
       this.toastService.openSnackBar('User not authenticated', 'error');
       return;
@@ -709,10 +640,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     this.isSavingProfile = true;
     this.saveButtonText = 'Saving...';
+    this.cdr.detectChanges();
 
-    // FIX: Ensure organizationType is sent as an array (backend expects an array)
-    console.log('📦 Organization Types to send:', this.selectedOrgTypes);
-
+    // Prepare payload
     const payload = {
       fullName: this.profileData.fullName.trim(),
       phoneNumber: this.profileData.phoneNumber.trim(),
@@ -720,85 +650,113 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       location: this.profileData.location?.trim() || '',
       scoutingPurpose: this.profileData.scoutingPurpose?.trim() || '',
       payRange: this.profileData.payRange?.trim() || '',
-      organizationType: this.selectedOrgTypes || [], // Send real array; backend expects array
+      organizationType:
+        Array.isArray(this.selectedOrgTypes) && this.selectedOrgTypes.length > 0
+          ? this.selectedOrgTypes
+          : [],
     };
 
-    console.log('🚀 FINAL UPDATE PAYLOAD:', payload);
+    console.log('🚀 Sending update payload:', payload);
+    console.log('🔗 Scouter ID:', this.scouterId);
+    console.log('🔑 Token available:', !!localStorage.getItem('access_token'));
 
-    console.log('🔍 FORM STATE BEFORE SAVE:');
-    this.debugFormState();
+    // Test the endpoint first
+    this.debugEndpointWithFetch(payload);
 
-    this.endpointService
+    const saveSub = this.endpointService
       .updateScouterProfile(this.scouterId, payload)
       .subscribe({
         next: (res: any) => {
-          console.log('✅ BACKEND RESPONSE:', res);
+          console.log('✅ Save response received:', res);
           this.handleSuccessfulSave(payload, res);
-
-          console.log('🔍 FORM STATE AFTER SAVE:');
-          this.debugFormState();
-
-          // Verify the update worked
-          setTimeout(() => {
-            this.verifyBackendUpdate();
-          }, 1000);
+          this.toastService.openSnackBar(
+            'Profile updated successfully!',
+            'success'
+          );
+          this.cdr.detectChanges();
         },
         error: (err: any) => {
-          console.error('❌ SAVE ERROR:', err);
+          console.error('❌ Save error:', {
+            name: err.name,
+            message: err.message,
+            status: err.status,
+            error: err.error,
+          });
+
           this.isSavingProfile = false;
           this.saveButtonText = this.isEditing
             ? 'Save Profile'
             : 'Update Profile';
 
-          let errorMessage = 'Failed to save profile';
-          if (err?.error?.message) errorMessage = err.error.message;
-          else if (err?.message) errorMessage = err.message;
+          if (
+            err.message?.includes('timed out') ||
+            err.name === 'TimeoutError'
+          ) {
+            this.toastService.openSnackBar(
+              'Request timed out. Please try again.',
+              'warning'
+            );
+          } else {
+            this.toastService.openSnackBar(
+              err.message || 'Failed to save profile',
+              'error'
+            );
+          }
 
-          this.toastService.openSnackBar(errorMessage, 'error');
           this.cdr.detectChanges();
         },
+        complete: () => {
+          console.log('✅ Save request completed');
+        },
+      });
+
+    this.subscriptions.push(saveSub);
+  }
+
+  private debugEndpointWithFetch(payload: any): void {
+    console.log('🧪 Debugging endpoint with fetch...');
+
+    const token = localStorage.getItem('access_token');
+    const url = `${environment.baseUrl}/scouters/v1/edit-scouter-profile/${this.scouterId}`;
+
+    console.log('🔗 Fetch URL:', url);
+
+    fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(async (response) => {
+        console.log('🔗 Fetch response status:', response.status);
+        console.log('🔗 Fetch response headers:');
+        const headersObj: { [key: string]: string } = {};
+        response.headers.forEach((value, key) => {
+          headersObj[key] = value;
+        });
+        console.log(headersObj);
+
+        const text = await response.text();
+        console.log('🔗 Fetch response body:', text);
+
+        try {
+          const json = JSON.parse(text);
+          console.log('🔗 Parsed JSON:', json);
+        } catch (e) {
+          console.log('🔗 Response is not JSON');
+        }
+      })
+      .catch((error) => {
+        console.error('🔗 Fetch error:', error);
       });
   }
 
-  // Debug method for save state
-  debugSaveState(): void {
-    console.log('🐛 SAVE STATE DEBUG:');
-    console.log('- selectedOrgTypes:', this.selectedOrgTypes);
-    console.log(
-      '- profileData.organizationTypes:',
-      this.profileData.organizationTypes
-    );
-    console.log('- isSavingProfile:', this.isSavingProfile);
-    console.log('- isEditing:', this.isEditing);
-    console.log('- scouterId:', this.scouterId);
-
-    const savedData = localStorage.getItem('user_profile_data');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        console.log(
-          '- localStorage organizationTypes:',
-          parsed.organizationTypes
-        );
-      } catch (e) {
-        console.error('Error parsing saved data:', e);
-      }
-    }
-  }
-
-  // Force refresh method
-  forceRefresh(): void {
-    console.log('🔄 Forcing data refresh...');
-    this.loadUserProfileData();
-  }
-
   private handleSuccessfulSave(savedPayload: any, apiResponse: any): void {
-    console.log('🎯 HANDLING SUCCESSFUL SAVE');
+    console.log('🎯 Handling successful save');
 
-    // DEBUG: See what the backend actually returned
-    this.debugBackendResponse(apiResponse);
-
-    // CRITICAL FIX: Always preserve the organization types we just sent
+    // Preserve organization types
     const preservedOrganizationTypes = this.selectedOrgTypes;
 
     let updatedProfile;
@@ -807,11 +765,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       apiResponse &&
       (apiResponse.data || apiResponse.details || apiResponse.success)
     ) {
-      // Use the data from backend response
       const responseData =
         apiResponse.data || apiResponse.details || apiResponse;
-
-      // Parse organization types from response, but fallback to what we sent
       const responseOrgTypes = this.parseOrganizationTypes(
         responseData.organizationType
       );
@@ -820,9 +775,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           ? responseOrgTypes
           : preservedOrganizationTypes;
 
-      // CRITICAL FIX: Properly merge ALL data including organization types
       updatedProfile = {
-        ...this.profileData, // Keep existing profile data
+        ...this.profileData,
         fullName:
           responseData.fullName ||
           savedPayload.fullName ||
@@ -845,24 +799,17 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           responseData.payRange ||
           savedPayload.payRange ||
           this.profileData.payRange,
-        organizationTypes: finalOrgTypes, // USE THE PRESERVED TYPES
-        profileImage: this.profileData.profileImage, // Preserve profile image
+        organizationTypes: finalOrgTypes,
+        profileImage: this.profileData.profileImage,
         scouterId: this.scouterId,
       };
     } else {
-      // Fallback to payload data if no response, but PRESERVE ALL DATA
-      console.warn(
-        '⚠️ No response data from backend, using local data with preserved org types'
-      );
       updatedProfile = {
-        ...this.profileData, // Keep ALL existing profile data
-        ...savedPayload, // Add the saved payload
-        organizationTypes: preservedOrganizationTypes, // CRITICAL: Use the types we just sent
+        ...this.profileData,
+        ...savedPayload,
+        organizationTypes: preservedOrganizationTypes,
       };
     }
-
-    console.log('✅ UPDATED PROFILE DATA FROM BACKEND:', updatedProfile);
-    console.log('✅ PRESERVED ORGANIZATION TYPES:', preservedOrganizationTypes);
 
     // Update services
     this.userService.updateFullProfile(updatedProfile);
@@ -871,47 +818,21 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // Cache the updated profile data
     this.cacheProfileData(updatedProfile);
 
-    // CRITICAL FIX: Update ALL local state including form fields
+    // Update local state
     this.profileData = { ...updatedProfile };
-    this.selectedOrgTypes = [...preservedOrganizationTypes]; // Ensure UI reflects the saved types
+    this.selectedOrgTypes = [...preservedOrganizationTypes];
 
     // Switch to view mode
     this.isEditing = false;
     this.saveButtonText = 'Update Profile';
     this.isSavingProfile = false;
 
-    this.toastService.openSnackBar('Profile updated successfully!', 'success');
-    this.cdr.detectChanges();
-
-    // Force reload from backend to ensure sync
+    // Reload data from backend
     setTimeout(() => {
-      this.loadUserProfileData();
+      this.loadDataWithTracking();
     }, 1000);
-  }
 
-  // Add this method to your component
-  verifyBackendUpdate(): void {
-    if (!this.scouterId) return;
-
-    console.log('🔍 VERIFYING BACKEND STATE');
-
-    // Fetch fresh data from backend to see current state
-    this.endpointService.fetchScouterProfile(this.scouterId).subscribe({
-      next: (currentData: any) => {
-        console.log('📊 CURRENT BACKEND DATA:', currentData);
-        console.log('📊 CURRENT LOCAL DATA:', this.profileData);
-
-        const backendOrgTypes = this.parseOrganizationTypes(
-          currentData?.organizationType
-        );
-        console.log('🔄 ORGANIZATION TYPES COMPARISON:');
-        console.log(' - Backend:', backendOrgTypes);
-        console.log(' - Local:', this.selectedOrgTypes);
-      },
-      error: (err) => {
-        console.error('❌ Failed to verify backend state:', err);
-      },
-    });
+    this.cdr.detectChanges();
   }
 
   private cacheProfileData(profileData: any): void {
@@ -923,13 +844,82 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ==================== PROFILE PICTURE OPERATIONS - MATCHING WORKING FLOW ====================
+  private validateProfileData(): { isValid: boolean; message?: string } {
+    if (!this.profileData.fullName?.trim()) {
+      return { isValid: false, message: 'Full name is required' };
+    }
+    if (!this.profileData.phoneNumber?.trim()) {
+      return { isValid: false, message: 'Phone number is required' };
+    }
+    if (!this.profileData.email?.trim()) {
+      return { isValid: false, message: 'Email is required' };
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.profileData.email.trim())) {
+      return { isValid: false, message: 'Please enter a valid email address' };
+    }
+    return { isValid: true };
+  }
+
+  // ==================== PROFILE PICTURE OPERATIONS ====================
+
+  private loadProfilePicture(): Subscription {
+    console.log('📷 Loading profile picture for scouterId:', this.scouterId);
+
+    const cachedImage = localStorage.getItem('profile_image');
+    if (cachedImage && this.isValidImageData(cachedImage)) {
+      console.log('✅ Using cached profile image');
+      this.profileImage = cachedImage;
+      this.hasExistingProfilePicture = true;
+      this.userService.setProfileImage(cachedImage);
+      this.cdr.detectChanges();
+
+      // Still fetch fresh from backend
+      return new Subscription(); // Return empty subscription
+    }
+
+    return this.endpointService.getScouterPicture(this.scouterId).subscribe({
+      next: (res: any) => {
+        console.log('📷 Profile picture API response:', res);
+
+        if (res?.data?.base64Picture) {
+          const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
+          this.applyProfilePicture(base64Image);
+        } else if (res?.base64Picture) {
+          const base64Image = `data:image/jpeg;base64,${res.base64Picture}`;
+          this.applyProfilePicture(base64Image);
+        } else {
+          console.log('📷 No usable profile picture data');
+          this.setDefaultAvatar();
+        }
+      },
+      error: (err) => {
+        console.log('📷 Profile picture load error:', err);
+        this.setDefaultAvatar();
+      },
+    });
+  }
+
+  private applyProfilePicture(imageData: string): void {
+    this.profileImage = imageData;
+    this.hasExistingProfilePicture = true;
+    this.userService.setProfileImage(imageData);
+    this.storeProfileImage(imageData);
+    this.cdr.detectChanges();
+    console.log('✅ Profile picture applied');
+  }
+
+  private isValidImageData(data: string): boolean {
+    if (!data) return false;
+    if (data.startsWith('data:image/')) return true;
+    if (data.startsWith('http')) return true;
+    return false;
+  }
 
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
 
-    // MATCHING: Validate file type like working component
     const fileType = file.type.split('/')[1];
     if (!['jpeg', 'png'].includes(fileType)) {
       this.toastService.openSnackBar(
@@ -964,161 +954,49 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
   }
 
+  private setProfilePicture(imageData: string): void {
+    if (imageData.startsWith('data:image/')) {
+      this.profileImage = imageData;
+    } else {
+      this.profileImage = `data:image/jpeg;base64,${imageData}`;
+    }
+
+    this.profileData.profileImage = this.profileImage;
+    this.hasExistingProfilePicture = true;
+    this.userService.setProfileImage(this.profileImage);
+    this.cdr.detectChanges();
+    console.log('✅ Profile picture set');
+  }
+
   private uploadProfilePicture(file: File): void {
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const fullDataUrl = e.target.result as string;
-      const base64Image = fullDataUrl.split(',')[1]; // Get base64 string only
+      const base64Image = fullDataUrl.split(',')[1];
       const payload = {
         scouterId: this.scouterId,
         base64Picture: base64Image,
       };
 
-      console.log(
-        '📷 Starting profile picture flow. scouterId:',
-        this.scouterId
-      );
+      console.log('📷 Starting profile picture upload');
 
-      // First check if backend already has a picture for this scouter to avoid
-      // sending a create request that the server rejects when a picture exists.
-      this.endpointService.getScouterPicture(this.scouterId).subscribe({
-        next: (existing: any) => {
-          const exists =
-            !!existing &&
-            (existing?.data?.base64Picture ||
-              existing?.base64Picture ||
-              typeof existing === 'string');
-          console.log('📷 Backend picture exists:', exists);
-
-          if (exists) {
-            console.log(
-              '📷 Replacing existing profile picture via replace endpoint'
+      const uploadSub = this.endpointService
+        .uploadScouterPicture(payload)
+        .subscribe({
+          next: (res: any) => {
+            console.log('✅ Profile picture uploaded:', res);
+            this.handleSuccessfulUpload(fullDataUrl);
+          },
+          error: (err) => {
+            console.error('❌ Upload failed:', err);
+            this.toastService.openSnackBar(
+              'Failed to upload profile picture',
+              'error'
             );
-            this.endpointService.replaceScouterPicture(payload).subscribe({
-              next: (res: any) => {
-                console.log('✅ Profile picture replaced successfully:', res);
-                this.handleSuccessfulUpload(fullDataUrl); // Pass the full data URL
-              },
-              error: (err) => {
-                console.error('❌ Replace picture failed:', err);
-                this.toastService.openSnackBar(
-                  'Failed to update profile picture',
-                  'error'
-                );
-                // Still show the image locally even if upload fails
-                this.setProfilePicture(fullDataUrl);
-              },
-            });
-          } else {
-            console.log(
-              '📷 Uploading new profile picture (no existing picture)'
-            );
-            console.log(
-              '📷 Upload payload size:',
-              payload.base64Picture?.length
-            );
-            console.log(
-              '📷 Upload payload preview:',
-              payload.base64Picture
-                ? payload.base64Picture.substring(0, 60) + '...'
-                : 'n/a'
-            );
+          },
+        });
 
-            this.endpointService.uploadScouterPicture(payload).subscribe({
-              next: (res: any) => {
-                console.log('✅ Profile picture uploaded successfully:', res);
-                this.handleSuccessfulUpload(fullDataUrl); // Pass the full data URL
-              },
-              error: (err) => {
-                console.error('❌ Upload picture failed:', err);
-
-                // If the server says you can only replace an existing picture, try replace endpoint
-                const serverMessage = err?.error?.message || err?.message || '';
-                if (
-                  typeof serverMessage === 'string' &&
-                  serverMessage.toLowerCase().includes('replace')
-                ) {
-                  console.log(
-                    '🔁 Server requires replace - attempting replace call'
-                  );
-                  this.endpointService
-                    .replaceScouterPicture(payload)
-                    .subscribe({
-                      next: (res2: any) => {
-                        console.log(
-                          '✅ Replace after upload fallback succeeded:',
-                          res2
-                        );
-                        this.handleSuccessfulUpload(fullDataUrl);
-                      },
-                      error: (err2) => {
-                        console.error('❌ Replace fallback failed:', err2);
-                        this.toastService.openSnackBar(
-                          'Failed to upload profile picture',
-                          'error'
-                        );
-                        this.setProfilePicture(fullDataUrl);
-                      },
-                    });
-                  return;
-                }
-
-                this.toastService.openSnackBar(
-                  'Failed to upload profile picture',
-                  'error'
-                );
-                // Still show the image locally even if upload fails
-                this.setProfilePicture(fullDataUrl);
-              },
-            });
-          }
-        },
-        error: (err) => {
-          console.warn(
-            '⚠️ Could not determine existing picture state, proceeding to upload:',
-            err
-          );
-          // If we cannot determine, attempt upload then fallback to replace
-          this.endpointService.uploadScouterPicture(payload).subscribe({
-            next: (res: any) => {
-              console.log(
-                '✅ Profile picture uploaded successfully (fallback):',
-                res
-              );
-              this.handleSuccessfulUpload(fullDataUrl);
-            },
-            error: (err2) => {
-              console.error('❌ Upload picture failed (fallback):', err2);
-              const serverMessage = err2?.error?.message || err2?.message || '';
-              if (
-                typeof serverMessage === 'string' &&
-                serverMessage.toLowerCase().includes('replace')
-              ) {
-                this.endpointService.replaceScouterPicture(payload).subscribe({
-                  next: (res3: any) => {
-                    console.log('✅ Replace after fallback succeeded:', res3);
-                    this.handleSuccessfulUpload(fullDataUrl);
-                  },
-                  error: (err3) => {
-                    console.error('❌ Replace fallback failed (final):', err3);
-                    this.toastService.openSnackBar(
-                      'Failed to upload profile picture',
-                      'error'
-                    );
-                    this.setProfilePicture(fullDataUrl);
-                  },
-                });
-                return;
-              }
-              this.toastService.openSnackBar(
-                'Failed to upload profile picture',
-                'error'
-              );
-              this.setProfilePicture(fullDataUrl);
-            },
-          });
-        },
-      });
+      this.subscriptions.push(uploadSub);
     };
     reader.readAsDataURL(file);
   }
@@ -1134,24 +1012,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // Update setProfilePicture to handle both full data URLs and base64 strings
-  private setProfilePicture(imageData: string): void {
-    // Ensure we have the full data URL format
-    if (imageData.startsWith('data:image/')) {
-      this.profileImage = imageData;
-    } else {
-      // If it's just base64, convert to data URL
-      this.profileImage = `data:image/jpeg;base64,${imageData}`;
-    }
-
-    this.profileData.profileImage = this.profileImage;
-    this.hasExistingProfilePicture = true;
-    this.userService.setProfileImage(this.profileImage);
-    this.cdr.detectChanges();
-
-    console.log('✅ Profile picture set successfully');
-  }
-
   removeProfilePicture(): void {
     if (!this.hasExistingProfilePicture) return;
 
@@ -1160,297 +1020,1475 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     );
     if (!confirmDelete) return;
 
-    this.endpointService.removeProfilePicture(this.scouterId).subscribe({
-      next: (res: any) => {
-        // After server reports deletion, verify by attempting to fetch the picture.
-        // Some backends return 200 even when deletion is not fully processed,
-        // so confirm before clearing local cache/UI.
-        this.endpointService.getScouterPicture(this.scouterId).subscribe({
-          next: (check: any) => {
-            const exists =
-              !!check &&
-              (check?.data?.base64Picture ||
-                check?.base64Picture ||
-                typeof check === 'string');
+    const removeSub = this.endpointService
+      .removeProfilePicture(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          this.setDefaultAvatar();
+          localStorage.removeItem('profile_image');
+          this.toastService.openSnackBar('Profile picture removed', 'success');
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('❌ Failed to remove profile picture:', err);
+          this.toastService.openSnackBar(
+            'Failed to remove profile picture',
+            'warning'
+          );
+        },
+      });
 
-            if (!exists) {
-              this.setDefaultAvatar();
-              localStorage.removeItem('profile_image');
-              this.toastService.openSnackBar(
-                'Profile picture removed',
-                'success'
-              );
-            } else {
-              console.warn(
-                '⚠️ Delete reported success but picture still exists on backend'
-              );
-              this.toastService.openSnackBar(
-                'Picture deletion reported but still present on server',
-                'warning'
-              );
-              // Refresh UI with backend image
-              this.loadProfilePicture();
-            }
-          },
-          error: (err) => {
-            // If we can't verify, conservatively clear cache and let next load reconcile
-            this.setDefaultAvatar();
-            localStorage.removeItem('profile_image');
-            this.toastService.openSnackBar(
-              'Profile picture removed',
-              'success'
-            );
-          },
-        });
-      },
-      error: (err) => {
-        console.error('❌ Failed to remove profile picture:', err);
-        this.toastService.openSnackBar(
-          'Failed to remove profile picture',
-          'warning'
-        );
-      },
-    });
+    this.subscriptions.push(removeSub);
   }
 
-  // ==================== SECURITY QUESTIONS - MATCHING WORKING FLOW ====================
+  private setDefaultAvatar(): void {
+    this.profileImage = null;
+    this.profileData.profileImage = '';
+    this.hasExistingProfilePicture = false;
+    this.userService.setProfileImage('');
+    this.cdr.detectChanges();
+  }
 
-  private loadSecurityQuestions(): void {
-    if (!this.scouterId) return;
+  private storeProfileImage(imageData: string): void {
+    try {
+      localStorage.setItem('profile_image', imageData);
+    } catch (err) {
+      console.warn('Could not store profile image:', err);
+    }
+  }
 
+  // ==================== SECURITY QUESTIONS METHODS ====================
+
+  get securedQuestionsCount(): number {
+    return this.securityQuestions.filter((q) => q.isHashed).length;
+  }
+
+  get totalQuestionsCount(): number {
+    return this.securityQuestions.length;
+  }
+
+  /**
+   * Test and fix security question endpoints
+   */
+  testAllSecurityQuestionEndpoints(): void {
+    console.group('🔍 TESTING ALL SECURITY QUESTION ENDPOINTS');
+
+    const scouterId = this.scouterId;
+    const encodedId = encodeURIComponent(scouterId);
+
+    // Test all possible endpoints
+    const endpointsToTest = [
+      {
+        name: 'getMySecurityQuestions',
+        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`,
+      },
+      {
+        name: 'getMySecurityQuestionsWithAnswers',
+        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`,
+      },
+      {
+        name: 'createScouterSecurityQuestions',
+        url: `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`,
+      },
+      {
+        name: 'updateScouterSecurityQuestions',
+        url: `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedId}`,
+      },
+    ];
+
+    endpointsToTest.forEach((endpoint) => {
+      console.log(`${endpoint.name}: ${endpoint.url}`);
+    });
+
+    console.groupEnd();
+  }
+
+  /**
+   * Load security questions with answers
+   */
+  private loadSecurityQuestionsWithAnswers(): void {
+    if (!this.scouterId) {
+      console.error('❌ No scouterId for security questions');
+      return;
+    }
+
+    console.log('🔒 Loading security questions for:', this.scouterId);
     this.isLoadingSecurityQuestions = true;
-    this.authService.getMySecurityQuestions(this.scouterId).subscribe({
-      next: (res: any) => {
-        this.isLoadingSecurityQuestions = false;
+    this.securityQuestionErrorMessage = '';
+    this.cdr.detectChanges();
 
-        // MATCHING: Handle security questions response
-        let loadedQuestions: SecurityQuestion[] = [];
+    const encodedScouterId = encodeURIComponent(this.scouterId);
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
 
-        if (res?.data?.questions) {
-          loadedQuestions = res.data.questions.map((q: any) => ({
-            question: q.question || '',
-            answer: q.answer || '••••••••',
-          }));
+    console.log('🔗 Fetching from:', url);
+
+    const token = localStorage.getItem('access_token');
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(async (response) => {
+        console.log('📡 Response status:', response.status);
+
+        // Build a plain object from Headers in a way compatible with TypeScript
+        const headersObj: { [key: string]: string } = {};
+        response.headers.forEach((value, key) => {
+          headersObj[key] = value;
+        });
+        console.log('📡 Response headers:', headersObj);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        this.securityQuestions = loadedQuestions;
-        this.updateSecurityQuestionsState();
-      },
-      error: (err) => {
+        const text = await response.text();
+        console.log(
+          '📦 Raw response (first 300 chars):',
+          text.substring(0, 300)
+        );
+
+        try {
+          // First try to parse as JSON
+          const json = JSON.parse(text);
+          this.processSecurityQuestionsResponse(json);
+        } catch (parseError) {
+          console.warn('⚠️ JSON parse failed, trying as raw text:', parseError);
+
+          // If it looks like it might be pure base64 (without JSON wrapper)
+          if (this.looksLikePureBase64(text)) {
+            console.log('🔍 Text appears to be pure base64');
+            const decoded = this.decodeBase64(text);
+            if (decoded) {
+              this.processSecurityQuestionsResponse(decoded);
+            } else {
+              throw new Error('Failed to decode base64 data');
+            }
+          } else {
+            // Try to see if it's base64 within a string
+            this.tryExtractBase64FromText(text);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('❌ Error loading security questions:', error);
         this.isLoadingSecurityQuestions = false;
-        console.error('❌ Failed to load security questions:', err);
+        this.securityQuestionErrorMessage = 'Failed to load security questions';
+        this.cdr.detectChanges();
+
+        // Try the simpler endpoint as fallback
+        this.loadBasicSecurityQuestions();
+      });
+  }
+
+  /**
+   * Try to extract base64 from text
+   */
+  private tryExtractBase64FromText(text: string): void {
+    console.log('🕵️ Trying to extract base64 from text...');
+
+    // Look for base64 patterns in the text
+    const base64Pattern = /"data"\s*:\s*"([^"]+)"/;
+    const match = text.match(base64Pattern);
+
+    if (match && match[1]) {
+      console.log('✅ Found base64 in data field');
+      const base64Data = match[1];
+      const decoded = this.decodeBase64(base64Data);
+      if (decoded) {
+        this.processSecurityQuestionsResponse({ data: decoded });
+        return;
+      }
+    }
+
+    // Try another pattern
+    const anyBase64Pattern = /([A-Za-z0-9+/]{40,}={0,2})/;
+    const anyMatch = text.match(anyBase64Pattern);
+
+    if (anyMatch && anyMatch[1]) {
+      console.log('⚠️ Found potential base64 string');
+      try {
+        const decoded = atob(anyMatch[1]);
+        const parsed = JSON.parse(decoded);
+        this.processSecurityQuestionsResponse({ data: parsed });
+        return;
+      } catch (e) {
+        console.error('❌ Failed to decode potential base64:', e);
+      }
+    }
+
+    throw new Error('Could not extract security questions from response');
+  }
+
+  /**
+   * Fallback to basic security questions endpoint
+   */
+  private loadBasicSecurityQuestions(): void {
+    console.log('🔄 Falling back to basic security questions endpoint...');
+
+    const encodedScouterId = encodeURIComponent(this.scouterId);
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
+
+    const token = localStorage.getItem('access_token');
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const text = await response.text();
+        console.log('📦 Basic endpoint response:', text.substring(0, 200));
+
+        try {
+          const json = JSON.parse(text);
+          this.processSecurityQuestionsResponse(json);
+        } catch (error) {
+          console.error('❌ Failed to parse basic endpoint response:', error);
+          this.securityQuestions = [];
+          this.isLoadingSecurityQuestions = false;
+          this.cdr.detectChanges();
+        }
+      })
+      .catch((error) => {
+        console.error('❌ Basic endpoint also failed:', error);
+        this.securityQuestions = [];
+        this.isLoadingSecurityQuestions = false;
+        this.cdr.detectChanges();
+      });
+  }
+
+  /**
+   * Check if text looks like pure base64
+   */
+  private looksLikePureBase64(str: string): boolean {
+    const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
+    return base64Regex.test(str.trim()) && str.trim().length % 4 === 0;
+  }
+
+  /**
+   * Process security questions response
+   */
+  private processSecurityQuestionsResponse(response: any): void {
+    console.log('🔍 Processing response:', response);
+
+    this.securityQuestions = [];
+
+    // Check if data is a base64-encoded string
+    if (response?.data && typeof response.data === 'string') {
+      console.log(
+        '📦 Data appears to be base64 encoded, attempting to decode...'
+      );
+
+      const decodedData = this.decodeBase64(response.data);
+
+      if (decodedData && Array.isArray(decodedData)) {
+        console.log(`✅ Successfully decoded ${decodedData.length} questions`);
+        this.processDecodedQuestionsArray(decodedData);
+      } else {
+        console.error('❌ Decoded data is not an array or is empty');
+        this.securityQuestions = [];
+      }
+    }
+    // Handle direct array format
+    else if (Array.isArray(response?.data)) {
+      this.processDecodedQuestionsArray(response.data);
+    }
+    // Handle direct response array
+    else if (Array.isArray(response)) {
+      this.processDecodedQuestionsArray(response);
+    }
+    // Handle other response formats
+    else if (response?.questions && Array.isArray(response.questions)) {
+      this.processDecodedQuestionsArray(response.questions);
+    }
+    // Try to extract from message format
+    else if (response?.message && response.data) {
+      console.log('📤 Trying to extract from message format...');
+      this.processSecurityQuestionsResponse({ data: response.data });
+    }
+
+    this.isLoadingSecurityQuestions = false;
+    this.updateSecurityQuestionsState();
+    this.cdr.detectChanges();
+
+    console.log('✅ Security questions loaded:', {
+      count: this.securityQuestions.length,
+      questions: this.securityQuestions,
     });
   }
 
+  /**
+   * Check if string is base64
+   */
+  private isBase64(str: string): boolean {
+    try {
+      return btoa(atob(str)) === str;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  /**
+   * Decode base64 string
+   */
+  private decodeBase64(base64String: string): any {
+    try {
+      console.log('🔓 Decoding base64 string...');
+      console.log('📏 String length:', base64String.length);
+
+      // Clean the string (remove whitespace, etc.)
+      const cleanString = base64String.trim();
+
+      // Decode base64
+      const decodedString = atob(cleanString);
+      console.log(
+        '📄 Decoded string (first 200 chars):',
+        decodedString.substring(0, 200)
+      );
+
+      // Try to parse as JSON
+      const parsed = JSON.parse(decodedString);
+      console.log('✅ Successfully parsed as JSON');
+
+      return parsed;
+    } catch (error) {
+      console.error('❌ Base64 decode/parse error:', error);
+
+      // Try alternative decoding for malformed base64
+      try {
+        // Sometimes base64 might have URL encoding
+        const decoded = decodeURIComponent(escape(atob(base64String)));
+        console.log('🔄 Alternative decode successful');
+        return JSON.parse(decoded);
+      } catch (altError) {
+        console.error('❌ Alternative decode also failed:', altError);
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Debug method to test base64 decoding
+   */
+  debugBase64Decoding(): void {
+    console.clear();
+    console.group('🔍 DEBUG BASE64 DECODING');
+
+    // Example base64 string from your logs
+    const base64String =
+      'W3sicXVlc3Rpb24iOiJXaGF0J3MgeW91ciBmYXZvdXJpdGUgZm9vZD8iLCJhbnN3ZXIiOiIkMmIkMTAkYnV0aGVwZktvamxONG4ycjZGLmM4T0U2QmNtUzhVOXUzSFBCdHJ5TEJsUmcuaFJDYUZiUW0ifSx7InF1ZXN0aW9uIjoid2hhdCdzIHlvdXIgZmlyc3QgcGV0cyBuYW1lPyIsImFuc3dlciI';
+
+    console.log(
+      'Base64 string (first 100 chars):',
+      base64String.substring(0, 100)
+    );
+    console.log('Full length:', base64String.length);
+
+    try {
+      const decoded = atob(base64String);
+      console.log('Decoded (first 200 chars):', decoded.substring(0, 200));
+
+      const parsed = JSON.parse(decoded);
+      console.log('Parsed JSON:', parsed);
+    } catch (error) {
+      console.error('Decoding error:', error);
+    }
+
+    console.groupEnd();
+  }
+
+  /**
+   * Process decoded questions array
+   */
+  private processDecodedQuestionsArray(questionsArray: any[]): void {
+    if (!questionsArray || !Array.isArray(questionsArray)) {
+      console.log('⚠️ No valid questions array found');
+      this.securityQuestions = [];
+      return;
+    }
+
+    console.log(`🔄 Processing ${questionsArray.length} security questions`);
+
+    this.securityQuestions = questionsArray.map((item: any, index: number) => {
+      // Extract question and answer
+      const questionText = item.question || item.text || '';
+      const answerText = item.answer || '';
+
+      // Determine if answer is hashed (BCrypt format)
+      const isHashed = this.isHashedAnswer(answerText);
+
+      // Create question object
+      const questionObj: SecurityQuestion = {
+        id: item.id || `q-${Date.now()}-${index}`,
+        question: questionText,
+        answer: isHashed ? this.ANSWER_MASK : answerText,
+        isHashed: isHashed,
+        showAnswer: false,
+        originalAnswer: answerText, // Store original for reference
+        createdAt: item.createdAt || new Date().toISOString(),
+      };
+
+      console.log(`📝 Question ${index + 1}:`, {
+        question:
+          questionText.substring(0, 30) +
+          (questionText.length > 30 ? '...' : ''),
+        hasAnswer: !!answerText,
+        isHashed: isHashed,
+        answerLength: answerText.length,
+      });
+
+      return questionObj;
+    });
+
+    console.log(
+      `✅ Loaded ${this.securityQuestions.length} security questions`
+    );
+  }
+
+  /**
+   * Improved processing of security questions array
+   */
+  private processSecurityQuestionsWithAnswersArray(
+    questionsArray: any[]
+  ): void {
+    if (!questionsArray || !Array.isArray(questionsArray)) {
+      console.log('⚠️ No valid questions array found');
+      this.securityQuestions = [];
+      return;
+    }
+
+    console.log(`🔄 Processing ${questionsArray.length} security questions`);
+
+    this.securityQuestions = questionsArray.map((item: any, index: number) => {
+      // Extract question and answer
+      const questionText = item.question || item.text || '';
+      const answerText = item.answer || '';
+
+      // Determine if answer is hashed
+      const isHashed = this.isHashedAnswer(answerText);
+
+      // Create question object
+      const questionObj: SecurityQuestion = {
+        id: item.id || `q-${Date.now()}-${index}`,
+        question: questionText,
+        answer: isHashed ? this.ANSWER_MASK : answerText,
+        isHashed: isHashed,
+        showAnswer: false,
+        originalAnswer: answerText, // Store original for reference
+        createdAt: item.createdAt || new Date().toISOString(),
+      };
+
+      // Log for debugging
+      console.log(`📝 Question ${index + 1}:`, {
+        id: questionObj.id,
+        questionPreview:
+          questionText.substring(0, 30) +
+          (questionText.length > 30 ? '...' : ''),
+        hasAnswer: !!answerText,
+        isHashed: isHashed,
+        answerLength: answerText.length,
+      });
+
+      return questionObj;
+    });
+
+    console.log(
+      `✅ Loaded ${this.securityQuestions.length} security questions`
+    );
+  }
+
+  /**
+   * Check if answer is hashed (BCrypt format)
+   */
+  private isHashedAnswer(answer: string): boolean {
+    if (!answer || typeof answer !== 'string') return false;
+
+    // BCrypt hashes typically start with $2a$, $2b$, or $2y$ and are 60 chars
+    const bcryptPattern = /^\$2[ayb]\$.{56}$/;
+
+    // Check common hash patterns
+    const isBCrypt = bcryptPattern.test(answer);
+    const looksLikeHash =
+      answer.length >= 60 && /^[a-zA-Z0-9$.+/]+$/.test(answer);
+
+    return isBCrypt || looksLikeHash;
+  }
+
+  /**
+   * Get display answer text
+   */
+  getDisplayAnswer(qa: SecurityQuestion): string {
+    if (!qa.showAnswer) {
+      return this.ANSWER_MASK;
+    }
+
+    if (qa.isHashed) {
+      return '[Secured Answer]';
+    }
+
+    return qa.answer || '';
+  }
+
+  /**
+   * Toggle answer visibility
+   */
+  toggleAnswerVisibility(index: number): void {
+    const question = this.securityQuestions[index];
+    if (!question) return;
+
+    question.showAnswer = !question.showAnswer;
+
+    // For hashed answers, we can't show the actual value
+    // Just indicate it's hashed
+    if (question.showAnswer && question.isHashed) {
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        if (question.showAnswer) {
+          question.showAnswer = false;
+          this.cdr.detectChanges();
+        }
+      }, 5000);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Initialize security questions for editing - ONLY 1 EMPTY INPUT
+   */
+  private initializeSecurityQuestions(): void {
+    console.log('🔄 Initializing security questions for editing...');
+
+    // Start with existing questions
+    this.tempSecurityQuestions = [];
+
+    if (this.securityQuestions.length > 0) {
+      // Copy existing questions
+      this.tempSecurityQuestions = this.securityQuestions.map((q) => ({
+        question: q.question,
+        // Prefill a masked placeholder for hashed answers so the input shows something
+        answer: q.isHashed ? this.ANSWER_MASK : q.answer,
+        revealAttempt: '',
+        revealed: false,
+        verifyInProgress: false,
+        showAnswer: false,
+        isHashed: q.isHashed,
+        originalAnswer: q.answer,
+        masked: !!q.isHashed,
+      }));
+
+      // If we have space for more, add ONE empty slot
+      if (this.securityQuestions.length < this.maxSecurityQuestions) {
+        this.tempSecurityQuestions.push({
+          question: '',
+          answer: '',
+          showAnswer: false,
+          isHashed: false,
+          originalAnswer: '',
+        });
+      }
+    } else {
+      // No existing questions - start with ONE empty question
+      this.tempSecurityQuestions = [
+        {
+          question: '',
+          answer: '',
+          showAnswer: false,
+          isHashed: false,
+          originalAnswer: '',
+        },
+      ];
+    }
+
+    this.isEditingSecurityQuestions = true;
+    this.updateSecurityQuestionCount();
+
+    console.log(
+      '✅ Initialized editing with:',
+      this.tempSecurityQuestions.length,
+      'questions'
+    );
+  }
+
+  /**
+   * Save security questions - PROFESSIONAL IMPLEMENTATION
+   */
   async saveSecurityQuestions(): Promise<void> {
+    console.log('💾 Saving security questions...');
+
+    // Validate all questions
     if (!this.canSaveSecurityQuestions()) {
       this.toastService.openSnackBar(
-        'Please fill in all questions and answers',
+        'Please fill in all questions and answers (minimum 5 chars for question, 3 for answer)',
         'warning'
       );
       return;
     }
 
-    if (!this.scouterId) {
-      this.toastService.openSnackBar('User not authenticated', 'error');
+    // Check for duplicates
+    if (this.hasDuplicateQuestions()) {
+      this.toastService.openSnackBar(
+        'Duplicate questions found. Please use unique questions.',
+        'warning'
+      );
       return;
     }
 
-    this.isLoadingSecurityQuestions = true;
+    this.isSavingSecurityQuestions = true;
+    this.securityQuestionErrorMessage = '';
+    this.cdr.detectChanges();
 
     try {
-      // MATCHING: Hash answers like working component
-      const hashedQuestions = await Promise.all(
-        this.tempSecurityQuestions.map(async (qa) => ({
-          question: qa.question.trim().toLowerCase(), // MATCHING: Lowercase like working component
-          answer: await bcrypt.hash(qa.answer.trim().toLowerCase(), 10), // MATCHING: Lowercase + hash
-        }))
+      // Filter only filled questions
+      const filledQuestions = this.tempSecurityQuestions.filter(
+        (q) => q.question.trim() && q.answer.trim()
+      );
+
+      if (filledQuestions.length === 0) {
+        throw new Error('No valid questions to save');
+      }
+
+      // Hash all answers (new and existing)
+      const questionsToSave = await Promise.all(
+        filledQuestions.map(async (qa) => {
+          // If editing existing question with hashed answer and answer wasn't changed
+          if (
+            qa.isHashed &&
+            qa.originalAnswer &&
+            (qa.answer === '' || qa.answer === this.ANSWER_MASK)
+          ) {
+            // Keep the original hashed answer
+            return {
+              question: qa.question.trim(),
+              answer: qa.originalAnswer,
+            };
+          }
+
+          // Hash new answer
+          const hashedAnswer = await bcrypt.hash(
+            qa.answer.trim().toLowerCase(),
+            10
+          );
+          return {
+            question: qa.question.trim(),
+            answer: hashedAnswer,
+          };
+        })
       );
 
       const payload = {
-        uniqueId: this.scouterId, // MATCHING: Use uniqueId like working component
-        securityQuestions: hashedQuestions,
+        uniqueId: this.scouterId,
+        securityQuestions: questionsToSave,
       };
 
-      this.authService.createScouterSecurityQuestion(payload).subscribe({
-        next: (res: any) => {
-          this.isLoadingSecurityQuestions = false;
-
-          // Update local state
-          const savedQuestions = this.tempSecurityQuestions.map((qa) => ({
-            question: qa.question.trim(),
-            answer: '••••••••',
-          }));
-
-          this.securityQuestions = savedQuestions;
-          this.isEditingSecurityQuestions = false;
-          this.editingQuestionIndex = null;
-
-          this.toastService.openSnackBar(
-            'Security questions saved successfully!',
-            'success'
-          );
-
-          // Reload after success
-          setTimeout(() => {
-            this.loadSecurityQuestions();
-          }, 1000);
-        },
-        error: (err) => {
-          console.error('❌ Failed to save security questions:', err);
-
-          // If server responds that a security profile already exists, merge
-          // new questions into existing ones (up to max of 5) using update API.
-          const serverMsg = (err?.error?.message || err?.message || '')
-            .toString()
-            .toLowerCase();
-
-          if (
-            err?.status === 403 &&
-            serverMsg.includes('security profile already exists')
-          ) {
-            console.log('ℹ️ Security profile exists — attempting merge flow');
-
-            // Fetch existing questions with answers (server-side hashed answers)
-            this.authService
-              .getMySecurityQuestionsWithAnswers(this.scouterId)
-              .subscribe({
-                next: async (existingRes: any) => {
-                  try {
-                    const existing =
-                      existingRes?.data?.questions ||
-                      existingRes?.questions ||
-                      [];
-
-                    // Normalize existing to { question, answer } where answer is hashed
-                    const existingNormalized = existing.map((q: any) => ({
-                      question: String(
-                        q.question || q.questionText || q.q || ''
-                      ).trim(),
-                      answer: q.answer || q.hashedAnswer || q.ans || '',
-                    }));
-
-                    // Prepare new hashed entries (we already hashed them above)
-                    const newHashed = hashedQuestions.map((q: any) => ({
-                      question: String(q.question).trim(),
-                      answer: q.answer,
-                    }));
-
-                    // Merge while avoiding duplicate questions (case-insensitive)
-                    const mergedMap = new Map<string, any>();
-                    for (const e of existingNormalized) {
-                      const key = e.question.toLowerCase();
-                      if (key) mergedMap.set(key, e);
-                    }
-                    for (const n of newHashed) {
-                      const key = n.question.toLowerCase();
-                      if (!mergedMap.has(key)) mergedMap.set(key, n);
-                    }
-
-                    // Enforce max of 5 questions; keep existing order by preferring
-                    // existing questions first then newly added ones
-                    const finalArray: any[] = [];
-                    // add existing in original order
-                    for (const e of existingNormalized) {
-                      if (finalArray.length >= 5) break;
-                      const key = e.question.toLowerCase();
-                      if (mergedMap.has(key)) {
-                        finalArray.push(mergedMap.get(key));
-                        mergedMap.delete(key);
-                      }
-                    }
-                    // then add remaining new ones
-                    for (const [k, v] of mergedMap) {
-                      if (finalArray.length >= 5) break;
-                      finalArray.push(v);
-                    }
-
-                    // If nothing to update
-                    if (finalArray.length === 0) {
-                      this.isLoadingSecurityQuestions = false;
-                      this.toastService.openSnackBar(
-                        'No questions to update',
-                        'warning'
-                      );
-                      return;
-                    }
-
-                    // Call update endpoint with merged questions
-                    this.authService
-                      .updateScouterSecurityQuestions(
-                        this.scouterId,
-                        finalArray
-                      )
-                      .subscribe({
-                        next: (uRes: any) => {
-                          this.isLoadingSecurityQuestions = false;
-                          this.toastService.openSnackBar(
-                            'Security questions merged successfully',
-                            'success'
-                          );
-                          // update UI masked answers
-                          this.securityQuestions = finalArray.map((q) => ({
-                            question: q.question,
-                            answer: '••••••••',
-                          }));
-                          this.isEditingSecurityQuestions = false;
-                          this.editingQuestionIndex = null;
-                          setTimeout(() => this.loadSecurityQuestions(), 800);
-                        },
-                        error: (uErr) => {
-                          this.isLoadingSecurityQuestions = false;
-                          console.error(
-                            '❌ Failed to merge security questions:',
-                            uErr
-                          );
-                          this.toastService.openSnackBar(
-                            'Failed to merge security questions',
-                            'error'
-                          );
-                        },
-                      });
-                  } catch (mergeErr) {
-                    this.isLoadingSecurityQuestions = false;
-                    console.error('❌ Merge flow failed:', mergeErr);
-                    this.toastService.openSnackBar(
-                      'Failed to merge security questions',
-                      'error'
-                    );
-                  }
-                },
-                error: (fetchErr) => {
-                  this.isLoadingSecurityQuestions = false;
-                  console.error(
-                    '❌ Could not fetch existing questions:',
-                    fetchErr
-                  );
-                  this.toastService.openSnackBar(
-                    'Unable to fetch existing security questions. Please refresh and try again.',
-                    'error'
-                  );
-                },
-              });
-
-            return;
-          }
-
-          // Generic error path
-          this.isLoadingSecurityQuestions = false;
-          this.toastService.openSnackBar(
-            err?.error?.message || 'Failed to save security questions',
-            'error'
-          );
-        },
+      console.log('📤 Saving security questions:', {
+        count: questionsToSave.length,
+        scouterId: this.scouterId,
       });
-    } catch (err) {
-      this.isLoadingSecurityQuestions = false;
-      console.error('❌ Hashing error:', err);
-      this.toastService.openSnackBar('Error securing your data', 'error');
+
+      // Use update endpoint (works for both create and update)
+      await this.updateSecurityQuestions(payload);
+    } catch (error) {
+      console.error('❌ Error saving security questions:', error);
+      this.isSavingSecurityQuestions = false;
+
+      let errorMessage = 'Failed to save security questions';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      this.securityQuestionErrorMessage = errorMessage;
+      this.toastService.openSnackBar(errorMessage, 'error');
+      this.cdr.detectChanges();
     }
   }
 
-  // ==================== MISSING TEMPLATE METHODS ====================
+  /**
+   * Handle security questions response (unified)
+   */
+  private handleSecurityQuestionsResponse(res: any): void {
+    this.isLoadingSecurityQuestions = false;
+    console.log('🔒 Processing security questions response:', res);
+
+    // Clear any existing questions
+    this.securityQuestions = [];
+
+    // Try multiple possible response formats
+    if (res?.data) {
+      // Format 1: { data: [{question: "...", answer: "..."}] }
+      if (Array.isArray(res.data)) {
+        this.processSecurityQuestionsArray(res.data);
+      }
+      // Format 2: { data: { questions: [...] } }
+      else if (res.data.questions && Array.isArray(res.data.questions)) {
+        this.processSecurityQuestionsArray(res.data.questions);
+      }
+      // Format 3: { data: { securityQuestions: [...] } }
+      else if (
+        res.data.securityQuestions &&
+        Array.isArray(res.data.securityQuestions)
+      ) {
+        this.processSecurityQuestionsArray(res.data.securityQuestions);
+      }
+    }
+    // Format 4: Direct array
+    else if (Array.isArray(res)) {
+      this.processSecurityQuestionsArray(res);
+    }
+    // Format 5: { questions: [...] }
+    else if (res?.questions && Array.isArray(res.questions)) {
+      this.processSecurityQuestionsArray(res.questions);
+    }
+    // Format 6: { securityQuestions: [...] }
+    else if (res?.securityQuestions && Array.isArray(res.securityQuestions)) {
+      this.processSecurityQuestionsArray(res.securityQuestions);
+    }
+
+    // If we still have no questions, check if it's an empty array response
+    if (
+      this.securityQuestions.length === 0 &&
+      Array.isArray(res?.data) &&
+      res.data.length === 0
+    ) {
+      console.log('✅ No security questions found (empty array)');
+    }
+    this.updateSecurityQuestionsState();
+    console.log('✅ Security questions processed:', {
+      count: this.securityQuestions.length,
+      questions: this.securityQuestions,
+    });
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Process array of security questions
+   */
+  private processSecurityQuestionsArray(questionsArray: any[]): void {
+    if (!questionsArray || !Array.isArray(questionsArray)) {
+      return;
+    }
+
+    this.securityQuestions = questionsArray.map((item: any, index: number) => {
+      // Handle string items (just question text)
+      if (typeof item === 'string') {
+        return {
+          id: `q-${index}`,
+          question: item,
+          answer: this.ANSWER_MASK,
+          isHashed: true,
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      // Handle object items with question property
+      if (item && typeof item === 'object') {
+        return {
+          id: item.id || `q-${index}`,
+          question: item.question || item.text || '',
+          answer: item.answer ? this.ANSWER_MASK : '',
+          isHashed: !!item.answer,
+          createdAt:
+            item.createdAt || item.dateCreated || new Date().toISOString(),
+        };
+      }
+
+      // Fallback
+      return {
+        id: `q-${index}`,
+        question: '',
+        answer: '',
+        isHashed: false,
+        createdAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  /**
+   * Handle security questions error
+   */
+  private handleSecurityQuestionsError(err: any): void {
+    this.isLoadingSecurityQuestions = false;
+
+    if (err.status === 404) {
+      // 404 means no security questions exist yet (this is OK)
+      console.log('✅ No security questions found (404 response)');
+      this.securityQuestions = [];
+      this.securityQuestionErrorMessage = '';
+    } else {
+      this.securityQuestionErrorMessage = 'Failed to load security questions';
+      console.error('❌ Error loading security questions:', err);
+    }
+
+    this.updateSecurityQuestionsState();
+    this.cdr.detectChanges();
+  }
+
+  // Update the save button text logic
+  getSaveButtonText(): string {
+    if (this.isSavingSecurityQuestions) {
+      return 'Saving...';
+    }
+
+    if (this.securityQuestions.length > 0) {
+      return 'Update All Questions';
+    }
+
+    return 'Save All Questions';
+  }
+
+  /**
+   * Update security questions
+   */
+  private updateSecurityQuestions(payload: any): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const encodedScouterId = encodeURIComponent(this.scouterId);
+      const url = `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
+
+      console.log('🔗 Updating at:', url);
+
+      const token = localStorage.getItem('access_token');
+
+      fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+
+          const result = await response.json();
+          console.log('✅ Update successful:', result);
+
+          // Handle success
+          this.handleSecurityQuestionsSaveSuccess(result);
+          resolve();
+        })
+        .catch((error) => {
+          console.error('❌ Update failed:', error);
+          reject(error);
+        });
+    });
+  }
+
+  /**
+   * Create security questions with FULL scouter ID
+   */
+  private createSecurityQuestions(payload: any): void {
+    // Ensure payload has the full scouter ID
+    const createPayload = {
+      uniqueId: this.scouterId, // FULL scouter ID
+      securityQuestions: payload.securityQuestions,
+    };
+
+    console.log('📤 Create payload with FULL scouterId:', createPayload);
+
+    this.authService.createScouterSecurityQuestion(createPayload).subscribe({
+      next: (res: any) => {
+        console.log('✅ Create successful:', res);
+        this.handleSecurityQuestionsSaveSuccess(res);
+      },
+      error: (createErr) => {
+        console.error('❌ Create failed:', createErr);
+
+        // Handle "already exists" error specially
+        if (
+          createErr.status === 403 &&
+          createErr.error?.message?.toLowerCase().includes('already exists')
+        ) {
+          console.log('🔄 Security profile exists, retrying with update...');
+
+          // If create says "already exists", then update should work
+          this.authService
+            .updateScouterSecurityQuestions(
+              this.scouterId, // FULL scouter ID
+              payload.securityQuestions
+            )
+            .subscribe({
+              next: (retryRes) => {
+                console.log('✅ Retry update successful:', retryRes);
+                this.handleSecurityQuestionsSaveSuccess(retryRes);
+              },
+              error: (retryErr) => {
+                console.error('❌ Retry update failed:', retryErr);
+                this.handleSecurityQuestionsSaveError(retryErr);
+              },
+            });
+        } else {
+          this.handleSecurityQuestionsSaveError(createErr);
+        }
+      },
+    });
+  }
+
+  // profile-page.component.ts - Add a test method to verify endpoints
+
+  testSecurityQuestionEndpoints(): void {
+    const fullScouterId = this.scouterId; // "scouter/5042/28September2025"
+    const encodedScouterId = encodeURIComponent(fullScouterId);
+
+    console.group('🔍 Testing Security Question Endpoints');
+
+    // Test GET endpoint (CORRECT ONE)
+    const getUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
+    console.log('1. GET URL:', getUrl);
+
+    // Test UPDATE endpoint (CORRECT ONE)
+    const updateUrl = `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
+    console.log('2. UPDATE URL:', updateUrl);
+
+    // Test CREATE endpoint (CORRECT ONE)
+    const createUrl = `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`;
+    console.log('3. CREATE URL:', createUrl);
+
+    // Test WITH ANSWERS endpoint
+    const withAnswersUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
+    console.log('4. WITH ANSWERS URL:', withAnswersUrl);
+
+    console.log('5. Full Scouter ID:', fullScouterId);
+    console.log('6. Encoded Scouter ID:', encodedScouterId);
+
+    // Test the endpoints with fetch
+    this.testEndpointWithFetch(getUrl, 'GET');
+    this.testEndpointWithFetch(withAnswersUrl, 'GET');
+
+    console.groupEnd();
+  }
+
+  private testEndpointWithFetch(url: string, method: string): void {
+    const token = localStorage.getItem('access_token');
+
+    console.log(`🧪 Testing ${method} ${url}`);
+
+    fetch(url, {
+      method: method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(async (response) => {
+        console.log(`📡 Response: ${response.status} ${response.statusText}`);
+
+        // Log headers
+        console.log('📋 Response headers:');
+        response.headers.forEach((value, key) => {
+          console.log(`  ${key}: ${value}`);
+        });
+
+        const text = await response.text();
+        console.log('📦 Response body:', text.substring(0, 200));
+
+        if (!response.ok) {
+          console.log(`❌ Error: ${text}`);
+        }
+      })
+      .catch((error) => {
+        console.error(`🚨 Fetch error: ${error.message}`);
+      });
+  }
+
+  /**
+   * Check if answer should be fetchable
+   */
+  canFetchAnswer(qa: SecurityQuestion): boolean {
+    return !!(qa.isHashed && qa.id);
+  }
+
+  /**
+   * Handle security questions with answers response
+   */
+  private handleSecurityQuestionsWithAnswersResponse(res: any): void {
+    this.isLoadingSecurityQuestions = false;
+    console.log('🔒 Processing security questions with answers:', res);
+
+    // Clear any existing questions
+    this.securityQuestions = [];
+
+    // Check if data is a base64-encoded string
+    if (res?.data && typeof res.data === 'string') {
+      console.log(
+        '📦 Data appears to be base64 encoded, attempting to decode...'
+      );
+
+      const decodedData = this.decodeBase64(res.data);
+
+      if (decodedData && Array.isArray(decodedData)) {
+        console.log(`✅ Successfully decoded ${decodedData.length} questions`);
+        this.processSecurityQuestionsWithAnswersArray(decodedData);
+      } else {
+        console.error('❌ Decoded data is not an array or is empty');
+        this.securityQuestions = [];
+      }
+    }
+    // Handle direct array format
+    else if (Array.isArray(res?.data)) {
+      this.processSecurityQuestionsWithAnswersArray(res.data);
+    }
+    // Handle direct response array
+    else if (Array.isArray(res)) {
+      this.processSecurityQuestionsWithAnswersArray(res);
+    }
+    // Handle other response formats
+    else if (res?.questions && Array.isArray(res.questions)) {
+      this.processSecurityQuestionsWithAnswersArray(res.questions);
+    }
+
+    this.updateSecurityQuestionsState();
+
+    console.log('✅ Security questions loaded:', {
+      count: this.securityQuestions.length,
+      questions: this.securityQuestions.map((q, i) => ({
+        index: i + 1,
+        question: q.question.substring(0, 30) + '...',
+        hasAnswer: !!q.answer,
+        isHashed: q.isHashed,
+        showAnswer: q.showAnswer,
+      })),
+    });
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Toggle answer visibility in edit mode
+   */
+  toggleEditAnswerVisibility(index: number): void {
+    const question = this.tempSecurityQuestions[index];
+    if (!question) return;
+
+    question.showAnswer = !question.showAnswer;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Verify existing hashed answer by comparing user input to stored hash
+   * If verified, populate the answer field with plaintext so it can be edited
+   */
+  async verifyExistingAnswer(index: number): Promise<void> {
+    const qa = this.tempSecurityQuestions[index];
+    if (!qa || !qa.originalAnswer) return;
+
+    const attempt = (qa.revealAttempt || '').trim();
+    if (!attempt) {
+      this.toastService.openSnackBar(
+        'Enter your existing answer to verify',
+        'warning'
+      );
+      return;
+    }
+
+    try {
+      qa.verifyInProgress = true;
+      this.cdr.detectChanges();
+
+      // bcrypt.compare accepts plaintext and hash
+      const ok = await bcrypt.compare(attempt.toLowerCase(), qa.originalAnswer);
+
+      qa.verifyInProgress = false;
+      if (ok) {
+        qa.answer = attempt; // reveal plaintext entered by user
+        qa.revealed = true;
+        qa.masked = false;
+        qa.revealAttempt = '';
+        this.toastService.openSnackBar(
+          'Answer verified — revealed for editing',
+          'success'
+        );
+      } else {
+        qa.revealed = false;
+        this.toastService.openSnackBar(
+          'Answer did not match our records',
+          'error'
+        );
+      }
+    } catch (err) {
+      console.error('Error verifying existing answer', err);
+      qa.verifyInProgress = false;
+      qa.revealed = false;
+      this.toastService.openSnackBar('Verification failed. Try again', 'error');
+    } finally {
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Handle successful save
+   */
+  private handleSecurityQuestionsSaveSuccess(res: any): void {
+    this.isSavingSecurityQuestions = false;
+
+    // Update local questions from temp questions
+    this.securityQuestions = this.tempSecurityQuestions
+      .filter((q) => q.question.trim() && q.answer.trim())
+      .map((qa, index) => ({
+        id: `q-${Date.now()}-${index}`,
+        question: qa.question.trim(),
+        answer: '••••••••', // Hide answers
+        isHashed: true,
+        showAnswer: false,
+        originalAnswer: qa.answer,
+        createdAt: new Date().toISOString(),
+      }));
+
+    this.isEditingSecurityQuestions = false;
+    this.updateSecurityQuestionsState();
+
+    this.toastService.openSnackBar(
+      'Security questions saved successfully!',
+      'success'
+    );
+
+    // Reload from server to ensure sync
+    setTimeout(() => {
+      this.loadSecurityQuestionsWithAnswers();
+    }, 1000);
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle error during security questions save
+   */
+  private handleSecurityQuestionsSaveError(err: any): void {
+    this.isSavingSecurityQuestions = false;
+    console.error('❌ Failed to save security questions:', err);
+
+    let errorMessage = 'Failed to save security questions';
+
+    if (err?.error?.message) {
+      errorMessage = err.error.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+
+    // Special handling for "already exists" error
+    if (
+      err.status === 403 &&
+      errorMessage.toLowerCase().includes('already exists')
+    ) {
+      errorMessage =
+        'Security questions already exist. Please try editing them instead.';
+    }
+
+    this.securityQuestionErrorMessage = errorMessage;
+    this.toastService.openSnackBar(errorMessage, 'error');
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Delete a question
+   */
+  async deleteQuestion(index: number): Promise<void> {
+    const question = this.securityQuestions[index];
+    if (!question) return;
+
+    const confirmed = confirm(
+      `Delete question: "${question.question.substring(0, 50)}..."?`
+    );
+    if (!confirmed) return;
+
+    // Remove from local array
+    this.securityQuestions.splice(index, 1);
+    this.updateSecurityQuestionsState();
+
+    this.toastService.openSnackBar('Question removed', 'success');
+    this.cdr.detectChanges();
+
+    // Note: Since there's no delete endpoint, we'll need to save all remaining questions
+    // This is handled when user saves
+  }
+  /**
+   * Edit a specific question
+   */
+  editQuestion(index: number): void {
+    this.isEditingSecurityQuestions = true;
+    this.editingQuestionIndex = index;
+
+    // Initialize with current questions
+    this.initializeSecurityQuestions();
+
+    // Scroll to the edited question
+    setTimeout(() => {
+      const element = document.querySelector(
+        `[data-question-index="${index}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Add new question (only when in edit mode)
+   */
+  addNewQuestion(): void {
+    if (this.tempSecurityQuestions.length >= this.maxSecurityQuestions) {
+      this.toastService.openSnackBar(
+        `Maximum of ${this.maxSecurityQuestions} security questions allowed`,
+        'warning'
+      );
+      return;
+    }
+
+    // Add ONE new empty question
+    this.tempSecurityQuestions.push({
+      question: '',
+      answer: '',
+      showAnswer: false,
+      isHashed: false,
+      originalAnswer: '',
+      masked: false,
+      revealAttempt: '',
+      revealed: false,
+      verifyInProgress: false,
+    });
+
+    this.updateSecurityQuestionCount();
+
+    // Scroll to new question
+    setTimeout(() => {
+      const lastIndex = this.tempSecurityQuestions.length - 1;
+      const element = document.querySelector(
+        `[data-question-index="${lastIndex}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Remove question from temp array
+   */
+  removeQuestion(index: number): void {
+    if (this.tempSecurityQuestions.length <= 1) {
+      this.toastService.openSnackBar(
+        'Must have at least one question',
+        'warning'
+      );
+      return;
+    }
+
+    this.tempSecurityQuestions.splice(index, 1);
+
+    if (this.editingQuestionIndex === index) {
+      this.editingQuestionIndex = null;
+    }
+
+    this.updateSecurityQuestionCount();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Check if can save security questions
+   */
+  canSaveSecurityQuestions(): boolean {
+    if (this.tempSecurityQuestions.length === 0) return false;
+
+    // Check all questions have at least 5 chars
+    const allQuestionsValid = this.tempSecurityQuestions.every(
+      (q) => q.question.trim().length >= 5
+    );
+
+    // Check answers: if editing existing hashed answer, blank is OK
+    const allAnswersValid = this.tempSecurityQuestions.every((q) => {
+      // If editing existing hashed answer and user didn't change it
+      if (q.isHashed && q.originalAnswer && q.answer === '') {
+        return true; // Blank is OK (keeps existing)
+      }
+
+      // Otherwise, need at least 3 chars
+      return q.answer.trim().length >= 3;
+    });
+
+    return allQuestionsValid && allAnswersValid;
+  }
+
+  /**
+   * Check for duplicate questions
+   */
+  hasDuplicateQuestions(): boolean {
+    const questions = this.tempSecurityQuestions
+      .map((q) => q.question.trim().toLowerCase())
+      .filter((q) => q.length > 0);
+
+    const uniqueQuestions = new Set(questions);
+    return uniqueQuestions.size !== questions.length;
+  }
+
+  /**
+   * Update the security questions state after changes
+   */
+  private updateSecurityQuestionsState(): void {
+    // Use the actual questions count, not temp
+    this.securityQuestionCount = this.securityQuestions.length;
+
+    console.log('📊 Security questions state updated:', {
+      count: this.securityQuestionCount,
+      max: this.maxSecurityQuestions,
+      canAddMore: this.securityQuestionCount < this.maxSecurityQuestions,
+    });
+
+    // Update badge text
+    const badge = document.querySelector('.security-questions-badge');
+    if (badge) {
+      badge.textContent = `${this.securityQuestionCount}/${this.maxSecurityQuestions}`;
+    }
+  }
+
+  /**
+   * Improved method to check if we can add more questions
+   */
+  canAddMoreQuestions(): boolean {
+    return this.securityQuestions.length < this.maxSecurityQuestions;
+  }
+
+  /**
+   * Update security question count
+   */
+  private updateSecurityQuestionCount(): void {
+    if (this.isEditingSecurityQuestions) {
+      this.securityQuestionCount = this.tempSecurityQuestions.length;
+    } else {
+      this.securityQuestionCount = this.securityQuestions.length;
+    }
+  }
+
+  /**
+   * Toggle edit mode for security questions
+   */
+  toggleEditSecurityQuestions(): void {
+    if (this.isEditingSecurityQuestions) {
+      this.cancelEditSecurityQuestions();
+    } else {
+      this.isEditingSecurityQuestions = true;
+      this.editingQuestionIndex = null;
+      this.initializeSecurityQuestions();
+    }
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Cancel editing
+   */
+  cancelEditSecurityQuestions(): void {
+    this.isEditingSecurityQuestions = false;
+    this.editingQuestionIndex = null;
+    this.securityQuestionErrorMessage = '';
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Improved method to add more questions
+   */
+  addMoreQuestions(): void {
+    if (!this.canAddMoreQuestions()) {
+      this.toastService.openSnackBar(
+        `Maximum of ${this.maxSecurityQuestions} questions reached`,
+        'warning'
+      );
+      return;
+    }
+
+    // Enter edit mode and initialize with current questions
+    this.isEditingSecurityQuestions = true;
+    this.initializeSecurityQuestions();
+
+    // Add an empty question slot
+    this.tempSecurityQuestions.push({ question: '', answer: '' });
+
+    // Update the count display
+    this.updateSecurityQuestionCount();
+
+    this.cdr.detectChanges();
+  }
+
+  // Add these methods to your ProfilePageComponent class in the TypeScript file:
+
+  // ==================== TEMPLATE HELPER METHODS ====================
+
+  /**
+   * Check if a question has invalid length
+   */
+  hasInvalidQuestion(qa: SecurityQuestion): boolean {
+    return qa.question?.trim()?.length > 0 && qa.question?.trim()?.length < 5;
+  }
+
+  /**
+   * Check if an answer has invalid length
+   */
+  hasInvalidAnswer(qa: SecurityQuestion): boolean {
+    return qa.answer?.trim()?.length > 0 && qa.answer?.trim()?.length < 3;
+  }
+
+  /**
+   * Get validation message for question
+   */
+  getQuestionValidationMessage(qa: SecurityQuestion): string {
+    if (this.hasInvalidQuestion(qa)) {
+      return 'Minimum 5 characters';
+    }
+    return '';
+  }
+
+  /**
+   * Get validation message for answer
+   */
+  getAnswerValidationMessage(qa: SecurityQuestion): string {
+    if (this.hasInvalidAnswer(qa)) {
+      return 'Minimum 3 characters';
+    }
+    return '';
+  }
+
+  /**
+   * Check if any questions are invalid
+   */
+  hasInvalidQuestions(): boolean {
+    return this.tempSecurityQuestions.some(
+      (qa) => qa.question?.trim()?.length > 0 && qa.question?.trim()?.length < 5
+    );
+  }
+
+  /**
+   * Check if any answers are invalid
+   */
+  hasInvalidAnswers(): boolean {
+    return this.tempSecurityQuestions.some(
+      (qa) => qa.answer?.trim()?.length > 0 && qa.answer?.trim()?.length < 3
+    );
+  }
+
+  /**
+   * Check if any questions or answers have been filled
+   */
+  hasAnyQuestionsOrAnswers(): boolean {
+    return this.tempSecurityQuestions.some(
+      (qa) => qa.question?.trim() || qa.answer?.trim()
+    );
+  }
+
+  // ==================== TEMPLATE METHODS ====================
 
   handleImageError(event: any): void {
     console.error('📷 Error loading profile image');
@@ -1460,15 +2498,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   triggerFileInput(): void {
-    // Allow opening the file picker regardless of edit mode so users can
-    // update their profile picture without entering form edit state.
     if (this.fileInput?.nativeElement) {
-      console.log('📁 Opening profile picture picker (standalone)');
+      console.log('📁 Opening profile picture picker');
       this.fileInput.nativeElement.click();
     }
   }
 
-  // Public alias for templates: makes intention clearer in HTML bindings
   public openProfileImagePicker(): void {
     this.triggerFileInput();
   }
@@ -1499,32 +2534,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  editQuestion(index: number): void {
-    this.editingQuestionIndex = index;
-    this.isEditingSecurityQuestions = true;
-    this.tempSecurityQuestions = JSON.parse(
-      JSON.stringify(this.securityQuestions)
-    );
-  }
-
-  async deleteQuestion(index: number): Promise<void> {
-    const questionToDelete = this.securityQuestions[index];
-    const confirmed = await this.showDeleteConfirmation(
-      questionToDelete.question
-    );
-    if (!confirmed) return;
-
-    this.securityQuestions.splice(index, 1);
-    this.updateSecurityQuestionsOnBackend();
-    this.toastService.openSnackBar('Question deleted successfully', 'success');
-  }
-
-  addMoreQuestions(): void {
-    this.addNewQuestion();
-  }
-
-  // ==================== UI INTERACTIONS - SIMPLIFIED ====================
-
   toggleEdit(): void {
     this.isEditing = !this.isEditing;
     this.saveButtonText = this.isEditing ? 'Save Profile' : 'Update Profile';
@@ -1551,243 +2560,22 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   // ==================== UTILITY METHODS ====================
 
-  private validateProfileData(): { isValid: boolean; message?: string } {
-    if (!this.profileData.fullName?.trim()) {
-      return { isValid: false, message: 'Full name is required' };
-    }
-    if (!this.profileData.phoneNumber?.trim()) {
-      return { isValid: false, message: 'Phone number is required' };
-    }
-    if (!this.profileData.email?.trim()) {
-      return { isValid: false, message: 'Email is required' };
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(this.profileData.email.trim())) {
-      return { isValid: false, message: 'Please enter a valid email address' };
-    }
-    return { isValid: true };
-  }
-
-  private setDefaultAvatar(): void {
-    this.profileImage = null;
-    this.profileData.profileImage = '';
-    this.hasExistingProfilePicture = false;
-    this.userService.setProfileImage('');
-    this.cdr.detectChanges();
-  }
-
-  private loadProfilePicture(): void {
-    console.log('📷 Loading profile picture for scouterId:', this.scouterId);
-
-    // First check if we have a cached image in localStorage
-    const cachedImage = localStorage.getItem('profile_image');
-    if (cachedImage && this.isValidImageData(cachedImage)) {
-      console.log('✅ Using cached profile image from localStorage');
-      this.profileImage = cachedImage;
-      this.hasExistingProfilePicture = true;
-      this.userService.setProfileImage(cachedImage);
-      this.cdr.detectChanges();
-      return;
-    }
-
-    // If no cached image, fetch from backend. Be tolerant of different response shapes.
-    this.endpointService.getScouterPicture(this.scouterId).subscribe({
-      next: (res: any) => {
-        console.log('📷 Profile picture API response:', res);
-
-        // Helper to apply and cache image
-        const applyImage = (imgSrc: string) => {
-          this.profileImage = imgSrc;
-          this.hasExistingProfilePicture = true;
-          this.userService.setProfileImage(imgSrc);
-          this.storeProfileImage(imgSrc);
-          this.cdr.detectChanges();
-          console.log('✅ Profile picture applied');
-        };
-
-        // Case A: expected shape { data: { base64Picture: '...' } }
-        if (res?.data && res.data.base64Picture) {
-          const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
-          console.log(
-            '✅ Profile picture loaded from backend (data.base64Picture)'
-          );
-          applyImage(base64Image);
-          return;
-        }
-
-        // Case B: response contains base64 at top-level
-        if (res?.base64Picture) {
-          const base64Image = `data:image/jpeg;base64,${res.base64Picture}`;
-          console.log('✅ Profile picture loaded from backend (base64Picture)');
-          applyImage(base64Image);
-          return;
-        }
-
-        // Case C: API returns a direct URL or data string in res or res.data
-        const candidate =
-          (res && typeof res === 'string' ? res : null) ||
-          (res?.data && typeof res.data === 'string' ? res.data : null) ||
-          (res?.data?.pictureUrl && res.data.pictureUrl) ||
-          (res?.pictureUrl && res.pictureUrl) ||
-          null;
-
-        if (candidate) {
-          const trimmed = String(candidate).trim();
-
-          // If it's a URL, use it directly
-          if (trimmed.startsWith('http')) {
-            console.log('✅ Profile picture is a URL, using as-is');
-            applyImage(trimmed);
-            return;
-          }
-
-          // If it looks like base64 payload, convert to data URL
-          const base64Only = trimmed.replace(
-            /^data:image\/[a-zA-Z]+;base64,/,
-            ''
-          );
-          if (this.isProbableBase64(base64Only)) {
-            const dataUrl = `data:image/jpeg;base64,${base64Only}`;
-            console.log('✅ Profile picture looks like base64 string');
-            applyImage(dataUrl);
-            return;
-          }
-        }
-
-        // No usable picture found
-        console.log('📷 No usable profile picture data in response');
-        this.setDefaultAvatar();
-      },
-      error: (err) => {
-        console.log('📷 Profile picture load error:', err);
-
-        // Check if it's a 404 (no picture) or other error
-        if (err?.status === 404) {
-          console.log('📷 No profile picture exists for this user');
-        } else if (err?.status === 401) {
-          console.log('📷 Unauthorized - might need to refresh token');
-        } else {
-          console.log(
-            '📷 Other error loading profile picture:',
-            err?.message || err
-          );
-        }
-
-        this.setDefaultAvatar();
-      },
-    });
-  }
-
-  // Add this helper method to validate image data
-  private isValidImageData(data: string): boolean {
-    if (!data) return false;
-
-    // Data URL is always valid
-    if (data.startsWith('data:image/')) return true;
-
-    // URL looks valid
-    if (data.startsWith('http')) return true;
-
-    // If it's a base64-like string, accept shorter lengths (images may be small)
-    const base64 = data.replace(/^data:image\/[a-zA-Z]+;base64,/, '').trim();
-    const base64Regex = /^[A-Za-z0-9+/=]+$/;
-    if (base64.length >= 20 && base64Regex.test(base64)) return true;
-
-    return false;
-  }
-
-  // New helper to guess if a string is probably base64 (lenient)
-  private isProbableBase64(str: string): boolean {
-    if (!str) return false;
-    const s = str.trim();
-    if (s.length < 20) return false;
-    const base64Regex = /^[A-Za-z0-9+/=]+$/;
-    return base64Regex.test(s);
-  }
-
-  private storeProfileImage(imageData: string): void {
-    try {
-      localStorage.setItem('profile_image', imageData);
-    } catch (err) {
-      console.warn('Could not store profile image:', err);
-    }
-  }
-
-  private updateSecurityQuestionsState(): void {
-    if (this.securityQuestions.length === 0) {
-      this.isEditingSecurityQuestions = true;
-    }
-    this.tempSecurityQuestions =
-      this.securityQuestions.length > 0
-        ? JSON.parse(JSON.stringify(this.securityQuestions))
-        : [{ question: '', answer: '' }];
-  }
-
-  private redirectToLogin(): void {
-    this.router.navigate(['/auth/login'], {
-      replaceUrl: true,
-      queryParams: {
-        redirectReason: 'session_expired',
-        returnUrl: this.router.url,
-      },
-    });
-  }
-
-  // Security Questions UI Methods
-  toggleEditSecurityQuestions(): void {
-    this.isEditingSecurityQuestions = !this.isEditingSecurityQuestions;
-    this.editingQuestionIndex = null;
-    if (this.isEditingSecurityQuestions) {
-      this.tempSecurityQuestions =
-        this.securityQuestions.length > 0
-          ? JSON.parse(JSON.stringify(this.securityQuestions))
-          : [{ question: '', answer: '' }];
-    }
-  }
-
-  addNewQuestion(): void {
-    if (this.tempSecurityQuestions.length < 5) {
-      this.tempSecurityQuestions.push({ question: '', answer: '' });
-    } else {
-      this.toastService.openSnackBar(
-        'Maximum of 5 security questions allowed',
-        'warning'
-      );
-    }
-  }
-
-  removeQuestion(index: number): void {
-    if (this.tempSecurityQuestions.length > 1) {
-      this.tempSecurityQuestions.splice(index, 1);
-    } else {
-      this.toastService.openSnackBar(
-        'At least one security question is required',
-        'warning'
-      );
-    }
-  }
-
-  canSaveSecurityQuestions(): boolean {
-    return (
-      this.tempSecurityQuestions.length > 0 &&
-      this.tempSecurityQuestions.every(
-        (q) => q.question?.trim() !== '' && q.answer?.trim() !== ''
-      )
-    );
-  }
-
-  // ==================== SUPPORTING PRIVATE METHODS ====================
-
   private async showSaveConfirmation(): Promise<boolean> {
     return new Promise(async (resolve) => {
-      const modal = await this.modalCtrl.create({
-        component: UpdateProfileConfirmationPopupModalComponent,
-        cssClass: 'confirmation-modal',
-        backdropDismiss: true,
-      });
-      await modal.present();
-      const { data, role } = await modal.onWillDismiss();
-      resolve(role === 'confirm');
+      try {
+        const modal = await this.modalCtrl.create({
+          component: UpdateProfileConfirmationPopupModalComponent,
+          cssClass: 'confirmation-modal',
+          backdropDismiss: true,
+        });
+
+        await modal.present();
+        const { role } = await modal.onWillDismiss();
+        resolve(role === 'confirm');
+      } catch (error) {
+        console.error('❌ Error showing confirmation modal:', error);
+        resolve(false);
+      }
     });
   }
 
@@ -1800,56 +2588,76 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     });
   }
 
-  private updateSecurityQuestionsOnBackend(): void {
-    if (!this.scouterId) return;
+  // ==================== NAVIGATION & SCROLL ====================
 
-    const payload = this.securityQuestions
-      .filter((q) => q.question.trim() !== '')
-      .map((q) => ({ question: q.question, answer: q.answer }));
-
-    this.authService
-      .updateScouterSecurityQuestions(this.scouterId, payload)
-      .subscribe({
-        next: (res: any) => {
-          this.tempSecurityQuestions = [...this.securityQuestions];
-          this.toastService.openSnackBar(
-            'Security questions updated successfully',
-            'success'
-          );
-        },
-        error: (err) => {
-          console.error('❌ Failed to update security questions:', err);
-          this.toastService.openSnackBar(
-            'Failed to update security questions',
-            'error'
-          );
-          this.loadSecurityQuestions();
-        },
-      });
+  private redirectToLogin(): void {
+    this.router.navigate(['/auth/login'], {
+      replaceUrl: true,
+      queryParams: {
+        redirectReason: 'session_expired',
+        returnUrl: this.router.url,
+      },
+    });
   }
 
-  // Navigation
-  goBack() {
+  goBack(): void {
     this.location.back();
   }
 
-  // Scroll methods
-  scrollToProfilePicture() {
+  scrollToProfilePicture(): void {
     if (this.profilePicture?.nativeElement) {
       const y = this.profilePicture.nativeElement.offsetTop - 20;
       this.pageContent.scrollToPoint(0, y, 600);
     }
   }
 
-  scrollToSecurityQuestions() {
+  scrollToSecurityQuestions(): void {
     if (this.securityQuestionsSection?.nativeElement) {
       const y = this.securityQuestionsSection.nativeElement.offsetTop;
       this.pageContent.scrollToPoint(0, y, 600);
     }
   }
 
-  ngOnDestroy() {
+  // ==================== CLEANUP ====================
+
+  reloadComponent(): void {
+    console.log('🔄 Reloading component...');
+
+    this.clearSubscriptions();
+
+    this.profileData = {
+      fullName: '',
+      phoneNumber: '',
+      email: '',
+      location: '',
+      scoutingPurpose: '',
+      payRange: '',
+      organizationTypes: [],
+      profileImage: '',
+    };
+
+    this.selectedOrgTypes = [];
+    this.isEditing = false;
+    this.isLoadingProfile = true;
+    this.securityQuestions = [];
+    this.tempSecurityQuestions = [{ question: '', answer: '' }];
+    this.isEditingSecurityQuestions = false;
+
+    this.initializeScouterId();
+
+    if (this.scouterId) {
+      this.loadDataWithTracking();
+    }
+
+    this.cdr.detectChanges();
+    console.log('✅ Component reloaded');
+  }
+
+  ngOnDestroy(): void {
+    console.log('🧹 Cleaning up ProfilePageComponent...');
+    this.clearSubscriptions();
     this.destroy$.next();
     this.destroy$.complete();
+    console.log('✅ ProfilePageComponent destroyed');
   }
 }

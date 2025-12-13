@@ -27,27 +27,26 @@ export interface resendOTP {
 })
 export class AuthService {
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
-  const url =
-    `${environment?.baseUrl}/${endpoints?.verifyOTP}` +
-    `?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
+    const url =
+      `${environment?.baseUrl}/${endpoints?.verifyOTP}` +
+      `?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
 
-  return this.http.post<any>(
-    url,
-    {}, 
-    { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
-  );
-}
+    return this.http.post<any>(
+      url,
+      {},
+      { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
+    );
+  }
 
-public resendOTP(resendParams: resendOTP): Observable<any> {
-  const url =
-    `${environment?.baseUrl}/${endpoints?.resendOTP}` +
-    `?phoneNumber=${resendParams?.phoneNumber}&email=${resendParams?.email}`;
+  public resendOTP(resendParams: resendOTP): Observable<any> {
+    const url =
+      `${environment?.baseUrl}/${endpoints?.resendOTP}` +
+      `?phoneNumber=${resendParams?.phoneNumber}&email=${resendParams?.email}`;
 
-  return this.http.get<any>(
-    url,
-    { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
-  );
-}
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
+  }
 
   private baseUrl = environment.baseUrl;
   private currentUserSubject = new BehaviorSubject<any>(null);
@@ -288,50 +287,56 @@ public resendOTP(resendParams: resendOTP): Observable<any> {
   }
 
   // ============ SECURITY QUESTIONS ============
+  /**
+   * Get security questions - Use the correct endpoint
+   */
   getMySecurityQuestions(uniqueId: string): Observable<any> {
-    const base = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}`;
-    const candidates: string[] = [];
+    // Use the FULL scouter ID
+    const fullScouterId = uniqueId;
 
-    if (uniqueId?.trim()) {
-      candidates.push(
-        `${base}?uniqueId=${encodeURIComponent(uniqueId.trim())}`
+    // URL encode the full scouter ID
+    const encodedScouterId = encodeURIComponent(fullScouterId);
+
+    // Use the CORRECT endpoint from your endpoints object
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
+
+    console.log('🔗 GET Security Questions URL:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Error getting security questions:', error);
+          return throwError(() => error);
+        })
       );
-      const numericMatch = String(uniqueId).match(/(\d+)/);
-      if (numericMatch?.[1]) {
-        candidates.push(
-          `${base}?uniqueId=${encodeURIComponent(numericMatch[1])}`
-        );
-      }
-    }
-
-    if (!candidates.length)
-      return throwError(
-        () => new Error('Invalid uniqueId for security questions')
-      );
-
-    const headers = this.jwtInterceptor.customHttpHeaders;
-
-    const tryFetch = (urls: string[], idx = 0): Observable<any> =>
-      this.http
-        .get<any>(urls[idx], { headers })
-        .pipe(
-          catchError((error) =>
-            idx < urls.length - 1
-              ? tryFetch(urls, idx + 1)
-              : throwError(() => error)
-          )
-        );
-
-    return tryFetch(candidates);
   }
 
+  /**
+   * Get security questions with answers (if available)
+   */
   public getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
-    let url = `${environment?.baseUrl}/${
-      endpoints?.getMySecurityQuestionsWithAnswers
-    }?uniqueId=${uniqueId.trim()}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    });
+    const encodedId = encodeURIComponent(uniqueId);
+
+    // Use the CORRECT endpoint from your endpoints object
+    const url = `${this.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
+
+    console.log('🔗 GET Security Questions With Answers URL:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(10000),
+        catchError((error) => {
+          console.warn('Could not fetch questions with answers:', error);
+          // Fall back to regular endpoint
+          return this.getMySecurityQuestions(uniqueId);
+        })
+      );
   }
 
   // Add this to your AuthService
@@ -371,20 +376,34 @@ public resendOTP(resendParams: resendOTP): Observable<any> {
     });
   }
 
+  /**
+   * Create security questions - Use the correct endpoint
+   */
   public createScouterSecurityQuestion(payload: any): Observable<any> {
-    const body = JSON.stringify(payload);
-    const url = `${environment?.baseUrl}/${endpoints?.createScouterSecurityQuestions}`;
+    // Ensure payload has the correct structure
+    const createPayload = {
+      uniqueId: payload.uniqueId, // Should be "scouter/5042/28September2025"
+      securityQuestions: payload.securityQuestions,
+    };
 
-    // Use authenticated headers when available; fall back to no-auth headers
-    const headers = this.jwtInterceptor.customHttpHeaders;
+    console.log('📤 Create payload with FULL scouterId:', createPayload);
 
-    return this.http.post<any>(url, body, { headers }).pipe(
-      tap((res) => console.log('✅ Created scouter security questions:', res)),
-      catchError((error) => {
-        console.error('❌ Error creating scouter security questions:', error);
-        return throwError(() => error);
+    // Use the CORRECT endpoint from your endpoints object
+    const url = `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`;
+
+    return this.http
+      .post<any>(url, createPayload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
       })
-    );
+      .pipe(
+        tap((res) =>
+          console.log('✅ Created scouter security questions:', res)
+        ),
+        catchError((error) => {
+          console.error('❌ Error creating scouter security questions:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   public updateTalentSecurityQuestions(
@@ -399,23 +418,81 @@ public resendOTP(resendParams: resendOTP): Observable<any> {
     });
   }
 
-  updateScouterSecurityQuestions(
+  /**
+   * Update security questions - use the correct endpoint
+   */
+  public updateScouterSecurityQuestions(
     scouterId: string,
     securityQuestions: any[]
   ): Observable<any> {
-    const url = `${this.baseUrl}/login/v1/auth/update-scouter-security-questions`;
+    // Use the FULL scouter ID
+    const fullScouterId = scouterId; // e.g., "scouter/5042/28September2025"
 
-    const params = new HttpParams().set('scouterId', scouterId);
+    console.log('🔧 Using FULL scouterId:', fullScouterId);
 
-    return this.http.put(url, { securityQuestions }, { params }).pipe(
-      timeout(15000),
-      tap((res) =>
-        console.log('✅ Security questions updated successfully:', res)
-      ),
-      catchError((error) => {
-        console.error('❌ Failed to update security questions:', error);
-        return throwError(() => error);
+    // URL encode the full scouter ID (it contains slashes)
+    const encodedScouterId = encodeURIComponent(fullScouterId);
+
+    // Use the CORRECT endpoint from your endpoints object
+    const url = `${this.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
+
+    console.log('🔗 Update Security Questions URL:', url);
+
+    return this.http
+      .put<any>(
+        url,
+        { securityQuestions },
+        {
+          headers: this.jwtInterceptor.customHttpHeaders,
+        }
+      )
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log('✅ Security questions updated:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to update security questions:', {
+            status: error.status,
+            statusText: error.statusText,
+            url: error.url,
+            message: error.message,
+            error: error.error,
+          });
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Delete a specific security question
+   */
+  public deleteSecurityQuestion(questionId: string): Observable<any> {
+    const url = `${this.baseUrl}/login/v1/auth/delete-security-question/${questionId}`;
+
+    return this.http
+      .delete<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
       })
-    );
+      .pipe(
+        timeout(10000),
+        catchError((error) => {
+          console.error('❌ Failed to delete security question:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  // auth.service.ts
+  getSecurityQuestionAnswer(questionId: string): Observable<any> {
+    const token = localStorage.getItem('access_token');
+    const url = `${environment.baseUrl}/security-questions/${questionId}/answer`;
+
+    return this.http.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }

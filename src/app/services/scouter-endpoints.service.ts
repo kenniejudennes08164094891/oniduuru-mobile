@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { catchError, Observable, of, tap, throwError } from 'rxjs';
-import { map, timeout } from 'rxjs/operators';
+import { map, retry, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
 import { JwtInterceptorService } from '../services/jwt-interceptor.service';
@@ -99,29 +99,70 @@ export class ScouterEndpointsService {
 
   // ============ PROFILE MANAGEMENT ============
 
-  public fetchScouterProfile(scouterId: string): Observable<any> {
-    if (!scouterId || scouterId.trim() === '') {
-      return throwError(() => new Error('Invalid scouterId provided'));
-    }
-
-    // Try multiple endpoint formats
-    const endpointsToTry = [
-      `${environment?.baseUrl}/${
+  fetchScouterProfile(scouterId: string): Observable<any> {
+    // Try multiple patterns
+    const urlPatterns = [
+      // Pattern 1: Query parameter (most likely)
+      `${this.baseUrl}/${
         endpoints.fetchScouterProfile
-      }/${encodeURIComponent(scouterId)}`,
-      `${environment?.baseUrl}/scouters/v1/scouter-profile/${encodeURIComponent(
+      }?scouterId=${encodeURIComponent(scouterId)}`,
+      // Pattern 2: Path parameter
+      `${this.baseUrl}/${endpoints.fetchScouterProfile}/${encodeURIComponent(
         scouterId
       )}`,
-      `${environment?.baseUrl}/scouters/v1/get-profile/${encodeURIComponent(
+      // Pattern 3: Alternative endpoint
+      `${this.baseUrl}/scouters/v1/get-scouter-profile/${encodeURIComponent(
         scouterId
       )}`,
     ];
 
-    console.log('🔍 Attempting profile fetch with endpoints:', endpointsToTry);
+    console.log('🔍 Trying scouter profile endpoints:', urlPatterns);
 
-    return this.tryEndpoints(endpointsToTry);
+    return this.tryEndpointsSequentially(urlPatterns);
   }
 
+  private tryEndpointsSequentially(urls: string[]): Observable<any> {
+    return new Observable((observer) => {
+      let currentIndex = 0;
+
+      const tryNext = () => {
+        if (currentIndex >= urls.length) {
+          observer.error(new Error('All profile endpoints failed'));
+          return;
+        }
+
+        const url = urls[currentIndex];
+        console.log(`🔄 Trying endpoint ${currentIndex + 1}: ${url}`);
+
+        this.http
+          .get<any>(url, {
+            headers: this.jwtInterceptor.customHttpHeaders,
+          })
+          .subscribe({
+            next: (response) => {
+              console.log(`✅ Endpoint ${currentIndex + 1} succeeded`);
+              observer.next(response);
+              observer.complete();
+            },
+            error: (error) => {
+              console.log(
+                `❌ Endpoint ${currentIndex + 1} failed: ${error.status}`
+              );
+              currentIndex++;
+
+              // If it's a 404, try next endpoint
+              if (error.status === 404 && currentIndex < urls.length) {
+                setTimeout(tryNext, 100);
+              } else {
+                observer.error(error);
+              }
+            },
+          });
+      };
+
+      tryNext();
+    });
+  }
   private tryEndpoints(
     endpoints: string[],
     index: number = 0
@@ -1299,8 +1340,6 @@ export class ScouterEndpointsService {
    * Toggle market offer status (for reconsidering offers)
    * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
    */
-  // scouter-endpoints.service.ts
-
   toggleMarketStatus(
     payload: {
       hireStatus: string;
@@ -1316,46 +1355,16 @@ export class ScouterEndpointsService {
       marketHireId: string;
     }
   ): Observable<any> {
-    // Extract numeric talent ID
-    const extractNumericId = (id: string): string => {
-      if (!id) return id;
-
-      // If ID contains slashes, take the first numeric part
-      if (id.includes('/')) {
-        const parts = id.split('/');
-        const numericPart = parts.find((part) => /^\d+$/.test(part));
-        return numericPart || id;
-      }
-
-      // If it's already numeric, return as is
-      if (/^\d+$/.test(id)) {
-        return id;
-      }
-
-      return id;
-    };
-
-    // Use numeric IDs for talent and scouter
-    const numericTalentId = extractNumericId(params.talentId);
-    const numericScouterId = extractNumericId(params.scouterId);
-
-    // Keep marketHireId as is since it's a composite ID
-    const encodedTalentId = encodeURIComponent(numericTalentId);
-    const encodedScouterId = encodeURIComponent(numericScouterId);
+    const encodedTalentId = encodeURIComponent(params.talentId);
+    const encodedScouterId = encodeURIComponent(params.scouterId);
     const encodedMarketHireId = encodeURIComponent(params.marketHireId);
 
-    const url = `${this.baseUrl}/${endpoints.toggleMarketStatus}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+    const url = `${this.baseUrl}/market/v1/toggle-market-status/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
 
     console.log('🔄 Toggling market offer status:', {
       url,
       payload,
-      params: {
-        originalTalentId: params.talentId,
-        numericTalentId,
-        originalScouterId: params.scouterId,
-        numericScouterId,
-        marketHireId: params.marketHireId,
-      },
+      params,
     });
 
     return this.http
@@ -1369,36 +1378,6 @@ export class ScouterEndpointsService {
         ),
         catchError((error) => {
           console.error('❌ Failed to toggle market offer:', error);
-
-          // If numeric ID fails, try with the original format
-          if (error.status === 404 && numericTalentId !== params.talentId) {
-            console.log('🔄 Retrying with original talent ID format...');
-            return this.http
-              .patch<any>(
-                `${this.baseUrl}/${
-                  endpoints.toggleMarketStatus
-                }/${encodeURIComponent(params.talentId)}/${encodeURIComponent(
-                  params.scouterId
-                )}/${encodedMarketHireId}`,
-                payload,
-                { headers: this.jwtInterceptor.customHttpHeaders }
-              )
-              .pipe(
-                timeout(15000),
-                tap((response) => console.log('✅ Retry succeeded:', response)),
-                catchError((retryError) => {
-                  console.error('❌ Retry also failed:', retryError);
-                  return throwError(
-                    () =>
-                      new Error(
-                        retryError.error?.message ||
-                          'Failed to update offer status'
-                      )
-                  );
-                })
-              );
-          }
-
           return throwError(
             () =>
               new Error(error.error?.message || 'Failed to update offer status')
