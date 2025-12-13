@@ -662,17 +662,17 @@
                 [class.border-red-300]="hasInvalidQuestion(qa)"
               />
               <div class="flex justify-between items-center mt-1.5">
-                <span
-                  class="text-xs"
-                  [class.text-red-500]="hasInvalidQuestion(qa)"
-                  [class.text-gray-400]="!hasInvalidQuestion(qa)"
-                >
-                  {{ getQuestionValidationMessage(qa) }}
-                </span>
-                <span class="text-xs text-gray-400">
-                  {{ qa.question?.length || 0 }} chars
-                </span>
-              </div>
+                  <span
+                    class="text-xs"
+                    [class.text-red-500]="hasInvalidQuestion(qa)"
+                    [class.text-gray-400]="!hasInvalidQuestion(qa)"
+                  >
+                    {{ getQuestionValidationMessage(qa) }}
+                  </span>
+                  <span class="text-xs text-gray-400">
+                    {{ qa.question.length || 0 }} chars
+                  </span>
+                </div>
             </div>
 
             <!-- Answer Input -->
@@ -759,7 +759,7 @@
                   {{ getAnswerValidationMessage(qa) }}
                 </span>
                 <span class="text-xs text-gray-400">
-                  {{ qa.answer?.length || 0 }} chars
+                  {{ qa.answer.length || 0 }} chars
                 </span>
               </div>
             </div>
