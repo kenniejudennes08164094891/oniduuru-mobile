@@ -586,7 +586,7 @@ export class CreateRecordPage implements OnInit {
     const file = input.files[0];
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'video/mp4'];
 
-    this.clearError(); // clear previous errors
+    this.clearError(); // remove previous errors
 
     if (!allowedTypes.includes(file.type)) {
       this.showError('Only PNG/JPG/JPEG and MP4 files are allowed.');
@@ -600,6 +600,10 @@ export class CreateRecordPage implements OnInit {
         img.onload = () => {
           if (img.width !== 828 || img.height !== 640) {
             this.showError('Invalid Image Dimensions, Image must be exactly 828 x 640 pixels.');
+            setTimeout(() => {
+              window.location.href = 'https://www.reduceimages.com/';
+            }, 1200);
+
             return;
           }
           const base64 = reader.result as string;
@@ -629,14 +633,16 @@ export class CreateRecordPage implements OnInit {
   // Show inline error and auto-clear after 3 seconds
   private showError(message: string) {
     this.uploadError = message;
+
+    // Clear message after 2 seconds
     setTimeout(() => {
       this.uploadError = '';
-    }, 3000);
+    }, 2000);
   }
 
   private clearError() {
     this.uploadError = '';
   }
- }
+}
 
 

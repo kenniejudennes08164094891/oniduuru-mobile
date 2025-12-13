@@ -2,7 +2,8 @@
   <div class="w-full flex justify-between items-center px-4 py-2">
     <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
     <div class="flex items-center gap-4">
-      <button (click)="handleWelcomeBack()" class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
+      <button (click)="handleWelcomeBack()"
+        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
         Back
       </button>
     </div>
@@ -202,9 +203,12 @@
         We have sent an OTP to {{ maskedEmail() }} and {{ maskedPhone() }}
       </p>
       <div class="flex justify-center gap-3">
-        <input *ngFor="let o of otp; let i = index" type="text" name="otp" maxlength="1" [(ngModel)]="otp[i]"
+        <input *ngFor="let field of otpFields; let i = index" type="text" maxlength="1" [(ngModel)]="otp[i]"
           (input)="moveNext($event, i)" class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg" />
       </div>
+      <p class="text-sm text-gray-500 mt-2">
+        Enter the 4-digit OTP sent to your email and phone number.
+      </p>
 
       <p class="text-sm text-gray-500">
         Didn’t get the code?
