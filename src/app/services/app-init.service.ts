@@ -1,22 +1,29 @@
 import { Injectable, Injector } from '@angular/core';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
-import { ScouterEndpointsService } from './scouter-endpoint.service';
 import { Router } from '@angular/router';
+import { ScouterEndpointsService } from './scouter-endpoints.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AppInitService {
   private isInitialized = false;
+  private scouterService: ScouterEndpointsService | null = null;
 
   constructor(
     private injector: Injector,
     private authService: AuthService,
     private userService: UserService,
-    private scouterService: ScouterEndpointsService,
     private router: Router
   ) {}
+
+  private getScouterService(): ScouterEndpointsService {
+    if (!this.scouterService) {
+      this.scouterService = this.injector.get(ScouterEndpointsService);
+    }
+    return this.scouterService;
+  }
 
   async initializeApp(): Promise<void> {
     if (this.isInitialized) {
@@ -226,17 +233,20 @@ export class AppInitService {
   /** ✅ Fetch notifications using the API service */
   private loadNotificationsFromAPI(receiverId: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
-      this.scouterService.fetchAllNotifications(receiverId).subscribe({
-        next: (res: any) => {
-          let notifications = [];
-          if (Array.isArray(res?.notifications))
-            notifications = res.notifications;
-          else if (Array.isArray(res?.data)) notifications = res.data;
-          else if (Array.isArray(res)) notifications = res;
-          resolve(notifications);
-        },
-        error: (err: any) => reject(err),
-      });
+      // Use the lazy-loaded service
+      this.getScouterService()
+        .fetchAllNotifications(receiverId)
+        .subscribe({
+          next: (res: any) => {
+            let notifications = [];
+            if (Array.isArray(res?.notifications))
+              notifications = res.notifications;
+            else if (Array.isArray(res?.data)) notifications = res.data;
+            else if (Array.isArray(res)) notifications = res;
+            resolve(notifications);
+          },
+          error: (err: any) => reject(err),
+        });
     });
   }
 

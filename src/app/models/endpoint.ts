@@ -47,7 +47,9 @@ export const endpoints = {
   talentMarketGrading: 'market/v1/talent-market-grading/scouter',
   createTalentMarketProfile: 'market/v1/talent-market-profile/create',
   updateTalentMarketProfile: 'market/v1/talent-market-profile/update-bio',
-  toggleMarketOffer: 'market/v1/toggle-market-status',
+  toggleMarketOffer: 'market/v1/toggle-market-status', //same
+  toggleMarketStatus: 'market/v1/toggle-market-status', //same
+
   marketByTimeFrame: 'market/v1/get-all-markets/filter-by-time',
   getMarketsByDateInterval: 'market/v1/get-all-markets/filter-by-date-interval',
   getSingleMarket: 'market/v1/get-single-market',
@@ -141,5 +143,4 @@ export const endpoints = {
   cloudinaryGetSecrets: 'utility/v1/cloudinary/signature',
 
   chatbot: 'api-service/v1/chatbot',
-
 };

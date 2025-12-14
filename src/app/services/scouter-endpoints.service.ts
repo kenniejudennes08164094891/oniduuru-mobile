@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { catchError, Observable, of, tap, throwError } from 'rxjs';
-import { map, timeout } from 'rxjs/operators';
+import { map, retry, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
 import { JwtInterceptorService } from '../services/jwt-interceptor.service';
@@ -99,29 +99,70 @@ export class ScouterEndpointsService {
 
   // ============ PROFILE MANAGEMENT ============
 
-  public fetchScouterProfile(scouterId: string): Observable<any> {
-    if (!scouterId || scouterId.trim() === '') {
-      return throwError(() => new Error('Invalid scouterId provided'));
-    }
-
-    // Try multiple endpoint formats
-    const endpointsToTry = [
-      `${environment?.baseUrl}/${
+  fetchScouterProfile(scouterId: string): Observable<any> {
+    // Try multiple patterns
+    const urlPatterns = [
+      // Pattern 1: Query parameter (most likely)
+      `${this.baseUrl}/${
         endpoints.fetchScouterProfile
-      }/${encodeURIComponent(scouterId)}`,
-      `${environment?.baseUrl}/scouters/v1/scouter-profile/${encodeURIComponent(
+      }?scouterId=${encodeURIComponent(scouterId)}`,
+      // Pattern 2: Path parameter
+      `${this.baseUrl}/${endpoints.fetchScouterProfile}/${encodeURIComponent(
         scouterId
       )}`,
-      `${environment?.baseUrl}/scouters/v1/get-profile/${encodeURIComponent(
+      // Pattern 3: Alternative endpoint
+      `${this.baseUrl}/scouters/v1/get-scouter-profile/${encodeURIComponent(
         scouterId
       )}`,
     ];
 
-    console.log('🔍 Attempting profile fetch with endpoints:', endpointsToTry);
+    console.log('🔍 Trying scouter profile endpoints:', urlPatterns);
 
-    return this.tryEndpoints(endpointsToTry);
+    return this.tryEndpointsSequentially(urlPatterns);
   }
 
+  private tryEndpointsSequentially(urls: string[]): Observable<any> {
+    return new Observable((observer) => {
+      let currentIndex = 0;
+
+      const tryNext = () => {
+        if (currentIndex >= urls.length) {
+          observer.error(new Error('All profile endpoints failed'));
+          return;
+        }
+
+        const url = urls[currentIndex];
+        console.log(`🔄 Trying endpoint ${currentIndex + 1}: ${url}`);
+
+        this.http
+          .get<any>(url, {
+            headers: this.jwtInterceptor.customHttpHeaders,
+          })
+          .subscribe({
+            next: (response) => {
+              console.log(`✅ Endpoint ${currentIndex + 1} succeeded`);
+              observer.next(response);
+              observer.complete();
+            },
+            error: (error) => {
+              console.log(
+                `❌ Endpoint ${currentIndex + 1} failed: ${error.status}`
+              );
+              currentIndex++;
+
+              // If it's a 404, try next endpoint
+              if (error.status === 404 && currentIndex < urls.length) {
+                setTimeout(tryNext, 100);
+              } else {
+                observer.error(error);
+              }
+            },
+          });
+      };
+
+      tryNext();
+    });
+  }
   private tryEndpoints(
     endpoints: string[],
     index: number = 0
@@ -1023,13 +1064,13 @@ export class ScouterEndpointsService {
       );
   }
 
-  // Helper method to transform API response to match your MockPayment interface
   private transformMarketResponse(response: any): any {
     if (!response) return { data: [], total: 0 };
 
     // Transform the API response to match your frontend structure
     const transformedData =
       response.data?.map((item: any) => ({
+        // Basic fields
         id: item.talentId || item.id || Math.random().toString(),
         profilePic: item.profilePicture || 'assets/images/default-avatar.png',
         name: item.talentName || 'Unknown Talent',
@@ -1044,12 +1085,23 @@ export class ScouterEndpointsService {
         offerStatus: this.mapStatus(item.status),
         status: this.mapActiveStatus(item.status),
 
+        // ✅ CRITICAL: Get the actual backend IDs for reconsider endpoint
+        marketHireId: item.marketHireId || item.marketId || item.id,
+
+        // ✅ Construct talentId with date format: "talent/ID/Date"
+        talentIdWithDate:
+          item.talentIdWithDate ||
+          this.constructTalentIdWithDate(item.talentId, item.createdAt),
+
         // Additional fields for the detail view
         jobDescription: item.jobDescription || 'No description provided',
         yourComment: item.scouterComment || '',
         yourRating: item.scouterRating || 0,
         talentComment: item.talentComment || '',
         talentRating: item.talentRating || 0,
+
+        // ✅ Store original backend data for debugging
+        _originalData: item,
       })) || [];
 
     return {
@@ -1058,6 +1110,22 @@ export class ScouterEndpointsService {
       currentPage: response.currentPage || 1,
       totalPages: response.totalPages || 1,
     };
+  }
+
+  // Helper to construct talentId with date format
+  private constructTalentIdWithDate(
+    talentId: string,
+    createdAt: string
+  ): string {
+    if (!talentId) return '';
+
+    const date = createdAt ? new Date(createdAt) : new Date();
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+
+    return `talent/${talentId}/${day}${month}${year}`;
+    // Or return `talent/${talentId}/${day}-${month}-${year}` based on your backend
   }
 
   private mapStatus(
@@ -1267,12 +1335,20 @@ export class ScouterEndpointsService {
       );
   }
 
+  // Add to scouter-endpoints.service.ts
   /**
    * Toggle market offer status (for reconsidering offers)
    * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
    */
-  toggleMarketOffer(
-    payload: any,
+  toggleMarketStatus(
+    payload: {
+      hireStatus: string;
+      amountToPay: string;
+      dateOfHire: string;
+      jobDescription: string;
+      startDate: string;
+      satisFactoryCommentByScouter: string;
+    },
     params: {
       talentId: string;
       scouterId: string;
@@ -1283,7 +1359,7 @@ export class ScouterEndpointsService {
     const encodedScouterId = encodeURIComponent(params.scouterId);
     const encodedMarketHireId = encodeURIComponent(params.marketHireId);
 
-    const url = `${this.baseUrl}/${endpoints.toggleMarketOffer}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+    const url = `${this.baseUrl}/market/v1/toggle-market-status/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
 
     console.log('🔄 Toggling market offer status:', {
       url,
