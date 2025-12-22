@@ -251,6 +251,25 @@ export class UserService {
   getStatus(): 'online' | 'away' | 'offline' {
     return this.statusSubject.value;
   }
+  getTalentId(): string | null {
+    // Try multiple sources in order
+    const profile = this.getProfileData();
+    if (profile?.user?.id) return profile.user.id;
+    if (profile?.id) return profile.id;
+
+    // Check localStorage directly as fallback
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        return parsed.id || parsed.userId || parsed.talentId || null;
+      } catch (e) {
+        console.error('Error parsing user_data:', e);
+      }
+    }
+
+    return null;
+  }
 
   getScouterId(): string | null {
     // Try multiple sources in order

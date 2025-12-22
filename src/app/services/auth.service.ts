@@ -1,6 +1,6 @@
 // auth.service.ts
 import { Injectable, Injector } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, tap, throwError } from 'rxjs';
 import { catchError, timeout, delay, retry } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -21,11 +21,17 @@ export interface resendOTP {
   phoneNumber: string;
   email: string;
 }
+export interface SecurityyQuestionResponse {
+  message: string;
+ data: string[];
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  customNoAuthHttpHeaders: HttpHeaders | { [header: string]: string | string[]; } | undefined;
+
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
     const url =
       `${environment?.baseUrl}/${endpoints?.verifyOTP}` +
@@ -48,7 +54,7 @@ export class AuthService {
     });
   }
 
-  private baseUrl = environment.baseUrl;
+  private baseUrl = `${environment.baseUrl}/login/v1/auth`;
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -161,7 +167,6 @@ export class AuthService {
         catchError((error) => throwError(() => error))
       );
   }
-
   // ============ TOKEN MANAGEMENT ============
   validateStoredToken(): boolean {
     const token = localStorage.getItem('access_token');
@@ -291,28 +296,62 @@ export class AuthService {
    * Get security questions - Use the correct endpoint
    */
   getMySecurityQuestions(uniqueId: string): Observable<any> {
-    // Use the FULL scouter ID
-    const fullScouterId = uniqueId;
+  const encodedId = encodeURIComponent(uniqueId);
 
-    // URL encode the full scouter ID
-    const encodedScouterId = encodeURIComponent(fullScouterId);
+  const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
 
-    // Use the CORRECT endpoint from your endpoints object
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
+  console.log('GET Security Questions URL:', url);
 
-    console.log('🔗 GET Security Questions URL:', url);
+  return this.http.get<any>(url, {
+    headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+  });
+}
+// auth.service.ts
+// auth.service.ts
+public validateTalentSecurityQuestion(payload: { 
+  talentId: string;
+    answerSecurityQuestion: {
+      question: string;
+      answer: string;
+    };
+}): Observable<any> {
+  const url = `${this.baseUrl}/validate-talent-security-questions`; // remove extra prefix
 
-    return this.http
-      .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders,
-      })
-      .pipe(
-        catchError((error) => {
-          console.error('❌ Error getting security questions:', error);
-          return throwError(() => error);
-        })
-      );
-  }
+  return this.http.post<any>(url, payload, {
+    headers: this.customNoAuthHttpHeaders
+  }).pipe(
+    catchError((error) => {
+      console.error('❌ Error validating security question:', error);
+      return throwError(() => error);
+    })
+  );
+}
+
+
+
+  // getMySecurityQuestions(uniqueId: string): Observable<any> {
+  //   // Use the FULL scouter ID
+  //   const fullScouterId = uniqueId;
+
+  //   // URL encode the full scouter ID
+  //   const encodedScouterId = encodeURIComponent(fullScouterId);
+
+  //   // Use the CORRECT endpoint from your endpoints object
+  //   const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
+
+  //   console.log('🔗 GET Security Questions URL:', url);
+
+  //   return this.http
+  //     .get<any>(url, {
+  //       headers: this.jwtInterceptor.customNoAuthHttpHeaders
+  //     })
+  //     .pipe(
+  //       catchError((error) => {
+  //         console.error('❌ Error getting security questions:', error);
+  //         return throwError(() => error);
+  //       })
+  //     );
+  // }
 
   /**
    * Get security questions with answers (if available)
