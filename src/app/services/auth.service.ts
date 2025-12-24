@@ -23,7 +23,7 @@ export interface resendOTP {
 }
 export interface SecurityyQuestionResponse {
   message: string;
- data: string[];
+  data: string[];
 }
 
 @Injectable({
@@ -34,8 +34,8 @@ export class AuthService {
 
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
     const url =
-      `${environment?.baseUrl}/${endpoints?.verifyOTP}` +
-      `?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
+      `${environment.baseUrl}/${endpoints.verifyOTP}` +
+      `?otp=${otpParams.otp}&phoneNumber=${otpParams.phoneNumber}&email=${otpParams.email}`;
 
     return this.http.post<any>(
       url,
@@ -43,6 +43,7 @@ export class AuthService {
       { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
     );
   }
+
 
   public resendOTP(resendParams: resendOTP): Observable<any> {
     const url =
@@ -54,7 +55,7 @@ export class AuthService {
     });
   }
 
-  private baseUrl = `${environment.baseUrl}/login/v1/auth`;
+  private baseUrl = environment.baseUrl;
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -296,36 +297,36 @@ export class AuthService {
    * Get security questions - Use the correct endpoint
    */
   getMySecurityQuestions(uniqueId: string): Observable<any> {
-  const encodedId = encodeURIComponent(uniqueId);
+    const encodedId = encodeURIComponent(uniqueId);
 
-  const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
 
-  console.log('GET Security Questions URL:', url);
+    console.log('GET Security Questions URL:', url);
 
-  return this.http.get<any>(url, {
-    headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-  });
-}
-// auth.service.ts
-// auth.service.ts
-public validateTalentSecurityQuestion(payload: { 
-  talentId: string;
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
+  }
+  // auth.service.ts
+  // auth.service.ts
+  public validateTalentSecurityQuestion(payload: {
+    talentId: string;
     answerSecurityQuestion: {
       question: string;
       answer: string;
     };
-}): Observable<any> {
-  const url = `${this.baseUrl}/validate-talent-security-questions`; // remove extra prefix
+  }): Observable<any> {
+    const url = `${this.baseUrl}/validate-talent-security-questions`; // remove extra prefix
 
-  return this.http.post<any>(url, payload, {
-    headers: this.customNoAuthHttpHeaders
-  }).pipe(
-    catchError((error) => {
-      console.error('❌ Error validating security question:', error);
-      return throwError(() => error);
-    })
-  );
-}
+    return this.http.post<any>(url, payload, {
+      headers: this.customNoAuthHttpHeaders
+    }).pipe(
+      catchError((error) => {
+        console.error('❌ Error validating security question:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
 
 

@@ -17,6 +17,9 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   uniqueId = '';
   questions: string[] = [];
   loading = false;
+  sendingOtp = false;
+  verifyingOtp = false;
+
   private countdownInterval: any;
 
   // OTP Management
@@ -102,25 +105,25 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
     });
   }
   // forgot-password.component.ts
- onSubmitSecurityAnswer() {
-  const payload = {
-    talentId: this.uniqueId,
-    answerSecurityQuestion: {
-      question: this.forgotPasswordData.securityQuestion,
-      answer: this.forgotPasswordData.securityAnswer
-    }
-  };
+  onSubmitSecurityAnswer() {
+    const payload = {
+      talentId: this.uniqueId,
+      answerSecurityQuestion: {
+        question: this.forgotPasswordData.securityQuestion,
+        answer: this.forgotPasswordData.securityAnswer
+      }
+    };
 
-  this.authService.validateTalentSecurityQuestion(payload).subscribe({
-    next: (res) => {
-      console.log('✅ Security question validated:', res);
-      this.nextStep(); // move to next step
-    },
-    error: (err) => {
-      console.error('❌ Failed to validate security question:', err);
-    }
-  });
-}
+    this.authService.validateTalentSecurityQuestion(payload).subscribe({
+      next: (res) => {
+        console.log('✅ Security question validated:', res);
+        this.nextStep(); // move to next step
+      },
+      error: (err) => {
+        console.error('❌ Failed to validate security question:', err);
+      }
+    });
+  }
 
 
   ngOnDestroy() {
@@ -165,10 +168,41 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   }
 
   // OTP Method Selection
-  selectOtpMethod(method: 'email' | 'phone') {
-    this.forgotPasswordData.otpMethod = method;
-    this.nextStep();
-  }
+ selectOtpMethod(method: 'email' | 'phone') {
+  this.forgotPasswordData.otpMethod = method;
+  this.sendOtp();
+}
+sendOtp() {
+  if (this.sendingOtp) return;
+
+  const payload = {
+    email:
+      this.forgotPasswordData.otpMethod === 'email'
+        ? this.forgotPasswordData.email
+        : '',
+    phoneNumber:
+      this.forgotPasswordData.otpMethod === 'phone'
+        ? this.forgotPasswordData.phone
+        : '',
+  };
+
+  this.sendingOtp = true;
+
+  this.authService.resendOTP(payload).subscribe({
+    next: () => {
+      this.sendingOtp = false;
+      this.resetOtp();
+      this.startCountdown();
+      this.nextStep(); // move to OTP input (Step 5)
+    },
+    error: (err) => {
+      this.sendingOtp = false;
+      console.error('❌ Failed to send OTP:', err);
+    },
+  });
+}
+
+
 
   // OTP Management
   onOtpInput(event: any, index: number) {
@@ -238,24 +272,69 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
   }
 
   // Action Methods
-  sendOtp() {
-    // Here you would typically call your OTP service
-    console.log('Sending OTP to:', this.forgotPasswordData);
-    this.nextStep();
-  }
+  // sendOtp() {
+  //   // Here you would typically call your OTP service
+  //   console.log('Sending OTP to:', this.forgotPasswordData);
+  //   this.nextStep();
+ // }
+resendOtp() {
+  if (this.countdown > 0) return;
 
-  resendOtp() {
-    this.sendOtp();
-    this.startCountdown();
-  }
+  const payload = {
+    email:
+      this.forgotPasswordData.otpMethod === 'email'
+        ? this.forgotPasswordData.email
+        : '',
+    phoneNumber:
+      this.forgotPasswordData.otpMethod === 'phone'
+        ? this.forgotPasswordData.phone
+        : '',
+  };
 
-  verifyOtp() {
-    // Here you would verify the OTP with your backend
-    if (this.isOtpComplete) {
-      console.log('Verifying OTP:', this.forgotPasswordData.otp);
-      this.nextStep();
-    }
-  }
+  this.authService.resendOTP(payload).subscribe({
+    next: () => {
+      this.resetOtp();
+      this.startCountdown();
+    },
+    error: (err) => console.error('❌ Failed to resend OTP:', err),
+  });
+}
+
+
+  // resendOtp() {
+  //   this.sendOtp();
+  //   this.startCountdown();
+  // }
+
+ verifyOtp() {
+  if (!this.isOtpComplete || this.verifyingOtp) return;
+
+  const payload = {
+    otp: this.forgotPasswordData.otp,
+    email:
+      this.forgotPasswordData.otpMethod === 'email'
+        ? this.forgotPasswordData.email
+        : '',
+    phoneNumber:
+      this.forgotPasswordData.otpMethod === 'phone'
+        ? this.forgotPasswordData.phone
+        : '',
+  };
+
+  this.verifyingOtp = true;
+
+  this.authService.verifyOTP(payload).subscribe({
+    next: () => {
+      this.verifyingOtp = false;
+      this.nextStep(); // proceed to reset password
+    },
+    error: (err) => {
+      this.verifyingOtp = false;
+      console.error('❌ OTP verification failed:', err);
+    },
+  });
+}
+
 
   updatePassword() {
     // Here you would update the password via your backend
