@@ -199,12 +199,28 @@
               </td>
 
               <!-- Status -->
+              <!-- Status + Evaluation Button -->
               <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
-                  <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.status)"></span>
-                  {{ hire.status }}
-                </span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
+                    <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.status)"></span>
+                    {{ hire.status }}
+                  </span>
+
+                  <!-- ✅ Evaluation button -->
+                  <ion-button *ngIf="hire.status === 'Offers Accepted' && !hire.isRated" (click)="openEvaluation(hire)"
+                    color="success" size="small">
+                    Evaluate
+                  </ion-button>
+
+                  <!-- ⭐ Show rated info -->
+                  <div *ngIf="hire.isRated" class="flex items-center gap-1 text-yellow-500 text-sm">
+                    <ion-icon name="star"></ion-icon>
+                    <span>{{ hire.rating }}/5</span>
+                  </div>
+                </div>
               </td>
+
             </tr>
           </tbody>
         </table>

@@ -1,8 +1,11 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { EndpointService } from 'src/app/services/endpoint.service';
-import { PaginationParams,marketHires } from 'src/app/models/mocks'; // or local interface
+import { PaginationParams, marketHires } from 'src/app/models/mocks'; // or local interface
 import { AuthService } from 'src/app/services/auth.service';
+import { ModalController, ToastController } from '@ionic/angular';
+import { EvaluationPageComponent } from 'src/app/components/evaluation-page/evaluation-page.component';
+import { EvaluationPageModule } from 'src/app/components/evaluation-page/evaluation-page.module';
 @Component({
   selector: 'app-view-hires',
   templateUrl: './view-hires.page.html',
@@ -11,19 +14,23 @@ import { AuthService } from 'src/app/services/auth.service';
 export class ViewHiresPage implements OnInit, OnDestroy {
   marketExpenditures: any[] = [];
   initialPaginatedHires: any[] = [];
-   paginatedHiresData: any[] = []; // writable source
- @Input() hires: any[] = []; // new input from parent
+  paginatedHiresData: any[] = []; // writable source
+  @Input() hires: any[] = []; // new input from parent
   currentMonth: string = '';
   currentTime: Date = new Date(); // live clock
   talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
   userName: string = 'User';
   private intervalId: any;
+  headerHidden: boolean = false;
+
 
 
   constructor(
     private router: Router,
     private endpointService: EndpointService,
-    private authService: AuthService
+    private authService: AuthService,
+    private modalCtrl: ModalController,
+    private toastCtrl: ToastController
   ) { }
   private base64JsonDecode<T = any>(b64: string): T | null {
     try {
@@ -37,13 +44,69 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       return null;
     }
   }
-  
+
 
   async goToHireTransaction(hireId: string | number): Promise<any> {
     console.log('Clicked hire:', hireId); // 👈 test log
-   await this.router.navigate(['/talent/market-price-preposition', hireId]);
+    const selectedHire = this.MockRecentHires.find(h => h.id === hireId);
+
+    if (!selectedHire) return;
+
+    // If offer is completed / accepted, show evaluation popup
+    if (selectedHire.status === 'Offers Accepted') {
+      const modal = await this.modalCtrl.create({
+        component: EvaluationPageComponent,
+        componentProps: { scouterName: selectedHire.name },
+      });
+
+      await modal.present();
+
+      const { data } = await modal.onDidDismiss();
+      if (data) {
+        console.log('Evaluation submitted:', data);
+        // TODO: send data to backend or local storage
+      }
+    } else {
+      // Otherwise, go to the details page as usual
+      await this.router.navigate(['/talent/market-price-preposition', hireId]);
+    }
   }
-  ngOnInit() : void {
+  ngOnInit(): void {
+    const saved = localStorage.getItem('MockRecentHires');
+    if (saved) {
+      this.MockRecentHires = JSON.parse(saved);
+    } else {
+      this.MockRecentHires = [
+        // Example
+        { id: 1, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 2, name: 'Yamine Yamal', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 780000, isRated: false, rating: null, comment: '' },
+        { id: 3, name: 'Alice Smith', email: 'alice@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-02', time: '10:30 AM', startDate: '2025-09-10', amount: 650000, isRated: false, rating: null, comment: '' },
+        { id: 4, name: 'Bob Johnson', email: 'bob@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-04', time: '10:30 AM', startDate: '2025-09-12', amount: 850000, isRated: false, rating: null, comment: '' },
+        { id: 5, name: 'Catherine Lee', email: 'catherine@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-15', amount: 920000, isRated: false, rating: null, comment: '' },
+        { id: 6, name: 'David Brown', email: 'david@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-06', time: '10:30 AM', startDate: '2025-09-18', amount: 750000, isRated: false, rating: null, comment: '' },
+        { id: 7, name: 'Eva Green', email: 'eva@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-07', time: '10:30 AM', startDate: '2025-09-20', amount: 880000, isRated: false, rating: null, comment: '' },
+        { id: 8, name: 'Frank White', email: 'frank@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-08', time: '10:30 AM', startDate: '2025-09-22', amount: 720000, isRated: false, rating: null, comment: '' },
+        { id: 9, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+        { id: 10, name: 'Henry Gold', email: 'henry@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-10', time: '10:30 AM', startDate: '2025-09-26', amount: 820000, isRated: false, rating: null, comment: '' },
+        { id: 11, name: 'Henry Gold', email: 'henry@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-10', time: '10:30 AM', startDate: '2025-09-26', amount: 820000, isRated: false, rating: null, comment: '' },
+        { id: 12, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+        { id: 13, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+        { id: 14, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 15, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 16, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 17, name: 'Gerrade Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 18, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 19, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 20, name: 'Gerrade Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+        { id: 21, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+      ].map(h => ({
+        ...h,
+        isRated: false,
+        rating: null,
+        comment: '',
+      }));
+      localStorage.setItem('MockRecentHires', JSON.stringify(this.MockRecentHires));
+    }
     this.loadTalentName();
     //  Final fallback: call API directly
     if (!this.talentId) return;
@@ -52,7 +115,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       next: (res: any) => {
         const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
         console.clear();
-        console.log("decoded>>",decoded); // use this as mock data: marketHires
+        console.log("decoded>>", decoded); // use this as mock data: marketHires
         this.initialPaginatedHires = decoded;
         this.paginatedHiresData = decoded;
         sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
@@ -82,6 +145,52 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     // Example mock data
     this.marketExpenditures = [];
   }
+  async openEvaluation(hire: any) {
+    if (hire.status !== 'Offers Accepted') {
+      const toast = await this.toastCtrl.create({
+        message: 'You can only evaluate accepted offers.',
+        duration: 2000,
+        color: 'warning',
+      });
+      await toast.present();
+      return;
+    }
+
+    if (hire.isRated) {
+      const toast = await this.toastCtrl.create({
+        message: 'You have already rated this scouter.',
+        duration: 2000,
+        color: 'medium',
+      });
+      await toast.present();
+      return;
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: EvaluationPageComponent,
+      componentProps: { scouterName: hire.name },
+    });
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+    if (data) {
+      hire.isRated = true;
+      hire.rating = data.rating;
+      hire.comment = data.comment;
+
+      // ✅ Save updated list
+      const updated = this.MockRecentHires.map(h => (h.id === hire.id ? hire : h));
+      localStorage.setItem('MockRecentHires', JSON.stringify(updated));
+
+      const toast = await this.toastCtrl.create({
+        message: `Thank you for rating ${hire.name}!`,
+        duration: 2000,
+        color: 'success',
+      });
+      await toast.present();
+    }
+  }
+
   loadTalentName() {
     try {
       const savedProfile = localStorage.getItem('talentProfile');
@@ -132,7 +241,6 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       hour12: true
     });
   }
-  headerHidden = false;
 
   // Example images (replace with your asset paths)
   images = {
@@ -143,28 +251,30 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
   // Mock data
   MockRecentHires = [
-    { id: 1, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000 },
-    { id: 2, name: 'Yamine Yamal', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 780000 },
-    { id: 3, name: 'Christiano Ronaldo', email: 'mike@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 390000 },
-    { id: 4, name: 'Andre Messi', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 800000 },
-    { id: 5, name: 'Elon Musk', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 70050 },
-    { id: 6, name: 'Mike Johnson', email: 'mike@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 300000 },
-    { id: 7, name: 'Jane Smith', email: 'jane@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 750000 },
-    { id: 8, name: 'Mike Johnson', email: 'mike@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 4000000 },
-    { id: 9, name: 'Sam sam', email: 'john@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 3000000 },
-    { id: 10, name: 'Seyi seyi', email: 'jane@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 2750000 },
-    { id: 11, name: 'Seyi ade', email: 'mike@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 3785900 },
-    { id: 12, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000 },
-    { id: 13, name: 'Yamine Yamal', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 780000 },
-    { id: 14, name: 'Christiano Ronaldo', email: 'mike@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 390000 },
-    { id: 15, name: 'Andre Messi', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 800000 },
-    { id: 16, name: 'Mike Johnson', email: 'mike@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 300000 },
-    { id: 17, name: 'Jane Smith', email: 'jane@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 750000 },
-    { id: 18, name: 'Mike Johnson', email: 'mike@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Declined', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-10', amount: 4000000 },
-    { id: 19, name: 'Sam sam', email: 'john@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 3000000 },
-    { id: 20, name: 'Seyi seyi', email: 'jane@example.com', profilePic: 'assets/images/portrait-african-american-man.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 2750000 },
-    { id: 21, name: 'Elon Musk', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 70050 },
+    { id: 1, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 2, name: 'Yamine Yamal', email: 'jane@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-03', time: '10:30 AM', startDate: '2025-09-08', amount: 780000, isRated: false, rating: null, comment: '' },
+    { id: 3, name: 'Alice Smith', email: 'alice@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-02', time: '10:30 AM', startDate: '2025-09-10', amount: 650000, isRated: false, rating: null, comment: '' },
+    { id: 4, name: 'Bob Johnson', email: 'bob@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-04', time: '10:30 AM', startDate: '2025-09-12', amount: 850000, isRated: false, rating: null, comment: '' },
+    { id: 5, name: 'Catherine Lee', email: 'catherine@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-05', time: '10:30 AM', startDate: '2025-09-15', amount: 920000, isRated: false, rating: null, comment: '' },
+    { id: 6, name: 'David Brown', email: 'david@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-06', time: '10:30 AM', startDate: '2025-09-18', amount: 750000, isRated: false, rating: null, comment: '' },
+    { id: 7, name: 'Eva Green', email: 'eva@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-07', time: '10:30 AM', startDate: '2025-09-20', amount: 880000, isRated: false, rating: null, comment: '' },
+    { id: 8, name: 'Frank White', email: 'frank@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-08', time: '10:30 AM', startDate: '2025-09-22', amount: 720000, isRated: false, rating: null, comment: '' },
+    { id: 9, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+    { id: 10, name: 'Henry Gold', email: 'henry@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-10', time: '10:30 AM', startDate: '2025-09-26', amount: 820000, isRated: false, rating: null, comment: '' },
+    { id: 11, name: 'Henry Gold', email: 'henry@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-10', time: '10:30 AM', startDate: '2025-09-26', amount: 820000, isRated: false, rating: null, comment: '' },
+    { id: 12, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+    { id: 13, name: 'Grace Black', email: 'grace@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-09', time: '10:30 AM', startDate: '2025-09-24', amount: 780000, isRated: false, rating: null, comment: '' },
+    { id: 14, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 15, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 16, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 17, name: 'Gerrade Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 18, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 19, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Accepted', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 20, name: 'Gerrade Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Offers Declined', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    { id: 21, name: 'Micheal Jackson', email: 'john@example.com', profilePic: 'assets/images/portrait-man-cartoon-style.jpg', status: 'Awaiting Acceptance', date: '2025-09-01', time: '10:30 AM', startDate: '2025-09-05', amount: 500000, isRated: false, rating: null, comment: '' },
+    // ...repeat for each record
   ];
+
 
   slideshowTexts = [
     'Track your hires seamlessly',
@@ -243,7 +353,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     }
   }
 
-  
+
 
   // ===== Search + Pagination =====
   get filteredAndSearchedHires() {
