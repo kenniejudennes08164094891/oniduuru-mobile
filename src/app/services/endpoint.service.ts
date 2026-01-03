@@ -159,6 +159,22 @@ export class EndpointService {
     });
   }
 
+   public getMySecurityQuestions(uniqueId: string):Observable<any>{
+    let url = `${environment?.baseUrl}/${endpoints?.getMySecurityQuestions}?uniqueId=${uniqueId.trim()}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+  }
+  public validateTalentSecurityQuestion(payload: {
+    talentId: string;
+    answerSecurityQuestion: {
+      question: string;
+      answer: string;
+   };
+  }): Observable<any> {
+    const url = `${environment.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
+    return this.http.post<any>(url, payload, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
+  }
   public getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
     const url = `${environment.baseUrl}/${
       endpoints.getMySecurityQuestionsWithAnswers
