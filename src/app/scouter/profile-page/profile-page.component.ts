@@ -217,29 +217,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== DEBUG & DIAGNOSTIC METHODS ====================
 
   runDebug(): void {
-    console.clear();
-    console.group(' PROFILE PAGE DEBUG');
-
-    console.log('1️⃣ COMPONENT STATE:');
-    console.log('- scouterId:', this.scouterId);
-    console.log('- isEditing:', this.isEditing);
-    console.log('- isLoadingProfile:', this.isLoadingProfile);
-    console.log('- hasExistingProfilePicture:', this.hasExistingProfilePicture);
-    console.log('- profileData:', this.profileData);
-    console.log('- selectedOrgTypes:', this.selectedOrgTypes);
-
-    console.log('2️⃣ AUTHENTICATION STATE:');
-    console.log('- Token exists:', !!localStorage.getItem('access_token'));
-    console.log('- User data exists:', !!localStorage.getItem('user_data'));
-
-    console.log('3️⃣ NETWORK STATE:');
-    console.log('- Backend URL:', environment.baseUrl);
-    console.log('- Online status:', navigator.onLine);
-
-    console.log('4️⃣ TEST REQUESTS:');
-    this.testNetworkConnectivity();
-
-    console.groupEnd();
+    // Removed: debug helper - left intentionally blank
   }
 
   private testNetworkConnectivity(): void {
@@ -714,43 +692,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   private debugEndpointWithFetch(payload: any): void {
-    console.log(' Debugging endpoint with fetch...');
-
-    const token = localStorage.getItem('access_token');
-    const url = `${environment.baseUrl}/scouters/v1/edit-scouter-profile/${this.scouterId}`;
-
-    console.log(' Fetch URL:', url);
-
-    fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(async (response) => {
-        console.log(' Fetch response status:', response.status);
-        console.log(' Fetch response headers:');
-        const headersObj: { [key: string]: string } = {};
-        response.headers.forEach((value, key) => {
-          headersObj[key] = value;
-        });
-        console.log(headersObj);
-
-        const text = await response.text();
-        console.log(' Fetch response body:', text);
-
-        try {
-          const json = JSON.parse(text);
-          console.log(' Parsed JSON:', json);
-        } catch (e) {
-          console.log(' Response is not JSON');
-        }
-      })
-      .catch((error) => {
-        console.error(' Fetch error:', error);
-      });
+    // debug helper removed in cleanup
   }
 
   private handleSuccessfulSave(savedPayload: any, apiResponse: any): void {
@@ -1071,36 +1013,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Test and fix security question endpoints
    */
   testAllSecurityQuestionEndpoints(): void {
-    console.group(' TESTING ALL SECURITY QUESTION ENDPOINTS');
-
-    const scouterId = this.scouterId;
-    const encodedId = encodeURIComponent(scouterId);
-
-    // Test all possible endpoints
-    const endpointsToTest = [
-      {
-        name: 'getMySecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`,
-      },
-      {
-        name: 'getMySecurityQuestionsWithAnswers',
-        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`,
-      },
-      {
-        name: 'createScouterSecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`,
-      },
-      {
-        name: 'updateScouterSecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedId}`,
-      },
-    ];
-
-    endpointsToTest.forEach((endpoint) => {
-      console.log(`${endpoint.name}: ${endpoint.url}`);
-    });
-
-    console.groupEnd();
+    // removed: debugging helper for endpoint URLs
   }
 
   /**
@@ -1112,7 +1025,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log(' Loading security questions for:', this.scouterId);
     this.isLoadingSecurityQuestions = true;
     this.securityQuestionErrorMessage = '';
     this.cdr.detectChanges();
@@ -1120,7 +1032,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     const encodedScouterId = encodeURIComponent(this.scouterId);
     const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
 
-    console.log(' Fetching from:', url);
+    // fetching security questions from backend
 
     const token = localStorage.getItem('access_token');
 
@@ -1132,31 +1044,28 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       },
     })
       .then(async (response) => {
-        console.log(' Response status:', response.status);
+        // response received
 
         // Build a plain object from Headers in a way compatible with TypeScript
         const headersObj: { [key: string]: string } = {};
         response.headers.forEach((value, key) => {
           headersObj[key] = value;
         });
-        console.log(' Response headers:', headersObj);
+        // headers received
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const text = await response.text();
-        console.log(
-          ' Raw response (first 300 chars):',
-          text.substring(0, 300)
-        );
+        // raw response received
 
         try {
           // First try to parse as JSON
           const json = JSON.parse(text);
           this.processSecurityQuestionsResponse(json);
         } catch (parseError) {
-          console.warn(' JSON parse failed, trying as raw text:', parseError);
+          // JSON parse failed, try alternative handling
 
           // If it looks like it might be pure base64 (without JSON wrapper)
           if (this.looksLikePureBase64(text)) {
@@ -1174,7 +1083,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         }
       })
       .catch((error) => {
-        console.error(' Error loading security questions:', error);
+        console.error('Error loading security questions:', error);
         this.isLoadingSecurityQuestions = false;
         this.securityQuestionErrorMessage = 'Failed to load security questions';
         this.cdr.detectChanges();
@@ -1279,23 +1188,21 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Process security questions response
    */
   private processSecurityQuestionsResponse(response: any): void {
-    console.log('🔍 Processing response:', response);
+    // Processing security questions response
 
     this.securityQuestions = [];
 
     // Check if data is a base64-encoded string
     if (response?.data && typeof response.data === 'string') {
-      console.log(
-        ' Data appears to be base64 encoded, attempting to decode...'
-      );
+      // Data appears to be base64 encoded - decoding attempt
 
       const decodedData = this.decodeBase64(response.data);
 
       if (decodedData && Array.isArray(decodedData)) {
-        console.log(` Successfully decoded ${decodedData.length} questions`);
+        // Successfully decoded questions
         this.processDecodedQuestionsArray(decodedData);
       } else {
-        console.error(' Decoded data is not an array or is empty');
+        console.error('Decoded data is not an array or is empty');
         this.securityQuestions = [];
       }
     }
@@ -1313,7 +1220,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
     // Try to extract from message format
     else if (response?.message && response.data) {
-      console.log(' Trying to extract from message format...');
+      // Trying to extract from message format
       this.processSecurityQuestionsResponse({ data: response.data });
     }
 
@@ -1321,10 +1228,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.updateSecurityQuestionsState();
     this.cdr.detectChanges();
 
-    console.log(' Security questions loaded:', {
-      count: this.securityQuestions.length,
-      questions: this.securityQuestions,
-    });
+    // Security questions loaded: count = ${this.securityQuestions.length}
   }
 
   /**
@@ -1343,35 +1247,28 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private decodeBase64(base64String: string): any {
     try {
-      console.log(' Decoding base64 string...');
-      console.log(' String length:', base64String.length);
+      // Decoding base64 string
 
       // Clean the string (remove whitespace, etc.)
       const cleanString = base64String.trim();
 
       // Decode base64
       const decodedString = atob(cleanString);
-      console.log(
-        ' Decoded string (first 200 chars):',
-        decodedString.substring(0, 200)
-      );
-
       // Try to parse as JSON
       const parsed = JSON.parse(decodedString);
-      console.log(' Successfully parsed as JSON');
 
       return parsed;
     } catch (error) {
-      console.error(' Base64 decode/parse error:', error);
+      console.error('Base64 decode/parse error:', error);
 
       // Try alternative decoding for malformed base64
       try {
         // Sometimes base64 might have URL encoding
         const decoded = decodeURIComponent(escape(atob(base64String)));
-        console.log(' Alternative decode successful');
+        // Alternative decode successful
         return JSON.parse(decoded);
       } catch (altError) {
-        console.error(' Alternative decode also failed:', altError);
+        console.error('Alternative decode also failed:', altError);
         return null;
       }
     }
@@ -1381,30 +1278,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Debug method to test base64 decoding
    */
   debugBase64Decoding(): void {
-    console.clear();
-    console.group(' DEBUG BASE64 DECODING');
-
-    // Example base64 string from your logs
-    const base64String =
-      'W3sicXVlc3Rpb24iOiJXaGF0J3MgeW91ciBmYXZvdXJpdGUgZm9vZD8iLCJhbnN3ZXIiOiIkMmIkMTAkYnV0aGVwZktvamxONG4ycjZGLmM4T0U2QmNtUzhVOXUzSFBCdHJ5TEJsUmcuaFJDYUZiUW0ifSx7InF1ZXN0aW9uIjoid2hhdCdzIHlvdXIgZmlyc3QgcGV0cyBuYW1lPyIsImFuc3dlciI';
-
-    console.log(
-      'Base64 string (first 100 chars):',
-      base64String.substring(0, 100)
-    );
-    console.log('Full length:', base64String.length);
-
-    try {
-      const decoded = atob(base64String);
-      console.log('Decoded (first 200 chars):', decoded.substring(0, 200));
-
-      const parsed = JSON.parse(decoded);
-      console.log('Parsed JSON:', parsed);
-    } catch (error) {
-      console.error('Decoding error:', error);
-    }
-
-    console.groupEnd();
+    // removed: debug helper for base64 decoding
   }
 
   /**
@@ -1412,12 +1286,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private processDecodedQuestionsArray(questionsArray: any[]): void {
     if (!questionsArray || !Array.isArray(questionsArray)) {
-      console.log('⚠️ No valid questions array found');
+      // No valid questions array found
       this.securityQuestions = [];
       return;
     }
 
-    console.log(` Processing ${questionsArray.length} security questions`);
+    // Processing questions array
 
     this.securityQuestions = questionsArray.map((item: any, index: number) => {
       // Extract question and answer
@@ -1438,21 +1312,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         createdAt: item.createdAt || new Date().toISOString(),
       };
 
-      console.log(` Question ${index + 1}:`, {
-        question:
-          questionText.substring(0, 30) +
-          (questionText.length > 30 ? '...' : ''),
-        hasAnswer: !!answerText,
-        isHashed: isHashed,
-        answerLength: answerText.length,
-      });
+      // question processed
 
       return questionObj;
     });
 
-    console.log(
-      ` Loaded ${this.securityQuestions.length} security questions`
-    );
+    console.log(` Loaded ${this.securityQuestions.length} security questions`);
   }
 
   /**
@@ -1502,9 +1367,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return questionObj;
     });
 
-    console.log(
-      ` Loaded ${this.securityQuestions.length} security questions`
-    );
+    console.log(` Loaded ${this.securityQuestions.length} security questions`);
   }
 
   /**
@@ -1583,7 +1446,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         verifyInProgress: false,
         showAnswer: false,
         isHashed: q.isHashed,
-        originalAnswer: q.answer,
+        // Preserve the real original answer (hash) when available; fall back to the displayed answer
+        originalAnswer: q.originalAnswer ? q.originalAnswer : q.answer,
         masked: !!q.isHashed,
       }));
 
@@ -1786,6 +1650,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           question: item,
           answer: this.ANSWER_MASK,
           isHashed: true,
+          originalAnswer: '',
           createdAt: new Date().toISOString(),
         };
       }
@@ -1797,6 +1662,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           question: item.question || item.text || '',
           answer: item.answer ? this.ANSWER_MASK : '',
           isHashed: !!item.answer,
+          originalAnswer: item.answer || '',
           createdAt:
             item.createdAt || item.dateCreated || new Date().toISOString(),
         };
@@ -1939,68 +1805,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // profile-page.component.ts - Add a test method to verify endpoints
 
   testSecurityQuestionEndpoints(): void {
-    const fullScouterId = this.scouterId; // "scouter/5042/28September2025"
-    const encodedScouterId = encodeURIComponent(fullScouterId);
-
-    console.group(' Testing Security Question Endpoints');
-
-    // Test GET endpoint (CORRECT ONE)
-    const getUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
-    console.log('1. GET URL:', getUrl);
-
-    // Test UPDATE endpoint (CORRECT ONE)
-    const updateUrl = `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
-    console.log('2. UPDATE URL:', updateUrl);
-
-    // Test CREATE endpoint (CORRECT ONE)
-    const createUrl = `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`;
-    console.log('3. CREATE URL:', createUrl);
-
-    // Test WITH ANSWERS endpoint
-    const withAnswersUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
-    console.log('4. WITH ANSWERS URL:', withAnswersUrl);
-
-    console.log('5. Full Scouter ID:', fullScouterId);
-    console.log('6. Encoded Scouter ID:', encodedScouterId);
-
-    // Test the endpoints with fetch
-    this.testEndpointWithFetch(getUrl, 'GET');
-    this.testEndpointWithFetch(withAnswersUrl, 'GET');
-
-    console.groupEnd();
+    // removed: helper for testing endpoints
   }
 
   private testEndpointWithFetch(url: string, method: string): void {
-    const token = localStorage.getItem('access_token');
-
-    console.log(` Testing ${method} ${url}`);
-
-    fetch(url, {
-      method: method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        console.log(` Response: ${response.status} ${response.statusText}`);
-
-        // Log headers
-        console.log(' Response headers:');
-        response.headers.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-
-        const text = await response.text();
-        console.log(' Response body:', text.substring(0, 200));
-
-        if (!response.ok) {
-          console.log(` Error: ${text}`);
-        }
-      })
-      .catch((error) => {
-        console.error(` Fetch error: ${error.message}`);
-      });
+    // removed: debug fetch helper
   }
 
   /**
@@ -2142,7 +1951,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         answer: '••••••••', // Hide answers
         isHashed: true,
         showAnswer: false,
-        originalAnswer: qa.answer,
+        // Preserve hash if we have it; otherwise clear so next load will fetch from server
+        originalAnswer: qa.originalAnswer ? qa.originalAnswer : '',
         createdAt: new Date().toISOString(),
       }));
 
