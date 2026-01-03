@@ -163,6 +163,8 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/scouter/resend-otp',
       '/scouter/verify-otp',
       '/verify-user-email',
+       '/login/v1/auth/validate-talent-security-questions',
+       '/login/v1/auth/get-my-security-questions',
       '/admin/v1/admin/validateUserEmail',
       '/assets/',
       'https://api.cloudinary.com/v1_1/dosiy2cmk/video/upload',

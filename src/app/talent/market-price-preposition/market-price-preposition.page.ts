@@ -120,10 +120,10 @@ export class MarketPricePrepositionPage implements OnInit {
   }
 
   setSelectedHire(hire: MockPayment) {
-    this.hire = hire; // ✅ update active hire in dashboard
+    this.hire = hire; //  update active hire in dashboard
   }
 
-  // ✅ switch between tabs
+  //  switch between tabs
   // setTab(tab: 'engagements' | 'stats') {
   //   this.activeTab = tab;
   // }
