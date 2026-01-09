@@ -159,16 +159,20 @@ export class EndpointService {
     });
   }
 
-   public getMySecurityQuestions(uniqueId: string):Observable<any>{
-    let url = `${environment?.baseUrl}/${endpoints?.getMySecurityQuestions}?uniqueId=${uniqueId.trim()}`;
-    return this.http.get<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+  public getMySecurityQuestions(uniqueId: string): Observable<any> {
+    let url = `${environment?.baseUrl}/${
+      endpoints?.getMySecurityQuestions
+    }?uniqueId=${uniqueId.trim()}`;
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
   }
   public validateTalentSecurityQuestion(payload: {
     talentId: string;
     answerSecurityQuestion: {
       question: string;
       answer: string;
-   };
+    };
   }): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
     return this.http.post<any>(url, payload, {
@@ -241,34 +245,65 @@ export class EndpointService {
     uniqueId?: string | null
   ): Observable<any> {
     let params = new HttpParams();
-
-    // Add parameters if provided and not null
-    if (wallet_id) {
-      params = params.set('wallet_id', wallet_id);
+    if (wallet_id && wallet_id.trim() !== '') {
+      params = params.set('wallet_id', wallet_id.trim());
     }
-    if (uniqueId) {
-      params = params.set('uniqueId', uniqueId);
+    if (uniqueId && uniqueId.trim() !== '') {
+      params = params.set('uniqueId', uniqueId.trim());
     }
 
     const url = `${environment.baseUrl}/${endpoints.fetchMyWallet}`;
+
+    // 🔍 CRITICAL DEBUG LOGGING
+    console.log('🔍 [DEBUG] Wallet Fetch Request:', {
+      url: url,
+      params: params.toString(),
+      uniqueId_value_sent: uniqueId,
+      wallet_id_value_sent: wallet_id,
+      full_request_url: `${url}?${params.toString()}`,
+      auth_headers_present:
+        this.jwtInterceptor.customHttpHeaders.has('Authorization'), // Check if auth header exists
+    });
+
     return this.http
       .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders,
-        params,
+        headers: this.jwtInterceptor.customHttpHeaders, // Ensure this contains the Authorization token
+        params: params,
       })
       .pipe(
         catchError((error) => {
+          console.error('❌ Wallet fetch error:', {
+            status: error.status,
+            message: error.message,
+            error: error.error,
+            url: url,
+            params: params.toString(),
+          });
+
           // Handle specific wallet not found error gracefully
           if (
             error.status === 400 &&
-            error.error?.message === 'Wallet not found'
+            (error.error?.message === 'Wallet not found' ||
+              error.error?.message?.includes('Wallet') ||
+              error.error?.message?.includes('wallet'))
           ) {
             // Return a specific structure for wallet not found
             return of({
               walletNotFound: true,
               message: 'Wallet profile not created yet',
+              statusCode: 400,
             });
           }
+
+          // Handle 404 - endpoint not found
+          if (error.status === 404) {
+            return of({
+              walletNotFound: true,
+              message: 'Wallet service unavailable',
+              statusCode: 404,
+            });
+          }
+
           // Re-throw other errors
           return throwError(() => error);
         })
@@ -354,7 +389,137 @@ export class EndpointService {
   // Verification & THIRD PARTY APIs (BVN, NIN, banks, countries, business verify)
   // --------------------------
 
-  // ✅ BVN Validation - Fixed to handle your API's response structure
+  //  BVN OTP Verification - UPDATED
+  public verifyBVNWithPhone(bvn: string, phoneNumber: string): Observable<any> {
+    const url = `${environment.baseUrl}/${endpoints.validateMyBVN}`;
+    const params = new HttpParams()
+      .set('bvn', String(bvn || ''))
+      .set('phoneNumber', String(phoneNumber || ''));
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+        params,
+      })
+      .pipe(
+        map((response: any) => {
+          console.log('BVN OTP Verification Response:', response);
+
+          // Handle different success response structures
+          if (response) {
+            // Check for session ID in different possible locations
+            const sessionId =
+              response.data?.sessionId ||
+              response.sessionId ||
+              response.data?.data?.sessionId ||
+              response.session_id;
+
+            return {
+              success: true,
+              message: response.message || 'OTP sent successfully',
+              sessionId: sessionId,
+              data: response,
+            };
+          }
+
+          throw new Error('Failed to send OTP');
+        }),
+        catchError((error) => {
+          console.error('BVN OTP Error:', error);
+
+          // Check for specific error messages
+          if (error.status === 400) {
+            const errorMsg = error.error?.message || 'Invalid BVN';
+            return throwError(() => ({
+              status: 400,
+              message: errorMsg,
+              userMessage: errorMsg.includes('Invalid')
+                ? 'Please check your BVN number and try again'
+                : 'Unable to verify BVN. Please try again later',
+            }));
+          }
+
+          return throwError(() => error);
+        })
+      );
+  }
+
+  // Helper method to extract sessionId from response
+  private extractSessionIdFromResponse(response: any): string {
+    if (!response) return '';
+
+    // Check if sessionId is nested in data object
+    if (response.data && response.data.sessionId) {
+      return response.data.sessionId;
+    }
+
+    // Check if it's in the root
+    if (response.sessionId) {
+      return response.sessionId;
+    }
+
+    // Try to find any property that might be sessionId
+    const sessionKeys = ['sessionId', 'sessionID', 'session_id', 'SessionId'];
+    for (const key of sessionKeys) {
+      if (response[key]) {
+        return response[key];
+      }
+      if (response.data && response.data[key]) {
+        return response.data[key];
+      }
+    }
+
+    return '';
+  }
+
+  //  Verify BVN OTP
+  public verifyBVNOTP(sessionId: string, otp: string): Observable<any> {
+    const url = `${environment.baseUrl}/${endpoints.fetchBVNDetails}`;
+    const payload = { sessionId, otp };
+
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+      })
+      .pipe(
+        map((response: any) => {
+          console.log('BVN OTP Validation Response:', response);
+
+          // Check for successful OTP verification based on actual API response
+          if (
+            response &&
+            (response.statusCode === 200 ||
+              response.statusCode === 201 ||
+              response.message?.toLowerCase().includes('success') ||
+              response.message?.toLowerCase().includes('fetched'))
+          ) {
+            return {
+              success: true,
+              data: response.data || response,
+              message: response.message || 'BVN verified successfully',
+              bvnDetails: response.data || response,
+            };
+          }
+
+          throw new Error('Invalid OTP or verification failed');
+        }),
+        catchError((error) => {
+          console.error('BVN OTP Validation Error:', error);
+
+          if (error.status === 400) {
+            return throwError(() => ({
+              status: 400,
+              message: 'Invalid OTP',
+              userMessage: 'The OTP entered is incorrect. Please try again.',
+            }));
+          }
+
+          return throwError(() => error);
+        })
+      );
+  }
+
+  //  BVN Validation - Fixed to handle your API's response structure
   public validateBVN(bvn: string): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.validateMyBVN}`;
     const params = new HttpParams().set('bvn', String(bvn || ''));
@@ -366,20 +531,20 @@ export class EndpointService {
       })
       .pipe(
         map((response: any) => {
-          console.log('BVN API Response:', response);
+          console.log('BVN Validation Response:', response);
 
-          // If we get any response at all, consider it success for now
-          // Adjust this based on your actual API success criteria
+          // IMPORTANT: This API now returns OTP request, not direct verification
+          // So we should handle it differently
           return {
             success: true,
             data: response,
-            message: 'BVN verification completed',
+            message: response.message || 'BVN validation initiated',
+            requiresOTP: response.message?.includes('OTP'), // Flag to indicate OTP is needed
           };
         }),
         catchError((error) => {
           console.error('BVN Error:', error);
 
-          // Direct handling of 400 responses
           if (error.status === 400) {
             return throwError(() => ({
               status: 400,
@@ -394,7 +559,7 @@ export class EndpointService {
       );
   }
 
-  // ✅ NIN Validation - Separate function with proper error handling
+  //  NIN Validation - Separate function with proper error handling
   public validateNIN(nin: string): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.validateMyNIN}`;
     const params = new HttpParams().set('nin', String(nin || ''));
@@ -408,17 +573,23 @@ export class EndpointService {
         map((response: any) => {
           console.log('NIN API Response:', response);
 
-          // Handle successful response structure
-          if (response && response.status === true) {
+          // Handle successful response structure from your API
+          // Your API returns: {message: 'NIN has been successfully verified!', data: {...}, statusCode: 200}
+          if (
+            response &&
+            (response.statusCode === 200 ||
+              response.message?.includes('successfully'))
+          ) {
             return {
               success: true,
-              data: response.data,
+              data: response.data || response,
               message: response.message || 'NIN verified successfully',
+              statusCode: response.statusCode,
             };
           }
 
           // If we get here but no error was thrown, it's still a failure
-          throw new Error('NIN verification failed - invalid number');
+          throw new Error('NIN verification failed - invalid response');
         }),
         catchError((error) => {
           console.error('NIN Validation Error:', error);
@@ -444,7 +615,7 @@ export class EndpointService {
       );
   }
 
-  // ✅ Get Nigerian Banks - Fixed response handling
+  //  Get Nigerian Banks - Fixed response handling
   public getNigerianBanks(): Observable<any[]> {
     const url = `${environment.baseUrl}/${endpoints.getNubanBanks}`;
 
@@ -471,7 +642,7 @@ export class EndpointService {
       );
   }
 
-  // ✅ Get All Countries - Enhanced to handle the actual API response structure
+  //  Get All Countries - Enhanced to handle the actual API response structure
   public getAllCountries(): Observable<any[]> {
     const url = `${environment.baseUrl}/${endpoints.getAllCountryFlags}`;
 
@@ -514,7 +685,7 @@ export class EndpointService {
         })
       );
   }
-  // ✅ Account Verification - Fixed to handle actual API response structure
+  //  Account Verification - Fixed to handle actual API response structure
   public verifyAccountNumber(payload: {
     bankCode: string;
     bankName: string;
@@ -577,62 +748,106 @@ export class EndpointService {
       );
   }
 
-  // ✅ Business Verification - Complete implementation
+  //  Business Verification - Complete implementation
   public verifyBusiness(payload: {
     SearchType: string;
     searchTerm: string;
   }): Observable<any> {
     const body = JSON.stringify(payload);
-    const url = `${environment.baseUrl}/${endpoints.verifyBusiness}`;
 
-    return this.http
-      .post<any>(url, body, {
-        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-      })
-      .pipe(
-        map((response: any) => {
-          console.log('Business Verification Response:', response);
+    // Try different endpoint variations since you're getting 404
+    const endpointVariations = [
+      `${environment.baseUrl}/${endpoints.verifyBusiness}`,
+      `${environment.baseUrl}/api-service/verify-business`, // Try without /v1
+      `${environment.baseUrl}/api-service/v1/business-verification`,
+    ];
 
-          // Check for successful business verification based on actual API response
-          if (
-            response &&
-            (response.message?.toLowerCase().includes('successful') ||
-              response.message?.toLowerCase().includes('verified') ||
-              response.statusCode === 200 ||
-              response.statusCode === 201)
-          ) {
-            return {
-              success: true,
-              data: response,
-              message: response.message || 'Business verified successfully',
-            };
-          }
+    console.log('🔍 Attempting business verification with payload:', payload);
 
-          throw new Error('Business verification failed - invalid response');
-        }),
-        catchError((error) => {
-          console.error('Business Verification Error:', error);
+    // Create a function to try endpoints sequentially
+    const tryEndpoint = (index: number): Observable<any> => {
+      if (index >= endpointVariations.length) {
+        return throwError(
+          () => new Error('All business verification endpoints failed')
+        );
+      }
 
-          if (error.status === 400) {
-            const errorMessage =
-              error.error?.message || 'Invalid business details';
-            return throwError(() => ({
-              status: 400,
-              message: errorMessage,
-              userMessage:
-                'Invalid RC number or company name. Please check and try again.',
-            }));
-          }
+      const url = endpointVariations[index];
+      console.log(`🔄 Trying endpoint ${index + 1}: ${url}`);
 
-          return throwError(() => ({
-            status: error.status || 500,
-            message:
-              error.message || 'Business verification service unavailable',
-            userMessage:
-              'Business verification service unavailable. Please try again later.',
-          }));
+      return this.http
+        .post<any>(url, body, {
+          headers: this.jwtInterceptor.customNoAuthHttpHeaders,
         })
-      );
+        .pipe(
+          catchError((error) => {
+            console.warn(`❌ Endpoint ${index + 1} failed: ${error.status}`);
+
+            // If it's a 404, try the next endpoint
+            if (error.status === 404 && index < endpointVariations.length - 1) {
+              return tryEndpoint(index + 1);
+            }
+
+            // For other errors or last endpoint, throw the error
+            return throwError(() => error);
+          })
+        );
+    };
+
+    return tryEndpoint(0).pipe(
+      map((response: any) => {
+        console.log('✅ Business Verification Response:', response);
+
+        // Check for successful business verification based on actual API response
+        if (
+          response &&
+          (response.message?.toLowerCase().includes('successful') ||
+            response.message?.toLowerCase().includes('verified') ||
+            response.statusCode === 200 ||
+            response.statusCode === 201 ||
+            response.success === true)
+        ) {
+          return {
+            success: true,
+            data: response.data || response,
+            message: response.message || 'Business verified successfully',
+            statusCode: response.statusCode || 200,
+          };
+        }
+
+        throw new Error('Business verification failed - invalid response');
+      }),
+      catchError((error) => {
+        console.error('Business Verification Error:', error);
+
+        if (error.status === 404) {
+          return throwError(() => ({
+            status: 404,
+            message: 'Business verification endpoint not found',
+            userMessage:
+              'Business verification service is currently unavailable. Please try again later.',
+          }));
+        }
+
+        if (error.status === 400) {
+          const errorMessage =
+            error.error?.message || 'Invalid business details';
+          return throwError(() => ({
+            status: 400,
+            message: errorMessage,
+            userMessage:
+              'Invalid RC number or company name. Please check and try again.',
+          }));
+        }
+
+        return throwError(() => ({
+          status: error.status || 500,
+          message: error.message || 'Business verification service unavailable',
+          userMessage:
+            'Business verification service unavailable. Please try again later.',
+        }));
+      })
+    );
   }
 
   // ==================== FALLBACK DATA ====================
@@ -714,41 +929,58 @@ export class EndpointService {
     ];
   }
 
-  public loginUser(user: any):Observable<any>{
+  public loginUser(user: any): Observable<any> {
     let body = JSON.stringify(user);
     let url = `${environment?.baseUrl}/${endpoints?.userLogin}`;
-    return this.http.post<any>(url, body, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+    return this.http.post<any>(url, body, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
   }
   public fetchTalentStats(talentId: string): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let url = `${environment?.baseUrl}/${endpoints?.talentDashboardStats}/${encodedTalentId}`;
-    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    });
   }
-  public fetchScouterMarketStatsWithTalent(talentId: string, scouterId: string): Observable<any> {
+  public fetchScouterMarketStatsWithTalent(
+    talentId: string,
+    scouterId: string
+  ): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let encodedScouterId = encodeURIComponent(scouterId);
     let url = `${environment?.baseUrl}/${endpoints?.scouterMarketWithTalent}/${encodedScouterId}/${encodedTalentId}`;
-    return this.http.get<any>(url, { headers: this.jwtInterceptor.customHttpHeaders });
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    });
   }
-  public fetchMyNotifications(
-    receiverId?: any
-  ):Observable<any>{
+  public fetchMyNotifications(receiverId?: any): Observable<any> {
     let encodedReceiverId = encodeURIComponent(receiverId);
-    let url = `${environment?.baseUrl}/${endpoints?.getMyNotifications}?receiverId=${receiverId === undefined ? '' : receiverId?.trim()}`;
-    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
+    let url = `${environment?.baseUrl}/${
+      endpoints?.getMyNotifications
+    }?receiverId=${receiverId === undefined ? '' : receiverId?.trim()}`;
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    });
   }
-  public clearMyNotifications(payload: any):Observable<any>{
+  public clearMyNotifications(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
     let url = `${environment?.baseUrl}/${endpoints?.clearMyNotifications}`;
-    return this.http.post<any>(url,body, {headers: this.jwtInterceptor.customHttpHeaders});
+    return this.http.post<any>(url, body, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    });
   }
-   public verifyOTP(otpParams: verifyOTP):Observable<any>{
+  public verifyOTP(otpParams: verifyOTP): Observable<any> {
     let url = `${environment?.baseUrl}/${endpoints?.verifyOTP}?otp=${otpParams?.otp}&phoneNumber=${otpParams?.phoneNumber}&email=${otpParams?.email}`;
-    return this.http.post<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+    return this.http.post<any>(url, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
   }
 
-  public resendOTP(resendParams: resendOTP):Observable<any>{
+  public resendOTP(resendParams: resendOTP): Observable<any> {
     let url = `${environment?.baseUrl}/${endpoints?.resendOTP}?phoneNumber=${resendParams?.phoneNumber}&email=${resendParams?.email}`;
-    return this.http.get<any>(url, {headers: this.jwtInterceptor.customNoAuthHttpHeaders});
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    });
   }
 }

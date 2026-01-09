@@ -30,7 +30,10 @@ export interface SecurityyQuestionResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  customNoAuthHttpHeaders: HttpHeaders | { [header: string]: string | string[]; } | undefined;
+  customNoAuthHttpHeaders:
+    | HttpHeaders
+    | { [header: string]: string | string[] }
+    | undefined;
 
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
     const url =
@@ -43,7 +46,6 @@ export class AuthService {
       { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
     );
   }
-
 
   public resendOTP(resendParams: resendOTP): Observable<any> {
     const url =
@@ -298,17 +300,25 @@ export class AuthService {
    */
   getMySecurityQuestions(uniqueId: string): Observable<any> {
     const encodedId = encodeURIComponent(uniqueId);
-
     const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
 
-    console.log('GET Security Questions URL:', url);
+    console.log('🔗 GET Security Questions URL:', url);
+    console.log('Using full scouterId:', uniqueId);
 
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-    });
+    // Use authenticated headers instead of no-auth headers
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders, // CHANGED THIS LINE
+      })
+      .pipe(
+        timeout(30000), // Increase timeout
+        catchError((error) => {
+          console.error('❌ Error getting security questions:', error);
+          return throwError(() => error);
+        })
+      );
   }
-  // auth.service.ts
-  // auth.service.ts
+
   public validateTalentSecurityQuestion(payload: {
     talentId: string;
     answerSecurityQuestion: {
@@ -318,17 +328,17 @@ export class AuthService {
   }): Observable<any> {
     const url = `${this.baseUrl}/validate-talent-security-questions`; // remove extra prefix
 
-    return this.http.post<any>(url, payload, {
-      headers: this.customNoAuthHttpHeaders
-    }).pipe(
-      catchError((error) => {
-        console.error('❌ Error validating security question:', error);
-        return throwError(() => error);
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.customNoAuthHttpHeaders,
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Error validating security question:', error);
+          return throwError(() => error);
+        })
+      );
   }
-
-
 
   // getMySecurityQuestions(uniqueId: string): Observable<any> {
   //   // Use the FULL scouter ID
@@ -357,20 +367,18 @@ export class AuthService {
   /**
    * Get security questions with answers (if available)
    */
-  public getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
+  getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
     const encodedId = encodeURIComponent(uniqueId);
-
-    // Use the CORRECT endpoint from your endpoints object
-    const url = `${this.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
 
     console.log('🔗 GET Security Questions With Answers URL:', url);
 
     return this.http
       .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders,
+        headers: this.jwtInterceptor.customHttpHeaders, // Ensure authenticated headers
       })
       .pipe(
-        timeout(10000),
+        timeout(30000), // Increase timeout
         catchError((error) => {
           console.warn('Could not fetch questions with answers:', error);
           // Fall back to regular endpoint
@@ -379,7 +387,6 @@ export class AuthService {
       );
   }
 
-  // Add this to your AuthService
   testApiConnection(): Observable<any> {
     const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
     return this.http.get(testUrl).pipe(
@@ -523,7 +530,6 @@ export class AuthService {
       );
   }
 
-  // auth.service.ts
   getSecurityQuestionAnswer(questionId: string): Observable<any> {
     const token = localStorage.getItem('access_token');
     const url = `${environment.baseUrl}/security-questions/${questionId}/answer`;

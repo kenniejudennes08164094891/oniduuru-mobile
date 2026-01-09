@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 
 import {
@@ -25,27 +26,29 @@ import { AppInitService } from './services/app-init.service';
   selector: 'app-root',
   templateUrl: 'app.component.html',
   styleUrls: ['app.component.scss'],
- 
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
+  hasWalletProfile = false;
+  private subscriptions = new Subscription();
+
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
     private platform: Platform,
     private authService: AuthService,
     private userService: UserService,
-    private appInitService: AppInitService,
-    // private ionApp: IonApp,
-    // private ionMenu: IonMenu,
-    // private ionHeader: IonHeader,
-    // private ionToolbar: IonToolbar,
-    // private ionTitle: IonTitle,
-    // private ionContent: IonContent,
-    // private ionList: IonList,
-    // private ionItem: IonItem,
-    // private ionLabel: IonLabel,
-    // private ionRouterOutlet: IonRouterOutlet
-  ) {
+    private appInitService: AppInitService
+  ) // private ionApp: IonApp,
+  // private ionMenu: IonMenu,
+  // private ionHeader: IonHeader,
+  // private ionToolbar: IonToolbar,
+  // private ionTitle: IonTitle,
+  // private ionContent: IonContent,
+  // private ionList: IonList,
+  // private ionItem: IonItem,
+  // private ionLabel: IonLabel,
+  // private ionRouterOutlet: IonRouterOutlet
+  {
     document.body.classList.remove('dark');
   }
 
@@ -82,6 +85,29 @@ export class AppComponent implements OnInit {
         }, 1000);
       }
     });
+
+    // Initialize wallet profile visibility from stored user (if any)
+    try {
+      const stored = localStorage.getItem('user_data');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.hasWalletProfile = !!parsed.hasWalletProfile;
+      }
+    } catch (e) {
+      console.warn('Could not parse stored user data for wallet visibility', e);
+      this.hasWalletProfile = false;
+    }
+
+    // React to user changes (e.g., login, profile updates)
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe((user) => {
+        this.hasWalletProfile = !!(user && user.hasWalletProfile);
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   toggleDarkMode() {

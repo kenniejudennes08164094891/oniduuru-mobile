@@ -123,7 +123,11 @@
             🔍 Verifying RC number...
           </p>
           <p *ngIf="rcVerified === true" class="text-sm text-green-600">
-            ✅ RC number verified
+            ✅ Verified: {{ businessData.companyName }}
+            <span *ngIf="businessData.incorporationDate">
+              (Incorporated:
+              {{ businessData.incorporationDate | date : "mediumDate" }})
+            </span>
           </p>
           <p *ngIf="rcVerified === false" class="text-sm text-red-600">
             ❌ Invalid RC number
@@ -565,11 +569,13 @@
       <!-- BVN Field with Enhanced Status -->
       <div class="relative">
         <label
+          *ngIf="!otpSent"
           class="bg-white absolute -top-2 p-1 left-5 text-[10px] text-[#717E95]"
         >
           BVN
         </label>
         <input
+          *ngIf="!otpSent"
           type="text"
           name="bvn"
           [(ngModel)]="bvn"
@@ -586,16 +592,61 @@
           [class.border-blue-500]="bvnVerifying"
         />
 
+        <div *ngIf="otpSent && !otpVerified">
+          <div class="mb-2">
+            <p class="text-sm text-gray-600">
+              Enter the OTP sent to this number - {{ maskedPhoneNumber }}
+            </p>
+          </div>
+
+          <input
+            type="text"
+            name="otp"
+            [(ngModel)]="otp"
+            required
+            maxlength="6"
+            pattern="^[0-9]{6}$"
+            (input)="onOtpInput($event)"
+            placeholder="Enter 6-digit OTP"
+            class="border px-3 py-4 w-full shadow-lg rounded-md bg-white placeholder:text-gray-300 transition-colors duration-300"
+            [class.border-blue-500]="otpVerifying"
+            [class.border-green-500]="otpVerified"
+            [class.border-red-500]="otpError"
+          />
+
+          <div *ngIf="otpVerifying" class="mt-1">
+            <div
+              class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"
+            ></div>
+            <p class="text-sm text-blue-600 flex items-center">
+              Verifying OTP...
+            </p>
+          </div>
+
+          <div *ngIf="otpError && !otpVerifying" class="mt-1">
+            <p class="text-sm text-red-600">❌ {{ otpError }}</p>
+          </div>
+        </div>
+
+        <!-- Display verified BVN (read-only after verification) -->
+        <input
+          *ngIf="otpVerified && bvnVerified === true"
+          type="text"
+          [value]="bvn"
+          readonly
+          class="border border-green-500 px-3 py-4 w-full shadow-lg rounded-md bg-gray-50 text-gray-700"
+        />
+
         <div class="mt-1 space-y-1">
           <p
-            *ngIf="bvnCtrl.invalid && bvnCtrl.touched"
+            *ngIf="bvnCtrl.invalid && bvnCtrl.touched && !otpSent"
             class="text-red-500 text-sm"
           >
             BVN must be exactly 11 digits only.
           </p>
 
           <div
-            *ngIf="bvnVerifying"
+            *ngIf="bvnVerifying && !otpSent"
             class="flex items-center text-[#B76A00] text-sm"
           >
             <div
@@ -605,7 +656,7 @@
           </div>
 
           <div
-            *ngIf="bvnVerified === true"
+            *ngIf="bvnVerified === true && otpVerified"
             class="flex items-center text-green-600 text-sm"
           >
             <ion-icon name="checkmark-circle" class="mr-1"></ion-icon>
@@ -613,10 +664,15 @@
           </div>
 
           <div
-            *ngIf="bvnVerified === false"
+            *ngIf="bvnVerified === false && !bvnVerifying && !otpSent"
             class="flex items-center text-red-600 text-sm"
           >
             ❌ Invalid BVN
+          </div>
+
+          <!-- OTP status messages -->
+          <div *ngIf="otpSent && !otpVerifying && !otpVerified" class="text-sm">
+            <p class="text-blue-600">⚡ OTP sent! Please check your phone.</p>
           </div>
         </div>
       </div>

@@ -18,9 +18,11 @@ import { Router } from '@angular/router';
 export class JwtInterceptorService implements HttpInterceptor {
   private tokenKey = 'access_token';
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
+    null
+  );
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {}
 
   /** Retrieves token from localStorage */
   public getToken(): string | null {
@@ -42,10 +44,15 @@ export class JwtInterceptorService implements HttpInterceptor {
   }
 
   /** Intercept outgoing HTTP requests */
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(
+    req: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<HttpEvent<any>> {
     // Skip for explicit opt-outs
     if (req.headers.get('Skip-Interceptor') === 'true') {
-      const modifiedReq = req.clone({ headers: req.headers.delete('Skip-Interceptor') });
+      const modifiedReq = req.clone({
+        headers: req.headers.delete('Skip-Interceptor'),
+      });
       return next.handle(modifiedReq);
     }
 
@@ -64,13 +71,20 @@ export class JwtInterceptorService implements HttpInterceptor {
     }
 
     const clonedReq = this.addTokenToRequest(req, token);
-    return next.handle(clonedReq).pipe(
-      catchError((error: HttpErrorResponse) => this.handleError(error, req, next))
-    );
+    return next
+      .handle(clonedReq)
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          this.handleError(error, req, next)
+        )
+      );
   }
 
   /** Add token to outgoing request headers */
-  private addTokenToRequest(req: HttpRequest<any>, token: string): HttpRequest<any> {
+  private addTokenToRequest(
+    req: HttpRequest<any>,
+    token: string
+  ): HttpRequest<any> {
     const headers: any = {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',
@@ -97,7 +111,10 @@ export class JwtInterceptorService implements HttpInterceptor {
   }
 
   /** Retry if refresh available, else redirect */
-  private handleAuthError(req: HttpRequest<any>, next: HttpHandler): Observable<any> {
+  private handleAuthError(
+    req: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<any> {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
@@ -163,15 +180,18 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/scouter/resend-otp',
       '/scouter/verify-otp',
       '/verify-user-email',
-       '/login/v1/auth/validate-talent-security-questions',
-       '/login/v1/auth/get-my-security-questions',
+      '/login/v1/auth/validate-talent-security-questions',
+      '/login/v1/auth/get-my-security-questions',
       '/admin/v1/admin/validateUserEmail',
       '/assets/',
       'https://api.cloudinary.com/v1_1/dosiy2cmk/video/upload',
     ];
 
     const isScouterRegistration =
-      url.includes('scouter') && (url.includes('create') || url.includes('verify') || url.includes('resend'));
+      url.includes('scouter') &&
+      (url.includes('create') ||
+        url.includes('verify') ||
+        url.includes('resend'));
 
     return (
       publicEndpoints.some((endpoint) => url.includes(endpoint)) ||
@@ -216,7 +236,10 @@ export class JwtInterceptorService implements HttpInterceptor {
     keysToRemove.forEach((key) => localStorage.removeItem(key));
 
     this.router.navigate(['/auth/login'], {
-      queryParams: { redirectReason: 'session_expired', returnUrl: this.router.url },
+      queryParams: {
+        redirectReason: 'session_expired',
+        returnUrl: this.router.url,
+      },
     });
   }
 
@@ -236,7 +259,7 @@ export class JwtInterceptorService implements HttpInterceptor {
       return new HttpHeaders({
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token || ''}`,
       });
     }
     return new HttpHeaders({

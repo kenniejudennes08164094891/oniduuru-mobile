@@ -1020,8 +1020,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Load security questions with answers
    */
   private loadSecurityQuestionsWithAnswers(): void {
+
+    this.debugSecurityQuestionsRequest();
+
     if (!this.scouterId) {
-      console.error(' No scouterId for security questions');
+      console.error('No scouterId for security questions');
       return;
     }
 
@@ -1029,69 +1032,67 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.securityQuestionErrorMessage = '';
     this.cdr.detectChanges();
 
-    const encodedScouterId = encodeURIComponent(this.scouterId);
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
+    console.log('Loading security questions for:', this.scouterId);
 
-    // fetching security questions from backend
+    // First try with answers endpoint
+    const sub = this.authService
+      .getMySecurityQuestionsWithAnswers(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          console.log('Security questions response:', res);
+          this.handleSecurityQuestionsResponse(res);
+          this.isLoadingSecurityQuestions = false;
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error loading security questions:', err);
 
-    const token = localStorage.getItem('access_token');
-
-    fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        // response received
-
-        // Build a plain object from Headers in a way compatible with TypeScript
-        const headersObj: { [key: string]: string } = {};
-        response.headers.forEach((value, key) => {
-          headersObj[key] = value;
-        });
-        // headers received
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const text = await response.text();
-        // raw response received
-
-        try {
-          // First try to parse as JSON
-          const json = JSON.parse(text);
-          this.processSecurityQuestionsResponse(json);
-        } catch (parseError) {
-          // JSON parse failed, try alternative handling
-
-          // If it looks like it might be pure base64 (without JSON wrapper)
-          if (this.looksLikePureBase64(text)) {
-            console.log(' Text appears to be pure base64');
-            const decoded = this.decodeBase64(text);
-            if (decoded) {
-              this.processSecurityQuestionsResponse(decoded);
-            } else {
-              throw new Error('Failed to decode base64 data');
-            }
-          } else {
-            // Try to see if it's base64 within a string
-            this.tryExtractBase64FromText(text);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error('Error loading security questions:', error);
-        this.isLoadingSecurityQuestions = false;
-        this.securityQuestionErrorMessage = 'Failed to load security questions';
-        this.cdr.detectChanges();
-
-        // Try the simpler endpoint as fallback
-        this.loadBasicSecurityQuestions();
+          // Try fallback
+          this.loadBasicSecurityQuestions();
+        },
       });
+
+    this.subscriptions.push(sub);
   }
+
+
+
+// profile-page.component.ts
+private debugSecurityQuestionsRequest(): void {
+  const token = localStorage.getItem('access_token');
+  const uniqueId = this.scouterId;
+  const encodedId = encodeURIComponent(uniqueId);
+  const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
+
+  console.log('🔍 DEBUG Security Questions Request:', {
+    scouterId: uniqueId,
+    encodedScouterId: encodedId,
+    url: url,
+    tokenExists: !!token,
+    tokenLength: token?.length,
+    endpointPath: endpoints.getMySecurityQuestions
+  });
+
+  // Test with fetch to see what happens
+  fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(async response => {
+    console.log('🔍 Direct fetch response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+    const text = await response.text();
+    console.log('🔍 Response text:', text.substring(0, 200));
+  })
+  .catch(error => {
+    console.error('🔍 Direct fetch error:', error);
+  });
+}
 
   /**
    * Try to extract base64 from text
@@ -1136,45 +1137,29 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Fallback to basic security questions endpoint
    */
   private loadBasicSecurityQuestions(): void {
-    console.log(' Falling back to basic security questions endpoint...');
-
-    const encodedScouterId = encodeURIComponent(this.scouterId);
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
-
-    const token = localStorage.getItem('access_token');
-
-    fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const text = await response.text();
-        console.log('📦 Basic endpoint response:', text.substring(0, 200));
-
-        try {
-          const json = JSON.parse(text);
-          this.processSecurityQuestionsResponse(json);
-        } catch (error) {
-          console.error(' Failed to parse basic endpoint response:', error);
-          this.securityQuestions = [];
+    const fallbackSub = this.authService
+      .getMySecurityQuestions(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          this.processSecurityQuestionsResponse(res);
           this.isLoadingSecurityQuestions = false;
           this.cdr.detectChanges();
-        }
-      })
-      .catch((error) => {
-        console.error(' Basic endpoint also failed:', error);
-        this.securityQuestions = [];
-        this.isLoadingSecurityQuestions = false;
-        this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Both endpoints failed:', err);
+          this.securityQuestions = [];
+          this.isLoadingSecurityQuestions = false;
+          this.securityQuestionErrorMessage =
+            'Unable to load security questions. Please try again later.';
+          this.cdr.detectChanges();
+        },
       });
+
+    this.subscriptions.push(fallbackSub);
   }
+
+
+
 
   /**
    * Check if text looks like pure base64

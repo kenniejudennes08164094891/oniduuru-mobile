@@ -19,7 +19,7 @@ export class DebugInterceptor implements HttpInterceptor {
     // Log the outgoing request
     console.group(` HTTP Request: ${req.method} ${req.url}`);
     console.log(' Headers:', req.headers.keys().map(k => `${k}: ${req.headers.get(k)}`));
-    console.log(' Body:', req.body);
+    // console.log(' Body:', req.body);
     console.groupEnd();
 
     const startTime = Date.now();
