@@ -4,8 +4,6 @@ import { EndpointService } from 'src/app/services/endpoint.service';
 import { PaginationParams, marketHires } from 'src/app/models/mocks'; // or local interface
 import { AuthService } from 'src/app/services/auth.service';
 import { ModalController, ToastController } from '@ionic/angular';
-import { EvaluationPageComponent } from 'src/app/components/evaluation-page/evaluation-page.component';
-import { EvaluationPageModule } from 'src/app/components/evaluation-page/evaluation-page.module';
 @Component({
   selector: 'app-view-hires',
   templateUrl: './view-hires.page.html',
@@ -44,33 +42,47 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       return null;
     }
   }
+  goToHireTransaction(hireId: string  | number) {
+  const selectedHire = this.MockRecentHires.find(h => String (h.id) === hireId);
 
-
-  async goToHireTransaction(hireId: string | number): Promise<any> {
-    console.log('Clicked hire:', hireId); // 👈 test log
-    const selectedHire = this.MockRecentHires.find(h => h.id === hireId);
-
-    if (!selectedHire) return;
-
-    // If offer is completed / accepted, show evaluation popup
-    if (selectedHire.status === 'Offers Accepted') {
-      const modal = await this.modalCtrl.create({
-        component: EvaluationPageComponent,
-        componentProps: { scouterName: selectedHire.name },
-      });
-
-      await modal.present();
-
-      const { data } = await modal.onDidDismiss();
-      if (data) {
-        console.log('Evaluation submitted:', data);
-        // TODO: send data to backend or local storage
-      }
-    } else {
-      // Otherwise, go to the details page as usual
-      await this.router.navigate(['/talent/market-price-preposition', hireId]);
-    }
+  if (!selectedHire) {
+    console.warn('Hire not found for ID:', hireId);
+    return;
   }
+
+  // Navigate to the Market Price Preposition page with the hire object
+  this.router.navigate(['/talent/market-price-preposition', hireId], {
+    state: { hire: selectedHire },
+  });
+}
+
+
+
+  // async goToHireTransaction(hireId: string | number): Promise<any> {
+  //   console.log('Clicked hire:', hireId); // 👈 test log
+  //   const selectedHire = this.MockRecentHires.find(h => h.id === hireId);
+  //
+  //   if (!selectedHire) return;
+  //
+  //   // If offer is completed / accepted, show evaluation popup
+  //   if (selectedHire.status === 'Offers Accepted') {
+  //     const modal = await this.modalCtrl.create({
+  //       component: EvaluationPageComponent,
+  //       componentProps: { scouterName: selectedHire.name },
+  //     });
+
+  //     await modal.present();
+
+  //     const { data } = await modal.onDidDismiss();
+  //     if (data) {
+  //       console.log('Evaluation submitted:', data);
+  //       // TODO: send data to backend or local storage
+  //     }
+  //   } else {
+  //     // Otherwise, go to the details page as usual
+  //     await this.router.navigate(['/talent/market-price-preposition', hireId]);
+  //   }
+  // }
   ngOnInit(): void {
     const saved = localStorage.getItem('MockRecentHires');
     if (saved) {
@@ -145,51 +157,11 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     // Example mock data
     this.marketExpenditures = [];
   }
-  async openEvaluation(hire: any) {
-    if (hire.status !== 'Offers Accepted') {
-      const toast = await this.toastCtrl.create({
-        message: 'You can only evaluate accepted offers.',
-        duration: 2000,
-        color: 'warning',
-      });
-      await toast.present();
-      return;
-    }
-
-    if (hire.isRated) {
-      const toast = await this.toastCtrl.create({
-        message: 'You have already rated this scouter.',
-        duration: 2000,
-        color: 'medium',
-      });
-      await toast.present();
-      return;
-    }
-
-    const modal = await this.modalCtrl.create({
-      component: EvaluationPageComponent,
-      componentProps: { scouterName: hire.name },
-    });
-    await modal.present();
-
-    const { data } = await modal.onDidDismiss();
-    if (data) {
-      hire.isRated = true;
-      hire.rating = data.rating;
-      hire.comment = data.comment;
-
-      // ✅ Save updated list
-      const updated = this.MockRecentHires.map(h => (h.id === hire.id ? hire : h));
-      localStorage.setItem('MockRecentHires', JSON.stringify(updated));
-
-      const toast = await this.toastCtrl.create({
-        message: `Thank you for rating ${hire.name}!`,
-        duration: 2000,
-        color: 'success',
-      });
-      await toast.present();
-    }
-  }
+goToMarketPreposition(hire: any) {
+  this.router.navigate(['/market-price-preposition', hire.id], {
+    state: { hire },
+  });
+}
 
   loadTalentName() {
     try {

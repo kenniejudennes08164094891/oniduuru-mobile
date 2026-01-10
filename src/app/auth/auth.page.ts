@@ -257,11 +257,11 @@ export class AuthPage implements OnInit {
   }
 
   private logBackendDiagnosis(err: any): void {
-    console.group('🔧 Backend 500 Error Diagnosis');
-    console.log('⏰ Time:', new Date().toISOString());
-    console.log('🔗 Endpoint:', err.url);
-    console.log('📡 HTTP Status:', err.status, err.statusText);
-    console.log('📦 Response Body:', err.error);
+    console.group(' Backend 500 Error Diagnosis');
+    console.log(' Time:', new Date().toISOString());
+    console.log(' Endpoint:', err.url);
+    console.log(' HTTP Status:', err.status, err.statusText);
+    console.log(' Response Body:', err.error);
     console.groupEnd();
   }
 
@@ -294,6 +294,6 @@ export class AuthPage implements OnInit {
 
   forgotPassword(): void {
     this.router.navigate(['/auth/forgot-password']);
-    this.toast.openSnackBar('Enter your email to reset your password', 'info');
+;
   }
 }

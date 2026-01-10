@@ -165,7 +165,8 @@
           </thead>
 
           <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
-            <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id)"
+            <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id.toString())">
+
               class="hover:bg-gray-50 transition-colors cursor-pointer">
 
               <!-- Profile + Name -->
@@ -206,12 +207,6 @@
                     <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.status)"></span>
                     {{ hire.status }}
                   </span>
-
-                  <!-- ✅ Evaluation button -->
-                  <ion-button *ngIf="hire.status === 'Offers Accepted' && !hire.isRated" (click)="openEvaluation(hire)"
-                    color="success" size="small">
-                    Evaluate
-                  </ion-button>
 
                   <!-- ⭐ Show rated info -->
                   <div *ngIf="hire.isRated" class="flex items-center gap-1 text-yellow-500 text-sm">
