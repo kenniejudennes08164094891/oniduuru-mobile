@@ -1,0 +1,106 @@
+<ion-grid class="h-full grid grid-rows-4 bg-transparent w-full">
+  <ion-row class="flex justify-center items-center bg-transparent">
+    <ion-col></ion-col>
+  </ion-row>
+
+  <ion-row class="flex justify-center items-center bg-transparent">
+    <ion-col>
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="submitForm()"
+        class="max-w-sm mx-auto w-full"
+      >
+        <h1 class="text-2xl font-bold mb-4 text-left text-white">
+          Welcome back — sign in
+        </h1>
+
+        <!-- EMAIL -->
+        <div class="mb-5">
+          <label class="block mb-2 text-sm font-medium text-white text-left">
+            Email
+          </label>
+          <input
+            type="email"
+            formControlName="email"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+            placeholder="Input email"
+            [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          />
+
+          <div
+            *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            class="text-red-400 text-xs mt-1"
+          >
+            <span *ngIf="loginForm.get('email')?.errors?.['required']">
+              Email is required
+            </span>
+            <span *ngIf="loginForm.get('email')?.errors?.['email']">
+              Enter a valid email
+            </span>
+          </div>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="mb-5">
+          <label class="block mb-2 text-sm font-medium text-white text-left">
+            Password
+          </label>
+
+          <div class="relative">
+            <input
+              [type]="passwordFieldType"
+              formControlName="password"
+              class="border border-[#D0D5DD] text-black px-3 py-2 w-full rounded-lg pr-10"
+              placeholder="Enter password"
+              [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            />
+
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+            >
+              <ion-icon
+                [name]="showEye ? 'eye-off-outline' : 'eye-outline'"
+              ></ion-icon>
+            </button>
+          </div>
+
+          <div
+            *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            class="text-red-400 text-xs mt-1"
+          >
+            Password is required
+          </div>
+        </div>
+
+        <!-- REMEMBER + FORGOT -->
+        <div class="flex items-center justify-between mb-5">
+          <label class="flex items-center gap-2 text-white text-sm">
+            <input type="checkbox" />
+            Remember me
+          </label>
+
+          <button
+            type="button"
+            class="text-sm text-white hover:underline"
+            (click)="forgotPassword()"
+          >
+            Forgot password?
+          </button>
+        </div>
+
+        <!-- SUBMIT -->
+        <ion-button
+          type="submit"
+          expand="block"
+          [disabled]="isLoading || loginForm.invalid"
+          [color]="loginForm.valid ? 'primary' : 'medium'"
+        >
+          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+          <span *ngIf="!isLoading">Sign in</span>
+        </ion-button>
+      </form>
+    </ion-col>
+  </ion-row>
+</ion-grid>

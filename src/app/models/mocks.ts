@@ -84,6 +84,8 @@ export interface MockPayment {
   profilePic: string;
   name: string;
   email: string;
+  isRated?: boolean;
+  scouterName?: string;
   date: string;
   startDate: string;
   amount: number;
@@ -122,6 +124,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg',
     name: 'John Doe',
+    scouterName: 'John Doe',
+    isRated: false,
     email: 'JohnDoe@gmail.com',
     date: 'Sep 10, 2025, 11:45 AM',
     startDate: 'Jan 1, 2025',
@@ -215,6 +219,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
     name: 'Jane Smith',
+    scouterName: 'Jane Smith',
+    isRated: false,
     email: 'Janesmt@gmail.com',
     date: 'Sep 9, 2025, 03:15 PM',
     startDate: 'Jan 9, 2025',
@@ -289,6 +295,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/936229/pexels-photo-936229.jpeg',
     name: 'Michael Johnson',
+    scouterName: 'Michael Johnson',
+    isRated: false,
     email: 'MichaelJohnson@gmail.com',
     date: 'Sep 8, 2025, 09:30 AM',
     startDate: 'Feb 1, 2025',
@@ -301,7 +309,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Thanks for the opportunity',
     talentRating: 3,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -311,7 +319,7 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-    
+
     proximity: '10 Oyedele Oguniyi Street, Anthony Lagos',
     payRange: '₦750k - ₦950k',
     aboutTalent: 'Backend engineer passionate about scalable systems.',
@@ -368,6 +376,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/774095/pexels-photo-774095.jpeg',
     name: 'Emily Davis',
+    scouterName: 'Emily Davis',
+    isRated: false,
     email: 'Emily@gmail.com',
     date: 'Sep 7, 2025, 07:50 PM',
     startDate: 'Dec 1, 2025',
@@ -380,7 +390,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Excited to join!',
     talentRating: 0,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -390,7 +400,7 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-    
+
     proximity: '20 Martins Street, Olosha Lagos',
     payRange: '₦50k - ₦100k',
     aboutTalent: 'Creative mobile app designer with fintech experience.',
@@ -441,6 +451,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg',
     name: 'Robert Wilson',
+    scouterName: 'Robert Wilson',
+    isRated: false,
     email: 'RobertW@protonmail.com',
     date: 'Sep 6, 2025, 02:20 PM',
     startDate: 'Mar 15, 2025',
@@ -454,7 +466,7 @@ export const MockRecentHires: MockPayment[] = [
     talentRating: 5,
 
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -515,6 +527,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg',
     name: 'Sophia Brown',
+    scouterName: 'Sophia Brown',
+    isRated: false,
     email: 'SophiaB@gmail.com',
     date: 'Sep 5, 2025, 10:10 AM',
     startDate: 'Apr 10, 2025',
@@ -527,7 +541,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Happy to take this opportunity',
     talentRating: 0,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -584,6 +598,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2379007/pexels-photo-2379007.jpeg',
     name: 'Daniel Lee',
+    scouterName: 'Daniel Lee',
+    isRated: false,
     email: 'DanLee@gmail.com',
     date: 'Sep 4, 2025, 06:40 PM',
     startDate: 'May 2, 2025',
@@ -596,7 +612,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Great collaboration so far',
     talentRating: 5,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -652,6 +668,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2381069/pexels-photo-2381069.jpeg',
     name: 'Olivia Martinez',
+    scouterName: 'Olivia Martinez',
+    isRated: false,
     email: 'OliviaM@gmail.com',
     date: 'Sep 3, 2025, 09:00 AM',
     startDate: 'Jun 12, 2025',
@@ -664,7 +682,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Thankful for the chance',
     talentRating: 3,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -721,6 +739,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2379008/pexels-photo-2379008.jpeg',
     name: 'David Clark',
+    scouterName: 'David Clark',
+    isRated: false,
     email: 'DavidC@gmail.com',
     date: 'Sep 2, 2025, 04:25 PM',
     startDate: 'Jul 5, 2025',
@@ -734,7 +754,7 @@ export const MockRecentHires: MockPayment[] = [
     talentRating: 5,
 
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -790,6 +810,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
     name: 'Ava Taylor',
+    scouterName: 'Ava Taylor',
+    isRated: false,
     email: 'AvaT@gmail.com',
     date: 'Sep 1, 2025, 11:30 AM',
     startDate: 'Aug 1, 2025',
@@ -802,7 +824,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Eager to join the project',
     talentRating: 0,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -858,6 +880,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/936229/pexels-photo-936229.jpeg',
     name: 'Ethan Harris',
+    scouterName: 'Ethan Harris',
+    isRated: false,
     email: 'EthanH@gmail.com',
     date: 'Aug 31, 2025, 08:10 PM',
     startDate: 'Aug 20, 2025',
@@ -870,7 +894,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Team has been welcoming',
     talentRating: 4,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -926,6 +950,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/2381069/pexels-photo-2381069.jpeg',
     name: 'Mia Thompson',
+    scouterName: 'Mia Thompson',
+    isRated: false,
     email: 'MiaT@gmail.com',
     date: 'Aug 30, 2025, 01:00 PM',
     startDate: 'Aug 25, 2025',
@@ -938,7 +964,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Challenging but rewarding work',
     talentRating: 5,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -998,6 +1024,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg',
     name: 'Chinedu Okoro',
+    scouterName: 'Chinedu Okoro',
+    isRated: false,
     email: 'chinedu.okoro@gmail.com',
     date: 'Sep 15, 2025, 10:30 AM',
     startDate: 'Oct 1, 2025',
@@ -1010,7 +1038,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Excited about this opportunity',
     talentRating: 5,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1068,6 +1096,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1130625/pexels-photo-1130625.jpeg',
     name: 'Aisha Bello',
+    scouterName: 'Aisha Bello',
+    isRated: false,
     email: 'aisha.bello@yahoo.com',
     date: 'Sep 16, 2025, 02:15 PM',
     startDate: 'Oct 5, 2025',
@@ -1080,7 +1110,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Looking forward to your response',
     talentRating: 0,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1126,6 +1156,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181695/pexels-photo-1181695.jpeg',
     name: 'Emeka Nwankwo',
+    scouterName: 'Emeka Nwankwo',
+    isRated: false,
     email: 'emeka.nwankwo@outlook.com',
     date: 'Sep 17, 2025, 09:45 AM',
     startDate: 'Oct 10, 2025',
@@ -1139,7 +1171,7 @@ export const MockRecentHires: MockPayment[] = [
     talentRating: 5,
 
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1196,6 +1228,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg',
     name: 'Fatima Yusuf',
+    scouterName: 'Fatima Yusuf',
+    isRated: false,
     email: 'fatima.yusuf@gmail.com',
     date: 'Sep 18, 2025, 04:20 PM',
     startDate: 'Oct 15, 2025',
@@ -1208,7 +1242,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Accepted another position',
     talentRating: 4,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1252,6 +1286,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg',
     name: 'Obinna Eze',
+    scouterName: 'Obinna Eze',
+    isRated: false,
     email: 'obinna.eze@protonmail.com',
     date: 'Sep 19, 2025, 11:10 AM',
     startDate: 'Oct 20, 2025',
@@ -1264,7 +1300,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Excited to work on this project',
     talentRating: 5,
 
-      // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1322,6 +1358,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg',
     name: 'Zainab Lawal',
+    scouterName: 'Zainab Lawal',
+    isRated: false,
     email: 'zainab.lawal@gmail.com',
     date: 'Sep 20, 2025, 03:45 PM',
     startDate: 'Oct 25, 2025',
@@ -1334,7 +1372,7 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Considering the offer',
     talentRating: 0,
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1378,6 +1416,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181683/pexels-photo-1181683.jpeg',
     name: 'Tunde Adewale',
+    scouterName: 'Tunde Adewale',
+    isRated: false,
     email: 'tunde.adewale@yahoo.com',
     date: 'Sep 21, 2025, 09:30 AM',
     startDate: 'Nov 1, 2025',
@@ -1391,7 +1431,7 @@ export const MockRecentHires: MockPayment[] = [
     talentRating: 5,
 
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1449,6 +1489,8 @@ export const MockRecentHires: MockPayment[] = [
     profilePic:
       'https://images.pexels.com/photos/1181243/pexels-photo-1181243.jpeg',
     name: 'Ngozi Chukwu',
+    scouterName: 'Ngozi Chukwu',
+    isRated: false,
     email: 'ngozi.chukwu@gmail.com',
     date: 'Sep 22, 2025, 01:20 PM',
     startDate: 'Nov 5, 2025',
@@ -1462,7 +1504,7 @@ export const MockRecentHires: MockPayment[] = [
     talentRating: 5,
 
 
-  // ✅ ADD THESE BACKEND FIELDS
+    // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
       'talent/0322/10July2024-scouter/1202/10July2024-10-August-2025-4:39pm',
@@ -1689,6 +1731,16 @@ export interface verifyOTP {
   email?: string | null;
   phoneNumber?: string | null;
 }
+export interface ForgotPasswordVerifyOtpPayload {
+  talentId: string;
+  otp: string;
+}
+export interface ForgotPasswordResendOtpPayload {
+  talentId: string;
+  phoneNumber?: string;
+  email?: string;
+}
+
 
 export interface resendOTP {
   email?: string | null;

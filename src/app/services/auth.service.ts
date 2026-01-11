@@ -11,6 +11,7 @@ import { ToastController } from '@ionic/angular';
 import { UserService } from './user.service';
 import { AppInitService } from './app-init.service';
 import { ToastsService } from './toasts.service';
+import { ForgotPasswordResendOtpPayload, ForgotPasswordVerifyOtpPayload } from '../models/mocks';
 export interface verifyOTP {
   otp: string;
   phoneNumber: string;
@@ -31,6 +32,11 @@ export interface SecurityyQuestionResponse {
 })
 export class AuthService {
   customNoAuthHttpHeaders: HttpHeaders | { [header: string]: string | string[]; } | undefined;
+  // login(credentials: { email: string; password: string }): Observable<any> {
+  //   return this.http.post<any>(`${environment.baseUrl}/login/v1/auth/login`, credentials, {
+  //     headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+  //   });
+  // }
 
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
     const url =
@@ -42,6 +48,18 @@ export class AuthService {
       {},
       { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
     );
+  }
+
+  public verifyForgotPasswordOTP(
+    payload: ForgotPasswordVerifyOtpPayload
+  ): Observable<any> {
+    return this.http.post('/login/v1/auth/verifyOTP', payload);
+  }
+
+  public resendForgotPasswordOTP(
+    payload: ForgotPasswordResendOtpPayload
+  ): Observable<any> {
+    return this.http.post('/login/v1/auth/resendOTP', payload);
   }
 
 
@@ -316,10 +334,10 @@ export class AuthService {
       answer: string;
     };
   }): Observable<any> {
-    const url = `${this.baseUrl}/validate-talent-security-questions`; // remove extra prefix
+    const url = `${this.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
 
     return this.http.post<any>(url, payload, {
-      headers: this.customNoAuthHttpHeaders
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
     }).pipe(
       catchError((error) => {
         console.error('❌ Error validating security question:', error);

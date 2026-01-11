@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, filter, Subscription } from 'rxjs';
 import { imageIcons } from 'src/app/models/stores';
 import { AuthService } from 'src/app/services/auth.service';
 
@@ -9,375 +11,332 @@ import { AuthService } from 'src/app/services/auth.service';
   styleUrls: ['./forgot-password.component.scss'],
 })
 export class ForgotPasswordComponent implements OnInit, OnDestroy {
-  currentStep = 1;
-  isDropdownOpen = false;
-  selectedOption = '';
   images = imageIcons;
-  countdown = 120;
-  uniqueId = '';
+
+  /* =========================
+     REACTIVE FORM
+  ========================= */
+  forgotPasswordForm!: FormGroup;
+
+  /* =========================
+     UI STATE
+  ========================= */
+  showUniqueIdentifier = false;
+  showSecurityFields = false;
+  isDropdownOpen = false;
+  loadingQuestions = false;
+
   questions: string[] = [];
-  loading = false;
+
+  /* =========================
+     STEP BASED (OTP + RESET)
+  ========================= */
+  currentStep = 3;
+  countdown = 120;
   sendingOtp = false;
   verifyingOtp = false;
-
   private countdownInterval: any;
 
-  // OTP Management
-  otpBoxes = Array(4).fill(0);
-  otpValues: string[] = Array(4).fill('');
+  otpBoxes = Array(6).fill(0);
+  otpValues: string[] = Array(6).fill('');
 
-  // Security Questions
-  securityQuestions = [
-    'What country were you born?',
-    'How old are you?',
-    "What is your sex?",
-  ];
+  /* =========================
+     SUBSCRIPTIONS
+  ========================= */
+  private subscriptions = new Subscription();
 
-  // Form Data
-  forgotPasswordData = {
-    accountType: '',
-    identifier: '',
-    securityQuestion: '',
-    securityAnswer: '',
-    otpMethod: '',
-    email: '',
-    phone: '',
-    otp: '',
-    newPassword: '',
-    confirmPassword: '',
-  };
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService
+  ) { }
 
-  constructor(private router: Router, private authService: AuthService) { }
-
-  ngOnInit() {
-    this.currentStep = 2;
-    this.startCountdown();
+  /* =========================
+     INIT
+  ========================= */
+  ngOnInit(): void {
+    this.buildForm();
+    this.handleAccountTypeChange();
+    this.handleUniqueIdChange();
   }
-  private lastFetchedUniqueId = '';
-  private isFetchingQuestions = false;
 
-  onUniqueIdChange(value: string) {
-    const trimmedId = value?.trim();
+  /* =========================
+     FORM SETUP
+  ========================= */
+  private buildForm(): void {
+    this.forgotPasswordForm = this.fb.group({
+      accountType: ['', Validators.required],
+      uniqueIdentifier: ['', Validators.required],
+      securityQuestion: ['', Validators.required],
+      securityAnswer: ['', Validators.required],
 
-    if (!trimmedId) {
-      return;
-    }
+      otpMethod: [''],
+      email: [''],
+      phone: [''],
+      otp: [''],
+      newPassword: [''],
+      confirmPassword: [''],
+    });
+  }
 
-    // Prevent duplicate or parallel calls
-    if (this.isFetchingQuestions || trimmedId === this.lastFetchedUniqueId) {
-      return;
-    }
+  /* =========================
+     REACTIVE FLOW (WEB STYLE)
+  ========================= */
 
-    this.isFetchingQuestions = true;
-    this.lastFetchedUniqueId = trimmedId;
+  private handleAccountTypeChange(): void {
+    const sub = this.forgotPasswordForm
+      .get('accountType')!
+      .valueChanges.subscribe(() => {
+        this.showUniqueIdentifier = true;
+        this.showSecurityFields = false;
+        this.questions = [];
+        this.forgotPasswordForm.patchValue({
+          uniqueIdentifier: '',
+          securityQuestion: '',
+          securityAnswer: '',
+        });
+      });
 
-    console.log('Calling security questions API for:', trimmedId);
+    this.subscriptions.add(sub);
+  }
 
-    this.authService.getMySecurityQuestions(trimmedId).subscribe({
+  private handleUniqueIdChange(): void {
+    const sub = this.forgotPasswordForm
+      .get('uniqueIdentifier')!
+      .valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe((value: string) => {
+        const trimmed = value?.trim();
+
+        // Show security fields as soon as user types anything
+        this.showSecurityFields = !!trimmed;
+
+        // Only call API when input is reasonably valid
+        if (trimmed && trimmed.length > 0) {
+          this.fetchSecurityQuestions(trimmed);
+        } else {
+          this.questions = []; // keep dropdown empty but visible
+        }
+      });
+
+    this.subscriptions.add(sub);
+  }
+
+  private fetchSecurityQuestions(uniqueId: string): void {
+    this.loadingQuestions = true;
+
+    this.authService.getMySecurityQuestions(uniqueId).subscribe({
       next: (res) => {
         this.questions = res?.data || [];
-        this.isFetchingQuestions = false;
+        //this.showSecurityFields = this.questions.length > 0;
+        this.loadingQuestions = false;
+
+        this.forgotPasswordForm.get('uniqueIdentifier')!.setErrors(null);
       },
       error: (err) => {
-        console.error('Failed to fetch security questions:', err);
-        this.isFetchingQuestions = false;
-        this.lastFetchedUniqueId = ''; // allow retry
+        console.error('Failed to fetch security questions', err);
+        this.questions = [];
+        //this.showSecurityFields = false;
+        this.loadingQuestions = false;
+
+        this.forgotPasswordForm.get('uniqueIdentifier')!.setErrors({ invalid: true });
       },
     });
   }
 
-  fetchSecurityQuestions() {
-    if (!this.uniqueId || !this.uniqueId.trim()) {
-      return;
-    }
-
-    this.loading = true;
-
-    this.authService.getMySecurityQuestions(this.uniqueId.trim()).subscribe({
-      next: (res) => {
-        this.questions = res.data || [];
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Error fetching security questions:', err);
-        this.loading = false;
-      },
-    });
-  }
-  // forgot-password.component.ts
-  onSubmitSecurityAnswer() {
-    const payload = {
-      talentId: this.uniqueId,
-      answerSecurityQuestion: {
-        question: this.forgotPasswordData.securityQuestion,
-        answer: this.forgotPasswordData.securityAnswer
-      }
-    };
-
-    this.authService.validateTalentSecurityQuestion(payload).subscribe({
-      next: (res) => {
-        console.log('✅ Security question validated:', res);
-        this.nextStep(); // move to next step
-      },
-      error: (err) => {
-        console.error('❌ Failed to validate security question:', err);
-      }
-    });
-  }
-
-
-  ngOnDestroy() {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
-  }
-
-  // Navigation Methods
-  nextStep() {
-    if (this.currentStep < 7) {
-      this.currentStep++;
-
-      // Reset OTP when moving to step 5
-      if (this.currentStep === 5) {
-        this.resetOtp();
-        this.startCountdown();
-      }
-    }
-  }
-
-  previousStep() {
-    if (this.currentStep > 1) {
-      this.currentStep--;
-    } else {
-      this.goBack();
-    }
-  }
-
-  goBack() {
-    this.router.navigate(['/auth/login']);
-  }
-
-  // Dropdown Methods
-  toggleDropdown() {
+  /* =========================
+     SECURITY QUESTION
+  ========================= */
+  toggleDropdown(): void {
     this.isDropdownOpen = !this.isDropdownOpen;
   }
 
-  selectSecurityQuestion(question: string) {
-    this.forgotPasswordData.securityQuestion = question;
+  selectSecurityQuestion(question: string): void {
+    this.forgotPasswordForm.patchValue({
+      securityQuestion: question,
+    });
+
+    this.forgotPasswordForm
+      .get('securityQuestion')
+      ?.updateValueAndValidity();
+
     this.isDropdownOpen = false;
   }
 
-  // OTP Method Selection
- selectOtpMethod(method: 'email' | 'phone') {
-  this.forgotPasswordData.otpMethod = method;
-  this.sendOtp();
-}
-sendOtp() {
-  if (this.sendingOtp) return;
 
-  const payload = {
-    email:
-      this.forgotPasswordData.otpMethod === 'email'
-        ? this.forgotPasswordData.email
-        : '',
-    phoneNumber:
-      this.forgotPasswordData.otpMethod === 'phone'
-        ? this.forgotPasswordData.phone
-        : '',
-  };
+  onSubmitSecurityAnswer(): void {
+    const requiredControls = [
+      'uniqueIdentifier',
+      'securityQuestion',
+      'securityAnswer',
+    ];
 
-  this.sendingOtp = true;
+    let hasError = false;
 
-  this.authService.resendOTP(payload).subscribe({
-    next: () => {
-      this.sendingOtp = false;
-      this.resetOtp();
-      this.startCountdown();
-      this.nextStep(); // move to OTP input (Step 5)
-    },
-    error: (err) => {
-      this.sendingOtp = false;
-      console.error('❌ Failed to send OTP:', err);
-    },
-  });
-}
-
-
-
-  // OTP Management
-  onOtpInput(event: any, index: number) {
-    const input = event.target;
-    const value = input.value;
-
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) {
-      input.value = '';
-      this.otpValues[index] = '';
-      return;
-    }
-
-    this.otpValues[index] = value;
-
-    // Auto-focus next input
-    if (value && index < this.otpBoxes.length - 1) {
-      const nextInput = document.querySelector(
-        `input[name="otp-${index + 1}"]`
-      ) as HTMLInputElement;
-      if (nextInput) {
-        nextInput.focus();
+    requiredControls.forEach((controlName) => {
+      const control = this.forgotPasswordForm.get(controlName);
+      control?.markAsTouched();
+      if (control?.invalid) {
+        hasError = true;
       }
-    }
+    });
 
-    // Update the complete OTP
-    this.forgotPasswordData.otp = this.otpValues.join('');
+    if (hasError) return;
+
+    const payload = {
+      talentId: this.forgotPasswordForm.value.uniqueIdentifier,
+      answerSecurityQuestion: {
+        question: this.forgotPasswordForm.value.securityQuestion,
+        answer: this.forgotPasswordForm.value.securityAnswer,
+      },
+    };
+
+    this.authService.validateTalentSecurityQuestion(payload).subscribe({
+      next: () => {
+        // Blur the currently focused element to avoid aria-hidden focus conflicts
+        try {
+          const active = document.activeElement as HTMLElement | null;
+          if (active) active.blur();
+        } catch (e) {
+          // ignore
+        }
+
+        // Navigate to OTP page (use setTimeout to ensure blur takes effect)
+        setTimeout(() => {
+          this.router.navigate(['/auth/forgot-password/verify-otp'], {
+            state: {
+              talentId: payload.talentId,
+              flow: 'forgot-password',
+            },
+          });
+        }, 0);
+      },
+      error: (err) => {
+        console.error('Security validation failed', err);
+      },
+    });
   }
 
-  onOtpKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace' && !this.otpValues[index] && index > 0) {
-      const prevInput = document.querySelector(
-        `input[name="otp-${index - 1}"]`
-      ) as HTMLInputElement;
-      if (prevInput) {
-        prevInput.focus();
-      }
-    }
-  }
+  /* =========================
+     OTP LOGIC (UNCHANGED)
+  ========================= */
 
-  get isOtpComplete(): boolean {
-    return (
-      this.otpValues.every((value) => value !== '') &&
-      this.otpValues.join('').length === 6
-    );
-  }
-
-  resetOtp() {
-    this.otpValues = Array(6).fill('');
-    this.forgotPasswordData.otp = '';
-  }
-
-  // Countdown Timer
-  startCountdown() {
-    this.countdown = 120;
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
-
-    this.countdownInterval = setInterval(() => {
-      if (this.countdown > 0) {
-        this.countdown--;
-      } else {
-        clearInterval(this.countdownInterval);
-      }
-    }, 1000);
-  }
-
-  // Action Methods
-  // sendOtp() {
-  //   // Here you would typically call your OTP service
-  //   console.log('Sending OTP to:', this.forgotPasswordData);
-  //   this.nextStep();
- // }
-resendOtp() {
-  if (this.countdown > 0) return;
-
-  const payload = {
-    email:
-      this.forgotPasswordData.otpMethod === 'email'
-        ? this.forgotPasswordData.email
-        : '',
-    phoneNumber:
-      this.forgotPasswordData.otpMethod === 'phone'
-        ? this.forgotPasswordData.phone
-        : '',
-  };
-
-  this.authService.resendOTP(payload).subscribe({
-    next: () => {
-      this.resetOtp();
-      this.startCountdown();
-    },
-    error: (err) => console.error('❌ Failed to resend OTP:', err),
-  });
-}
-
-
-  // resendOtp() {
+  // selectOtpMethod(method: 'email' | 'phone'): void {
+  //   this.forgotPasswordForm.patchValue({ otpMethod: method });
   //   this.sendOtp();
-  //   this.startCountdown();
   // }
 
- verifyOtp() {
-  if (!this.isOtpComplete || this.verifyingOtp) return;
+  // sendOtp(): void {
+  //   if (this.sendingOtp) return;
 
-  const payload = {
-    otp: this.forgotPasswordData.otp,
-    email:
-      this.forgotPasswordData.otpMethod === 'email'
-        ? this.forgotPasswordData.email
-        : '',
-    phoneNumber:
-      this.forgotPasswordData.otpMethod === 'phone'
-        ? this.forgotPasswordData.phone
-        : '',
-  };
+  //   const payload = {
+  //     email:
+  //       this.forgotPasswordForm.value.otpMethod === 'email'
+  //         ? this.forgotPasswordForm.value.email
+  //         : '',
+  //     phoneNumber:
+  //       this.forgotPasswordForm.value.otpMethod === 'phone'
+  //         ? this.forgotPasswordForm.value.phone
+  //         : '',
+  //   };
 
-  this.verifyingOtp = true;
+  //   this.sendingOtp = true;
 
-  this.authService.verifyOTP(payload).subscribe({
-    next: () => {
-      this.verifyingOtp = false;
-      this.nextStep(); // proceed to reset password
-    },
-    error: (err) => {
-      this.verifyingOtp = false;
-      console.error('❌ OTP verification failed:', err);
-    },
-  });
-}
+  //   this.authService.resendOTP(payload).subscribe({
+  //     next: () => {
+  //       this.sendingOtp = false;
+  //       this.resetOtp();
+  //       this.startCountdown();
+  //       this.currentStep = 5;
+  //     },
+  //     error: () => {
+  //       this.sendingOtp = false;
+  //     },
+  //   });
+  // }
 
+  // onOtpInput(event: any, index: number): void {
+  //   const value = event.target.value;
 
-  updatePassword() {
-    // Here you would update the password via your backend
-    if (
-      this.forgotPasswordData.newPassword ===
-      this.forgotPasswordData.confirmPassword
-    ) {
-      console.log('Updating password:', this.forgotPasswordData.newPassword);
-      this.nextStep();
+  //   if (!/^\d*$/.test(value)) {
+  //     event.target.value = '';
+  //     return;
+  //   }
+
+  //   this.otpValues[index] = value;
+  //   this.forgotPasswordForm.patchValue({
+  //     otp: this.otpValues.join(''),
+  //   });
+  // }
+
+  // verifyOtp(): void {
+  //   if (this.otpValues.join('').length !== 6 || this.verifyingOtp) return;
+
+  //   const payload = {
+  //     otp: this.forgotPasswordForm.value.otp,
+  //     email:
+  //       this.forgotPasswordForm.value.otpMethod === 'email'
+  //         ? this.forgotPasswordForm.value.email
+  //         : '',
+  //     phoneNumber:
+  //       this.forgotPasswordForm.value.otpMethod === 'phone'
+  //         ? this.forgotPasswordForm.value.phone
+  //         : '',
+  //   };
+
+  //   this.verifyingOtp = true;
+
+  //   this.authService.verifyOTP(payload).subscribe({
+  //     next: () => {
+  //       this.verifyingOtp = false;
+  //       this.currentStep = 6;
+  //     },
+  //     error: () => {
+  //       this.verifyingOtp = false;
+  //     },
+  //   });
+  // }
+
+  // /* =========================
+  //    COUNTDOWN
+  // ========================= */
+  // startCountdown(): void {
+  //   this.countdown = 120;
+  //   clearInterval(this.countdownInterval);
+
+  //   this.countdownInterval = setInterval(() => {
+  //     this.countdown--;
+  //     if (this.countdown <= 0) clearInterval(this.countdownInterval);
+  //   }, 1000);
+  // }
+
+  // resetOtp(): void {
+  //   this.otpValues = Array(6).fill('');
+  //   this.forgotPasswordForm.patchValue({ otp: '' });
+  // }
+
+  /* =========================
+     NAVIGATION
+  ========================= */
+  goBack(): void {
+    if (this.currentStep > 3) {
+      this.currentStep--;
+    } else {
+      this.router.navigate(['/auth/login']);
     }
   }
-  goToStep2() {
-    this.currentStep = 2;
-  }
 
-
-  goToLogin() {
+  goToLogin(): void {
     this.router.navigate(['/auth/login']);
   }
 
-  cancel() {
-    this.router.navigate(['/auth/login']);
-  }
-
-  onSubmit() {
-    // Form submission handled in individual steps
-  }
-
-  // Utility Methods
-  get maskedEmail(): string {
-    if (!this.forgotPasswordData.email) return '';
-    const [localPart, domain] = this.forgotPasswordData.email.split('@');
-    const maskedLocal =
-      localPart.substring(0, 3) + '*'.repeat(localPart.length - 3);
-    return `${maskedLocal}@${domain}`;
-  }
-
-  get maskedPhone(): string {
-    if (!this.forgotPasswordData.phone) return '';
-    return (
-      this.forgotPasswordData.phone.substring(0, 3) +
-      '*'.repeat(this.forgotPasswordData.phone.length - 5) +
-      this.forgotPasswordData.phone.slice(-2)
-    );
+  /* =========================
+     DESTROY
+  ========================= */
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+    clearInterval(this.countdownInterval);
   }
 }

@@ -169,7 +169,7 @@ export class JwtInterceptorService implements HttpInterceptor {
       '/assets/',
       'https://api.cloudinary.com/v1_1/dosiy2cmk/video/upload',
     ];
-
+    
     const isScouterRegistration =
       url.includes('scouter') && (url.includes('create') || url.includes('verify') || url.includes('resend'));
 
