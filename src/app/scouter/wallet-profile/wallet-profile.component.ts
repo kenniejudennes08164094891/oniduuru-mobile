@@ -1500,6 +1500,22 @@ export class WalletProfileComponent implements OnInit {
         this.ninLastName ||
         (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '');
 
+      // ✅ FIXED: Ensure phone number is properly formatted
+      let phoneNumber = this.number || '';
+      if (phoneNumber) {
+        // Convert to Nigerian format if needed (starts with 0 or 234)
+        if (phoneNumber.startsWith('0') && phoneNumber.length === 11) {
+          // Keep as is (08123456789)
+          phoneNumber = phoneNumber;
+        } else if (phoneNumber.startsWith('234') && phoneNumber.length === 13) {
+          // Already in 234 format
+          phoneNumber = phoneNumber;
+        } else {
+          // Format as 0xxxxxxxxxx
+          phoneNumber = '0' + phoneNumber.replace(/^0+/, '').slice(0, 10);
+        }
+      }
+
       const payload = {
         bankAccountNumber: this.savingsAcc,
         bankCode: bankCode,
@@ -1518,15 +1534,28 @@ export class WalletProfileComponent implements OnInit {
         role: this.role.toLowerCase(),
         selectedOption: 'isIndividual',
         title: this.selectedTitle,
-        phoneNumber: this.number,
+        phoneNumber: this.formatPhoneNumber(this.number), // For individual
         uniqueId: uniqueId,
       };
 
       console.log('📤 Sending individual wallet profile:', payload);
+      console.log(
+        '📱 Phone number being sent:',
+        phoneNumber,
+        'Length:',
+        phoneNumber.length
+      );
+
+      // Add validation before sending
+      if (!phoneNumber || phoneNumber.length < 11) {
+        throw new Error(
+          'Valid phone number is required (11 digits starting with 0)'
+        );
+      }
+
       const response = await this.endpointService
         .createWalletProfile(payload)
         .toPromise();
-      console.log('✅ Individual profile created:', response);
 
       await loading.dismiss();
 
@@ -1574,6 +1603,7 @@ export class WalletProfileComponent implements OnInit {
       this.toastService.openSnackBar(errorMessage, 'error');
     }
   }
+
   async createBusinessProfile() {
     const loading = await this.showLoading('Creating business profile...');
 
@@ -1613,7 +1643,28 @@ export class WalletProfileComponent implements OnInit {
         );
       }
 
-      // Create business payload
+      let businessPhoneNumber = this.businessData.companyPhone || '';
+      if (businessPhoneNumber) {
+        // Convert to Nigerian format if needed
+        if (
+          businessPhoneNumber.startsWith('0') &&
+          businessPhoneNumber.length === 11
+        ) {
+          // Keep as is
+          businessPhoneNumber = businessPhoneNumber;
+        } else if (
+          businessPhoneNumber.startsWith('234') &&
+          businessPhoneNumber.length === 13
+        ) {
+          // Already in 234 format
+          businessPhoneNumber = businessPhoneNumber;
+        } else {
+          // Format as 0xxxxxxxxxx
+          businessPhoneNumber =
+            '0' + businessPhoneNumber.replace(/^0+/, '').slice(0, 10);
+        }
+      }
+
       const payload = {
         selectedOption: 'isRegisteredBusiness',
         occupation: this.businessData.natureOfBusiness,
@@ -1628,19 +1679,25 @@ export class WalletProfileComponent implements OnInit {
         cacRegCertificate: this.businessData.cacRegCertificate,
         rcNumber: this.businessData.rcNumber,
         companyName: this.businessData.companyName,
-        phoneNumber: this.businessData.companyPhone,
+        phoneNumber: this.formatPhoneNumber(this.businessData.companyPhone), // For business
       };
 
       console.log('📤 Sending business wallet profile:', {
         ...payload,
         cacRegCertificate: payload.cacRegCertificate ? '***BASE64***' : '',
+        phoneNumber: businessPhoneNumber, // Log phone number for debugging
       });
+
+      // Add validation before sending
+      if (!businessPhoneNumber || businessPhoneNumber.length < 11) {
+        throw new Error(
+          'Valid company phone number is required (11 digits starting with 0)'
+        );
+      }
 
       const response = await this.endpointService
         .createWalletProfile(payload)
         .toPromise();
-      console.log('✅ Business profile created:', response);
-
       await loading.dismiss();
 
       // Save to localStorage and navigate
@@ -1679,6 +1736,34 @@ export class WalletProfileComponent implements OnInit {
 
       this.toastService.openSnackBar(errorMessage, 'error');
     }
+  }
+
+  private formatPhoneNumber(phone: string): string {
+    if (!phone) return '';
+
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+
+    // Handle different formats
+    if (digits.length === 11 && digits.startsWith('0')) {
+      // Format: 08123456789
+      return digits;
+    } else if (digits.length === 13 && digits.startsWith('234')) {
+      // Format: 2348123456789
+      return '0' + digits.slice(3);
+    } else if (digits.length === 10) {
+      // Format: 8123456789 (missing leading 0)
+      return '0' + digits;
+    } else if (digits.length > 10) {
+      // Try to extract the last 11 digits
+      const last11 = digits.slice(-11);
+      if (last11.length === 11) {
+        return last11.startsWith('0') ? last11 : '0' + last11.slice(1);
+      }
+    }
+
+    // Return as is if no pattern matches
+    return phone;
   }
 
   // ==================== VALIDATION METHODS ====================
