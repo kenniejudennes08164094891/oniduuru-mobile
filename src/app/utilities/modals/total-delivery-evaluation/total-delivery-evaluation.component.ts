@@ -84,12 +84,12 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
   // Submit comment to API
   async submitEvaluation() {
     if (!this.hire?.id) {
-      this.showToast('Invalid hire data');
+      await this.showToast('Invalid hire data');
       return;
     }
 
     if (this.rating === 0) {
-      this.showToast('Please provide a rating before submitting!');
+      await this.showToast('Please provide a rating before submitting!');
       return;
     }
 
@@ -97,7 +97,7 @@ export class TotalDeliveryEvaluationComponent implements OnInit {
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId) {
-      this.showToast('User not authenticated');
+      await this.showToast('User not authenticated');
       return;
     }
 
