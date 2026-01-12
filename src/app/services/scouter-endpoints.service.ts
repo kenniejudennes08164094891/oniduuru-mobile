@@ -1387,4 +1387,3 @@ export class ScouterEndpointsService {
   }
 }
 
-// THIS IS UP TO DATE

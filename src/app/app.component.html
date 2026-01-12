@@ -24,6 +24,7 @@
         </ion-item>
 
         <ion-item
+          *ngIf="!hasWalletProfile"
           button
           class="menu-button"
           (click)="navigateAndCloseMenu('/scouter/wallet-page/wallet-profile')"

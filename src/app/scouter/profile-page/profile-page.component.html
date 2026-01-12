@@ -9,23 +9,7 @@
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
     <!-- Debug buttons (optional) -->
-    <!-- <div class="fixed top-20 right-4 flex flex-col gap-2 z-50">
-      <button
-        (click)="runDebug()"
-        class="bg-red-500 text-white p-3 rounded-full shadow-lg hover:bg-red-600 transition"
-        title="Debug Network"
-      >
-        🐛 Debug
-      </button>
-
-      <button
-        (click)="reloadComponent()"
-        class="bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition"
-        title="Reload Component"
-      >
-        🔄 Reload
-      </button>
-    </div> -->
+    <!-- Debug buttons removed in cleanup -->
 
     <!-- Loading State for Profile -->
     <div *ngIf="isLoadingProfile" class="minimal-loading">
@@ -662,17 +646,17 @@
                 [class.border-red-300]="hasInvalidQuestion(qa)"
               />
               <div class="flex justify-between items-center mt-1.5">
-                  <span
-                    class="text-xs"
-                    [class.text-red-500]="hasInvalidQuestion(qa)"
-                    [class.text-gray-400]="!hasInvalidQuestion(qa)"
-                  >
-                    {{ getQuestionValidationMessage(qa) }}
-                  </span>
-                  <span class="text-xs text-gray-400">
-                    {{ qa.question.length || 0 }} chars
-                  </span>
-                </div>
+                <span
+                  class="text-xs"
+                  [class.text-red-500]="hasInvalidQuestion(qa)"
+                  [class.text-gray-400]="!hasInvalidQuestion(qa)"
+                >
+                  {{ getQuestionValidationMessage(qa) }}
+                </span>
+                <span class="text-xs text-gray-400">
+                  {{ qa.question.length || 0 }} chars
+                </span>
+              </div>
             </div>
 
             <!-- Answer Input -->

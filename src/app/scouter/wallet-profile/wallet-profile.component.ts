@@ -27,6 +27,8 @@ export class WalletProfileComponent implements OnInit {
   isOtpStep = false;
   isLoading = false;
 
+  bvnDateOfBirth: string = '';
+
   // Profile type - initialize as null to show empty state
   profileType: 'business' | 'individual' | null = null;
 
@@ -34,6 +36,15 @@ export class WalletProfileComponent implements OnInit {
   title = title;
   gender = gender;
   maritalStatus = maritalStatus;
+
+  // Add these properties to your component
+  otp: string = '';
+  otpSent: boolean = false;
+  otpVerifying: boolean = false;
+  otpVerified: boolean = false;
+  bvnSessionId: string = '';
+  maskedPhoneNumber: string = '';
+  otpError: string = '';
 
   // API loaded data
   banks: string[] = [];
@@ -64,8 +75,8 @@ export class WalletProfileComponent implements OnInit {
 
   role = 'scouter';
 
-  otp: string[] = ['', '', '', '', '', ''];
-  otpArray = new Array(4);
+  // otp: string[] = ['', '', '', '', '', ''];
+  // otpArray = new Array(4);
 
   countdown = 60;
 
@@ -130,6 +141,7 @@ export class WalletProfileComponent implements OnInit {
     cacCertificate: null as File | null,
     incorporationDate: '',
     cacRegCertificate: '',
+    incorporationDateFormatted: '',
   };
 
   // Form controls
@@ -147,6 +159,8 @@ export class WalletProfileComponent implements OnInit {
     Validators.required,
     Validators.pattern(/^[0-9]{11}$/),
   ]);
+
+  ninDateOfBirth: string = '';
 
   constructor(
     private location: Location,
@@ -378,34 +392,142 @@ export class WalletProfileComponent implements OnInit {
 
   // ==================== SEPARATE VERIFICATION METHODS ====================
 
-  private verifyBVN(): void {
-    if (!this.bvn || this.bvn.length !== 11) {
-      console.log('BVN validation skipped: invalid length', this.bvn);
+  initiateBVNVerification(): void {
+    if (!this.bvn || this.bvn.length !== 11) return;
+
+    // Get phone number from user profile
+    const phoneNumber = this.number;
+    if (!phoneNumber || phoneNumber.length !== 11) {
+      this.toastService.openSnackBar(
+        'Phone number is required for BVN verification. Please ensure your profile has a valid phone number.',
+        'error'
+      );
       return;
     }
 
     this.bvnVerifying = true;
-    this.bvnVerified = null;
-    // Reset BVN name data
-    this.bvnFirstName = '';
-    this.bvnMiddleName = '';
-    this.bvnLastName = '';
-    this.bvnFullName = '';
+    this.otpSent = false;
+    this.otpVerified = false;
 
-    console.log('Starting BVN verification for:', this.bvn);
+    // Mask the phone number for display (shows last 4 digits)
+    this.maskedPhoneNumber = this.maskPhoneNumber(phoneNumber);
 
-    this.endpointService.validateBVN(this.bvn).subscribe({
+    this.endpointService.verifyBVNWithPhone(this.bvn, phoneNumber).subscribe({
       next: (res: any) => {
-        console.log('BVN verification successful:', res);
+        console.log('BVN OTP Initiation Success:', res);
         this.bvnVerifying = false;
 
-        if (res.success === true) {
+        // FIX: Check for success based on API response
+        if (
+          res.success === true &&
+          res.message &&
+          res.message.includes('OTP')
+        ) {
+          this.otpSent = true;
+          this.bvnSessionId = res.sessionId || res.data?.sessionId;
+
+          // Extract phone number from message for display
+          const phoneInMessage = this.extractPhoneFromMessage(res.message);
+          if (phoneInMessage) {
+            this.maskedPhoneNumber = this.maskPhoneNumber(phoneInMessage);
+          }
+
+          this.toastService.openSnackBar(
+            res.message ||
+              `OTP sent to the phone number registered with your BVN: ${this.maskedPhoneNumber}`,
+            'success'
+          );
+
+          // Focus on OTP input
+          setTimeout(() => {
+            const otpInput = document.querySelector(
+              'input[name="otp"]'
+            ) as HTMLInputElement;
+            if (otpInput) {
+              otpInput.focus();
+            }
+          }, 100);
+        } else {
+          console.warn('Unexpected response:', res);
+          this.bvnVerified = false;
+          this.toastService.openSnackBar(
+            res.message || 'Failed to send OTP. Please try again.',
+            'error'
+          );
+        }
+      },
+      error: (err: any) => {
+        console.error('BVN OTP initiation error:', err);
+        this.bvnVerifying = false;
+        this.bvnVerified = false;
+
+        const errorMsg =
+          err?.userMessage || err?.message || 'Failed to send OTP';
+        this.toastService.openSnackBar(`❌ ${errorMsg}`, 'error');
+      },
+    });
+  }
+
+  // Add this helper method to extract phone from message
+  private extractPhoneFromMessage(message: string): string {
+    if (!message) return '';
+
+    // Extract phone number from message like "OTP sent to 08083826576"
+    const phoneMatch = message.match(/\d{10,}/);
+    return phoneMatch ? phoneMatch[0] : '';
+  }
+
+  private autoPopulateDateOfBirth(): void {
+    // Priority: 1. BVN DOB, 2. NIN DOB, 3. Existing DOB from user data
+    if (!this.dob) {
+      let dateToUse = '';
+
+      if (this.bvnVerified && this.bvnDateOfBirth) {
+        dateToUse = this.bvnDateOfBirth;
+        console.log('Using date of birth from BVN verification');
+      } else if (this.ninVerified && this.ninDateOfBirth) {
+        dateToUse = this.ninDateOfBirth;
+        console.log('Using date of birth from NIN verification');
+      }
+
+      if (dateToUse) {
+        this.dob = this.formatDateForInput(dateToUse);
+        this.formatDob();
+        console.log('✅ Date of birth auto-populated:', this.dob);
+      }
+    }
+  }
+
+  // Method to verify OTP
+  verifyOTP(): void {
+    if (!this.otp || this.otp.length !== 6) {
+      this.otpError = 'OTP must be 6 digits';
+      return;
+    }
+
+    if (!this.bvnSessionId) {
+      this.otpError = 'Session expired. Please re-enter your BVN.';
+      return;
+    }
+
+    this.otpVerifying = true;
+    this.otpError = '';
+
+    this.endpointService.verifyBVNOTP(this.bvnSessionId, this.otp).subscribe({
+      next: (res: any) => {
+        this.otpVerifying = false;
+
+        if (res.success === true || res.statusCode === 200) {
+          this.otpVerified = true;
           this.bvnVerified = true;
 
-          // Extract name data from response
-          this.bvnFirstName = res.data?.firstName || '';
-          this.bvnMiddleName = res.data?.middleName || '';
-          this.bvnLastName = res.data?.lastName || '';
+          // Extract name data from BVN details
+          const bvnDetails = res.bvnDetails || res.data || res;
+          this.bvnFirstName =
+            bvnDetails?.firstName || bvnDetails?.firstname || '';
+          this.bvnMiddleName =
+            bvnDetails?.middleName || bvnDetails?.middlename || '';
+          this.bvnLastName = bvnDetails?.lastName || bvnDetails?.lastname || '';
 
           // Construct full name
           this.bvnFullName = [
@@ -416,37 +538,79 @@ export class WalletProfileComponent implements OnInit {
             .filter((name) => name && name.trim())
             .join(' ');
 
+          // ✅ Extract and store date of birth from BVN response
+          this.bvnDateOfBirth = this.extractDateOfBirthFromBVNResponse(res);
+
+          // Auto-populate date of birth
+          this.autoPopulateDateOfBirth();
+
+          // Priority: BVN DOB > NIN DOB > existing DOB
+          if (this.bvnDateOfBirth && !this.dob) {
+            this.dob = this.formatDateForInput(this.bvnDateOfBirth);
+            this.formatDob();
+            console.log('✅ Date of birth auto-populated from BVN:', this.dob);
+          } else if (!this.dob && this.ninDateOfBirth) {
+            // If no DOB from BVN but we have from NIN
+            this.dob = this.formatDateForInput(this.ninDateOfBirth);
+            this.formatDob();
+            console.log(
+              '✅ Date of birth auto-populated from NIN (fallback):',
+              this.dob
+            );
+          }
+
           const successMessage = this.bvnFullName
             ? `✅ BVN has been verified successfully! for ${this.bvnFullName}`
             : '✅ BVN verified successfully';
 
           this.toastService.openSnackBar(successMessage, 'success');
+
+          // Clear OTP after successful verification
+          setTimeout(() => {
+            this.otp = '';
+          }, 1000);
         } else {
-          this.bvnVerified = false;
-          this.toastService.openSnackBar('❌ BVN verification failed', 'error');
+          this.otpVerified = false;
+          this.otpError = res.message || 'Invalid OTP. Please try again.';
+          this.toastService.openSnackBar(`❌ ${this.otpError}`, 'error');
         }
       },
       error: (err: any) => {
-        console.error('BVN verification detailed error:', {
-          status: err.status,
-          message: err.message,
-          userMessage: err.userMessage,
-          originalError: err.originalError,
-        });
-
-        this.bvnVerifying = false;
-        this.bvnVerified = false;
+        console.error('OTP verification error:', err);
+        this.otpVerifying = false;
+        this.otpVerified = false;
+        this.otpError =
+          err?.userMessage || err?.message || 'OTP verification failed';
 
         const errorMsg =
-          err?.userMessage || err?.message || 'BVN verification failed';
+          err?.userMessage || err?.message || 'OTP verification failed';
         this.toastService.openSnackBar(`❌ ${errorMsg}`, 'error');
-
-        // Log additional details for debugging
-        if (err.originalError) {
-          console.log('Original API error response:', err.originalError);
-        }
       },
     });
+  }
+
+  // OTP input handler with auto-verification
+  onOtpInput(event: any): void {
+    let value = event.target.value;
+    value = value.replace(/[^0-9]/g, '').slice(0, 6);
+    this.otp = value;
+    this.otpError = '';
+
+    // Auto-verify when 6 digits are entered
+    if (value.length === 6 && this.otpSent && !this.otpVerified) {
+      this.verifyOTP();
+    }
+  }
+
+  // Helper method to mask phone number
+  private maskPhoneNumber(phoneNumber: string): string {
+    if (!phoneNumber || phoneNumber.length < 5) return phoneNumber;
+
+    const visibleDigits = 5;
+    const maskedPart = '*******';
+    const lastDigits = phoneNumber.slice(-visibleDigits);
+
+    return `${maskedPart}${lastDigits}`;
   }
 
   private verifyNIN(): void {
@@ -454,20 +618,22 @@ export class WalletProfileComponent implements OnInit {
 
     this.ninVerifying = true;
     this.ninVerified = null;
-    // Reset NIN name data
     this.ninFirstName = '';
     this.ninMiddleName = '';
     this.ninLastName = '';
     this.ninFullName = '';
+    this.ninDateOfBirth = '';
 
     this.endpointService.validateNIN(this.nin).subscribe({
       next: (res: any) => {
         this.ninVerifying = false;
+        console.log('NIN Verification Raw Response:', res);
 
-        if (res.success === true) {
+        // Check for success based on actual API response structure
+        if (res && (res.success === true || res.statusCode === 200)) {
           this.ninVerified = true;
 
-          // Extract name data from response (adjust property names based on actual API response)
+          // Extract name data from response
           this.ninFirstName = res.data?.firstName || res.data?.firstname || '';
           this.ninMiddleName =
             res.data?.middleName || res.data?.middlename || '';
@@ -482,6 +648,34 @@ export class WalletProfileComponent implements OnInit {
             .filter((name) => name && name.trim())
             .join(' ');
 
+          // ✅ Store date of birth from NIN response
+          this.ninDateOfBirth = this.extractDateOfBirthFromNINResponse(res);
+
+          // Auto-populate date of birth if not already set
+          if (this.ninDateOfBirth && !this.dob) {
+            // Format the date for HTML input (YYYY-MM-DD)
+            const formattedDate = this.formatDateForInput(this.ninDateOfBirth);
+
+            // Validate the formatted date
+            if (this.isValidDateForInput(formattedDate)) {
+              this.dob = formattedDate;
+              this.formatDob();
+              console.log(
+                '✅ Date of birth auto-populated from NIN:',
+                this.dob
+              );
+            } else {
+              console.warn(
+                '⚠️ Invalid date format from NIN:',
+                this.ninDateOfBirth
+              );
+              this.toastService.openSnackBar(
+                'Date of birth from NIN is in an unexpected format. Please enter it manually.',
+                'warning'
+              );
+            }
+          }
+
           const successMessage = this.ninFullName
             ? `✅ NIN has been verified successfully! for ${this.ninFullName}`
             : '✅ NIN verified successfully';
@@ -489,6 +683,7 @@ export class WalletProfileComponent implements OnInit {
           this.toastService.openSnackBar(successMessage, 'success');
         } else {
           this.ninVerified = false;
+          console.warn('NIN verification failed - unexpected response:', res);
           this.toastService.openSnackBar('❌ NIN verification failed', 'error');
         }
       },
@@ -502,6 +697,155 @@ export class WalletProfileComponent implements OnInit {
         this.toastService.openSnackBar(`❌ ${errorMsg}`, 'error');
       },
     });
+  }
+
+  // Add this utility method to validate if date is in correct format for HTML date input
+  private isValidDateForInput(dateString: string): boolean {
+    if (!dateString) return false;
+
+    // Check if date is in YYYY-MM-DD format
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+
+    // Validate the actual date
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  }
+
+  //  NEW METHOD: Extract date of birth specifically from NIN response
+  private extractDateOfBirthFromNINResponse(response: any): string {
+    if (!response) return '';
+
+    // Check for date of birth in different NIN response structures
+    const ninData = response.data || response;
+
+    const dateOfBirth =
+      ninData.birthDate ||
+      ninData.dateOfBirth ||
+      ninData.dob ||
+      response.birthDate;
+
+    console.log('🎂 Extracted date of birth from NIN:', dateOfBirth);
+
+    if (dateOfBirth) {
+      // Normalize the date to YYYY-MM-DD format
+      return this.normalizeDate(dateOfBirth);
+    }
+
+    return '';
+  }
+
+  //  NEW METHOD: Extract date of birth from BVN response
+  private extractDateOfBirthFromBVNResponse(response: any): string {
+    if (!response) return '';
+
+    const bvnDetails = response.bvnDetails || response.data || response;
+
+    const dateOfBirth =
+      bvnDetails.dateOfBirth ||
+      bvnDetails.dob ||
+      bvnDetails.birthDate ||
+      bvnDetails.date_of_birth;
+
+    console.log('🎂 Extracted date of birth from BVN:', dateOfBirth);
+
+    // Format the date if needed
+    if (dateOfBirth) {
+      // Handle different date formats
+      return this.normalizeDate(dateOfBirth);
+    }
+
+    return '';
+  }
+
+  //  HELPER METHOD: Normalize date from different formats
+  private normalizeDate(dateString: string): string {
+    if (!dateString) return '';
+
+    console.log('🔄 Normalizing date:', dateString);
+
+    try {
+      // Handle format "17-04-2002" (DD-MM-YYYY)
+      if (dateString.includes('-') && dateString.split('-').length === 3) {
+        const parts = dateString.split('-');
+
+        // Check if first part is day (2 digits) - DD-MM-YYYY format
+        if (
+          parts[0].length === 2 &&
+          parts[1].length === 2 &&
+          parts[2].length === 4
+        ) {
+          // Convert DD-MM-YYYY to YYYY-MM-DD
+          const formatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          console.log('✅ Normalized DD-MM-YYYY to:', formatted);
+          return formatted;
+        }
+
+        // Check if first part is year (4 digits) - YYYY-MM-DD format
+        if (
+          parts[0].length === 4 &&
+          parts[1].length === 2 &&
+          parts[2].length === 2
+        ) {
+          // Already in YYYY-MM-DD format
+          console.log('✅ Already YYYY-MM-DD format:', dateString);
+          return dateString;
+        }
+      }
+
+      // Handle format with slashes "17/04/2002" (DD/MM/YYYY)
+      if (dateString.includes('/') && dateString.split('/').length === 3) {
+        const parts = dateString.split('/');
+
+        if (
+          parts[0].length === 2 &&
+          parts[1].length === 2 &&
+          parts[2].length === 4
+        ) {
+          // Convert DD/MM/YYYY to YYYY-MM-DD
+          const formatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          console.log('✅ Normalized DD/MM/YYYY to:', formatted);
+          return formatted;
+        }
+      }
+
+      // Handle ISO format
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const formatted = `${year}-${month}-${day}`;
+        console.log('✅ Normalized ISO date to:', formatted);
+        return formatted;
+      }
+
+      console.warn('⚠️ Could not normalize date:', dateString);
+      return dateString;
+    } catch (error) {
+      console.error('❌ Error normalizing date:', error, 'Input:', dateString);
+      return dateString;
+    }
+  }
+
+  private extractDateOfBirthFromResponse(response: any): string {
+    // Determine which type of response this is and use appropriate method
+    if (response?.data?.nin || response?.nin) {
+      return this.extractDateOfBirthFromNINResponse(response);
+    } else if (response?.bvnDetails || response?.data?.bvn) {
+      return this.extractDateOfBirthFromBVNResponse(response);
+    }
+
+    // Fallback to generic extraction
+    const dateOfBirth =
+      response?.data?.dateOfBirth ||
+      response?.data?.dob ||
+      response?.data?.birthDate ||
+      response?.dateOfBirth ||
+      response?.dob ||
+      response?.birthDate;
+
+    return dateOfBirth || '';
   }
 
   private verifyAccount(): void {
@@ -691,36 +1035,110 @@ export class WalletProfileComponent implements OnInit {
       searchTerm: this.businessData.rcNumber,
     };
 
+    console.log(
+      '🔍 Calling business verification with payload:',
+      verifyPayload
+    );
+
     this.endpointService.verifyBusiness(verifyPayload).subscribe({
       next: (res: any) => {
         this.rcVerifying = false;
-        console.log('RC Verification Response:', res);
+        console.log('✅ RC Verification Response:', res);
 
-        // Check for success in different possible response structures
-        if (res && res.success === true) {
+        // Check for success based on the actual API response structure
+        // Your API returns: {message: 'Successful Business Verification', statusCode: 200, data: {...}}
+        if (
+          res &&
+          (res.statusCode === 200 || res.statusCode === 201) &&
+          res.message === 'Successful Business Verification'
+        ) {
           this.rcVerified = true;
+
+          // ✅ EXTRACT AND BIND BUSINESS NAME (approvedName)
+          if (res.data && res.data.approvedName) {
+            this.businessData.companyName = res.data.approvedName;
+            console.log(
+              '✅ Business name extracted and bound:',
+              this.businessData.companyName
+            );
+          }
+
+          // ✅ EXTRACT AND BIND INCORPORATION DATE (companyRegistrationDate)
+          if (res.data && res.data.companyRegistrationDate) {
+            const rawDate = res.data.companyRegistrationDate;
+            this.businessData.incorporationDate =
+              this.formatDateForInput(rawDate);
+            console.log(
+              '✅ Incorporation date extracted and bound:',
+              this.businessData.incorporationDate
+            );
+          }
+
+          // ✅ EXTRACT NATURE OF BUSINESS
+          if (
+            res.data &&
+            res.data.natureOfBusiness &&
+            res.data.natureOfBusiness !== 'N/A'
+          ) {
+            this.businessData.natureOfBusiness = res.data.natureOfBusiness;
+            console.log(
+              '✅ Nature of business extracted:',
+              this.businessData.natureOfBusiness
+            );
+          }
+
           this.toastService.openSnackBar(
-            '✅ RC Number verified successfully',
+            '✅ RC number verified successfully',
             'success'
           );
         } else {
           this.rcVerified = false;
+          console.warn('Unexpected response structure:', res);
           this.toastService.openSnackBar(
-            '❌ RC Number verification failed',
+            '❌ Invalid RC number or unexpected response',
             'error'
           );
         }
       },
       error: (err: any) => {
-        console.error('RC Number verification error:', err);
+        console.error('❌ RC Number verification error:', err);
         this.rcVerifying = false;
         this.rcVerified = false;
 
-        const errorMsg =
-          err?.userMessage || err?.message || 'RC Number verification failed';
-        this.toastService.openSnackBar(`❌ ${errorMsg}`, 'error');
+        // Handle 404 specifically
+        if (err.status === 404) {
+          console.warn('⚠️ Business verification endpoint returned 404');
+          // Try alternative endpoint or show specific message
+          this.toastService.openSnackBar(
+            '⚠️ Business verification service is currently unavailable. Please try again later.',
+            'warning'
+          );
+        } else {
+          const errorMsg =
+            err?.userMessage || err?.message || 'RC Number verification failed';
+          this.toastService.openSnackBar(`❌ ${errorMsg}`, 'error');
+        }
       },
     });
+  }
+
+  //  ADD THIS HELPER METHOD FOR DATE DISPLAY
+  private formatDateForDisplay(dateString: string): string {
+    if (!dateString) return '';
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date for display:', error);
+      return dateString;
+    }
   }
 
   // ==================== HELPER METHODS ====================
@@ -807,7 +1225,8 @@ export class WalletProfileComponent implements OnInit {
       // Auto-populate business fields
       this.businessData.companyEmail = this.email;
       this.businessData.companyPhone = this.number;
-      this.businessData.companyName = this.fullName;
+      // ✅ FIX: DO NOT auto-populate companyName here - let it come from CAC verification
+      // this.businessData.companyName = this.fullName; // REMOVE THIS LINE
 
       // Set dropdown values
       this.setDropdownValues(user);
@@ -847,6 +1266,23 @@ export class WalletProfileComponent implements OnInit {
 
   // ==================== FORM SUBMISSION METHODS ====================
   async onSubmit(form: any) {
+    // Check if BVN requires OTP verification
+    if (this.bvn && this.bvn.length === 11 && !this.otpVerified) {
+      if (this.otpSent) {
+        this.toastService.openSnackBar(
+          'Please enter and verify the OTP sent to your phone.',
+          'warning'
+        );
+        return;
+      } else {
+        this.toastService.openSnackBar(
+          'Please complete BVN verification first.',
+          'warning'
+        );
+        return;
+      }
+    }
+
     // First validate the form
     const validation = this.validateIndividualForm();
 
@@ -935,13 +1371,30 @@ export class WalletProfileComponent implements OnInit {
   private checkVerificationStatus(): string[] {
     const errors: string[] = [];
 
-    if (this.bvnVerified !== true) {
-      errors.push('BVN verification is required');
+    // BVN verification check - requires OTP verification
+    if (this.bvn && this.bvn.length === 11) {
+      if (!this.otpVerified) {
+        if (this.otpSent) {
+          errors.push('Please enter and verify the OTP sent to your phone');
+        } else {
+          errors.push('Please complete BVN verification by initiating OTP');
+        }
+      } else if (this.bvnVerified !== true) {
+        errors.push('BVN verification failed. Please try again.');
+      }
     }
-    if (this.ninVerified !== true) {
+
+    // NIN verification check
+    if (this.nin && this.nin.length === 11 && this.ninVerified !== true) {
       errors.push('NIN verification is required');
     }
-    if (this.acctVerified !== true) {
+
+    // Account verification check
+    if (
+      this.savingsAcc &&
+      this.savingsAcc.length === 10 &&
+      this.acctVerified !== true
+    ) {
       errors.push('Account verification is required');
     }
 
@@ -981,17 +1434,47 @@ export class WalletProfileComponent implements OnInit {
         throw new Error('Invalid bank selected. Please choose a valid bank.');
       }
 
+      // 🔴 REMOVE THIS BLOCK - BVN verification is already handled via OTP flow
       // Verify all details before submission
-      try {
-        await this.endpointService.validateBVN(this.bvn).toPromise();
-        await this.endpointService.validateNIN(this.nin).toPromise();
+      // try {
+      //   await this.endpointService.validateBVN(this.bvn).toPromise(); // ❌ This is causing the error
+      //   await this.endpointService.validateNIN(this.nin).toPromise();
 
-        const acctPayload = {
-          bankCode: bankCode,
-          bankName: this.selectedBank,
-          bankAccountNo: this.savingsAcc,
-        };
-        await this.endpointService.verifyAccountNumber(acctPayload).toPromise();
+      //   const acctPayload = {
+      //     bankCode: bankCode,
+      //     bankName: this.selectedBank,
+      //     bankAccountNo: this.savingsAcc,
+      //   };
+      //   await this.endpointService.verifyAccountNumber(acctPayload).toPromise();
+      // } catch (verifyErr: any) {
+      //   throw new Error(
+      //     verifyErr?.userMessage ||
+      //     'Verification failed. Please check your inputs.'
+      //   );
+      // }
+
+      // ✅ NEW: Check verification status instead
+      const verificationErrors = this.checkVerificationStatus();
+      if (verificationErrors.length > 0) {
+        throw new Error(this.formatValidationErrors(verificationErrors));
+      }
+
+      // ✅ Verify NIN and Account if they exist (but not BVN since it's already verified via OTP)
+      try {
+        if (this.nin) {
+          await this.endpointService.validateNIN(this.nin).toPromise();
+        }
+
+        if (this.savingsAcc && this.selectedBank) {
+          const acctPayload = {
+            bankCode: bankCode,
+            bankName: this.selectedBank,
+            bankAccountNo: this.savingsAcc,
+          };
+          await this.endpointService
+            .verifyAccountNumber(acctPayload)
+            .toPromise();
+        }
       } catch (verifyErr: any) {
         throw new Error(
           verifyErr?.userMessage ||
@@ -1000,10 +1483,39 @@ export class WalletProfileComponent implements OnInit {
       }
 
       // Create individual payload
-      const rawParts = (this.fullName || '')
+      const nameParts = (this.fullName || '')
         .trim()
         .split(/\s+/)
         .filter(Boolean);
+
+      // Use verified names from BVN/NIN if available, otherwise use manual input
+      const firstName =
+        this.bvnFirstName || this.ninFirstName || nameParts[0] || '';
+      const middleName =
+        this.bvnMiddleName ||
+        this.ninMiddleName ||
+        (nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '');
+      const lastName =
+        this.bvnLastName ||
+        this.ninLastName ||
+        (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '');
+
+      // ✅ FIXED: Ensure phone number is properly formatted
+      let phoneNumber = this.number || '';
+      if (phoneNumber) {
+        // Convert to Nigerian format if needed (starts with 0 or 234)
+        if (phoneNumber.startsWith('0') && phoneNumber.length === 11) {
+          // Keep as is (08123456789)
+          phoneNumber = phoneNumber;
+        } else if (phoneNumber.startsWith('234') && phoneNumber.length === 13) {
+          // Already in 234 format
+          phoneNumber = phoneNumber;
+        } else {
+          // Format as 0xxxxxxxxxx
+          phoneNumber = '0' + phoneNumber.replace(/^0+/, '').slice(0, 10);
+        }
+      }
+
       const payload = {
         bankAccountNumber: this.savingsAcc,
         bankCode: bankCode,
@@ -1012,31 +1524,51 @@ export class WalletProfileComponent implements OnInit {
         countryOfResidence: this.selectedCountry,
         dob: this.formatDateForAPI(this.dob),
         email: this.email,
-        firstName: rawParts[0] ?? '',
+        firstName: firstName,
         gender: this.selectedGender.toLowerCase(),
         maritalStatus: this.selectedMaritalStatus.toLowerCase(),
-        middleName: rawParts[1] ?? '',
-        lastName: rawParts[2] ?? '',
+        middleName: middleName,
+        lastName: lastName,
         nin: this.nin,
         occupation: this.occupation,
         role: this.role.toLowerCase(),
         selectedOption: 'isIndividual',
         title: this.selectedTitle,
-        phoneNumber: this.number,
+        phoneNumber: this.formatPhoneNumber(this.number), // For individual
         uniqueId: uniqueId,
       };
 
       console.log('📤 Sending individual wallet profile:', payload);
+      console.log(
+        '📱 Phone number being sent:',
+        phoneNumber,
+        'Length:',
+        phoneNumber.length
+      );
+
+      // Add validation before sending
+      if (!phoneNumber || phoneNumber.length < 11) {
+        throw new Error(
+          'Valid phone number is required (11 digits starting with 0)'
+        );
+      }
+
       const response = await this.endpointService
         .createWalletProfile(payload)
         .toPromise();
-      console.log('✅ Individual profile created:', response);
 
       await loading.dismiss();
 
       // Save to localStorage and navigate
       localStorage.setItem('walletProfileCreated', 'true');
       localStorage.setItem('walletProfileType', 'individual');
+
+      // Mark the logged-in user as having a wallet profile and notify services
+      try {
+        this.authService.updateCurrentUser({ hasWalletProfile: true });
+      } catch (err) {
+        console.warn('Could not update user_data hasWalletProfile', err);
+      }
 
       this.toastService.openSnackBar(
         '✅ Individual wallet profile created successfully!',
@@ -1055,9 +1587,16 @@ export class WalletProfileComponent implements OnInit {
         'Failed to create individual profile. Please try again.';
       if (error.status === 409)
         errorMessage = 'Wallet profile already exists for this user.';
-      else if (error.status === 400)
-        errorMessage = 'Invalid data provided. Please check your information.';
-      else if (error.status === 401)
+      else if (error.status === 400) {
+        // Check for BVN-specific error
+        if (error.message?.includes('BVN')) {
+          errorMessage =
+            'BVN verification required. Please complete BVN OTP verification first.';
+        } else {
+          errorMessage =
+            'Invalid data provided. Please check your information.';
+        }
+      } else if (error.status === 401)
         errorMessage = 'Session expired. Please login again.';
       else if (error.message) errorMessage = error.message;
 
@@ -1104,7 +1643,28 @@ export class WalletProfileComponent implements OnInit {
         );
       }
 
-      // Create business payload
+      let businessPhoneNumber = this.businessData.companyPhone || '';
+      if (businessPhoneNumber) {
+        // Convert to Nigerian format if needed
+        if (
+          businessPhoneNumber.startsWith('0') &&
+          businessPhoneNumber.length === 11
+        ) {
+          // Keep as is
+          businessPhoneNumber = businessPhoneNumber;
+        } else if (
+          businessPhoneNumber.startsWith('234') &&
+          businessPhoneNumber.length === 13
+        ) {
+          // Already in 234 format
+          businessPhoneNumber = businessPhoneNumber;
+        } else {
+          // Format as 0xxxxxxxxxx
+          businessPhoneNumber =
+            '0' + businessPhoneNumber.replace(/^0+/, '').slice(0, 10);
+        }
+      }
+
       const payload = {
         selectedOption: 'isRegisteredBusiness',
         occupation: this.businessData.natureOfBusiness,
@@ -1119,24 +1679,37 @@ export class WalletProfileComponent implements OnInit {
         cacRegCertificate: this.businessData.cacRegCertificate,
         rcNumber: this.businessData.rcNumber,
         companyName: this.businessData.companyName,
-        phoneNumber: this.businessData.companyPhone,
+        phoneNumber: this.formatPhoneNumber(this.businessData.companyPhone), // For business
       };
 
       console.log('📤 Sending business wallet profile:', {
         ...payload,
         cacRegCertificate: payload.cacRegCertificate ? '***BASE64***' : '',
+        phoneNumber: businessPhoneNumber, // Log phone number for debugging
       });
+
+      // Add validation before sending
+      if (!businessPhoneNumber || businessPhoneNumber.length < 11) {
+        throw new Error(
+          'Valid company phone number is required (11 digits starting with 0)'
+        );
+      }
 
       const response = await this.endpointService
         .createWalletProfile(payload)
         .toPromise();
-      console.log('✅ Business profile created:', response);
-
       await loading.dismiss();
 
       // Save to localStorage and navigate
       localStorage.setItem('walletProfileCreated', 'true');
       localStorage.setItem('walletProfileType', 'business');
+
+      // Mark the logged-in user as having a wallet profile and notify services
+      try {
+        this.authService.updateCurrentUser({ hasWalletProfile: true });
+      } catch (err) {
+        console.warn('Could not update user_data hasWalletProfile', err);
+      }
 
       this.toastService.openSnackBar(
         '✅ Business wallet profile created successfully!',
@@ -1165,6 +1738,34 @@ export class WalletProfileComponent implements OnInit {
     }
   }
 
+  private formatPhoneNumber(phone: string): string {
+    if (!phone) return '';
+
+    // Remove all non-digit characters
+    const digits = phone.replace(/\D/g, '');
+
+    // Handle different formats
+    if (digits.length === 11 && digits.startsWith('0')) {
+      // Format: 08123456789
+      return digits;
+    } else if (digits.length === 13 && digits.startsWith('234')) {
+      // Format: 2348123456789
+      return '0' + digits.slice(3);
+    } else if (digits.length === 10) {
+      // Format: 8123456789 (missing leading 0)
+      return '0' + digits;
+    } else if (digits.length > 10) {
+      // Try to extract the last 11 digits
+      const last11 = digits.slice(-11);
+      if (last11.length === 11) {
+        return last11.startsWith('0') ? last11 : '0' + last11.slice(1);
+      }
+    }
+
+    // Return as is if no pattern matches
+    return phone;
+  }
+
   // ==================== VALIDATION METHODS ====================
   private validateIndividualForm(): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
@@ -1174,6 +1775,14 @@ export class WalletProfileComponent implements OnInit {
     }
     if (!this.bvn || !/^\d{11}$/.test(this.bvn)) {
       errors.push('BVN must be exactly 11 digits');
+    }
+    // OTP verification check
+    if (this.bvn && this.bvn.length === 11 && !this.otpVerified) {
+      if (this.otpSent) {
+        errors.push('Please enter and verify the OTP sent to your phone');
+      } else {
+        errors.push('Please complete BVN verification by entering the OTP');
+      }
     }
     if (!this.nin || !/^\d{11}$/.test(this.nin)) {
       errors.push('NIN must be exactly 11 digits');
@@ -1317,6 +1926,15 @@ export class WalletProfileComponent implements OnInit {
       return 'Fill all inputs to Save';
     }
 
+    // Check if BVN needs OTP verification
+    if (this.bvn && this.bvn.length === 11 && !this.otpVerified) {
+      if (this.otpSent) {
+        return 'Verify OTP to Continue';
+      } else {
+        return 'Verify BVN to Continue';
+      }
+    }
+
     const verificationErrors = this.checkVerificationStatus();
     if (verificationErrors.length > 0) {
       return 'Complete Verifications';
@@ -1401,15 +2019,60 @@ export class WalletProfileComponent implements OnInit {
 
   private formatDateForInput(dateString: string): string {
     if (!dateString) return '';
+
     try {
+      console.log('📅 Formatting date for input:', dateString);
+
+      // Handle format "17-04-2002" (DD-MM-YYYY)
+      if (dateString.includes('-') && dateString.split('-').length === 3) {
+        const parts = dateString.split('-');
+
+        // Check if first part is day (2 digits) - DD-MM-YYYY format
+        if (
+          parts[0].length === 2 &&
+          parts[1].length === 2 &&
+          parts[2].length === 4
+        ) {
+          // Convert DD-MM-YYYY to YYYY-MM-DD
+          const formatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          console.log('📅 Converted DD-MM-YYYY to YYYY-MM-DD:', formatted);
+          return formatted;
+        }
+
+        // Check if first part is year (4 digits) - YYYY-MM-DD format
+        if (
+          parts[0].length === 4 &&
+          parts[1].length === 2 &&
+          parts[2].length === 2
+        ) {
+          // Already in YYYY-MM-DD format
+          console.log('📅 Already in YYYY-MM-DD format:', dateString);
+          return dateString;
+        }
+      }
+
+      // Handle ISO format (e.g., "1992-07-27T23:00:00.000+00:00")
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return '';
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const formatted = `${year}-${month}-${day}`;
+        console.log('📅 Converted ISO to YYYY-MM-DD:', formatted);
+        return formatted;
+      }
+
+      // Try parsing as just date string without time
+      const justDate = dateString.split('T')[0];
+      if (justDate && justDate.includes('-')) {
+        console.log('📅 Using date part only:', justDate);
+        return justDate;
+      }
+
+      console.warn('⚠️ Could not parse date:', dateString);
+      return '';
     } catch (error) {
-      console.error('Error formatting date:', error);
+      console.error('❌ Error formatting date:', error, 'Input:', dateString);
       return '';
     }
   }
@@ -1430,15 +2093,23 @@ export class WalletProfileComponent implements OnInit {
     value = value.replace(/[^0-9]/g, '').slice(0, 11);
     this.bvn = value;
     this.bvnVerified = null;
+    this.otpSent = false;
+    this.otpVerified = false;
+    this.otp = '';
+    this.otpError = '';
+
     // Reset BVN name data when input changes
     this.bvnFirstName = '';
     this.bvnMiddleName = '';
     this.bvnLastName = '';
     this.bvnFullName = '';
 
+    // Clear any existing timer
     if (this.bvnTimer) clearTimeout(this.bvnTimer);
+
+    // Only initiate verification when we have exactly 11 digits
     if (this.bvn && this.bvn.length === 11) {
-      this.bvnTimer = setTimeout(() => this.verifyBVN(), 700);
+      this.bvnTimer = setTimeout(() => this.initiateBVNVerification(), 700);
     }
   }
 
