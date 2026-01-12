@@ -22,7 +22,7 @@ export interface resendOTP {
   phoneNumber: string;
   email: string;
 }
-export interface SecurityyQuestionResponse {
+export interface SecurityQuestionResponse {
   message: string;
   data: string[];
 }
@@ -31,12 +31,31 @@ export interface SecurityyQuestionResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  customNoAuthHttpHeaders: HttpHeaders | { [header: string]: string | string[]; } | undefined;
-  // login(credentials: { email: string; password: string }): Observable<any> {
-  //   return this.http.post<any>(`${environment.baseUrl}/login/v1/auth/login`, credentials, {
-  //     headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-  //   });
-  // }
+  customNoAuthHttpHeaders:
+    | HttpHeaders
+    | { [header: string]: string | string[] }
+    | undefined;
+  private baseUrl = environment.baseUrl;
+  private currentUserSubject = new BehaviorSubject<any>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  private profileUpdatedSubject = new BehaviorSubject<boolean>(false);
+  public profileUpdated$ = this.profileUpdatedSubject.asObservable();
+
+  private userLoggedInSubject = new BehaviorSubject<boolean>(false);
+  public userLoggedIn$ = this.userLoggedInSubject.asObservable();
+
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private jwtInterceptor: JwtInterceptorService,
+    private toast: ToastController,
+    private injector: Injector,
+    private toastr: ToastsService
+  ) {
+    this.loadStoredUser();
+    this.checkInitialAuthState();
+  }
 
   public verifyOTP(otpParams: verifyOTP): Observable<any> {
     const url =
@@ -62,7 +81,6 @@ export class AuthService {
     return this.http.post('/login/v1/auth/resendOTP', payload);
   }
 
-
   public resendOTP(resendParams: resendOTP): Observable<any> {
     const url =
       `${environment?.baseUrl}/${endpoints?.resendOTP}` +
@@ -73,27 +91,6 @@ export class AuthService {
     });
   }
 
-  private baseUrl = environment.baseUrl;
-  private currentUserSubject = new BehaviorSubject<any>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
-
-  private profileUpdatedSubject = new BehaviorSubject<boolean>(false);
-  public profileUpdated$ = this.profileUpdatedSubject.asObservable();
-
-  private userLoggedInSubject = new BehaviorSubject<boolean>(false);
-  public userLoggedIn$ = this.userLoggedInSubject.asObservable();
-
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-    private jwtInterceptor: JwtInterceptorService,
-    private toast: ToastController,
-    private injector: Injector,
-    private toastr: ToastsService
-  ) {
-    this.loadStoredUser();
-    this.checkInitialAuthState();
-  }
 
   private checkInitialAuthState(): void {
     const token = this.getToken();
@@ -310,10 +307,6 @@ export class AuthService {
     }
   }
 
-  // ============ SECURITY QUESTIONS ============
-  /**
-   * Get security questions - Use the correct endpoint
-   */
   getMySecurityQuestions(uniqueId: string): Observable<any> {
     const encodedId = encodeURIComponent(uniqueId);
 
@@ -325,8 +318,11 @@ export class AuthService {
       headers: this.jwtInterceptor.customNoAuthHttpHeaders,
     });
   }
-  // auth.service.ts
-  // auth.service.ts
+
+  // ============ SECURITY QUESTIONS ============
+  /**
+   * Get security questions - Use the correct endpoint
+   */
   public validateTalentSecurityQuestion(payload: {
     talentId: string;
     answerSecurityQuestion: {
@@ -346,49 +342,21 @@ export class AuthService {
     );
   }
 
-
-
-  // getMySecurityQuestions(uniqueId: string): Observable<any> {
-  //   // Use the FULL scouter ID
-  //   const fullScouterId = uniqueId;
-
-  //   // URL encode the full scouter ID
-  //   const encodedScouterId = encodeURIComponent(fullScouterId);
-
-  //   // Use the CORRECT endpoint from your endpoints object
-  //   const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
-
-  //   console.log('🔗 GET Security Questions URL:', url);
-
-  //   return this.http
-  //     .get<any>(url, {
-  //       headers: this.jwtInterceptor.customNoAuthHttpHeaders
-  //     })
-  //     .pipe(
-  //       catchError((error) => {
-  //         console.error('❌ Error getting security questions:', error);
-  //         return throwError(() => error);
-  //       })
-  //     );
-  // }
-
   /**
    * Get security questions with answers (if available)
    */
-  public getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
+  getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
     const encodedId = encodeURIComponent(uniqueId);
-
-    // Use the CORRECT endpoint from your endpoints object
-    const url = `${this.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
 
     console.log('🔗 GET Security Questions With Answers URL:', url);
 
     return this.http
       .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders,
+        headers: this.jwtInterceptor.customHttpHeaders, // Ensure authenticated headers
       })
       .pipe(
-        timeout(10000),
+        timeout(30000), // Increase timeout
         catchError((error) => {
           console.warn('Could not fetch questions with answers:', error);
           // Fall back to regular endpoint
@@ -397,7 +365,6 @@ export class AuthService {
       );
   }
 
-  // Add this to your AuthService
   testApiConnection(): Observable<any> {
     const testUrl = `${this.baseUrl}/health`; // or any health check endpoint
     return this.http.get(testUrl).pipe(
@@ -541,7 +508,6 @@ export class AuthService {
       );
   }
 
-  // auth.service.ts
   getSecurityQuestionAnswer(questionId: string): Observable<any> {
     const token = localStorage.getItem('access_token');
     const url = `${environment.baseUrl}/security-questions/${questionId}/answer`;

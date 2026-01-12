@@ -123,7 +123,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       if (this.scouterId) {
         this.loadDataWithTracking();
       } else {
-        console.error('❌ No scouterId found, cannot load data');
+        console.error(' No scouterId found, cannot load data');
         this.isLoadingProfile = false;
         this.cdr.detectChanges();
       }
@@ -167,14 +167,14 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res: any) => {
           clearTimeout(loadingTimeout);
-          console.log('✅ Profile data received');
+          console.log(' Profile data received');
           this.handleProfileResponse(res);
           this.isLoadingProfile = false;
           this.cdr.detectChanges();
         },
         error: (err) => {
           clearTimeout(loadingTimeout);
-          console.error('❌ Profile data error:', err);
+          console.error(' Profile data error:', err);
 
           // Check if it's a timeout or network error
           if (err.message?.includes('Timeout') || err.name === 'TimeoutError') {
@@ -198,7 +198,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // Store subscriptions
     this.subscriptions.push(profileSub, pictureSub);
 
-    console.log(`📊 Started ${this.subscriptions.length} data loads`);
+    console.log(` Started ${this.subscriptions.length} data loads`);
   }
 
   /**
@@ -208,7 +208,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private getCleanScouterId(scouterId: string): string {
     if (!scouterId) return '';
 
-    console.log('🔧 Getting scouter ID for API:', scouterId);
+    console.log(' Getting scouter ID for API:', scouterId);
 
     // Return the FULL scouter ID as-is
     return scouterId.trim();
@@ -217,38 +217,16 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== DEBUG & DIAGNOSTIC METHODS ====================
 
   runDebug(): void {
-    console.clear();
-    console.group('🐛 PROFILE PAGE DEBUG');
-
-    console.log('1️⃣ COMPONENT STATE:');
-    console.log('- scouterId:', this.scouterId);
-    console.log('- isEditing:', this.isEditing);
-    console.log('- isLoadingProfile:', this.isLoadingProfile);
-    console.log('- hasExistingProfilePicture:', this.hasExistingProfilePicture);
-    console.log('- profileData:', this.profileData);
-    console.log('- selectedOrgTypes:', this.selectedOrgTypes);
-
-    console.log('2️⃣ AUTHENTICATION STATE:');
-    console.log('- Token exists:', !!localStorage.getItem('access_token'));
-    console.log('- User data exists:', !!localStorage.getItem('user_data'));
-
-    console.log('3️⃣ NETWORK STATE:');
-    console.log('- Backend URL:', environment.baseUrl);
-    console.log('- Online status:', navigator.onLine);
-
-    console.log('4️⃣ TEST REQUESTS:');
-    this.testNetworkConnectivity();
-
-    console.groupEnd();
+    // Removed: debug helper - left intentionally blank
   }
 
   private testNetworkConnectivity(): void {
-    console.log('🧪 Testing network connectivity...');
+    console.log(' Testing network connectivity...');
 
     // Test 1: Simple fetch to verify network
     fetch('https://httpbin.org/get')
-      .then(() => console.log('✅ Internet connectivity: OK'))
-      .catch(() => console.log('❌ Internet connectivity: FAILED'));
+      .then(() => console.log(' Internet connectivity: OK'))
+      .catch(() => console.log(' Internet connectivity: FAILED'));
 
     // Test 2: Test backend endpoint directly
     this.testBackendDirectly();
@@ -259,11 +237,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     const testUrl = `${environment.baseUrl}/health`;
 
     if (!token) {
-      console.log('❌ No token for backend test');
+      console.log(' No token for backend test');
       return;
     }
 
-    console.log('🔗 Testing backend:', testUrl);
+    console.log(' Testing backend:', testUrl);
 
     fetch(testUrl, {
       headers: {
@@ -272,26 +250,26 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     })
       .then(async (response) => {
         console.log(
-          `🔗 Backend response: ${response.status} ${response.statusText}`
+          ` Backend response: ${response.status} ${response.statusText}`
         );
         const text = await response.text();
-        console.log('🔗 Response:', text.substring(0, 200));
+        console.log(' Response:', text.substring(0, 200));
       })
       .catch((error) => {
-        console.error('🔗 Backend test failed:', error);
+        console.error(' Backend test failed:', error);
       });
   }
 
   // ==================== CORE INITIALIZATION ====================
 
   private initializeScouterId(): void {
-    console.log('🆔 Initializing scouterId...');
+    console.log(' Initializing scouterId...');
 
     const userDetails = this.authService.decodeScouterDetails();
     this.scouterId =
       userDetails?.details?.user?.scouterId || userDetails?.scouterId || '';
 
-    console.log('✅ ScouterId initialized:', {
+    console.log(' ScouterId initialized:', {
       scouterId: this.scouterId,
       cleanScouterId: this.getCleanScouterId(this.scouterId),
       hasSlash: this.scouterId.includes('/'),
@@ -299,16 +277,16 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     });
 
     if (!this.scouterId) {
-      console.error('❌ No scouterId found in auth service');
+      console.error(' No scouterId found in auth service');
       const userData = localStorage.getItem('user_data');
       if (userData) {
         try {
           const parsed = JSON.parse(userData);
           this.scouterId =
             parsed?.scouterId || parsed?.details?.user?.scouterId || '';
-          console.log('🔄 Found scouterId in localStorage:', this.scouterId);
+          console.log(' Found scouterId in localStorage:', this.scouterId);
         } catch (e) {
-          console.error('❌ Error parsing user_data:', e);
+          console.error(' Error parsing user_data:', e);
         }
       }
     }
@@ -342,9 +320,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         try {
           const profile = JSON.parse(cachedProfile);
           this.bindUserProfile(profile);
-          console.log('✅ Loaded profile from cache');
+          console.log(' Loaded profile from cache');
         } catch (e) {
-          console.error('❌ Error parsing cached profile:', e);
+          console.error(' Error parsing cached profile:', e);
         }
       }
 
@@ -352,9 +330,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         try {
           const user = JSON.parse(userData);
           this.initializeWithUserProfileData();
-          console.log('✅ Loaded profile from user_data');
+          console.log(' Loaded profile from user_data');
         } catch (e) {
-          console.error('❌ Error parsing user_data:', e);
+          console.error(' Error parsing user_data:', e);
         }
       }
 
@@ -373,7 +351,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   private handleProfileResponse(res: any): void {
-    console.log('📥 Profile response structure:', {
+    console.log(' Profile response structure:', {
       hasData: !!res,
       hasDetails: !!res?.details,
       hasDataField: !!res?.data,
@@ -383,18 +361,18 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     const userData = res?.details || res?.data?.details || res?.data || res;
 
     if (userData) {
-      console.log('✅ Found user data in response');
+      console.log(' Found user data in response');
 
       // Ensure email is populated
       if (!userData.email) {
         userData.email = this.extractEmailFromAllSources();
-        console.log('📧 Injected email:', userData.email);
+        console.log(' Injected email:', userData.email);
       }
 
       this.bindUserProfile(userData);
       this.updateEditStateBasedOnProfile(userData);
     } else {
-      console.warn('⚠️ No user data in response, using local data');
+      console.warn(' No user data in response, using local data');
       this.initializeWithUserProfileData();
     }
 
@@ -402,7 +380,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   private handleProfileError(err: any): void {
-    console.error('❌ Profile load failed:', {
+    console.error(' Profile load failed:', {
       status: err.status,
       message: err.message,
       error: err.error,
@@ -423,7 +401,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== DATA BINDING ====================
 
   private extractEmailFromAllSources(): string {
-    console.log('🔍 Extracting email from all sources...');
+    console.log(' Extracting email from all sources...');
 
     // 1. localStorage user_data
     const storedUserData = localStorage.getItem('user_data');
@@ -436,11 +414,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           parsed?.details?.user?.email ||
           parsed?.details?.session?.email;
         if (email) {
-          console.log('✅ Email found in localStorage:', email);
+          console.log(' Email found in localStorage:', email);
           return email;
         }
       } catch (e) {
-        console.error('❌ Error parsing user_data:', e);
+        console.error(' Error parsing user_data:', e);
       }
     }
 
@@ -453,7 +431,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         userDetails?.details?.user?.email ||
         userDetails?.details?.session?.email;
       if (email) {
-        console.log('✅ Email found in auth service:', email);
+        console.log(' Email found in auth service:', email);
         return email;
       }
     }
@@ -461,26 +439,26 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // 3. Current user
     const currentUser = this.authService.getCurrentUser();
     if (currentUser?.email) {
-      console.log('✅ Email found in current user:', currentUser.email);
+      console.log(' Email found in current user:', currentUser.email);
       return currentUser.email;
     }
 
     // 4. Registration email
     const regEmail = localStorage.getItem('registration_email');
     if (regEmail) {
-      console.log('✅ Email found in registration:', regEmail);
+      console.log(' Email found in registration:', regEmail);
       return regEmail;
     }
 
-    console.log('❌ No email found in any source');
+    console.log(' No email found in any source');
     return '';
   }
 
   private initializeWithUserProfileData(): void {
-    console.log('🔄 Initializing with user profile data...');
+    console.log(' Initializing with user profile data...');
 
     const email = this.extractEmailFromAllSources();
-    console.log('📧 Extracted email:', email);
+    console.log(' Extracted email:', email);
 
     // Get user data from localStorage or auth
     let userData = null;
@@ -489,7 +467,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       try {
         userData = JSON.parse(userDataStr);
       } catch (e) {
-        console.log('❌ Could not parse user_data for profile');
+        console.log(' Could not parse user_data for profile');
       }
     }
 
@@ -518,7 +496,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   private bindUserProfile(user: any): void {
-    console.log('🔗 Binding user profile data');
+    console.log(' Binding user profile data');
 
     // Parse organization types
     const orgTypes = this.parseOrganizationTypes(user.organizationType);
@@ -559,7 +537,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       this.selectedOrgTypes = [...orgTypes];
     }
 
-    console.log('✅ Profile data bound:', this.profileData);
+    console.log(' Profile data bound:', this.profileData);
     this.cdr.detectChanges();
   }
 
@@ -598,7 +576,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         );
       }
     } catch (error) {
-      console.error('❌ Error parsing organization types:', error);
+      console.error(' Error parsing organization types:', error);
     }
 
     return [];
@@ -611,7 +589,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.isEditing = !hasCompleteProfile;
     this.saveButtonText = this.isEditing ? 'Save Profile' : 'Update Profile';
 
-    console.log('🔄 Edit state updated:', {
+    console.log(' Edit state updated:', {
       isEditing: this.isEditing,
       hasCompleteProfile,
       fullName: !!profile.fullName,
@@ -625,7 +603,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== PROFILE OPERATIONS ====================
 
   public saveProfile(): void {
-    console.log('💾 Starting profile save...');
+    console.log('Starting profile save...');
 
     if (!this.scouterId) {
       this.toastService.openSnackBar('User not authenticated', 'error');
@@ -656,9 +634,9 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           : [],
     };
 
-    console.log('🚀 Sending update payload:', payload);
-    console.log('🔗 Scouter ID:', this.scouterId);
-    console.log('🔑 Token available:', !!localStorage.getItem('access_token'));
+    console.log(' Sending update payload:', payload);
+    console.log(' Scouter ID:', this.scouterId);
+    console.log(' Token available:', !!localStorage.getItem('access_token'));
 
     // Test the endpoint first
     this.debugEndpointWithFetch(payload);
@@ -667,7 +645,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       .updateScouterProfile(this.scouterId, payload)
       .subscribe({
         next: (res: any) => {
-          console.log('✅ Save response received:', res);
+          console.log(' Save response received:', res);
           this.handleSuccessfulSave(payload, res);
           this.toastService.openSnackBar(
             'Profile updated successfully!',
@@ -676,7 +654,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         error: (err: any) => {
-          console.error('❌ Save error:', {
+          console.error(' Save error:', {
             name: err.name,
             message: err.message,
             status: err.status,
@@ -706,7 +684,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         complete: () => {
-          console.log('✅ Save request completed');
+          console.log(' Save request completed');
         },
       });
 
@@ -714,47 +692,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   }
 
   private debugEndpointWithFetch(payload: any): void {
-    console.log('🧪 Debugging endpoint with fetch...');
-
-    const token = localStorage.getItem('access_token');
-    const url = `${environment.baseUrl}/scouters/v1/edit-scouter-profile/${this.scouterId}`;
-
-    console.log('🔗 Fetch URL:', url);
-
-    fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(async (response) => {
-        console.log('🔗 Fetch response status:', response.status);
-        console.log('🔗 Fetch response headers:');
-        const headersObj: { [key: string]: string } = {};
-        response.headers.forEach((value, key) => {
-          headersObj[key] = value;
-        });
-        console.log(headersObj);
-
-        const text = await response.text();
-        console.log('🔗 Fetch response body:', text);
-
-        try {
-          const json = JSON.parse(text);
-          console.log('🔗 Parsed JSON:', json);
-        } catch (e) {
-          console.log('🔗 Response is not JSON');
-        }
-      })
-      .catch((error) => {
-        console.error('🔗 Fetch error:', error);
-      });
+    // debug helper removed in cleanup
   }
 
   private handleSuccessfulSave(savedPayload: any, apiResponse: any): void {
-    console.log('🎯 Handling successful save');
+    console.log(' Handling successful save');
 
     // Preserve organization types
     const preservedOrganizationTypes = this.selectedOrgTypes;
@@ -838,7 +780,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private cacheProfileData(profileData: any): void {
     try {
       localStorage.setItem('user_profile_data', JSON.stringify(profileData));
-      console.log('💾 Profile data cached locally');
+      console.log(' Profile data cached locally');
     } catch (err) {
       console.warn('Could not cache profile data:', err);
     }
@@ -864,11 +806,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== PROFILE PICTURE OPERATIONS ====================
 
   private loadProfilePicture(): Subscription {
-    console.log('📷 Loading profile picture for scouterId:', this.scouterId);
+    console.log(' Loading profile picture for scouterId:', this.scouterId);
 
     const cachedImage = localStorage.getItem('profile_image');
     if (cachedImage && this.isValidImageData(cachedImage)) {
-      console.log('✅ Using cached profile image');
+      console.log(' Using cached profile image');
       this.profileImage = cachedImage;
       this.hasExistingProfilePicture = true;
       this.userService.setProfileImage(cachedImage);
@@ -880,7 +822,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     return this.endpointService.getScouterPicture(this.scouterId).subscribe({
       next: (res: any) => {
-        console.log('📷 Profile picture API response:', res);
+        console.log(' Profile picture API response:', res);
 
         if (res?.data?.base64Picture) {
           const base64Image = `data:image/jpeg;base64,${res.data.base64Picture}`;
@@ -889,12 +831,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           const base64Image = `data:image/jpeg;base64,${res.base64Picture}`;
           this.applyProfilePicture(base64Image);
         } else {
-          console.log('📷 No usable profile picture data');
+          console.log(' No usable profile picture data');
           this.setDefaultAvatar();
         }
       },
       error: (err) => {
-        console.log('📷 Profile picture load error:', err);
+        console.log(' Profile picture load error:', err);
         this.setDefaultAvatar();
       },
     });
@@ -906,7 +848,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.userService.setProfileImage(imageData);
     this.storeProfileImage(imageData);
     this.cdr.detectChanges();
-    console.log('✅ Profile picture applied');
+    console.log(' Profile picture applied');
   }
 
   private isValidImageData(data: string): boolean {
@@ -944,7 +886,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       this.uploadProfilePicture(file);
     };
     reader.onerror = (error) => {
-      console.error('📷 Error reading file:', error);
+      console.error(' Error reading file:', error);
       this.toastService.openSnackBar('Error reading image file', 'error');
     };
     reader.readAsDataURL(file);
@@ -965,7 +907,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.hasExistingProfilePicture = true;
     this.userService.setProfileImage(this.profileImage);
     this.cdr.detectChanges();
-    console.log('✅ Profile picture set');
+    console.log(' Profile picture set');
   }
 
   private uploadProfilePicture(file: File): void {
@@ -978,17 +920,17 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         base64Picture: base64Image,
       };
 
-      console.log('📷 Starting profile picture upload');
+      console.log(' Starting profile picture upload');
 
       const uploadSub = this.endpointService
         .uploadScouterPicture(payload)
         .subscribe({
           next: (res: any) => {
-            console.log('✅ Profile picture uploaded:', res);
+            console.log(' Profile picture uploaded:', res);
             this.handleSuccessfulUpload(fullDataUrl);
           },
           error: (err) => {
-            console.error('❌ Upload failed:', err);
+            console.error(' Upload failed:', err);
             this.toastService.openSnackBar(
               'Failed to upload profile picture',
               'error'
@@ -1030,7 +972,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          console.error('❌ Failed to remove profile picture:', err);
+          console.error(' Failed to remove profile picture:', err);
           this.toastService.openSnackBar(
             'Failed to remove profile picture',
             'warning'
@@ -1071,131 +1013,99 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Test and fix security question endpoints
    */
   testAllSecurityQuestionEndpoints(): void {
-    console.group('🔍 TESTING ALL SECURITY QUESTION ENDPOINTS');
-
-    const scouterId = this.scouterId;
-    const encodedId = encodeURIComponent(scouterId);
-
-    // Test all possible endpoints
-    const endpointsToTest = [
-      {
-        name: 'getMySecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`,
-      },
-      {
-        name: 'getMySecurityQuestionsWithAnswers',
-        url: `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`,
-      },
-      {
-        name: 'createScouterSecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`,
-      },
-      {
-        name: 'updateScouterSecurityQuestions',
-        url: `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedId}`,
-      },
-    ];
-
-    endpointsToTest.forEach((endpoint) => {
-      console.log(`${endpoint.name}: ${endpoint.url}`);
-    });
-
-    console.groupEnd();
+    // removed: debugging helper for endpoint URLs
   }
 
   /**
    * Load security questions with answers
    */
   private loadSecurityQuestionsWithAnswers(): void {
+
+    this.debugSecurityQuestionsRequest();
+
     if (!this.scouterId) {
-      console.error('❌ No scouterId for security questions');
+      console.error('No scouterId for security questions');
       return;
     }
 
-    console.log('🔒 Loading security questions for:', this.scouterId);
     this.isLoadingSecurityQuestions = true;
     this.securityQuestionErrorMessage = '';
     this.cdr.detectChanges();
 
-    const encodedScouterId = encodeURIComponent(this.scouterId);
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
+    console.log('Loading security questions for:', this.scouterId);
 
-    console.log('🔗 Fetching from:', url);
+    // First try with answers endpoint
+    const sub = this.authService
+      .getMySecurityQuestionsWithAnswers(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          console.log('Security questions response:', res);
+          this.handleSecurityQuestionsResponse(res);
+          this.isLoadingSecurityQuestions = false;
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error loading security questions:', err);
 
-    const token = localStorage.getItem('access_token');
-
-    fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        console.log('📡 Response status:', response.status);
-
-        // Build a plain object from Headers in a way compatible with TypeScript
-        const headersObj: { [key: string]: string } = {};
-        response.headers.forEach((value, key) => {
-          headersObj[key] = value;
-        });
-        console.log('📡 Response headers:', headersObj);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const text = await response.text();
-        console.log(
-          '📦 Raw response (first 300 chars):',
-          text.substring(0, 300)
-        );
-
-        try {
-          // First try to parse as JSON
-          const json = JSON.parse(text);
-          this.processSecurityQuestionsResponse(json);
-        } catch (parseError) {
-          console.warn('⚠️ JSON parse failed, trying as raw text:', parseError);
-
-          // If it looks like it might be pure base64 (without JSON wrapper)
-          if (this.looksLikePureBase64(text)) {
-            console.log('🔍 Text appears to be pure base64');
-            const decoded = this.decodeBase64(text);
-            if (decoded) {
-              this.processSecurityQuestionsResponse(decoded);
-            } else {
-              throw new Error('Failed to decode base64 data');
-            }
-          } else {
-            // Try to see if it's base64 within a string
-            this.tryExtractBase64FromText(text);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error('❌ Error loading security questions:', error);
-        this.isLoadingSecurityQuestions = false;
-        this.securityQuestionErrorMessage = 'Failed to load security questions';
-        this.cdr.detectChanges();
-
-        // Try the simpler endpoint as fallback
-        this.loadBasicSecurityQuestions();
+          // Try fallback
+          this.loadBasicSecurityQuestions();
+        },
       });
+
+    this.subscriptions.push(sub);
   }
+
+
+
+// profile-page.component.ts
+private debugSecurityQuestionsRequest(): void {
+  const token = localStorage.getItem('access_token');
+  const uniqueId = this.scouterId;
+  const encodedId = encodeURIComponent(uniqueId);
+  const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
+
+  console.log('🔍 DEBUG Security Questions Request:', {
+    scouterId: uniqueId,
+    encodedScouterId: encodedId,
+    url: url,
+    tokenExists: !!token,
+    tokenLength: token?.length,
+    endpointPath: endpoints.getMySecurityQuestions
+  });
+
+  // Test with fetch to see what happens
+  fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(async response => {
+    console.log('🔍 Direct fetch response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+    const text = await response.text();
+    console.log('🔍 Response text:', text.substring(0, 200));
+  })
+  .catch(error => {
+    console.error('🔍 Direct fetch error:', error);
+  });
+}
 
   /**
    * Try to extract base64 from text
    */
   private tryExtractBase64FromText(text: string): void {
-    console.log('🕵️ Trying to extract base64 from text...');
+    console.log(' Trying to extract base64 from text...');
 
     // Look for base64 patterns in the text
     const base64Pattern = /"data"\s*:\s*"([^"]+)"/;
     const match = text.match(base64Pattern);
 
     if (match && match[1]) {
-      console.log('✅ Found base64 in data field');
+      console.log(' Found base64 in data field');
       const base64Data = match[1];
       const decoded = this.decodeBase64(base64Data);
       if (decoded) {
@@ -1216,7 +1126,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         this.processSecurityQuestionsResponse({ data: parsed });
         return;
       } catch (e) {
-        console.error('❌ Failed to decode potential base64:', e);
+        console.error(' Failed to decode potential base64:', e);
       }
     }
 
@@ -1227,45 +1137,29 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Fallback to basic security questions endpoint
    */
   private loadBasicSecurityQuestions(): void {
-    console.log('🔄 Falling back to basic security questions endpoint...');
-
-    const encodedScouterId = encodeURIComponent(this.scouterId);
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
-
-    const token = localStorage.getItem('access_token');
-
-    fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const text = await response.text();
-        console.log('📦 Basic endpoint response:', text.substring(0, 200));
-
-        try {
-          const json = JSON.parse(text);
-          this.processSecurityQuestionsResponse(json);
-        } catch (error) {
-          console.error('❌ Failed to parse basic endpoint response:', error);
-          this.securityQuestions = [];
+    const fallbackSub = this.authService
+      .getMySecurityQuestions(this.scouterId)
+      .subscribe({
+        next: (res: any) => {
+          this.processSecurityQuestionsResponse(res);
           this.isLoadingSecurityQuestions = false;
           this.cdr.detectChanges();
-        }
-      })
-      .catch((error) => {
-        console.error('❌ Basic endpoint also failed:', error);
-        this.securityQuestions = [];
-        this.isLoadingSecurityQuestions = false;
-        this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Both endpoints failed:', err);
+          this.securityQuestions = [];
+          this.isLoadingSecurityQuestions = false;
+          this.securityQuestionErrorMessage =
+            'Unable to load security questions. Please try again later.';
+          this.cdr.detectChanges();
+        },
       });
+
+    this.subscriptions.push(fallbackSub);
   }
+
+
+
 
   /**
    * Check if text looks like pure base64
@@ -1279,23 +1173,21 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Process security questions response
    */
   private processSecurityQuestionsResponse(response: any): void {
-    console.log('🔍 Processing response:', response);
+    // Processing security questions response
 
     this.securityQuestions = [];
 
     // Check if data is a base64-encoded string
     if (response?.data && typeof response.data === 'string') {
-      console.log(
-        '📦 Data appears to be base64 encoded, attempting to decode...'
-      );
+      // Data appears to be base64 encoded - decoding attempt
 
       const decodedData = this.decodeBase64(response.data);
 
       if (decodedData && Array.isArray(decodedData)) {
-        console.log(`✅ Successfully decoded ${decodedData.length} questions`);
+        // Successfully decoded questions
         this.processDecodedQuestionsArray(decodedData);
       } else {
-        console.error('❌ Decoded data is not an array or is empty');
+        console.error('Decoded data is not an array or is empty');
         this.securityQuestions = [];
       }
     }
@@ -1313,7 +1205,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
     // Try to extract from message format
     else if (response?.message && response.data) {
-      console.log('📤 Trying to extract from message format...');
+      // Trying to extract from message format
       this.processSecurityQuestionsResponse({ data: response.data });
     }
 
@@ -1321,10 +1213,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.updateSecurityQuestionsState();
     this.cdr.detectChanges();
 
-    console.log('✅ Security questions loaded:', {
-      count: this.securityQuestions.length,
-      questions: this.securityQuestions,
-    });
+    // Security questions loaded: count = ${this.securityQuestions.length}
   }
 
   /**
@@ -1343,35 +1232,28 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private decodeBase64(base64String: string): any {
     try {
-      console.log('🔓 Decoding base64 string...');
-      console.log('📏 String length:', base64String.length);
+      // Decoding base64 string
 
       // Clean the string (remove whitespace, etc.)
       const cleanString = base64String.trim();
 
       // Decode base64
       const decodedString = atob(cleanString);
-      console.log(
-        '📄 Decoded string (first 200 chars):',
-        decodedString.substring(0, 200)
-      );
-
       // Try to parse as JSON
       const parsed = JSON.parse(decodedString);
-      console.log('✅ Successfully parsed as JSON');
 
       return parsed;
     } catch (error) {
-      console.error('❌ Base64 decode/parse error:', error);
+      console.error('Base64 decode/parse error:', error);
 
       // Try alternative decoding for malformed base64
       try {
         // Sometimes base64 might have URL encoding
         const decoded = decodeURIComponent(escape(atob(base64String)));
-        console.log('🔄 Alternative decode successful');
+        // Alternative decode successful
         return JSON.parse(decoded);
       } catch (altError) {
-        console.error('❌ Alternative decode also failed:', altError);
+        console.error('Alternative decode also failed:', altError);
         return null;
       }
     }
@@ -1381,30 +1263,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Debug method to test base64 decoding
    */
   debugBase64Decoding(): void {
-    console.clear();
-    console.group('🔍 DEBUG BASE64 DECODING');
-
-    // Example base64 string from your logs
-    const base64String =
-      'W3sicXVlc3Rpb24iOiJXaGF0J3MgeW91ciBmYXZvdXJpdGUgZm9vZD8iLCJhbnN3ZXIiOiIkMmIkMTAkYnV0aGVwZktvamxONG4ycjZGLmM4T0U2QmNtUzhVOXUzSFBCdHJ5TEJsUmcuaFJDYUZiUW0ifSx7InF1ZXN0aW9uIjoid2hhdCdzIHlvdXIgZmlyc3QgcGV0cyBuYW1lPyIsImFuc3dlciI';
-
-    console.log(
-      'Base64 string (first 100 chars):',
-      base64String.substring(0, 100)
-    );
-    console.log('Full length:', base64String.length);
-
-    try {
-      const decoded = atob(base64String);
-      console.log('Decoded (first 200 chars):', decoded.substring(0, 200));
-
-      const parsed = JSON.parse(decoded);
-      console.log('Parsed JSON:', parsed);
-    } catch (error) {
-      console.error('Decoding error:', error);
-    }
-
-    console.groupEnd();
+    // removed: debug helper for base64 decoding
   }
 
   /**
@@ -1412,12 +1271,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private processDecodedQuestionsArray(questionsArray: any[]): void {
     if (!questionsArray || !Array.isArray(questionsArray)) {
-      console.log('⚠️ No valid questions array found');
+      // No valid questions array found
       this.securityQuestions = [];
       return;
     }
 
-    console.log(`🔄 Processing ${questionsArray.length} security questions`);
+    // Processing questions array
 
     this.securityQuestions = questionsArray.map((item: any, index: number) => {
       // Extract question and answer
@@ -1438,21 +1297,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         createdAt: item.createdAt || new Date().toISOString(),
       };
 
-      console.log(`📝 Question ${index + 1}:`, {
-        question:
-          questionText.substring(0, 30) +
-          (questionText.length > 30 ? '...' : ''),
-        hasAnswer: !!answerText,
-        isHashed: isHashed,
-        answerLength: answerText.length,
-      });
+      // question processed
 
       return questionObj;
     });
 
-    console.log(
-      `✅ Loaded ${this.securityQuestions.length} security questions`
-    );
+    console.log(` Loaded ${this.securityQuestions.length} security questions`);
   }
 
   /**
@@ -1467,7 +1317,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log(`🔄 Processing ${questionsArray.length} security questions`);
+    console.log(` Processing ${questionsArray.length} security questions`);
 
     this.securityQuestions = questionsArray.map((item: any, index: number) => {
       // Extract question and answer
@@ -1489,7 +1339,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       };
 
       // Log for debugging
-      console.log(`📝 Question ${index + 1}:`, {
+      console.log(` Question ${index + 1}:`, {
         id: questionObj.id,
         questionPreview:
           questionText.substring(0, 30) +
@@ -1502,9 +1352,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       return questionObj;
     });
 
-    console.log(
-      `✅ Loaded ${this.securityQuestions.length} security questions`
-    );
+    console.log(` Loaded ${this.securityQuestions.length} security questions`);
   }
 
   /**
@@ -1567,7 +1415,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Initialize security questions for editing - ONLY 1 EMPTY INPUT
    */
   private initializeSecurityQuestions(): void {
-    console.log('🔄 Initializing security questions for editing...');
+    console.log(' Initializing security questions for editing...');
 
     // Start with existing questions
     this.tempSecurityQuestions = [];
@@ -1583,7 +1431,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         verifyInProgress: false,
         showAnswer: false,
         isHashed: q.isHashed,
-        originalAnswer: q.answer,
+        // Preserve the real original answer (hash) when available; fall back to the displayed answer
+        originalAnswer: q.originalAnswer ? q.originalAnswer : q.answer,
         masked: !!q.isHashed,
       }));
 
@@ -1614,7 +1463,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.updateSecurityQuestionCount();
 
     console.log(
-      '✅ Initialized editing with:',
+      ' Initialized editing with:',
       this.tempSecurityQuestions.length,
       'questions'
     );
@@ -1691,7 +1540,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         securityQuestions: questionsToSave,
       };
 
-      console.log('📤 Saving security questions:', {
+      console.log(' Saving security questions:', {
         count: questionsToSave.length,
         scouterId: this.scouterId,
       });
@@ -1699,7 +1548,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       // Use update endpoint (works for both create and update)
       await this.updateSecurityQuestions(payload);
     } catch (error) {
-      console.error('❌ Error saving security questions:', error);
+      console.error(' Error saving security questions:', error);
       this.isSavingSecurityQuestions = false;
 
       let errorMessage = 'Failed to save security questions';
@@ -1718,7 +1567,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private handleSecurityQuestionsResponse(res: any): void {
     this.isLoadingSecurityQuestions = false;
-    console.log('🔒 Processing security questions response:', res);
+    console.log(' Processing security questions response:', res);
 
     // Clear any existing questions
     this.securityQuestions = [];
@@ -1760,10 +1609,10 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       Array.isArray(res?.data) &&
       res.data.length === 0
     ) {
-      console.log('✅ No security questions found (empty array)');
+      console.log(' No security questions found (empty array)');
     }
     this.updateSecurityQuestionsState();
-    console.log('✅ Security questions processed:', {
+    console.log(' Security questions processed:', {
       count: this.securityQuestions.length,
       questions: this.securityQuestions,
     });
@@ -1786,6 +1635,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           question: item,
           answer: this.ANSWER_MASK,
           isHashed: true,
+          originalAnswer: '',
           createdAt: new Date().toISOString(),
         };
       }
@@ -1797,6 +1647,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           question: item.question || item.text || '',
           answer: item.answer ? this.ANSWER_MASK : '',
           isHashed: !!item.answer,
+          originalAnswer: item.answer || '',
           createdAt:
             item.createdAt || item.dateCreated || new Date().toISOString(),
         };
@@ -1821,12 +1672,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     if (err.status === 404) {
       // 404 means no security questions exist yet (this is OK)
-      console.log('✅ No security questions found (404 response)');
+      console.log(' No security questions found (404 response)');
       this.securityQuestions = [];
       this.securityQuestionErrorMessage = '';
     } else {
       this.securityQuestionErrorMessage = 'Failed to load security questions';
-      console.error('❌ Error loading security questions:', err);
+      console.error(' Error loading security questions:', err);
     }
 
     this.updateSecurityQuestionsState();
@@ -1854,7 +1705,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       const encodedScouterId = encodeURIComponent(this.scouterId);
       const url = `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
 
-      console.log('🔗 Updating at:', url);
+      console.log(' Updating at:', url);
 
       const token = localStorage.getItem('access_token');
 
@@ -1873,14 +1724,14 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           }
 
           const result = await response.json();
-          console.log('✅ Update successful:', result);
+          console.log(' Update successful:', result);
 
           // Handle success
           this.handleSecurityQuestionsSaveSuccess(result);
           resolve();
         })
         .catch((error) => {
-          console.error('❌ Update failed:', error);
+          console.error(' Update failed:', error);
           reject(error);
         });
     });
@@ -1896,22 +1747,22 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       securityQuestions: payload.securityQuestions,
     };
 
-    console.log('📤 Create payload with FULL scouterId:', createPayload);
+    console.log(' Create payload with FULL scouterId:', createPayload);
 
     this.authService.createScouterSecurityQuestion(createPayload).subscribe({
       next: (res: any) => {
-        console.log('✅ Create successful:', res);
+        console.log(' Create successful:', res);
         this.handleSecurityQuestionsSaveSuccess(res);
       },
       error: (createErr) => {
-        console.error('❌ Create failed:', createErr);
+        console.error(' Create failed:', createErr);
 
         // Handle "already exists" error specially
         if (
           createErr.status === 403 &&
           createErr.error?.message?.toLowerCase().includes('already exists')
         ) {
-          console.log('🔄 Security profile exists, retrying with update...');
+          console.log(' Security profile exists, retrying with update...');
 
           // If create says "already exists", then update should work
           this.authService
@@ -1921,11 +1772,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
             )
             .subscribe({
               next: (retryRes) => {
-                console.log('✅ Retry update successful:', retryRes);
+                console.log(' Retry update successful:', retryRes);
                 this.handleSecurityQuestionsSaveSuccess(retryRes);
               },
               error: (retryErr) => {
-                console.error('❌ Retry update failed:', retryErr);
+                console.error(' Retry update failed:', retryErr);
                 this.handleSecurityQuestionsSaveError(retryErr);
               },
             });
@@ -1939,68 +1790,11 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // profile-page.component.ts - Add a test method to verify endpoints
 
   testSecurityQuestionEndpoints(): void {
-    const fullScouterId = this.scouterId; // "scouter/5042/28September2025"
-    const encodedScouterId = encodeURIComponent(fullScouterId);
-
-    console.group('🔍 Testing Security Question Endpoints');
-
-    // Test GET endpoint (CORRECT ONE)
-    const getUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedScouterId}`;
-    console.log('1. GET URL:', getUrl);
-
-    // Test UPDATE endpoint (CORRECT ONE)
-    const updateUrl = `${environment.baseUrl}/${endpoints.updateScouterSecurityQuestions}?scouterId=${encodedScouterId}`;
-    console.log('2. UPDATE URL:', updateUrl);
-
-    // Test CREATE endpoint (CORRECT ONE)
-    const createUrl = `${environment.baseUrl}/${endpoints.createScouterSecurityQuestions}`;
-    console.log('3. CREATE URL:', createUrl);
-
-    // Test WITH ANSWERS endpoint
-    const withAnswersUrl = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedScouterId}`;
-    console.log('4. WITH ANSWERS URL:', withAnswersUrl);
-
-    console.log('5. Full Scouter ID:', fullScouterId);
-    console.log('6. Encoded Scouter ID:', encodedScouterId);
-
-    // Test the endpoints with fetch
-    this.testEndpointWithFetch(getUrl, 'GET');
-    this.testEndpointWithFetch(withAnswersUrl, 'GET');
-
-    console.groupEnd();
+    // removed: helper for testing endpoints
   }
 
   private testEndpointWithFetch(url: string, method: string): void {
-    const token = localStorage.getItem('access_token');
-
-    console.log(`🧪 Testing ${method} ${url}`);
-
-    fetch(url, {
-      method: method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-      .then(async (response) => {
-        console.log(`📡 Response: ${response.status} ${response.statusText}`);
-
-        // Log headers
-        console.log('📋 Response headers:');
-        response.headers.forEach((value, key) => {
-          console.log(`  ${key}: ${value}`);
-        });
-
-        const text = await response.text();
-        console.log('📦 Response body:', text.substring(0, 200));
-
-        if (!response.ok) {
-          console.log(`❌ Error: ${text}`);
-        }
-      })
-      .catch((error) => {
-        console.error(`🚨 Fetch error: ${error.message}`);
-      });
+    // removed: debug fetch helper
   }
 
   /**
@@ -2015,7 +1809,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private handleSecurityQuestionsWithAnswersResponse(res: any): void {
     this.isLoadingSecurityQuestions = false;
-    console.log('🔒 Processing security questions with answers:', res);
+    console.log(' Processing security questions with answers:', res);
 
     // Clear any existing questions
     this.securityQuestions = [];
@@ -2023,16 +1817,16 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // Check if data is a base64-encoded string
     if (res?.data && typeof res.data === 'string') {
       console.log(
-        '📦 Data appears to be base64 encoded, attempting to decode...'
+        ' Data appears to be base64 encoded, attempting to decode...'
       );
 
       const decodedData = this.decodeBase64(res.data);
 
       if (decodedData && Array.isArray(decodedData)) {
-        console.log(`✅ Successfully decoded ${decodedData.length} questions`);
+        console.log(` Successfully decoded ${decodedData.length} questions`);
         this.processSecurityQuestionsWithAnswersArray(decodedData);
       } else {
-        console.error('❌ Decoded data is not an array or is empty');
+        console.error(' Decoded data is not an array or is empty');
         this.securityQuestions = [];
       }
     }
@@ -2051,7 +1845,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
     this.updateSecurityQuestionsState();
 
-    console.log('✅ Security questions loaded:', {
+    console.log(' Security questions loaded:', {
       count: this.securityQuestions.length,
       questions: this.securityQuestions.map((q, i) => ({
         index: i + 1,
@@ -2142,7 +1936,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         answer: '••••••••', // Hide answers
         isHashed: true,
         showAnswer: false,
-        originalAnswer: qa.answer,
+        // Preserve hash if we have it; otherwise clear so next load will fetch from server
+        originalAnswer: qa.originalAnswer ? qa.originalAnswer : '',
         createdAt: new Date().toISOString(),
       }));
 
@@ -2167,7 +1962,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    */
   private handleSecurityQuestionsSaveError(err: any): void {
     this.isSavingSecurityQuestions = false;
-    console.error('❌ Failed to save security questions:', err);
+    console.error(' Failed to save security questions:', err);
 
     let errorMessage = 'Failed to save security questions';
 
@@ -2343,7 +2138,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // Use the actual questions count, not temp
     this.securityQuestionCount = this.securityQuestions.length;
 
-    console.log('📊 Security questions state updated:', {
+    console.log(' Security questions state updated:', {
       count: this.securityQuestionCount,
       max: this.maxSecurityQuestions,
       canAddMore: this.securityQuestionCount < this.maxSecurityQuestions,
@@ -2491,7 +2286,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== TEMPLATE METHODS ====================
 
   handleImageError(event: any): void {
-    console.error('📷 Error loading profile image');
+    console.error(' Error loading profile image');
     this.hasExistingProfilePicture = false;
     this.profileImage = null;
     this.cdr.detectChanges();
@@ -2499,7 +2294,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   triggerFileInput(): void {
     if (this.fileInput?.nativeElement) {
-      console.log('📁 Opening profile picture picker');
+      console.log(' Opening profile picture picker');
       this.fileInput.nativeElement.click();
     }
   }
@@ -2573,7 +2368,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
         const { role } = await modal.onWillDismiss();
         resolve(role === 'confirm');
       } catch (error) {
-        console.error('❌ Error showing confirmation modal:', error);
+        console.error(' Error showing confirmation modal:', error);
         resolve(false);
       }
     });
@@ -2621,7 +2416,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   // ==================== CLEANUP ====================
 
   reloadComponent(): void {
-    console.log('🔄 Reloading component...');
+    console.log(' Reloading component...');
 
     this.clearSubscriptions();
 
@@ -2650,14 +2445,14 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     }
 
     this.cdr.detectChanges();
-    console.log('✅ Component reloaded');
+    console.log(' Component reloaded');
   }
 
   ngOnDestroy(): void {
-    console.log('🧹 Cleaning up ProfilePageComponent...');
+    console.log(' Cleaning up ProfilePageComponent...');
     this.clearSubscriptions();
     this.destroy$.next();
     this.destroy$.complete();
-    console.log('✅ ProfilePageComponent destroyed');
+    console.log(' ProfilePageComponent destroyed');
   }
 }
