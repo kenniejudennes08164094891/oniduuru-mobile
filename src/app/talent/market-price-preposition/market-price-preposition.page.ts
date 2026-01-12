@@ -7,6 +7,9 @@ import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { PaginationParams } from 'src/app/models/mocks';
 import { ToastrService } from 'ngx-toastr';
+import { ModalController, ToastController, AlertController } from '@ionic/angular';
+import { EvaluationPageComponent } from 'src/app/components/evaluation-page/evaluation-page.component';
+
 @Component({
   selector: 'app-market-price-preposition',
   templateUrl: './market-price-preposition.page.html',
@@ -28,14 +31,39 @@ export class MarketPricePrepositionPage implements OnInit {
     private endpointService: EndpointService,
     private router: Router,
     private authService: AuthService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private modalCtrl: ModalController,
+    private toastCtrl: ToastController,
+    private evaluationPageComponent: EvaluationPageComponent,
+    private alertCtrl: AlertController
   ) { }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+    const nav = this.router.getCurrentNavigation();
+    this.hire = nav?.extras?.state?.['hire'];
     this.hire = MockRecentHires.find((h) => h.id === id);
+    if (this.hire) {
+      this.handleTransactionFlow();
+    }
     this.fetchMarketsOnEnter();
     this.loadTalentName();
+  }
+  async handleTransactionFlow() {
+    if (!this.hire) return;
+    switch (this.hire.offerStatus) {
+      case 'Offer Accepted':
+        await this.openEvaluation(this.hire);
+        break;
+
+      case 'Awaiting Acceptance':
+        await this.showAcceptRejectPopup(this.hire);
+        break;
+
+      case 'Offer Rejected':
+        // Just load the page normally (no popups)
+        break;
+    }
   }
   loadTalentName() {
     try {
@@ -147,14 +175,126 @@ export class MarketPricePrepositionPage implements OnInit {
         return '#79797B'; // GRAY
     }
   }
+  async openEvaluation(hire?: MockPayment) {
+    if (hire) this.hire = hire;
+    if (!this.hire) return;
+
+    if (this.hire.offerStatus !== 'Offer Accepted') {
+      const toast = await this.toastCtrl.create({
+        message: 'You can only evaluate accepted offers.',
+        duration: 2000,
+        color: 'warning',
+      });
+      await toast.present();
+      return;
+    }
+
+    if (this.hire.isRated) {
+      const toast = await this.toastCtrl.create({
+        message: 'You have already rated this scouter.',
+        duration: 2000,
+        color: 'medium',
+      });
+      await toast.present();
+      return;
+    }
+
+    const modal = await this.modalCtrl.create({
+      component: EvaluationPageComponent,
+      componentProps: { scouterName: this.hire?.scouterName || 'Your Scouter' },
+    });
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+
+    if (data) {
+      this.hire.isRated = true;
+      this.hire.talentRating = data.rating;
+      this.hire.talentComment = data.comment;
+
+      //  Persist to local storage
+      const updatedHires = MockRecentHires.map((h) =>
+        h.id === this.hire?.id ? this.hire : h
+      );
+      localStorage.setItem('MockRecentHires', JSON.stringify(updatedHires));
+
+      const toast = await this.toastCtrl.create({
+        message: `Thank you for evaluating ${this.hire?.scouterName || 'the scouter'}!`,
+        duration: 2000,
+        color: 'success',
+      });
+      await toast.present();
+    }
+  }
+
   goToHireTransaction(hire: any): void {
     if (!hire) { return; }
     const hireId = hire.id;
     const scouterId = hire.scouterId || ''; // example: 'scouter/4212/23November2024'
     // pass the hire and scouterId in navigation state
-     sessionStorage.setItem('scouterId', scouterId);
+    sessionStorage.setItem('scouterId', scouterId);
     this.router.navigate(['/talent/market-price-preposition', hireId], {
       state: { scouterId, hire }
     });
+  }
+  async showAcceptRejectPopup(hire: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Offer Decision',
+      message: `Would you like to accept or decline this offer from <b>${hire.name}</b>?`,
+      buttons: [
+        {
+          text: 'Decline',
+          role: 'cancel',
+          cssClass: 'danger',
+          handler: async () => {
+            await this.confirmChoice(hire, 'Offer Declined');
+          },
+        },
+        {
+          text: 'Accept',
+          handler: async () => {
+            await this.confirmChoice(hire, 'Offer Accepted');
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  // Confirmation for choice
+  async confirmChoice(hire: any, choice: 'Offer Accepted' | 'Offer Declined') {
+    const confirm = await this.alertCtrl.create({
+      header: 'Confirm Choice',
+      message: `Are you sure you want to ${choice === 'Offer Accepted' ? 'accept' : 'decline'} this offer?`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Yes, Confirm',
+          handler: async () => {
+            hire.offerStatus = choice;
+
+            // Persist update
+            const hires = JSON.parse(localStorage.getItem('MockRecentHires') || '[]');
+            const updated = hires.map((h: any) => (h.id === hire.id ? hire : h));
+            localStorage.setItem('MockRecentHires', JSON.stringify(updated));
+
+            const toast = await this.toastCtrl.create({
+              message: `Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`,
+              duration: 2000,
+              color: choice === 'Offer Accepted' ? 'success' : 'danger',
+            });
+            await toast.present();
+
+            // After accepting, you can open evaluation modal immediately
+            if (choice === 'Offer Accepted') {
+              await this.openEvaluation(hire);
+            }
+          },
+        },
+      ],
+    });
+
+    await confirm.present();
   }
 }

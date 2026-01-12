@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { IonicModule } from '@ionic/angular';
+import { EvaluationPageModule } from 'src/app/components/evaluation-page/evaluation-page.module';
 
 import { ViewHiresPageRoutingModule } from './view-hires-routing.module';
 
@@ -16,7 +17,8 @@ import { SharedModule } from '../../shared/shared.module';
     FormsModule,
     IonicModule,
     ViewHiresPageRoutingModule,
-    SharedModule
+    SharedModule,
+    EvaluationPageModule
   ],
   declarations: [ViewHiresPage] // declare the header component here
 })

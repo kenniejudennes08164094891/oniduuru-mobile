@@ -1,0 +1,72 @@
+<ion-header>
+  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden"></app-talent-header>
+
+  <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+
+    <!-- <ion-toolbar color="primary">
+
+    </ion-toolbar> -->
+
+    <div class="relative z-10 text-white">
+      <div class="flex items-start gap-3 mt-4">
+        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
+        <div class="flex justify-between items-center w-full">
+          <p class="text-white font-medium text-[24px] leading-relaxed">Evaluation on scouter's integrity</p>
+          <ion-buttons slot="end">
+            <ion-button color="light" (click)="close()">X</ion-button>
+          </ion-buttons>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="flex flex-col items-center space-y-6">
+    <p class="text-center text-gray-500 text-base">Please evaluate the quality of the scouter's integrity on this role.
+      Remember, comments to the scouter should follow our <a class="text-blue-700" href="/community-guidelines"
+        target="_blank">Community
+        Guidelines</a></p>
+    <p> Scouter's Job Description: For events and contents </p>
+    <!-- Comment box -->
+    <ion-item lines="none">
+      <ion-label position="floating">Please write a comment on your level of satisfactory integrity observed by the {{
+        scouterName }} all through the job..</ion-label>
+      <ion-textarea [(ngModel)]="comment" auto-grow="true"></ion-textarea>
+      <!-- 📎 Comment action icons -->
+      <div class="comment-actions">
+        <!-- Attach link -->
+        <ion-button fill="clear" size="small" (click)="addLink()">
+          <ion-icon name="attach-outline"></ion-icon>
+        </ion-button>
+
+        <!-- Location -->
+        <ion-button fill="clear" size="small" (click)="addLocation()">
+          <ion-icon name="location-outline"></ion-icon>
+        </ion-button>
+
+        <!-- Photo upload -->
+        <ion-button fill="clear" size="small">
+          <label for="photoInput">
+            <ion-icon name="image-outline"></ion-icon>
+          </label>
+        </ion-button>
+
+        <!-- Hidden file input -->
+        <input type="file" id="photoInput" accept="image/*" hidden (change)="onPhotoSelected($event)" />
+      </div>
+
+    </ion-item>
+    <div class="flex ml-0 mr-auto display-block space-x-2">
+      <P>Your star rating:</P>
+      <ion-icon *ngFor="let star of [1, 2, 3, 4, 5]" [name]="star <= rating ? 'star' : 'star-outline'" color="warning"
+        size="medium" (click)="setRating(star)"></ion-icon>
+    </div>
+    <!--  Submit -->
+    <ion-button class="submit-btn" [disabled]="rating === 0" (click)="submitEvaluation()">
+      Post comment
+    </ion-button>
+  </div>
+
+</ion-content>
