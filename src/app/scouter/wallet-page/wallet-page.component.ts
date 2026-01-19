@@ -15,6 +15,8 @@ import { Router } from '@angular/router';
   styleUrls: ['./wallet-page.component.scss'],
   standalone: false,
 })
+
+
 export class WalletPageComponent implements OnInit {
   @ViewChild(IonContent) content!: IonContent;
   @ViewChild('dropdownSection') dropdownSection!: ElementRef;
@@ -58,7 +60,7 @@ export class WalletPageComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.initializeUserData();
@@ -195,15 +197,31 @@ export class WalletPageComponent implements OnInit {
     if (res && res.data) {
       const walletData = res.data;
 
-      // Update wallet information
-      this.walletBalance = Number(walletData.balance) || 0;
-      this.accountNumber =
-        walletData.accountNumber || walletData.accountNumber || 'Not available';
+      // Extract and display wallet information from the payload
+      console.log('🔍 Wallet Data Received:', walletData);
 
-      // Update user name from wallet data if available
-      if (walletData.walletName || walletData.accountName) {
-        this.userName = walletData.walletName || walletData.accountName;
+      // 1. Wallet Account Number (wallet_id)
+      this.accountNumber = walletData.wallet_id || 'Not available';
+
+      // 2. Wallet Name
+      if (walletData.firstName || walletData.lastName) {
+        this.userName = `${walletData.firstName || ''} ${walletData.middleName || ''} ${walletData.lastName || ''}`.trim();
+      } else if (walletData.firstName) {
+        this.userName = walletData.firstName;
       }
+
+      // 3. Wallet Account Balance
+      this.walletBalance = parseFloat(walletData.currentAcctBalance) || 0;
+
+      // Additional debug logging
+      console.log('💰 Wallet Info Extracted:', {
+        accountNumber: this.accountNumber,
+        userName: this.userName,
+        walletBalance: this.walletBalance,
+        fullName: walletData.firstName,
+        middleName: walletData.middleName,
+        lastName: walletData.lastName
+      });
 
       // Update transaction totals if available
       if (walletData.totalDeposit !== undefined) {
@@ -216,7 +234,7 @@ export class WalletPageComponent implements OnInit {
         this.totalTransfer = Number(walletData.totalTransfer) || 0;
       }
 
-      console.log('Wallet data loaded successfully:', walletData);
+      console.log('✅ Wallet data loaded successfully:', walletData);
     } else {
       console.warn('No wallet data found in response:', res);
       this.walletError = true;
