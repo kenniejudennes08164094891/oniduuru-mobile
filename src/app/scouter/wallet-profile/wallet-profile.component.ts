@@ -9,6 +9,7 @@ import { LoadingController } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { WalletEventsService } from 'src/app/services/wallet-events.service';
 
 @Component({
   selector: 'app-wallet-profile',
@@ -169,8 +170,9 @@ export class WalletProfileComponent implements OnInit {
     private toastService: ToastsService,
     private authService: AuthService,
     private userService: UserService,
-    private router: Router
-  ) {}
+    private router: Router, private walletEvents: WalletEventsService
+
+  ) { }
 
   // ==================== INITIALIZATION ====================
   async ngOnInit() {
@@ -434,7 +436,7 @@ export class WalletProfileComponent implements OnInit {
 
           this.toastService.openSnackBar(
             res.message ||
-              `OTP sent to the phone number registered with your BVN: ${this.maskedPhoneNumber}`,
+            `OTP sent to the phone number registered with your BVN: ${this.maskedPhoneNumber}`,
             'success'
           );
 
@@ -1423,6 +1425,7 @@ export class WalletProfileComponent implements OnInit {
       }
 
       const uniqueId = this.getCurrentUserUniqueId();
+
       if (!uniqueId) {
         throw new Error(
           'Unable to retrieve user information. Please login again.'
@@ -1434,32 +1437,15 @@ export class WalletProfileComponent implements OnInit {
         throw new Error('Invalid bank selected. Please choose a valid bank.');
       }
 
-      // 🔴 REMOVE THIS BLOCK - BVN verification is already handled via OTP flow
-      // Verify all details before submission
-      // try {
-      //   await this.endpointService.validateBVN(this.bvn).toPromise(); // ❌ This is causing the error
-      //   await this.endpointService.validateNIN(this.nin).toPromise();
 
-      //   const acctPayload = {
-      //     bankCode: bankCode,
-      //     bankName: this.selectedBank,
-      //     bankAccountNo: this.savingsAcc,
-      //   };
-      //   await this.endpointService.verifyAccountNumber(acctPayload).toPromise();
-      // } catch (verifyErr: any) {
-      //   throw new Error(
-      //     verifyErr?.userMessage ||
-      //     'Verification failed. Please check your inputs.'
-      //   );
-      // }
 
-      // ✅ NEW: Check verification status instead
+      //   Check verification status instead
       const verificationErrors = this.checkVerificationStatus();
       if (verificationErrors.length > 0) {
         throw new Error(this.formatValidationErrors(verificationErrors));
       }
 
-      // ✅ Verify NIN and Account if they exist (but not BVN since it's already verified via OTP)
+      //  Verify NIN and Account if they exist (but not BVN since it's already verified via OTP)
       try {
         if (this.nin) {
           await this.endpointService.validateNIN(this.nin).toPromise();
@@ -1478,7 +1464,7 @@ export class WalletProfileComponent implements OnInit {
       } catch (verifyErr: any) {
         throw new Error(
           verifyErr?.userMessage ||
-            'Verification failed. Please check your inputs.'
+          'Verification failed. Please check your inputs.'
         );
       }
 
@@ -1559,9 +1545,40 @@ export class WalletProfileComponent implements OnInit {
 
       await loading.dismiss();
 
-      // Save to localStorage and navigate
+      // ✅ SET THE FLAG
       localStorage.setItem('walletProfileCreated', 'true');
-      localStorage.setItem('walletProfileType', 'individual');
+      localStorage.setItem('hasWalletProfile', 'true');
+
+      // Update user data with wallet profile flag
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+
+          // Set direct property
+          user.hasWalletProfile = true;
+
+          // Also update completeOnboarding if it exists
+          if (user.completeOnboarding) {
+            try {
+              const onboardingData = JSON.parse(user.completeOnboarding);
+              onboardingData.hasWalletProfile = true;
+              user.completeOnboarding = JSON.stringify(onboardingData);
+            } catch (e) {
+              console.warn('Could not update completeOnboarding:', e);
+            }
+          }
+
+          localStorage.setItem('user_data', JSON.stringify(user));
+          console.log('✅ Updated user_data with wallet profile flag');
+        } catch (e) {
+          console.warn('Error updating user data:', e);
+        }
+      }
+
+      // Emit event
+      this.walletEvents.emitWalletProfileCreated();
+
 
       // Mark the logged-in user as having a wallet profile and notify services
       try {
@@ -1575,6 +1592,21 @@ export class WalletProfileComponent implements OnInit {
         'success'
       );
       this.isFormLocked = true;
+
+      this.walletEvents.emitWalletProfileCreated();
+
+
+
+      // Notify AppComponent that wallet profile was created
+      const appComponent = (window as any).appComponentRef;
+      if (appComponent && appComponent.notifyWalletProfileCreated) {
+        appComponent.notifyWalletProfileCreated();
+      }
+
+      // Clear any cached wallet data
+      if (uniqueId) {
+        localStorage.removeItem(`wallet_${uniqueId}`);
+      }
 
       setTimeout(() => {
         this.router.navigate(['/wallet-dashboard'], { replaceUrl: true });
@@ -1613,6 +1645,7 @@ export class WalletProfileComponent implements OnInit {
       }
 
       const uniqueId = this.getCurrentUserUniqueId();
+
       if (!uniqueId) {
         throw new Error(
           'Unable to retrieve user information. Please login again.'
@@ -1700,9 +1733,39 @@ export class WalletProfileComponent implements OnInit {
         .toPromise();
       await loading.dismiss();
 
-      // Save to localStorage and navigate
+      // ✅ SET MULTIPLE FLAGS FOR RELIABILITY
       localStorage.setItem('walletProfileCreated', 'true');
-      localStorage.setItem('walletProfileType', 'business');
+      localStorage.setItem('hasWalletProfile', 'true');
+
+      // Update user data with wallet profile flag
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+
+          // Set direct property
+          user.hasWalletProfile = true;
+
+          // Also update completeOnboarding if it exists
+          if (user.completeOnboarding) {
+            try {
+              const onboardingData = JSON.parse(user.completeOnboarding);
+              onboardingData.hasWalletProfile = true;
+              user.completeOnboarding = JSON.stringify(onboardingData);
+            } catch (e) {
+              console.warn('Could not update completeOnboarding:', e);
+            }
+          }
+
+          localStorage.setItem('user_data', JSON.stringify(user));
+          console.log('✅ Updated user_data with wallet profile flag');
+        } catch (e) {
+          console.warn('Error updating user data:', e);
+        }
+      }
+
+      // Emit event
+      this.walletEvents.emitWalletProfileCreated();
 
       // Mark the logged-in user as having a wallet profile and notify services
       try {
@@ -1711,14 +1774,30 @@ export class WalletProfileComponent implements OnInit {
         console.warn('Could not update user_data hasWalletProfile', err);
       }
 
+      // In createBusinessProfile method, after success:
       this.toastService.openSnackBar(
         '✅ Business wallet profile created successfully!',
         'success'
       );
       this.isFormLocked = true;
 
+      this.walletEvents.emitWalletProfileCreated();
+
+
+
+      // Notify AppComponent that wallet profile was created
+      const appComponent = (window as any).appComponentRef;
+      if (appComponent && appComponent.notifyWalletProfileCreated) {
+        appComponent.notifyWalletProfileCreated();
+      }
+
+      // Clear any cached wallet data
+      if (uniqueId) {
+        localStorage.removeItem(`wallet_${uniqueId}`);
+      }
+
       setTimeout(() => {
-        this.router.navigate(['/wallet-dashboard'], { replaceUrl: true });
+        this.router.navigate(['/scouter/wallet-page'], { replaceUrl: true });
       }, 2000);
     } catch (error: any) {
       await loading.dismiss();

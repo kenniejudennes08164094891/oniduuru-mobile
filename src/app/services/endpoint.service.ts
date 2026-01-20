@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { JwtInterceptorService } from './jwt-interceptor.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
@@ -309,6 +309,44 @@ export class EndpointService {
         })
       );
   }
+
+public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
+  // DON'T encode the uniqueId - your API expects the format "scouter/6985/29September2025"
+  // Encoding changes slashes to %2F which might not be what the API expects
+  const url = `${environment.baseUrl}/wallets/v1/my-monthly-stats`;
+  
+  const params = new HttpParams()
+    .set('uniqueId', uniqueId) // Don't encode here
+    .set('year', year);
+
+  console.log('🔍 [DEBUG] Making histogram API call:', {
+    url: url,
+    params: params.toString(),
+    fullUrl: `${url}?${params.toString()}`,
+    uniqueId: uniqueId,
+    year: year,
+    isUniqueIdEncoded: uniqueId.includes('%2F') // Check if it's already encoded
+  });
+
+  return this.http.get<any>(url, {
+    headers: this.jwtInterceptor.customHttpHeaders,
+    params: params
+  }).pipe(
+    tap((response) => {
+      console.log('📡 Histogram API Raw Response:', response);
+    }),
+    catchError((error) => {
+      console.error('❌ Histogram data fetch error:', {
+        status: error.status,
+        message: error.message,
+        error: error.error,
+        url: url,
+        params: params.toString()
+      });
+      return throwError(() => error);
+    })
+  );
+}
 
   public fundsDeposit(payload: any): Observable<any> {
     const body = JSON.stringify(payload);

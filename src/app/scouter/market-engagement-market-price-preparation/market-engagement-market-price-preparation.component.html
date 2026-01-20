@@ -4,12 +4,12 @@
 
 <ion-content class="ion-padding" *ngIf="hire">
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="flex justify-center items-center py-10">
+  <!-- <div *ngIf="isLoading" class="flex justify-center items-center py-10">
     <div class="text-center">
       <ion-spinner></ion-spinner>
       <p class="mt-2 text-gray-600">Loading hire details...</p>
     </div>
-  </div>
+  </div> -->
 
   <!-- Content when data is loaded -->
   <div *ngIf="hire && !isLoading">
@@ -56,19 +56,31 @@
       <span> <strong>Date of Hire:</strong> {{ hire.date }} </span>
     </p>
 
+    <!-- Display Scouter Comment - FIXED -->
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
-      <span> <strong>Your own comment:</strong> {{ hire.yourComment }} </span>
+      <span>
+        <strong>Your own comment:</strong>
+        <span *ngIf="hire?.yourComment; else noScouterComment">
+          {{ hire.yourComment }}
+        </span>
+        <ng-template #noScouterComment>
+          <span class="text-gray-500 italic">No comment added yet</span>
+        </ng-template>
+      </span>
     </p>
 
-    <!-- Rating -->
+
+    <!-- For scouter Rating display: -->
     <div class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Your Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
         <ion-icon name="star" (click)="updateRating(star)" [class.text-yellow-500]="star <= hire.yourRating"
-          [class.text-gray-400]="star > hire.yourRating" class="cursor-pointer text-xl"></ion-icon>
+          [class.text-gray-400]="star > hire.yourRating" class="cursor-pointer text-xl">
+        </ion-icon>
       </ng-container>
+
     </div>
   </div>
 
@@ -87,7 +99,7 @@
 
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
-      <span> <strong>Talent’s Email:</strong> {{ hire.email }} </span>
+      <span> <strong>Talent's Email:</strong> {{ hire.email }} </span>
     </p>
 
     <p class="flex items-center gap-2">
@@ -98,29 +110,39 @@
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <span>
-        <strong>Comment by Talent:</strong> {{ hire.talentComment }}
+        <strong>Comment by Talent:</strong>
+        <span *ngIf="hire?.talentComment; else noTalentComment">
+          {{ hire.talentComment }}
+        </span>
+        <ng-template #noTalentComment>
+          <span class="text-gray-500 italic">No comment from talent yet</span>
+        </ng-template>
       </span>
     </p>
 
-    <!-- Talent Rating -->
+    <!-- For Talent Rating display: -->
     <div class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Talent Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
         <ion-icon name="star" [class.text-yellow-500]="star <= hire.talentRating"
-          [class.text-gray-400]="star < hire.talentRating" class="text-xl"></ion-icon>
+          [class.text-gray-400]="star > hire.talentRating" class="text-xl">
+        </ion-icon>
       </ng-container>
+
     </div>
   </div>
 
-  <!-- In market-engagement-market-price-preparation.component.html -->
-  <!-- In market-engagement-market-price-preparation.component.html -->
+
+
+
   <app-market-engagement-tabs [initialHire]="hire" (hireSelected)="onTableHireClick($event)">
   </app-market-engagement-tabs>
 
   <app-total-delivery-evaluation *ngIf="isTotalDeliveryModalOpen" [hire]="selectedModalHire || hire"
     [isModalOpen]="isTotalDeliveryModalOpen" (close)="closeTotalDeliveryModal()"
-    (ratingUpdated)="onRatingUpdated($event)"></app-total-delivery-evaluation>
+    (ratingUpdated)="onRatingUpdated($event)">
+  </app-total-delivery-evaluation>
 
   <!-- Reconsider Confirmation Modal -->
   <app-reconsider-confirmation-modal [talentName]="selectedTalentForReconsider?.name || ''"

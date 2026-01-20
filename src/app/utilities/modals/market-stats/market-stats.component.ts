@@ -14,6 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-market-stats',
@@ -24,20 +25,27 @@ import { AuthService } from 'src/app/services/auth.service';
 export class MarketStatsComponent implements OnInit, OnChanges {
   @Output() hireSelected = new EventEmitter<TotalHires>();
   @Input() selectedHire: TotalHires | undefined;
+    private destroy$ = new Subject<void>();
+
 
   hire: TotalHires | undefined;
   userName: string = 'Loading...';
   isLoading: boolean = false;
-  
+
   // Real API data
   statsData: any = null;
   performanceData: any = null;
-  
+
+  // Add this property to track if we're already processing
+  private isProcessingHireChange: boolean = false;
+  private lastProcessedHireId: string | null = null;
+
+
   // Chart data - Fixed pieChartOptions
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
     plugins: {
-      legend: { 
+      legend: {
         position: 'right',
         labels: {
           font: {
@@ -51,7 +59,7 @@ export class MarketStatsComponent implements OnInit, OnChanges {
           label: (context) => {
             const label = context.label || '';
             const value = context.parsed;
-            
+
             // FIX: Type-safe reduce function
             const total = (context.dataset.data as number[]).reduce(
               (acc: number, curr: number) => {
@@ -59,10 +67,10 @@ export class MarketStatsComponent implements OnInit, OnChanges {
                 const a = typeof acc === 'number' ? acc : 0;
                 const b = typeof curr === 'number' ? curr : 0;
                 return a + b;
-              }, 
+              },
               0
             );
-            
+
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
             return `${label}: ${value} (${percentage}%)`;
           },
@@ -87,95 +95,95 @@ export class MarketStatsComponent implements OnInit, OnChanges {
     ],
   };
 
-// Update the barChartOptions tooltip callback
-barChartOptions: ChartOptions<'bar'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { 
-    legend: { 
-      position: 'top',
-      labels: {
-        font: {
-          size: 12
+  // Update the barChartOptions tooltip callback
+  barChartOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleFont: { size: 12 },
+        bodyFont: { size: 11 },
+        padding: 10,
+        callbacks: {
+          label: (context) => {
+            // Fix: Check if value is not null
+            const value = context.parsed.y;
+            if (value === null || value === undefined) {
+              return `${context.dataset.label}: No rating`;
+            }
+
+            // Ensure value is a number
+            const numValue = typeof value === 'number' ? value : parseFloat(value as any) || 0;
+
+            // Generate star string safely
+            const fullStars = Math.floor(numValue);
+            const halfStar = numValue % 1 >= 0.5;
+
+            let stars = '';
+            if (fullStars > 0) {
+              stars = '⭐'.repeat(fullStars);
+            }
+            if (halfStar) {
+              stars += '½';
+            }
+            if (stars === '' && numValue > 0 && numValue < 1) {
+              stars = '½';
+            }
+
+            return `${context.dataset.label}: ${numValue.toFixed(1)} ${stars}`;
+          }
         }
       }
     },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleFont: { size: 12 },
-      bodyFont: { size: 11 },
-      padding: 10,
-      callbacks: {
-        label: (context) => {
-          // Fix: Check if value is not null
-          const value = context.parsed.y;
-          if (value === null || value === undefined) {
-            return `${context.dataset.label}: No rating`;
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          callback: function (value) {
+            if (typeof value === 'number') {
+              return value + '⭐';
+            }
+            return value;
           }
-          
-          // Ensure value is a number
-          const numValue = typeof value === 'number' ? value : parseFloat(value as any) || 0;
-          
-          // Generate star string safely
-          const fullStars = Math.floor(numValue);
-          const halfStar = numValue % 1 >= 0.5;
-          
-          let stars = '';
-          if (fullStars > 0) {
-            stars = '⭐'.repeat(fullStars);
+        },
+        max: 5,
+        title: {
+          display: true,
+          text: 'Rating (1-5 stars)',
+          font: {
+            size: 12,
+            weight: 'bold'
           }
-          if (halfStar) {
-            stars += '½';
-          }
-          if (stars === '' && numValue > 0 && numValue < 1) {
-            stars = '½';
-          }
-          
-          return `${context.dataset.label}: ${numValue.toFixed(1)} ${stars}`;
-        }
-      }
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { 
-        stepSize: 1,
-        callback: function(value) {
-          if (typeof value === 'number') {
-            return value + '⭐';
-          }
-          return value;
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)'
         }
       },
-      max: 5,
-      title: {
-        display: true,
-        text: 'Rating (1-5 stars)',
-        font: {
-          size: 12,
-          weight: 'bold'
+      x: {
+        title: {
+          display: true,
+          text: 'Market Engagements',
+          font: {
+            size: 12,
+            weight: 'bold'
+          }
+        },
+        grid: {
+          display: false
         }
-      },
-      grid: {
-        color: 'rgba(0, 0, 0, 0.1)'
       }
     },
-    x: {
-      title: {
-        display: true,
-        text: 'Market Engagements',
-        font: {
-          size: 12,
-          weight: 'bold'
-        }
-      },
-      grid: {
-        display: false
-      }
-    }
-  },
-};
+  };
 
   barChartData: ChartData<'bar'> = {
     labels: ['Loading...'],
@@ -220,46 +228,85 @@ barChartOptions: ChartOptions<'bar'> = {
     private route: ActivatedRoute,
     private scouterService: ScouterEndpointsService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
-    // Load initial data
-    this.loadInitialData();
+    console.log('🔄 MarketStats: ngOnInit - initializing');
+
+    // Only load initial data if we don't already have a selected hire
+    if (!this.selectedHire) {
+      this.loadInitialData();
+    } else {
+      console.log('✅ Already have selected hire, skipping initial load');
+      this.setSelectedHire(this.selectedHire);
+    }
   }
+
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedHire'] && changes['selectedHire'].currentValue) {
-      console.log(
-        '🔄 MarketStats: Selected hire changed to:',
-        changes['selectedHire'].currentValue.name
-      );
-      this.setSelectedHire(changes['selectedHire'].currentValue);
-    }
-  }
+      const newHire = changes['selectedHire'].currentValue;
+      const newHireId = newHire.id || newHire.talentId;
 
-  private loadInitialData() {
-    // First check if we have a selected hire from parent
-    if (this.selectedHire) {
-      this.setSelectedHire(this.selectedHire);
-    } else {
-      // Otherwise load from URL
-      const talentId = this.route.snapshot.paramMap.get('id');
-      if (talentId) {
-        this.loadHireData(talentId);
+      console.log('🔄 MarketStats: Selected hire changed:', {
+        name: newHire.name,
+        id: newHireId,
+        previousId: this.lastProcessedHireId,
+        isProcessing: this.isProcessingHireChange
+      });
+
+      // Prevent infinite loop: don't process if we're already processing or if it's the same hire
+      if (this.isProcessingHireChange || this.lastProcessedHireId === newHireId) {
+        console.log('⏸️ Skipping hire change - already processing or same hire');
+        return;
       }
+
+      this.setSelectedHire(newHire);
     }
   }
 
-  setSelectedHire(hire: TotalHires) {
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+private loadInitialData() {
+  console.log('🔄 MarketStats: Loading initial data');
+  
+  // First check if we have a selected hire from parent
+  if (this.selectedHire) {
+    this.setSelectedHire(this.selectedHire);
+  } else {
+    // Otherwise load from URL
+    const talentId = this.route.snapshot.paramMap.get('id');
+    if (talentId) {
+      this.loadHireData(talentId);
+    }
+  }
+}
+
+  private setSelectedHire(hire: TotalHires) {
     console.log('🔄 MarketStats: Setting selected hire:', hire.name);
+
+    // Set processing flag
+    this.isProcessingHireChange = true;
+
     this.hire = hire;
     this.userName = hire.name || 'Talent';
+    this.lastProcessedHireId = hire.id || hire.talentId;
 
     // Load real stats data for the selected hire
     this.loadRealStatsData(hire.id);
 
-    // Emit event to parent
-    this.hireSelected.emit(hire);
+    // Emit event to parent (but only if it's a different hire than current)
+    if (!this.selectedHire || this.selectedHire.id !== hire.id) {
+      this.hireSelected.emit(hire);
+    }
+
+    // Reset processing flag after a delay
+    setTimeout(() => {
+      this.isProcessingHireChange = false;
+    }, 100);
   }
 
   private loadHireData(talentId: string) {
@@ -275,9 +322,9 @@ barChartOptions: ChartOptions<'bar'> = {
       return;
     }
 
-    this.scouterService.getAllMarketsByScouter(scouterId, { 
+    this.scouterService.getAllMarketsByScouter(scouterId, {
       talentId: talentId,
-      limit: 10 
+      limit: 10
     }).subscribe({
       next: (response) => {
         if (response?.data && response.data.length > 0) {
@@ -296,31 +343,43 @@ barChartOptions: ChartOptions<'bar'> = {
   }
 
   private loadRealStatsData(talentId: string) {
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
+    console.log('📊 Fetching real stats for talent:', talentId);
+    
+  if (this.isLoading) {
+    console.log('⏸️ Already loading stats, skipping');
+    return;
+  }
+  
+  const currentUser = this.authService.getCurrentUser();
+  const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId) {
-      console.error('❌ No scouter ID found for stats');
-      this.showPlaceholderData();
-      return;
-    }
+  if (!scouterId) {
+    console.error('❌ No scouter ID found for stats');
+    this.showPlaceholderData();
+    return;
+  }
 
-    console.log('📊 Fetching real stats for:', { scouterId, talentId });
+  this.isLoading = true;
 
-    // Fetch scouter-talent stats from API
-    this.scouterService.getScouterTalentStats(scouterId, talentId).subscribe({
+  // Fetch scouter-talent stats from API with unsubscribe
+  this.scouterService.getScouterTalentStats(scouterId, talentId)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
       next: (response) => {
         console.log('✅ Real stats loaded:', response);
         this.statsData = response;
         this.processRealData(response);
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('❌ Failed to load real stats:', error);
         this.warningMessage = '⚠️ Could not load real-time data. Using calculated data from current engagement.';
         this.initializeWithHireData();
+        this.isLoading = false;
       }
     });
   }
+  
 
   private processRealData(apiData: any) {
     // Process and transform API data into chart formats
@@ -342,7 +401,7 @@ barChartOptions: ChartOptions<'bar'> = {
   private processPerformanceData(data: any) {
     // Extract performance percentages from API response
     const performance = data.performanceMetrics || data.ratingsDistribution || {};
-    
+
     // Type-safe array creation
     const performanceData = [
       performance.excellent || performance.fiveStar || 0,
@@ -381,7 +440,7 @@ barChartOptions: ChartOptions<'bar'> = {
   private processRatingHistory(data: any) {
     // Extract rating history from API
     const engagements = data.engagementHistory || data.hireHistory || [];
-    
+
     if (engagements.length === 0 && this.hire) {
       // Fallback to current hire data if no history
       this.initializeWithHireData();
@@ -389,7 +448,7 @@ barChartOptions: ChartOptions<'bar'> = {
     }
 
     // Create labels (A, B, C, etc.)
-    const labels = engagements.slice(0, 15).map((_: any, i: number) => 
+    const labels = engagements.slice(0, 15).map((_: any, i: number) =>
       String.fromCharCode(65 + i)
     );
 
@@ -432,15 +491,15 @@ barChartOptions: ChartOptions<'bar'> = {
     this.ratingList = engagements.slice(0, 15).map((engagement: any, i: number) => {
       const scouterRating = engagement.scouterRating || engagement.yourRating || 0;
       const talentRating = engagement.talentRating || 0;
-      
+
       return {
         letter: String.fromCharCode(65 + i),
-        date: engagement.date 
+        date: engagement.date
           ? new Date(engagement.date).toLocaleDateString('en-US', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric'
-            })
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          })
           : 'Date not available',
         hasRating: !!(scouterRating > 0 || talentRating > 0),
         scouterRating: scouterRating > 0 ? `${scouterRating.toFixed(1)} stars` : 'No rating',
@@ -527,8 +586,8 @@ barChartOptions: ChartOptions<'bar'> = {
 
   private calculatePerformanceFromRatings(scouterRating: number, talentRating: number): number[] {
     // Calculate performance percentages based on ratings
-    const avgRating = scouterRating > 0 && talentRating > 0 
-      ? (scouterRating + talentRating) / 2 
+    const avgRating = scouterRating > 0 && talentRating > 0
+      ? (scouterRating + talentRating) / 2
       : Math.max(scouterRating, talentRating);
 
     if (avgRating >= 4.5) return [85, 10, 3, 1, 1, 0];
@@ -551,8 +610,8 @@ barChartOptions: ChartOptions<'bar'> = {
     this.performanceMetrics = {
       scouterRating: scouterRating,
       talentRating: talentRating,
-      averageRating: scouterRating > 0 && talentRating > 0 
-        ? (scouterRating + talentRating) / 2 
+      averageRating: scouterRating > 0 && talentRating > 0
+        ? (scouterRating + talentRating) / 2
         : Math.max(scouterRating, talentRating),
       totalEngagements: totalEngagements,
       ratedEngagements: ratedEngagements,
@@ -566,7 +625,7 @@ barChartOptions: ChartOptions<'bar'> = {
     const ratingScore = ((scouterRating + talentRating) / 10) * 40; // Max 40 points
     const consistencyScore = (ratedEngagements / Math.max(this.ratingList.length, 1)) * 30; // Max 30 points
     const balanceScore = (Math.min(scouterRating, talentRating) / Math.max(scouterRating, talentRating, 1)) * 30; // Max 30 points
-    
+
     return Math.min(100, ratingScore + consistencyScore + balanceScore);
   }
 
@@ -593,7 +652,7 @@ barChartOptions: ChartOptions<'bar'> = {
   private showPlaceholderData() {
     this.dataSourceInfo = '⚠️ Unable to load data';
     this.warningMessage = 'Please check your connection or try again later.';
-    
+
     this.pieChartData = {
       labels: ['Data unavailable'],
       datasets: [{
@@ -664,23 +723,23 @@ barChartOptions: ChartOptions<'bar'> = {
   }
 
   get averageScouterRating(): string {
-    const ratings = this.barChartData.datasets[0].data.filter((r: any) => 
+    const ratings = this.barChartData.datasets[0].data.filter((r: any) =>
       typeof r === 'number' && r > 0
     ) as number[];
-    
+
     if (ratings.length === 0) return 'N/A';
-    
+
     const sum = ratings.reduce((acc: number, curr: number) => acc + curr, 0);
     return (sum / ratings.length).toFixed(1);
   }
 
   get averageTalentRating(): string {
-    const ratings = this.barChartData.datasets[1].data.filter((r: any) => 
+    const ratings = this.barChartData.datasets[1].data.filter((r: any) =>
       typeof r === 'number' && r > 0
     ) as number[];
-    
+
     if (ratings.length === 0) return 'N/A';
-    
+
     const sum = ratings.reduce((acc: number, curr: number) => acc + curr, 0);
     return (sum / ratings.length).toFixed(1);
   }
@@ -703,11 +762,11 @@ barChartOptions: ChartOptions<'bar'> = {
   }
 
   // Add this method to generate star ratings
-getStars(rating: number): string {
-  const fullStars = Math.floor(rating);
-  const halfStar = rating % 1 >= 0.5;
-  let stars = '⭐'.repeat(fullStars);
-  if (halfStar) stars += '½';
-  return stars;
-}
+  getStars(rating: number): string {
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5;
+    let stars = '⭐'.repeat(fullStars);
+    if (halfStar) stars += '½';
+    return stars;
+  }
 }

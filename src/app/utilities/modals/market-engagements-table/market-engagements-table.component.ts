@@ -131,6 +131,7 @@ export class MarketEngagementsTableComponent implements OnInit {
     console.log('✅ Mock data loaded, count:', this.hires.length);
   }
 
+// In market-engagements-table.component.ts - update the openHireModal method
 async openHireModal(hire: any) {
   if (this.isProcessingClick) {
     return;
@@ -156,14 +157,17 @@ async openHireModal(hire: any) {
       // We're on the same talent's detail page
       console.log('✅ Already on same talent page, updating view');
       
-      // The hireSelected event will be handled by the parent
-      // No need to navigate
+      // Open the evaluation modal if hire is accepted
+      if (hire.offerStatus === 'Offer Accepted') {
+        console.log('✅ Opening Total Delivery Evaluation modal for accepted offer');
+        this.isModalOpen = true;
+      }
     } else {
       // Navigate to talent detail page
       const navigationExtras: NavigationExtras = {
         state: {
           shouldOpenModal: true,
-          modalType: this.getModalTypeForHire(hire), // Add this method
+          modalType: this.getModalTypeForHire(hire),
           hireData: hire,
         },
       };
@@ -179,6 +183,8 @@ async openHireModal(hire: any) {
     }, 500);
   }
 }
+
+
 
 // Add this helper method
 private getModalTypeForHire(hire: any): string {
@@ -417,16 +423,16 @@ private getModalTypeForHire(hire: any): string {
     if (this.currentPage > 1) this.currentPage--;
   }
 
-  onRatingUpdated(updateData: { hireId: string; rating: number }) {
-    const hireIndex = this.hires.findIndex((h) => h.id === updateData.hireId);
-    if (hireIndex !== -1) {
-      this.hires[hireIndex].yourRating = updateData.rating;
-    }
-
-    if (this.selectedHire?.id === updateData.hireId) {
-      this.selectedHire.yourRating = updateData.rating;
-    }
+onRatingUpdated(updateData: { hireId: string; rating: number }) {
+  const hireIndex = this.hires.findIndex((h) => h.id === updateData.hireId);
+  if (hireIndex !== -1) {
+    this.hires[hireIndex].yourRating = updateData.rating;
   }
+
+  if (this.selectedHire?.id === updateData.hireId) {
+    this.selectedHire.yourRating = updateData.rating;
+  }
+}
 
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {

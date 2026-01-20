@@ -121,9 +121,15 @@ export interface FilterScouterParam {
   param: string;
 }
 
-
+export interface satisFactoryComment {
+  scouterId: string;
+  dateOfComment: string;
+  remark: string;
+  rating: number;
+}
 
 export interface TotalHires {
+  // Basic fields
   id: string;
   profilePic: string;
   name: string;
@@ -134,22 +140,45 @@ export interface TotalHires {
   offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
   status: 'Active' | 'Pending' | 'Away' | string;
 
+  // Job details
   jobDescription: string;
+  
+  // ✅ ENSURE THESE ARE IN THE INTERFACE
   yourComment: string;
   yourRating: number;
   talentComment: string;
   talentRating: number;
 
+  // Backend IDs
   marketHireId: string;
   scouterId: string;
   talentId: string;
 
+  // Phone numbers
   scouterPhoneNumber?: string;
   talentPhoneNumber?: string;
 
+  // API response fields - ✅ MAKE SURE THESE ARE INCLUDED
+  satisFactoryCommentByScouter?: string;
+  satisFactoryCommentByTalent?: string;
+  
+  // Other API fields
+  talentName?: string;
+  scouterName?: string;
+  talentEmail?: string;
+  scouterEmail?: string;
+  dateOfHire?: string;
+  amountToPay?: string;
+  hireStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  talentIdWithDate?: string;
+  talentPicture?: string;
+  scouterPicture?: string;
+
+  // Debug
   _originalData?: any;
 }
-
 
 export const MockRecentHires: MockPayment[] = [
   {
