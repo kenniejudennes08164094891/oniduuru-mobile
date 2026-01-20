@@ -113,10 +113,43 @@ export interface MockPayment {
   location: Location;
 }
 
+
+
+
 export interface FilterScouterParam {
   key: string;
   param: string;
 }
+
+
+
+export interface TotalHires {
+  id: string;
+  profilePic: string;
+  name: string;
+  email: string;
+  date: string;
+  startDate: string;
+  amount: number;
+  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+  status: 'Active' | 'Pending' | 'Away' | string;
+
+  jobDescription: string;
+  yourComment: string;
+  yourRating: number;
+  talentComment: string;
+  talentRating: number;
+
+  marketHireId: string;
+  scouterId: string;
+  talentId: string;
+
+  scouterPhoneNumber?: string;
+  talentPhoneNumber?: string;
+
+  _originalData?: any;
+}
+
 
 export const MockRecentHires: MockPayment[] = [
   {

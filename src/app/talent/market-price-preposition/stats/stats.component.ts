@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ChartOptions, ChartData } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
-import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
@@ -15,7 +15,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class StatsComponent {
   headerHidden: false | undefined;
-  hire: MockPayment | undefined;
+  hire: TotalHires | undefined;
   userName: string = 'SeyiAde'; // default name
   isLoading: boolean = false;
 

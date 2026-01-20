@@ -4,7 +4,6 @@ import { imageIcons } from 'src/app/models/stores';
 import { MakePaymentPopupModalComponent } from 'src/app/utilities/modals/make-payment-popup-modal/make-payment-popup-modal.component';
 import { PaymentService } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
-import { MockPayment } from 'src/app/models/mocks';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
@@ -52,7 +51,6 @@ export class ScouterDashboardComponent implements OnInit {
 
 
   notificationCount: number = 0;
-  // hire: MockPayment | undefined;
   images = imageIcons;
   loading: string = 'Loading...';
   showSpinner: boolean = true;

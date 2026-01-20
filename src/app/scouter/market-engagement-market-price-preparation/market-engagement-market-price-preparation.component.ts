@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
@@ -9,6 +9,10 @@ import { ReconsiderOfferModalComponent } from 'src/app/utilities/modals/reconsid
 import { ReconsiderConfirmationModalComponent } from 'src/app/utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
 import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component';
 import { ToastsService } from 'src/app/services/toasts.service';
+
+
+
+
 
 @Component({
   selector: 'app-market-engagement-market-price-preparation',
@@ -20,7 +24,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   @ViewChild(MarketEngagementsTableComponent)
   marketTableComponent!: MarketEngagementsTableComponent;
 
-  hire: MockPayment | undefined;
+  hire: TotalHires | undefined;
   images = imageIcons;
   userName: string = 'Viki West';
   isLoading: boolean = false;
@@ -43,95 +47,268 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     private authService: AuthService,
     private modalCtrl: ModalController,
     private toastService: ToastsService
-  ) {}
+  ) { }
 
-  ngOnInit() {
-    // Subscribe to route param changes
-    this.route.paramMap.subscribe((params) => {
-      const talentId = params.get('id');
-
-      if (talentId) {
-        // Check if talent changed
-        if (this.previousTalentId !== talentId) {
-          this.previousTalentId = talentId;
-          this.checkNavigationState();
-          this.loadHireDetails(talentId);
+ngOnInit() {
+  // Subscribe to route param changes
+  this.route.paramMap.subscribe((params) => {
+    const talentId = params.get('id');
+    
+    console.log('🔄 Route changed - Talent ID:', talentId);
+    
+    if (talentId) {
+      // Check navigation state FIRST (this contains the actual hire data)
+      this.checkNavigationState(talentId);
+      
+      // Reset loading state
+      this.isLoading = true;
+      
+      // Always load hire details when param changes
+      this.previousTalentId = talentId;
+      
+      // If we have state data, use it immediately
+      if (this.selectedModalHire) {
+        console.log('✅ Using hire data from navigation state:', this.selectedModalHire.name);
+        this.hire = this.selectedModalHire;
+        this.userName = this.selectedModalHire.name || 'Unknown Talent';
+        this.isLoading = false;
+        
+        // Check if we need to open a modal
+        if (this.shouldOpenModalOnLoad) {
+          this.openModalAfterDataLoad();
         }
+      } else {
+        // Otherwise load from API
+        this.loadHireDetails(talentId);
       }
+      
+      // Reset modal states
+      this.shouldOpenModalOnLoad = false;
+      this.modalTypeToOpen = '';
+    }
+  });
+}
+
+private checkNavigationState(talentId: string) {
+  const navigation = this.router.getCurrentNavigation();
+  
+  // Check BOTH extras.state and history.state
+  let stateData = null;
+  
+  if (navigation?.extras?.state) {
+    stateData = navigation.extras.state as any;
+    console.log('📦 Navigation extras state:', stateData);
+  } else if (history.state) {
+    // Fallback to history.state
+    stateData = history.state;
+    console.log('📦 History state:', stateData);
+  }
+  
+  if (stateData?.hireData) {
+    const hireData = stateData.hireData;
+    console.log('✅ Found hire data in navigation state:', {
+      name: hireData.name,
+      id: hireData.id,
+      talentId: hireData.talentId,
+      matchesRouteId: hireData.id === talentId || hireData.talentId === talentId
+    });
+    
+    // Always set the state data regardless of ID match
+    this.shouldOpenModalOnLoad = stateData.shouldOpenModal || false;
+    this.modalTypeToOpen = stateData.modalType || '';
+    this.selectedModalHire = hireData;
+    
+    console.log('📊 Modal states set:', {
+      shouldOpenModal: this.shouldOpenModalOnLoad,
+      modalType: this.modalTypeToOpen
     });
   }
+}
 
-  private checkNavigationState() {
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      const state = navigation.extras.state as any;
+loadHireDetails(talentId: string) {
+  this.isLoading = true;
 
-      if (state.shouldOpenModal && state.hireData) {
-        this.shouldOpenModalOnLoad = true;
-        this.modalTypeToOpen = state.modalType || '';
-        this.selectedModalHire = state.hireData;
-        console.log('Modal should open after load:', this.modalTypeToOpen);
+  const currentUser = this.authService.getCurrentUser();
+  const scouterId = currentUser?.scouterId || currentUser?.id;
+
+  if (!scouterId) {
+    console.error('❌ No scouter ID found');
+    this.isLoading = false;
+    return;
+  }
+
+  console.log('🔍 Loading hire details for talent ID:', talentId);
+  console.log('🎯 Scouter ID:', scouterId);
+
+  // Use the talentId directly as the API expects it
+  this.scouterService.getAllMarketsByScouter(scouterId, {
+    talentId: talentId, // Pass the talentId directly
+    limit: 10,
+  }).subscribe({
+    next: (response: any) => {
+      console.log('📊 API Response:', {
+        dataLength: response.data?.length || 0,
+        talentIdRequested: talentId
+      });
+
+      const data = response.data as TotalHires[] || [];
+      
+      if (data.length === 0) {
+        console.warn('⚠️ No data returned for talentId:', talentId);
+        
+        // If we have navigation state data, use it
+        if (this.selectedModalHire) {
+          console.log('✅ Using navigation state data since API returned empty');
+          this.setHireData(this.selectedModalHire);
+        } else {
+          // Try without talentId filter to see if we get any data
+          this.loadAllDataAndFindTalent(scouterId, talentId);
+        }
+        return;
+      }
+
+      // Use the first item from the filtered response
+      const hireData = data[0];
+      console.log('✅ Found hire data from API:', {
+        name: hireData.name,
+        talentId: hireData.talentId,
+        matchesRequested: hireData.talentId === talentId
+      });
+
+      this.setHireData(hireData);
+      this.isLoading = false;
+    },
+    error: (error: any) => {
+      console.error('❌ Error loading hire details:', error);
+      
+      // If we have navigation state data, use it as fallback
+      if (this.selectedModalHire) {
+        console.log('✅ Using navigation state data as fallback');
+        this.setHireData(this.selectedModalHire);
+        this.isLoading = false;
+      } else {
+        // Fallback: Try loading all data and searching
+        this.loadAllDataAndFindTalent(scouterId, talentId);
       }
     }
-  }
+  });
+}
 
-  loadHireDetails(talentId: string) {
-    this.isLoading = true;
 
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
-
-    if (!scouterId) {
-      console.error('❌ No scouter ID found');
+private loadAllDataAndFindTalent(scouterId: string, talentId: string) {
+  console.log('🔄 Loading all data to search for talent:', talentId);
+  
+  this.scouterService.getAllMarketsByScouter(scouterId, {
+    limit: 100,
+  }).subscribe({
+    next: (response: any) => {
+      const allData = response.data as TotalHires[] || [];
+      console.log(`📊 Total records loaded: ${allData.length}`);
+      
+      // Try to find the talent by various methods
+      let hireData = this.findTalentInData(allData, talentId);
+      
+      if (hireData) {
+        console.log('✅ Found in all data:', hireData.name);
+        this.setHireData(hireData);
+      } else {
+        console.error('❌ Talent not found in any data');
+        this.loadMockData(talentId);
+      }
+      
       this.isLoading = false;
-      return;
+    },
+    error: (error: any) => {
+      console.error('❌ Error loading all data:', error);
+      this.loadMockData(talentId);
+      this.isLoading = false;
     }
+  });
+}
 
-    console.log('🔍 Loading hire details for talent:', talentId);
-
-    this.scouterService
-      .getAllMarketsByScouter(scouterId, {
-        talentId: talentId,
-        limit: 10,
-      })
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Hire details response:', response);
-
-          if (response?.data && response.data.length > 0) {
-            const hireData = response.data[0];
-            this.hire = hireData;
-            this.userName = hireData?.name || 'Unknown Talent';
-
-            // Check if we need to open a modal after loading
-            if (this.shouldOpenModalOnLoad) {
-              this.openModalAfterDataLoad();
-            }
-          } else {
-            this.loadMockData(talentId);
-
-            if (this.shouldOpenModalOnLoad) {
-              setTimeout(() => {
-                this.openModalAfterDataLoad();
-              }, 500);
-            }
-          }
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Error loading hire details:', error);
-          this.loadMockData(talentId);
-
-          if (this.shouldOpenModalOnLoad) {
-            setTimeout(() => {
-              this.openModalAfterDataLoad();
-            }, 500);
-          }
-
-          this.isLoading = false;
-        },
-      });
+private findTalentInData(data: TotalHires[], talentId: string): TotalHires | undefined {
+  // Try multiple matching strategies
+  const strategies = [
+    // 1. Exact talentId match (most important)
+    (item: TotalHires) => item.talentId === talentId,
+    // 2. Check if talentId contains the search string
+    (item: TotalHires) => item.talentId?.includes(talentId),
+    // 3. Check if id contains the search string
+    (item: TotalHires) => item.id?.toString().includes(talentId),
+    // 4. Check if talentIdWithDate contains the search string
+    (item: TotalHires) => (item as any).talentIdWithDate?.includes(talentId),
+    // 5. Check if email contains the search string
+    (item: TotalHires) => item.email?.toLowerCase().includes(talentId.toLowerCase()),
+    // 6. Check if name contains the search string
+    (item: TotalHires) => item.name?.toLowerCase().includes(talentId.toLowerCase()),
+  ];
+  
+  for (let i = 0; i < strategies.length; i++) {
+    const match = data.find(strategies[i]);
+    if (match) {
+      console.log(`✅ Found with strategy ${i}: ${match.name}`);
+      return match;
+    }
   }
+  
+  return undefined;
+}
+
+private findExactTalent(data: TotalHires[], talentId: string): TotalHires | undefined {
+  console.log(`🔍 Searching for ${talentId} in ${data.length} records`);
+  
+  // Try multiple matching strategies in order of priority
+  const matchStrategies = [
+    // 1. Exact ID match
+    (item: TotalHires) => item.id === talentId,
+    // 2. Exact talentId match
+    (item: TotalHires) => item.talentId === talentId,
+    // 3. Check if talentId contains the ID (partial match)
+    (item: TotalHires) => item.talentId?.includes(talentId),
+    // 4. Check if ID contains talentId (partial match)
+    (item: TotalHires) => item.id?.includes(talentId),
+    // 5. Check talentIdWithDate if it exists
+    (item: TotalHires) => (item as any).talentIdWithDate?.includes(talentId),
+  ];
+  
+  for (let i = 0; i < matchStrategies.length; i++) {
+    const match = data.find(matchStrategies[i]);
+    if (match) {
+      console.log(`✅ Found with strategy ${i}: ${match.name}`);
+      return match;
+    }
+  }
+  
+  console.log('❌ No exact match found');
+  return undefined;
+}
+
+
+
+private setHireData(hireData: TotalHires) {
+  // Make sure the hire data has all required properties
+  this.hire = {
+    ...hireData,
+    jobDescription: hireData.jobDescription || '',
+    yourComment: hireData.yourComment || '',
+    yourRating: hireData.yourRating || 0,
+    talentComment: hireData.talentComment || '',
+    talentRating: hireData.talentRating || 0,
+  };
+  
+  this.userName = hireData?.name || 'Unknown Talent';
+  
+  console.log('✅ Hire data set:', {
+    name: hireData.name,
+    id: hireData.id,
+    talentId: hireData.talentId
+  });
+  
+  // Check if we need to open a modal after loading
+  if (this.shouldOpenModalOnLoad) {
+    this.openModalAfterDataLoad();
+  }
+}
 
   private openModalAfterDataLoad() {
     console.log('Opening modal after data load:', this.modalTypeToOpen);
@@ -156,9 +333,23 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   }
 
   // Handle table hire click
-  onTableHireClick(hire: MockPayment) {
-    console.log('📋 Table hire clicked:', hire.name);
+// Handle table hire click
+onTableHireClick(hire: TotalHires) {
+  console.log('📋 Table hire clicked in detail page:', hire.name);
 
+  // Check current route talent ID
+  const currentTalentId = this.route.snapshot.paramMap.get('id');
+
+  if (currentTalentId === hire.id || currentTalentId === hire.talentId) {
+    // Already on the same talent page - update the current hire
+    this.hire = hire;  // This will update the initialHire input
+    this.userName = hire.name || 'Talent';
+    console.log('✅ Updated current hire to:', hire.name);
+    
+    // Open modal if needed
+    this.openModalForCurrentHire(hire);
+  } else {
+    // Navigate to the talent's detail page
     const navigationExtras: NavigationExtras = {
       state: {
         shouldOpenModal: true,
@@ -171,6 +362,30 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       ['/scouter/market-engagement-market-price-preparation', hire.id],
       navigationExtras
     );
+  }
+}
+
+  private updateStatsWithHire(hire: TotalHires) {
+    console.log('📊 Updating stats with hire:', hire.name);
+
+    // Update the current hire
+    this.hire = hire;
+    this.userName = hire.name || 'Talent';
+
+    // This will automatically update the stats component through the tabs component
+    // since the initialHire input is bound
+  }
+
+  private openModalForCurrentHire(hire: any) {
+    console.log('Opening modal for current hire:', hire.name);
+
+    const modalType = this.getModalTypeForHire(hire);
+
+    if (modalType === 'reconsider') {
+      this.openReconsiderModal(hire);
+    } else if (modalType === 'total-delivery') {
+      this.openTotalDeliveryModal(hire);
+    }
   }
 
   private getModalTypeForHire(hire: any): string {
@@ -438,25 +653,39 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     console.error('❌', message);
   }
 
-  private loadMockData(talentId: string) {
-    const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
-    if (mock) {
-      this.hire = {
-        ...mock,
-        jobDescription: mock.jobDescription ?? '',
-        yourComment: mock.yourComment ?? '',
-        yourRating: mock.yourRating ?? 0,
-        talentComment: mock.talentComment ?? '',
-        talentRating: mock.talentRating ?? 0,
-      } as MockPayment;
-      this.userName = this.hire?.name || 'Unknown Talent';
-    } else {
-      console.error('❌ No mock data found for talent ID:', talentId);
-      this.hire = this.createFallbackHire(talentId);
-    }
+private loadMockData(talentId: string) {
+  console.log('🔍 Searching mock data for:', talentId);
+  
+  // First try exact match with talentId
+  let mock = MockRecentHires.find((m) => m.talentId === talentId);
+  
+  // Then try partial matches
+  if (!mock) {
+    mock = MockRecentHires.find((m) => 
+      m.talentId?.includes(talentId) ||
+      m.id?.toString().includes(talentId) ||
+      m.email?.toLowerCase().includes(talentId.toLowerCase())
+    );
   }
+  
+  if (mock) {
+    this.hire = {
+      ...mock,
+      jobDescription: mock.jobDescription ?? '',
+      yourComment: mock.yourComment ?? '',
+      yourRating: mock.yourRating ?? 0,
+      talentComment: mock.talentComment ?? '',
+      talentRating: mock.talentRating ?? 0,
+    } as TotalHires;
+    this.userName = this.hire?.name || 'Unknown Talent';
+    console.log('✅ Found in mock data:', this.hire.name);
+  } else {
+    console.error('❌ No mock data found for talent ID:', talentId);
+    this.hire = this.createFallbackHire(talentId);
+  }
+}
 
-  private createFallbackHire(talentId: string): MockPayment {
+  private createFallbackHire(talentId: string): TotalHires {
     return {
       id: talentId,
       profilePic: 'assets/images/default-avatar.png',
@@ -472,7 +701,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       yourRating: 0,
       talentComment: '',
       talentRating: 0,
-    } as MockPayment;
+    } as TotalHires;
   }
 
   private updateReconsideredOffer(offerData: any) {

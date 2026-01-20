@@ -1,0 +1,43 @@
+/* market-stats.component.scss */
+:host {
+  display: block;
+}
+
+/* Custom scrollbar for engagement history */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Chart tooltip styling */
+.chartjs-tooltip {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  color: white !important;
+  font-size: 12px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .min-w-\[800px\] {
+    min-width: 600px;
+  }
+}

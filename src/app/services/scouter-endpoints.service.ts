@@ -1005,149 +1005,289 @@ export class ScouterEndpointsService {
       );
   }
 
-  // Add to scouter-endpoints.service.ts
+getAllMarketsByScouter(
+  scouterId: string,
+  params?: {
+    statusParams?: string;
+    talentId?: string;
+    searchText?: string;
+    limit?: number;
+    pageNo?: number;
+  }
+): Observable<any> {
+  if (!scouterId || scouterId.trim() === '') {
+    console.error('❌ Invalid scouterId provided:', scouterId);
+    return throwError(() => new Error('Invalid scouter ID provided'));
+  }
 
-  // Market Engagements
-  getAllMarketsByScouter(
-    scouterId: string,
-    params?: {
-      statusParams?: string;
-      talentId?: string;
-      limit?: number;
-      pageNo?: number;
+  // Encode the scouterId to handle special characters
+  const encodedScouterId = encodeURIComponent(scouterId);
+  const url = `${this.baseUrl}/${endpoints.getMarketsByScouterId}/${encodedScouterId}`;
+  let httpParams = new HttpParams();
+
+  // Add all parameters exactly as API expects
+  if (params?.statusParams) {
+    httpParams = httpParams.set('statusParams', params.statusParams);
+  }
+
+  if (params?.talentId) {
+    httpParams = httpParams.set('talentId', params.talentId);
+  }
+
+  if (params?.searchText) {
+    httpParams = httpParams.set('searchText', params.searchText);
+  }
+
+  // ✅ Ensure limit is between 0-10 as per API requirement
+  const limit = params?.limit ? Math.min(Math.max(0, params.limit), 10) : 10;
+  httpParams = httpParams.set('limit', limit.toString());
+
+  if (params?.pageNo) {
+    httpParams = httpParams.set('pageNo', params.pageNo.toString());
+  }
+
+  console.log('📊 API Request Details:', {
+    url,
+    scouterId,
+    encodedScouterId,
+    params: httpParams.toString(),
+    fullUrl: `${url}?${httpParams.toString()}`,
+    expectedCurlFormat: `curl -X 'GET' '${url}?${httpParams.toString()}' -H 'accept: */*' -H 'Authorization: Bearer ...'`
+  });
+
+  // Get headers and add debug
+  const headers = this.jwtInterceptor.customHttpHeaders;
+  const token = this.getToken();
+  
+  console.log('🔍 Authentication Debug:', {
+    hasToken: !!token,
+    tokenPreview: token ? token.substring(0, 30) + '...' : 'No token',
+    headers: {
+      hasAuthorization: headers.has('Authorization'),
+      authorizationValue: headers.get('Authorization')
     }
-  ): Observable<any> {
-    const encodedScouterId = encodeURIComponent(scouterId);
-    const url = `${this.baseUrl}/market/v1/get-all-markets/scouter/${encodedScouterId}`;
+  });
 
-    let httpParams = new HttpParams();
-
-    if (params?.statusParams) {
-      httpParams = httpParams.set('statusParams', params.statusParams);
-    }
-
-    if (params?.talentId) {
-      httpParams = httpParams.set('talentId', params.talentId);
-    }
-
-    // ✅ FIX: Ensure limit is between 0-10 as per API requirement
-    const limit = params?.limit ? Math.min(Math.max(0, params.limit), 10) : 10;
-    httpParams = httpParams.set('limit', limit.toString());
-
-    if (params?.pageNo) {
-      httpParams = httpParams.set('pageNo', params.pageNo.toString());
-    }
-
-    console.log('📊 Fetching market engagements:', {
-      url,
-      limit,
-      pageNo: params?.pageNo,
-    });
-
-    return this.http
-      .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders,
-        params: httpParams,
+  // Make the request
+  return this.http
+    .get<any>(url, {
+      headers: headers,
+      params: httpParams,
+    })
+    .pipe(
+      timeout(30000), // Increased timeout
+      tap((response) => {
+        console.log('✅ API Response Received:', {
+          status: 'Success',
+          message: response.message,
+          hasDetails: !!response.details,
+          detailsLength: response.details?.length,
+          pagination: response.paginationParams
+        });
+      }),
+      map((response) => {
+        console.log('📊 Processing API Response...');
+        return this.transformMarketResponse(response);
+      }),
+      catchError((error) => {
+        console.error('❌ API Request Failed:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error,
+          url: url,
+          requestDetails: {
+            scouterId: scouterId,
+            params: params
+          }
+        });
+        
+        // Handle specific error cases
+        if (error.status === 401) {
+          console.warn('⚠️ Unauthorized - Token may be expired or invalid');
+          return throwError(() => new Error('Session expired. Please login again.'));
+        } else if (error.status === 404) {
+          console.warn('⚠️ Endpoint not found:', url);
+          return throwError(() => new Error('API endpoint not found. Please check the URL.'));
+        } else if (error.status === 0) {
+          console.warn('⚠️ Network error - CORS or connectivity issue');
+          return throwError(() => new Error('Network error. Please check your internet connection.'));
+        } else if (error.status === 400) {
+          console.warn('⚠️ Bad request - Check parameters');
+          return throwError(() => new Error('Invalid request. Please check your parameters.'));
+        }
+        
+        return throwError(
+          () => new Error(error.error?.message || 'Failed to load market engagements')
+        );
       })
-      .pipe(
-        timeout(15000),
-        map((response) => this.transformMarketResponse(response)),
-        catchError((error) => {
-          console.error('❌ Failed to fetch market engagements:', error);
-          return throwError(
-            () =>
-              new Error(
-                error.error?.message || 'Failed to load market engagements'
-              )
-          );
-        })
-      );
+    );
+}
+
+private transformMarketResponse(response: any): any {
+  console.log('🔍 RAW API Response for transformation:', response);
+
+  if (!response) {
+    console.log('❌ No response received');
+    return { data: [], total: 0, currentPage: 1, totalPages: 1 };
   }
 
-  private transformMarketResponse(response: any): any {
-    if (!response) return { data: [], total: 0 };
+  // ✅ DECODE the base64 details field
+  let decodedDetails: any[] = [];
+  
+  if (response.details && typeof response.details === 'string') {
+    try {
+      console.log('🔍 Attempting to decode base64 details...');
+      console.log('Base64 string length:', response.details.length);
+      console.log('Base64 string preview:', response.details.substring(0, 100) + '...');
+      
+      // Decode base64
+      const decodedString = atob(response.details);
+      console.log('✅ Decoded string length:', decodedString.length);
+      console.log('✅ Decoded string preview:', decodedString.substring(0, 200) + '...');
+      
+      // Parse JSON
+      decodedDetails = JSON.parse(decodedString);
+      console.log('✅ Successfully parsed JSON. Items found:', decodedDetails.length);
+      console.log('✅ First item:', decodedDetails[0]);
+    } catch (error) {
+      console.error('❌ Failed to decode or parse details:', error);
+      console.error('Error details:', {
+        // errorName: error.name,
+        // errorMessage: error.message,
+        base64String: response.details?.substring(0, 100)
+      });
+    }
+  } else {
+    console.log('⚠️ No details field or details is not a string:', response.details);
+  }
 
-    // Transform the API response to match your frontend structure
-    const transformedData =
-      response.data?.map((item: any) => ({
-        // Basic fields
-        id: item.talentId || item.id || Math.random().toString(),
-        profilePic: item.profilePicture || 'assets/images/default-avatar.png',
-        name: item.talentName || 'Unknown Talent',
-        email: item.talentEmail || 'No email',
-        date: item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString()
-          : 'N/A',
-        startDate: item.startDate
-          ? new Date(item.startDate).toLocaleDateString()
-          : 'N/A',
-        amount: item.amount || item.price || 0,
-        offerStatus: this.mapStatus(item.status),
-        status: this.mapActiveStatus(item.status),
-
-        // ✅ CRITICAL: Get the actual backend IDs for reconsider endpoint
-        marketHireId: item.marketHireId || item.marketId || item.id,
-
-        // ✅ Construct talentId with date format: "talent/ID/Date"
-        talentIdWithDate:
-          item.talentIdWithDate ||
-          this.constructTalentIdWithDate(item.talentId, item.createdAt),
-
-        // Additional fields for the detail view
-        jobDescription: item.jobDescription || 'No description provided',
-        yourComment: item.scouterComment || '',
-        yourRating: item.scouterRating || 0,
-        talentComment: item.talentComment || '',
-        talentRating: item.talentRating || 0,
-
-        // ✅ Store original backend data for debugging
-        _originalData: item,
-      })) || [];
-
+  // Transform the API response to match your frontend structure
+  const transformedData = decodedDetails.map((item: any, index: number) => {
+    console.log(`🔍 Processing item ${index}:`, item);
+    
+    // Parse amount (remove commas from "450,000")
+    let amount = 0;
+    if (item.amountToPay) {
+      try {
+        // Remove commas and convert to number
+        const amountString = item.amountToPay.toString().replace(/,/g, '');
+        amount = parseFloat(amountString);
+      } catch (e) {
+        console.warn('Could not parse amount:', item.amountToPay);
+      }
+    }
+    
     return {
-      data: transformedData,
-      total: response.total || response.count || transformedData.length,
-      currentPage: response.currentPage || 1,
-      totalPages: response.totalPages || 1,
+      // Use talentId or generate a unique ID
+      id: item.talentId || item.id || `hire-${index}-${Date.now()}`,
+      
+      // Profile picture - use talentPicture from decoded data
+      profilePic: item.talentPicture || 'assets/images/default-avatar.png',
+      
+      // Names and emails
+      name: item.talentName || 'Unknown Talent',
+      email: item.talentEmail || 'No email',
+      
+      // Dates
+      date: item.dateOfHire || item.createdAt 
+        ? this.formatDate(item.dateOfHire || item.createdAt)
+        : 'N/A',
+      startDate: item.startDate 
+        ? this.formatDate(item.startDate)
+        : 'N/A',
+      
+      // Amount (parsed)
+      amount: amount,
+      
+      // Status mapping
+      offerStatus: this.mapStatus(item.hireStatus || item.status),
+      status: this.mapActiveStatus(item.hireStatus || item.status),
+      
+      // Backend IDs
+      marketHireId: item.marketHireId || item.id,
+      scouterId: item.scouterId,
+      talentId: item.talentId,
+      
+      // Additional fields
+      jobDescription: item.jobDescription || 'No description provided',
+      yourComment: item.satisFactoryCommentByScouter || item.scouterComment || '',
+      yourRating: item.scouterRating || 0,
+      talentComment: item.talentComment || '',
+      talentRating: item.talentRating || 0,
+      
+      // Phone numbers
+      scouterPhoneNumber: item.scouterPhoneNumber,
+      talentPhoneNumber: item.talentPhoneNumber,
+      
+      // Original data for debugging
+      _originalData: item,
     };
+  });
+
+  console.log('✅ Transformed data:', transformedData);
+  console.log('✅ Pagination params from API:', response.paginationParams);
+
+  const totals = response.paginationParams?.totals || transformedData.length;
+  const limit = response.paginationParams?.limit || 10;
+  
+  return {
+    data: transformedData,
+    total: totals,
+    currentPage: response.paginationParams?.pageNo || 1,
+    totalPages: Math.ceil(totals / limit) || 1,
+    message: response.message,
+    rawResponse: response, // Keep original for debugging
+  };
+}
+
+// Add this helper method to format dates
+private formatDate(dateString: string): string {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  } catch (error) {
+    console.warn('Could not parse date:', dateString);
+    return dateString;
   }
+}
 
-  // Helper to construct talentId with date format
-  private constructTalentIdWithDate(
-    talentId: string,
-    createdAt: string
-  ): string {
-    if (!talentId) return '';
+// Update status mapping to handle your specific status values
+private mapStatus(
+  apiStatus: string
+): 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' {
+  const statusMap: { [key: string]: any } = {
+    'awaiting-acceptance': 'Awaiting Acceptance',
+    'offer-accepted': 'Offer Accepted',
+    'offer-declined': 'Offer Rejected',
+    'accepted': 'Offer Accepted',
+    'pending': 'Awaiting Acceptance',
+    'rejected': 'Offer Rejected',
+  };
+  
+  const mappedStatus = statusMap[apiStatus?.toLowerCase()] || 'Awaiting Acceptance';
+  console.log(`🔍 Status mapping: ${apiStatus} -> ${mappedStatus}`);
+  return mappedStatus;
+}
 
-    const date = createdAt ? new Date(createdAt) : new Date();
-    const day = date.getDate();
-    const month = date.toLocaleString('en-US', { month: 'long' });
-    const year = date.getFullYear();
-
-    return `talent/${talentId}/${day}${month}${year}`;
-    // Or return `talent/${talentId}/${day}-${month}-${year}` based on your backend
-  }
-
-  private mapStatus(
-    apiStatus: string
-  ): 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' {
-    const statusMap: { [key: string]: any } = {
-      'offer-accepted': 'Offer Accepted',
-      'awaiting-acceptance': 'Awaiting Acceptance',
-      'offer-declined': 'Offer Rejected',
-    };
-    return statusMap[apiStatus] || 'Awaiting Acceptance';
-  }
-
-  private mapActiveStatus(apiStatus: string): 'Active' | 'Pending' | 'Away' {
-    const statusMap: { [key: string]: any } = {
-      'offer-accepted': 'Active',
-      'awaiting-acceptance': 'Pending',
-      'offer-declined': 'Away',
-    };
-    return statusMap[apiStatus] || 'Pending';
-  }
-
+private mapActiveStatus(apiStatus: string): 'Active' | 'Pending' | 'Away' {
+  const statusMap: { [key: string]: any } = {
+    'awaiting-acceptance': 'Pending',
+    'offer-accepted': 'Active',
+    'offer-declined': 'Away',
+    'accepted': 'Active',
+    'pending': 'Pending',
+    'rejected': 'Away',
+  };
+  
+  return statusMap[apiStatus?.toLowerCase()] || 'Pending';
+}
   // ============ DASHBOARD STATISTICS ============
 
   /**
@@ -1385,5 +1525,42 @@ export class ScouterEndpointsService {
         })
       );
   }
+
+
+
+/**
+ * Get talent performance grading (categorization)
+ * GET /market/v1/talent-market-grading/scouter/{scouterId}
+ */
+public getTalentPerformanceGrading(scouterId: string): Observable<any> {
+  if (!scouterId || scouterId.trim() === '') {
+    return throwError(() => new Error('Invalid scouterId provided'));
+  }
+
+  const encodedScouterId = encodeURIComponent(scouterId);
+  const url = `${this.baseUrl}/market/v1/talent-market-grading/scouter/${encodedScouterId}`;
+
+  console.log('📊 Fetching talent performance grading:', url);
+
+  return this.http
+    .get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    })
+    .pipe(
+      timeout(15000),
+      tap((response) =>
+        console.log('✅ Talent performance grading fetched:', response)
+      ),
+      catchError((error) => {
+        console.error('❌ Failed to fetch talent performance grading:', error);
+        return throwError(
+          () =>
+            new Error(
+              error.error?.message || 'Failed to load talent performance data'
+            )
+        );
+      })
+    );
+}
 }
 
