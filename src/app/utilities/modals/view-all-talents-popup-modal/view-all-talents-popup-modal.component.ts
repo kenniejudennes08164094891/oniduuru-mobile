@@ -1,4 +1,3 @@
-// view-all-talents-popup-modal.component.ts
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController, Platform } from '@ionic/angular';
@@ -50,6 +49,7 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
     }
 
     this.loading = true;
+    this.error = '';
 
     console.log('🔍 Fetching market profile for talent:', talentId);
 
@@ -61,38 +61,30 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
       },
       error: (err) => {
         this.loading = false;
-        this.error = err.message || 'Failed to load talent profile';
+        this.error = err.message || 'Failed to load talent profile. Please try again.';
         console.error('❌ Error loading market profile:', err);
-
-        // Fallback to existing data if API fails
-        this.setupFallbackData();
+        
+        // Clear all data on error
+        this.marketProfile = null;
+        this.skillSet = [];
+        this.marketReviews = [];
+        this.pictorialDocumentations = [];
       }
     });
   }
 
   // Helper method to extract talent ID from various possible locations
   private getTalentId(): string | null {
-    // Check multiple possible locations for talent ID
     const possibleIdLocations = [
-      this.hire?._raw?.talentId,      // From mapped talent data
-      this.talentData?._raw?.talentId, // From original talent data
-      this.hire?.talentId,            // Direct talentId field
-      this.talentData?.talentId,      // Direct talentId field
-      this.hire?.id,                  // ID field (might be talent ID)
-      this.talentData?.id             // ID field (might be talent ID)
+      this.hire?._raw?.talentId,
+      this.talentData?._raw?.talentId,
+      this.hire?.talentId,
+      this.talentData?.talentId,
+      this.hire?.id,
+      this.talentData?.id
     ];
 
-    // Return the first non-null/undefined value
-    const talentId = possibleIdLocations.find(id => id);
-
-    console.log('🔍 Looking for talent ID in:', {
-      hire: this.hire,
-      talentData: this.talentData,
-      possibleIds: possibleIdLocations,
-      foundId: talentId
-    });
-
-    return talentId || null;
+    return possibleIdLocations.find(id => id) || null;
   }
 
   private processMarketProfile(response: any) {
@@ -127,22 +119,23 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
     try {
       let skillSets: any[] = [];
 
-      // If skillSets is a string, parse it
       if (typeof skillSetsData === 'string') {
         skillSets = JSON.parse(skillSetsData);
       } else if (Array.isArray(skillSetsData)) {
         skillSets = skillSetsData;
       }
 
-      // Map API skill format to your component's expected format
-      return skillSets.map((skill: any) => ({
-        jobTitle: skill.skill || skill.jobTitle || skill.name || 'Unknown Skill',
-        skillLevel: skill.skillLevel || skill.level || skill.experienceLevel || 'Intermediate',
-        amount: this.parsePrice(skill.pricing || skill.amount || skill.hourlyRate),
-        pricing: skill.pricing, // Keep original pricing string
-        description: skill.description || '',
-        _raw: skill
-      }));
+      // Filter out any empty/null skill sets
+      return skillSets
+        .filter(skill => skill && (skill.skill || skill.jobTitle || skill.name))
+        .map((skill: any) => ({
+          jobTitle: skill.skill || skill.jobTitle || skill.name || 'Unknown Skill',
+          skillLevel: skill.skillLevel || skill.level || skill.experienceLevel || '',
+          amount: this.parsePrice(skill.pricing || skill.amount || skill.hourlyRate),
+          pricing: skill.pricing,
+          description: skill.description || '',
+          _raw: skill
+        }));
     } catch (error) {
       console.warn('⚠️ Error parsing skill sets:', error);
       return [];
@@ -152,9 +145,10 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
   private parseJsonField(fieldData: any): any[] {
     try {
       if (typeof fieldData === 'string') {
-        return JSON.parse(fieldData);
+        const parsed = JSON.parse(fieldData);
+        return Array.isArray(parsed) ? parsed.filter(item => item) : [];
       } else if (Array.isArray(fieldData)) {
-        return fieldData;
+        return fieldData.filter(item => item);
       }
       return [];
     } catch (error) {
@@ -167,13 +161,9 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
     if (!priceString) return 0;
 
     try {
-      // Convert to string if it's not already
       const str = String(priceString);
-
-      // Remove commas and any non-numeric characters except decimal point
       const numericString = str.replace(/[^\d.]/g, '');
       const price = parseFloat(numericString);
-
       return isNaN(price) ? 0 : price;
     } catch (error) {
       console.warn('⚠️ Error parsing price:', priceString);
@@ -181,17 +171,16 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
     }
   }
 
-  private setupFallbackData() {
-    // Use existing hire data if API fails
-    if (this.hire?.skillSet && Array.isArray(this.hire.skillSet)) {
-      this.skillSet = this.hire.skillSet;
-    } else if (this.talentData?.skillSets) {
-      // Try to parse skillSets from original talent data
-      this.skillSet = this.parseSkillSets(this.talentData.skillSets);
-    }
+  // Add this method to close the modal
+  closeModal() {
+    this.modalCtrl.dismiss();
   }
 
-  // In ViewAllTalentsPopupModalComponent class
+  // Check if we have any talent data to display
+  get hasTalentData(): boolean {
+    return !!this.marketProfile || !!this.hire || !!this.talentData;
+  }
+
   handleImageError(event: Event) {
     const imgElement = event.target as HTMLImageElement;
     imgElement.src = 'assets/images/default-avatar.png';
@@ -209,21 +198,22 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
     return this.marketProfile?.details?.fullName ||
       this.hire?.name ||
       this.talentData?.fullName ||
-      'Unknown Talent';
+      'Talent';
   }
 
   get location(): string {
     return this.marketProfile?.details?.location ||
       this.hire?.location ||
       this.talentData?.address ||
-      'Unknown Location';
+      'Location not specified';
   }
 
   get valueProposition(): string {
-    return this.marketProfile?.details?.valueProposition ||
+    const valueProp = this.marketProfile?.details?.valueProposition ||
       this.hire?.aboutTalent ||
-      this.talentData?.bio ||
-      'No description available';
+      this.talentData?.bio;
+    
+    return valueProp || 'No description available yet.';
   }
 
   get profilePic(): string {
@@ -233,12 +223,14 @@ export class ViewAllTalentsPopupModalComponent extends BaseModal implements OnIn
       'assets/images/default-avatar.png';
   }
 
-  // Calculate average rating from market reviews
   get averageRating(): number {
-    if (!this.marketReviews || this.marketReviews.length === 0) return 4; // Default
+    if (!this.marketReviews || this.marketReviews.length === 0) return 0;
 
-    const total = this.marketReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-    return Math.round(total / this.marketReviews.length);
+    const validReviews = this.marketReviews.filter(review => review.rating);
+    if (validReviews.length === 0) return 0;
+
+    const total = validReviews.reduce((sum, review) => sum + review.rating, 0);
+    return Math.round(total / validReviews.length);
   }
 
   hireTalent() {

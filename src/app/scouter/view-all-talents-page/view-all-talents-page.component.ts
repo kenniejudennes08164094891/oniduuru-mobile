@@ -280,4 +280,7 @@ private mapTalent(talent: any): any {
     this.currentPage = 1;
     this.loadTalents();
   }
+
+
+  
 }

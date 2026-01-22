@@ -1,5 +1,5 @@
-// recent-reviews-tab.component.ts
 import { Component, Input, OnInit } from '@angular/core';
+import { imageIcons } from 'src/app/models/stores';
 
 @Component({
   selector: 'app-recent-reviews-tab',
@@ -9,36 +9,50 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class RecentReviewsTabComponent implements OnInit {
   @Input() marketReviews: any[] = [];
-  @Input() hire: any; // For fallback
+  @Input() hire: any;
 
-  ngOnInit() {
-    // If no API reviews, use fallback
-    if (!this.marketReviews || this.marketReviews.length === 0) {
-      if (this.hire?.recentReview) {
-        this.marketReviews = this.hire.recentReview;
-      } else {
-        // Default reviews
-        this.marketReviews = [
-          {
-            profilePic: 'assets/images/default-avatar.png',
-            name: 'John Doe',
-            comment: 'Excellent work, very professional!',
-            rating: 5,
-            date: new Date().toISOString()
-          }
-        ];
-      }
+  images = imageIcons
+
+
+      ngOnInit() {
+    // Use only API data - no fallback mock data
+    if (!this.marketReviews || !Array.isArray(this.marketReviews)) {
+      this.marketReviews = [];
     }
   }
 
   // Map API review format to your expected format
   get formattedReviews(): any[] {
-    return this.marketReviews.map((review: any) => ({
-      profilePic: review.profilePicture || review.profilePic || 'assets/images/default-avatar.png',
-      name: review.reviewerName || review.name || 'Anonymous',
-      comment: review.comment || review.review || 'No comment available',
-      yourRating: review.rating || review.yourRating || 0,
-      date: review.date || new Date().toISOString()
-    }));
+    if (!this.marketReviews || this.marketReviews.length === 0) {
+      return [];
+    }
+
+    return this.marketReviews
+      .filter(review => review && (
+        review.reviewerName || review.name || review.comment || review.review
+      ))
+      .map((review: any) => {
+        // Try to parse date
+        let date = new Date();
+        try {
+          if (review.date) {
+            date = new Date(review.date);
+            if (isNaN(date.getTime())) {
+              date = new Date();
+            }
+          }
+        } catch (e) {
+          date = new Date();
+        }
+
+        return {
+          profilePic: review.profilePicture || review.profilePic || 'assets/images/default-avatar.png',
+          name: review.reviewerName || review.name || 'Anonymous',
+          comment: review.comment || review.review || 'No comment provided',
+          yourRating: review.rating || review.yourRating || 0,
+          date: date.toISOString()
+        };
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date, newest first
   }
 }

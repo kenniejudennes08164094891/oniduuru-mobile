@@ -1,36 +1,77 @@
-<!-- skill-set-tab.component.html -->
-<div *ngIf="skillSet.length > 0; else noSkills" class="overflow-x-auto">
-  <table class="min-w-full border border-gray-200 text-sm">
-    <tbody>
-      <tr *ngFor="let skill of skillSet" class="hover:bg-gray-50 border-b">
-        <td class="px-3 sm:px-6 py-6 flex items-center gap-2 sm:gap-3">
-          <input
-            type="checkbox"
-            [checked]="isChecked(skill)"
-            (change)="onCheckboxChange($event, skill)"
-            class="h-4 w-4 text-blue-600"
-          />
-          <div>
-            <p class="text-sm sm:text-base font-medium text-gray-900">
-              {{ skill.jobTitle }}
-            </p>
-            <p class="text-xs sm:text-sm text-gray-500">
-              {{ skill.skillLevel || "N/A" }}
-            </p>
-          </div>
-        </td>
-        <td
-          class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap font-semibold"
-        >
-          {{ formatPrice(skill.amount) }}
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<ng-template #noSkills>
-  <div class="text-center py-8 text-gray-500">
-    <p>No skills available for this talent</p>
+<div class="space-y-4">
+  <!-- Skills List -->
+  <div *ngIf="skillSet.length > 0" class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 text-sm">
+      <tbody>
+        <tr *ngFor="let skill of skillSet" class="hover:bg-gray-50 border-b">
+          <td class="px-3 sm:px-6 py-6 flex items-center gap-2 sm:gap-3">
+            <input
+              type="checkbox"
+              [checked]="isChecked(skill)"
+              (change)="onCheckboxChange($event, skill)"
+              class="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+            <div class="min-w-0 flex-1">
+              <p class="text-sm sm:text-base font-medium text-gray-900 truncate">
+                {{ skill.jobTitle }}
+              </p>
+              <p *ngIf="skill.skillLevel" class="text-xs sm:text-sm text-gray-500 truncate">
+                {{ skill.skillLevel }}
+              </p>
+              <p *ngIf="skill.description" class="text-xs text-gray-400 mt-1 line-clamp-2">
+                {{ skill.description }}
+              </p>
+            </div>
+          </td>
+          <td
+            class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap font-semibold"
+          >
+            {{ formatPrice(skill.amount) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-</ng-template>
+
+  <!-- Empty State -->
+  <div *ngIf="skillSet.length === 0" class="text-center ">
+    <div class="text-gray-400 mb-3 flex justify-center">
+      <!-- <ion-icon name="images-outline" class="text-4xl"></ion-icon> -->
+      <img [src]="images.NoDataImage" alt="No Data" class="h-55 w-55" >
+    </div>
+    <h3 class="text-lg font-medium text-gray-700 mb-2">No Skills Listed</h3>
+    <p class="text-gray-500 max-w-sm mx-auto">
+      This talent hasn't added any skills to their profile yet.
+    </p>
+  </div>
+
+  <!-- No Selection State -->
+  <div *ngIf="skillSet.length > 0 && selectedSkills.length === 0" 
+       class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <div class="flex items-start">
+      <ion-icon name="information-circle-outline" class="text-blue-500 text-xl mr-2 mt-0.5"></ion-icon>
+      <div>
+        <p class="text-sm text-blue-700">
+          Select skills you'd like to hire this talent for.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Selection Summary -->
+  <div *ngIf="selectedSkills.length > 0" 
+       class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+    <div class="flex justify-between items-center">
+      <div class="flex items-center">
+        <ion-icon name="checkmark-circle-outline" class="text-green-500 text-xl mr-2"></ion-icon>
+        <span class="text-sm font-medium text-green-700">
+          {{ selectedSkills.length }} skill{{ selectedSkills.length !== 1 ? 's' : '' }} selected
+        </span>
+      </div>
+      <button (click)="clearSelection()" 
+              class="text-sm text-green-600 hover:text-green-800 font-medium">
+        Clear
+      </button>
+    </div>
+  </div>
+</div>
