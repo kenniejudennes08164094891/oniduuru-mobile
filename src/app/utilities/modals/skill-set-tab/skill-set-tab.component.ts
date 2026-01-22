@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { imageIcons } from 'src/app/models/stores';
+// skill-set-tab.component.ts
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-skill-set-tab',
@@ -8,14 +8,14 @@ import { imageIcons } from 'src/app/models/stores';
   standalone: false,
 })
 export class SkillSetTabComponent {
-  @Input() hire: any;
-  @Input() selectedSkills: any[] = []; // ✅ get from parent
+  @Input() skillSet: any[] = []; // Use API skill set instead of hire
+  @Input() selectedSkills: any[] = [];
   @Output() skillSelectionChanged = new EventEmitter<any[]>();
 
-  images = imageIcons;
-
   isChecked(skill: any): boolean {
-    return this.selectedSkills.some((s) => s.jobTitle === skill.jobTitle);
+    return this.selectedSkills.some((s) => 
+      s.jobTitle === skill.jobTitle && s.skillLevel === skill.skillLevel
+    );
   }
 
   onCheckboxChange(event: Event, skill: any) {
@@ -24,9 +24,27 @@ export class SkillSetTabComponent {
       this.selectedSkills = [...this.selectedSkills, skill];
     } else {
       this.selectedSkills = this.selectedSkills.filter(
-        (s) => s.jobTitle !== skill.jobTitle
+        (s) => !(s.jobTitle === skill.jobTitle && s.skillLevel === skill.skillLevel)
       );
     }
-    this.skillSelectionChanged.emit(this.selectedSkills); // ✅ bubble up
+    this.skillSelectionChanged.emit(this.selectedSkills);
+  }
+
+  formatPrice(amount: any): string {
+    if (!amount) return 'Negotiable';
+    
+    // If it's already a formatted string, return it
+    if (typeof amount === 'string' && amount.includes('₦')) {
+      return amount;
+    }
+    
+    // If it's a number, format it
+    const num = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
+    
+    if (isNaN(num)) {
+      return typeof amount === 'string' ? amount : 'Negotiable';
+    }
+    
+    return `₦${num.toLocaleString('en-NG')}`;
   }
 }

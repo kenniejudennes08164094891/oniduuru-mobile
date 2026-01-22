@@ -9,6 +9,7 @@ import { PaginationParams } from 'src/app/models/mocks';
 import { ToastrService } from 'ngx-toastr';
 import { ModalController, ToastController, AlertController } from '@ionic/angular';
 import { EvaluationPageComponent } from 'src/app/components/evaluation-page/evaluation-page.component';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-market-price-preposition',
@@ -31,7 +32,7 @@ export class MarketPricePrepositionPage implements OnInit {
     private endpointService: EndpointService,
     private router: Router,
     private authService: AuthService,
-    private toastr: ToastrService,
+    private toast: ToastsService,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
     private evaluationPageComponent: EvaluationPageComponent,
@@ -180,22 +181,17 @@ export class MarketPricePrepositionPage implements OnInit {
     if (!this.hire) return;
 
     if (this.hire.offerStatus !== 'Offer Accepted') {
-      const toast = await this.toastCtrl.create({
-        message: 'You can only evaluate accepted offers.',
-        duration: 2000,
-        color: 'warning',
-      });
-      await toast.present();
+   
+      this.toast.openSnackBar('You can only evaluate accepted offers.', 'warning');
+
+
       return;
     }
 
     if (this.hire.isRated) {
-      const toast = await this.toastCtrl.create({
-        message: 'You have already rated this scouter.',
-        duration: 2000,
-        color: 'medium',
-      });
-      await toast.present();
+    
+      this.toast.openSnackBar('You have already rated this scouter.', 'warning');
+
       return;
     }
 
@@ -218,12 +214,9 @@ export class MarketPricePrepositionPage implements OnInit {
       );
       localStorage.setItem('MockRecentHires', JSON.stringify(updatedHires));
 
-      const toast = await this.toastCtrl.create({
-        message: `Thank you for evaluating ${this.hire?.scouterName || 'the scouter'}!`,
-        duration: 2000,
-        color: 'success',
-      });
-      await toast.present();
+   
+      this.toast.openSnackBar(`Thank you for evaluating ${this.hire?.scouterName || 'the scouter'}!`, 'success');
+
     }
   }
 
@@ -279,12 +272,8 @@ export class MarketPricePrepositionPage implements OnInit {
             const updated = hires.map((h: any) => (h.id === hire.id ? hire : h));
             localStorage.setItem('MockRecentHires', JSON.stringify(updated));
 
-            const toast = await this.toastCtrl.create({
-              message: `Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`,
-              duration: 2000,
-              color: choice === 'Offer Accepted' ? 'success' : 'danger',
-            });
-            await toast.present();
+            this.toast.openSnackBar(`Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`, `${choice === 'Offer Accepted' ? 'success' : 'error'}`);
+
 
             // After accepting, you can open evaluation modal immediately
             if (choice === 'Offer Accepted') {

@@ -1,29 +1,21 @@
+<!-- reels-and-documentation-tab.component.html -->
 <div class="space-y-6">
-  <!-- 🎥 Video Section -->
-  <div *ngIf="hire?.video" class="w-full">
-    <video
-      class="w-full h-[280px] rounded-lg shadow-md"
-      [src]="hire.video"
-      controls
-      preload="metadata"
-    >
-      Your browser does not support the video tag.
-    </video>
-  </div>
-
-  <!-- 🖼️ Pictures Section -->
-  <div *ngIf="hire as selectedHire">
-    <!-- 🖼️ Pictures Section -->
-    <div *ngIf="hire as selectedHire">
-      <h3 class="text-lg font-semibold mb-3">Portfolio Images</h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <img
-          *ngFor="let pic of selectedHire.pictures"
-          [src]="pic"
-          class="w-full h-44 object-cover rounded-lg shadow-sm"
-          alt="Portfolio Image"
-        />
-      </div>
+  <!-- Portfolio Images Section -->
+  <div *ngIf="pictures.length > 0">
+    <h3 class="text-lg font-semibold mb-3">Portfolio Images</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <img
+        *ngFor="let pic of pictures; let i = index"
+        [src]="pic"
+        [alt]="'Portfolio Image ' + (i + 1)"
+        class="w-full h-44 object-cover rounded-lg shadow-sm hover:scale-105 transition-transform"
+        (error)="handleImageError(i)" 
+      />
     </div>
+  </div>
+  
+  <!-- No Content Message -->
+  <div *ngIf="pictures.length === 0" class="text-center py-8 text-gray-500">
+    <p>No portfolio images available for this talent</p>
   </div>
 </div>

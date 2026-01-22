@@ -1,50 +1,60 @@
+<!-- view-all-talents-popup-modal.component.html -->
 <ion-content class="ion-padding">
   <div class="space-y-6 p-4">
-    <div class="flex items-start gap-3">
-      <div
-        class="h-32 w-32 rounded-full overflow-hidden flex items-center justify-center bg-gray-100"
-      >
-        <img
-          class="h-full w-full object-cover"
-          [src]="hire?.profilePic"
-          alt="Talent"
-        />
-      </div>
-
-      <div class="space-y-1 mt-1.5">
-        <h5 class="text-[14px] text-[#101828]">{{ hire?.name }}</h5>
-        <p class="text-[12px] text-[#79797B]">{{ hire?.proximity }}</p>
-        <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-          <ion-icon
-            name="star"
-            [class.text-yellow-500]="star <= (hire?.yourRating ?? 0)"
-            [class.text-gray-400]="star > (hire?.yourRating ?? 0)"
-            class="text-xl"
-          ></ion-icon>
-        </ng-container>
-      </div>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-8">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p class="mt-4 text-gray-600">Loading talent profile...</p>
     </div>
 
-    <p class="w-[90%] text-[14px] text-[#000000] font-light p-1">
-      {{ hire?.aboutTalent }}
-    </p>
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="text-center py-8 text-red-600">
+      <p>{{ error }}</p>
+      <button (click)="loadTalentMarketProfile()"
+        class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        Retry
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading && !error">
+      <div class="flex items-start gap-3">
+        <div class="h-32 w-32 rounded-full overflow-hidden flex items-center justify-center bg-gray-100">
+          <img class="h-full w-full object-cover" [src]="profilePic || 'assets/images/default-avatar.png'" alt="Talent"
+            (error)="handleImageError($event)" />
+        </div>
+
+        <div class="space-y-1 mt-1.5">
+          <h5 class="text-[14px] text-[#101828]">{{ fullName }}</h5>
+          <p class="text-[12px] text-[#79797B]">{{ location }}</p>
+          <!-- Display average rating from market reviews -->
+          <div class="flex">
+            <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+              <ion-icon name="star" [class.text-yellow-500]="star <= averageRating"
+                [class.text-gray-400]="star > averageRating" class="text-xl"></ion-icon>
+            </ng-container>
+            <span class="text-xs text-gray-500 ml-2">({{ marketReviews.length || 0 }} reviews)</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="w-[90%] text-[14px] text-[#000000] font-light p-1">
+        {{ valueProposition }}
+      </p>
+    </div>
   </div>
 
-  <app-view-all-talents-switch-tab
-    [hire]="hire"
-    [selectedSkills]="selectedSkills"
-    (skillSelectionChanged)="onSkillSelectionChanged($event)"
-  ></app-view-all-talents-switch-tab>
+  <!-- Tab Component -->
+  <app-view-all-talents-switch-tab [hire]="hire" [marketProfile]="marketProfile" [skillSet]="skillSet"
+    [marketReviews]="marketReviews" [pictorialDocumentations]="pictorialDocumentations"
+    [selectedSkills]="selectedSkills" (skillSelectionChanged)="onSkillSelectionChanged($event)"
+    *ngIf="!loading && !error"></app-view-all-talents-switch-tab>
 
-  <!-- ✅ Hire button only if skills are selected -->
-  <div
-    *ngIf="hasSelectedSkill"
-    class="sticky bottom-0 left-0 right-0 bg-white mt-10 pt-2 pb-16 flex justify-end"
-  >
-    <button
-      class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
-      (click)="hireTalent()"
-    >
+  <!-- Hire button only if skills are selected -->
+  <div *ngIf="hasSelectedSkill && !loading && !error"
+    class="sticky bottom-0 left-0 right-0 bg-white mt-10 pt-2 pb-16 flex justify-end">
+    <button class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+      (click)="hireTalent()">
       Hire Talent
     </button>
   </div>

@@ -38,7 +38,7 @@ export class MarketEngagementsTableComponent implements OnInit {
     private modalCtrl: ModalController,
     private route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadMarketEngagements();
@@ -131,70 +131,76 @@ export class MarketEngagementsTableComponent implements OnInit {
     console.log('✅ Mock data loaded, count:', this.hires.length);
   }
 
-// In market-engagements-table.component.ts - update the openHireModal method
-async openHireModal(hire: any) {
-  if (this.isProcessingClick) {
-    return;
-  }
-
-  this.isProcessingClick = true;
-
-  try {
-    this.selectedHire = hire;
-    
-    // CRITICAL: Always emit to parent components first
-    this.hireSelected.emit(hire);
-    
-    console.log(
-      `Opening modal for ${hire.name}, Status: ${hire.offerStatus}`
-    );
-
-    // Check if we're already on the detail page
-    const isOnDetailPage = this.router.url.includes('market-engagement-market-price-preparation');
-    const currentRouteTalentId = this.route.parent?.snapshot.paramMap.get('id');
-    
-    if (isOnDetailPage && (currentRouteTalentId === hire.id || currentRouteTalentId === hire.talentId)) {
-      // We're on the same talent's detail page
-      console.log('✅ Already on same talent page, updating view');
-      
-      // Open the evaluation modal if hire is accepted
-      if (hire.offerStatus === 'Offer Accepted') {
-        console.log('✅ Opening Total Delivery Evaluation modal for accepted offer');
-        this.isModalOpen = true;
-      }
-    } else {
-      // Navigate to talent detail page
-      const navigationExtras: NavigationExtras = {
-        state: {
-          shouldOpenModal: true,
-          modalType: this.getModalTypeForHire(hire),
-          hireData: hire,
-        },
-      };
-
-      this.router.navigate(
-        ['/scouter/market-engagement-market-price-preparation', hire.id],
-        navigationExtras
-      );
+  async openHireModal(hire: any) {
+    if (this.isProcessingClick) {
+      return;
     }
-  } finally {
-    setTimeout(() => {
-      this.isProcessingClick = false;
-    }, 500);
+
+    this.isProcessingClick = true;
+
+    try {
+      this.selectedHire = hire;
+
+      // CRITICAL: Always emit to parent components first
+      this.hireSelected.emit(hire);
+
+      console.log(
+        `Opening modal for ${hire.name}, Status: ${hire.offerStatus}`
+      );
+
+      // ✅ ADD TOAST FOR AWAITING ACCEPTANCE STATUS
+      if (hire.offerStatus === 'Awaiting Acceptance') {
+        this.toastService.openSnackBar(
+          `Offer is awaiting acceptance from ${hire.name}. Check back later for updates.`,
+          'warning',
+        );
+
+        return;
+      }
+
+      // Check if we're already on the detail page
+      const isOnDetailPage = this.router.url.includes('market-engagement-market-price-preparation');
+      const currentRouteTalentId = this.route.parent?.snapshot.paramMap.get('id');
+
+      if (isOnDetailPage && (currentRouteTalentId === hire.id || currentRouteTalentId === hire.talentId)) {
+        // We're on the same talent's detail page
+        console.log('✅ Already on same talent page, updating view');
+
+        // DON'T open modals here - let the detail page handle it
+        // The detail page will open modals based on the hire status
+        console.log(`ℹ️ Not opening modal in table - detail page will handle it`);
+      } else {
+        // Navigate to talent detail page with state to open modal
+        const navigationExtras: NavigationExtras = {
+          state: {
+            shouldOpenModal: true,
+            modalType: this.getModalTypeForHire(hire),
+            hireData: hire,
+          },
+        };
+
+        console.log(`🚀 Navigating to detail page with modal type: ${this.getModalTypeForHire(hire)}`);
+        this.router.navigate(
+          ['/scouter/market-engagement-market-price-preparation', hire.id],
+          navigationExtras
+        );
+      }
+    } finally {
+      setTimeout(() => {
+        this.isProcessingClick = false;
+      }, 500);
+    }
   }
-}
 
-
-
-// Add this helper method
-private getModalTypeForHire(hire: any): string {
-  if (hire.offerStatus === 'Offer Rejected') {
-    return 'reconsider';
-  } else if (hire.offerStatus === 'Offer Accepted') {
-    return 'total-delivery';
+  // Add this helper method
+  private getModalTypeForHire(hire: any): string {
+    if (hire.offerStatus === 'Offer Rejected') {
+      return 'reconsider';
+    } else if (hire.offerStatus === 'Offer Accepted') {
+      return 'total-delivery';
+    }
+    return 'none';
   }
-  return 'none';
-}
 
   onReconsiderConfirmed() {
     console.log('Reconsider confirmed from table');
@@ -362,35 +368,7 @@ private getModalTypeForHire(hire: any): string {
     }
   }
 
-  private updateOfferOnBackend(offerData: any) {
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId) return;
-
-    const payload = {
-      scouterId: scouterId,
-      talentId: offerData.talentId,
-      marketId: offerData.talentId,
-      newAmount: offerData.amount,
-      newJobDescription: offerData.jobDescription,
-      newStartDate: offerData.startDate,
-      additionalComments: offerData.comments,
-      action: 'reconsider_offer',
-    };
-
-    // Call your service method
-    // this.scouterService.reconsiderOffer(payload).subscribe({
-    //   next: (response) => {
-    //     console.log('Offer reconsidered successfully:', response);
-    //   },
-    //   error: (error) => {
-    //     console.error('Failed to reconsider offer:', error);
-    //   }
-    // });
-  }
-
-  // Other existing methods...
   closeModal() {
     this.selectedHire = null;
     this.isModalOpen = false;
@@ -423,16 +401,16 @@ private getModalTypeForHire(hire: any): string {
     if (this.currentPage > 1) this.currentPage--;
   }
 
-onRatingUpdated(updateData: { hireId: string; rating: number }) {
-  const hireIndex = this.hires.findIndex((h) => h.id === updateData.hireId);
-  if (hireIndex !== -1) {
-    this.hires[hireIndex].yourRating = updateData.rating;
-  }
+  onRatingUpdated(updateData: { hireId: string; rating: number }) {
+    const hireIndex = this.hires.findIndex((h) => h.id === updateData.hireId);
+    if (hireIndex !== -1) {
+      this.hires[hireIndex].yourRating = updateData.rating;
+    }
 
-  if (this.selectedHire?.id === updateData.hireId) {
-    this.selectedHire.yourRating = updateData.rating;
+    if (this.selectedHire?.id === updateData.hireId) {
+      this.selectedHire.yourRating = updateData.rating;
+    }
   }
-}
 
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {

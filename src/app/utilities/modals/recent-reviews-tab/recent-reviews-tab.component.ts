@@ -1,6 +1,5 @@
+// recent-reviews-tab.component.ts
 import { Component, Input, OnInit } from '@angular/core';
-import { imageIcons } from 'src/app/models/stores';
-import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-recent-reviews-tab',
@@ -9,16 +8,37 @@ import { ToastController } from '@ionic/angular';
   standalone: false,
 })
 export class RecentReviewsTabComponent implements OnInit {
-  images = imageIcons;
-  @Input() hire: any;
-
-  constructor(private toastController: ToastController) {}
+  @Input() marketReviews: any[] = [];
+  @Input() hire: any; // For fallback
 
   ngOnInit() {
-    // Nothing special to init because recentReview is an array
+    // If no API reviews, use fallback
+    if (!this.marketReviews || this.marketReviews.length === 0) {
+      if (this.hire?.recentReview) {
+        this.marketReviews = this.hire.recentReview;
+      } else {
+        // Default reviews
+        this.marketReviews = [
+          {
+            profilePic: 'assets/images/default-avatar.png',
+            name: 'John Doe',
+            comment: 'Excellent work, very professional!',
+            rating: 5,
+            date: new Date().toISOString()
+          }
+        ];
+      }
+    }
   }
 
-  setRating(review: any, star: number) {
-    review.yourRating = star;
+  // Map API review format to your expected format
+  get formattedReviews(): any[] {
+    return this.marketReviews.map((review: any) => ({
+      profilePic: review.profilePicture || review.profilePic || 'assets/images/default-avatar.png',
+      name: review.reviewerName || review.name || 'Anonymous',
+      comment: review.comment || review.review || 'No comment available',
+      yourRating: review.rating || review.yourRating || 0,
+      date: review.date || new Date().toISOString()
+    }));
   }
 }

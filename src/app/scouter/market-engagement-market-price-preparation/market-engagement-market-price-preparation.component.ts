@@ -417,8 +417,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     }, 300);
   }
 
-  // Handle table hire click
-  // Handle table hire click
   onTableHireClick(hire: TotalHires) {
     console.log('📋 Table hire clicked in detail page:', hire.name);
 
@@ -431,8 +429,14 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
       console.log('✅ Updated current hire to:', hire.name);
 
-      // Open modal if needed
-      this.openModalForCurrentHire(hire);
+      // IMPORTANT: Check if we should open a modal based on status
+      if (hire.offerStatus === 'Offer Rejected') {
+        console.log('✅ Opening Reconsider Modal from table click');
+        this.openReconsiderModal(hire);
+      } else if (hire.offerStatus === 'Offer Accepted') {
+        console.log('✅ Opening Total Delivery Modal from table click');
+        this.openTotalDeliveryModal(hire);
+      }
     } else {
       // Navigate to the talent's detail page
       const navigationExtras: NavigationExtras = {
@@ -650,30 +654,59 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId || !this.selectedTalentForReconsider) return;
+    if (!scouterId || !this.selectedTalentForReconsider) {
+      console.error('❌ Missing required data');
+      return;
+    }
 
     // ✅ Get the actual market hire data
     const talentData = this.selectedTalentForReconsider;
 
-    // ✅ Check if we have proper IDs
-    if (!talentData.marketHireId || !talentData.talentIdWithDate) {
+    // ✅ Check if we have proper IDs - CRITICAL: Use the correct IDs from the API response
+    if (!talentData.marketHireId || !talentData.talentId) {
       console.error('❌ Missing required IDs for reconsider offer:', {
         marketHireId: talentData.marketHireId,
+        talentId: talentData.talentId,
         talentIdWithDate: talentData.talentIdWithDate,
+        id: talentData.id,
+        allKeys: Object.keys(talentData)
       });
-      this.toastService.openSnackBar(
-        'Cannot reconsider offer: Missing required data. Please refresh and try again.',
-        'error'
-      );
-      return;
+
+      // Try alternative ID sources
+      const marketHireId = talentData.marketHireId || talentData.id;
+      const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
+
+      if (!marketHireId || !talentId) {
+        this.toastService.openSnackBar(
+          'Cannot reconsider offer: Missing required data. Please refresh and try again.',
+          'error'
+        );
+        return;
+      }
     }
 
     // Prepare payload according to the endpoint specification
     const currentDate = new Date();
     const formattedCurrentDate = this.formatDateForPayload(currentDate);
-    const formattedStartDate = this.formatDateForPayload(
-      new Date(offerData.startDate)
-    );
+
+    // Parse the date properly
+    let formattedStartDate;
+    try {
+      formattedStartDate = this.formatDateForPayload(
+        new Date(offerData.startDate)
+      );
+    } catch (error) {
+      console.warn('⚠️ Could not parse start date, using current date:', error);
+      formattedStartDate = formattedCurrentDate;
+    }
+
+    // Prepare the satisfactory comment
+    const satisFactoryCommentByScouter = JSON.stringify({
+      scouterId: scouterId,
+      dateOfComment: formattedCurrentDate,
+      remark: offerData.satisfactoryComment || "(Proposal Reconsidered)",
+      rating: offerData.satisfactoryRating || 0,
+    });
 
     const payload = {
       hireStatus: 'awaiting-acceptance',
@@ -681,30 +714,29 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       jobDescription: offerData.jobDescription,
       startDate: formattedStartDate,
       dateOfHire: formattedCurrentDate,
-      satisFactoryCommentByScouter: JSON.stringify({
-        scouterId: scouterId,
-        dateOfComment: formattedCurrentDate,
-        remark: '(Proposal Reconsidered)',
-        rating: 0,
-      }),
+      satisFactoryCommentByScouter: satisFactoryCommentByScouter,
     };
+
+    // Use the correct IDs - try multiple sources
+    const marketHireId = talentData.marketHireId || talentData.id;
+    const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
 
     console.log('✅ Sending reconsider offer with:', {
       payload,
       params: {
-        talentId: talentData.talentIdWithDate,
+        talentId: talentId,
         scouterId: scouterId,
-        marketHireId: talentData.marketHireId,
+        marketHireId: marketHireId,
       },
+      rawPayload: JSON.stringify(payload, null, 2)
     });
 
     // Call the PATCH endpoint
     this.scouterService
       .toggleMarketStatus(payload, {
-        // ✅ Use correct method name
-        talentId: talentData.talentIdWithDate,
+        talentId: talentId,
         scouterId: scouterId,
-        marketHireId: talentData.marketHireId,
+        marketHireId: marketHireId,
       })
       .subscribe({
         next: (response) => {
@@ -713,70 +745,50 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
             'Offer reconsidered successfully!',
             'success'
           );
+
+          // Refresh the data after successful reconsideration
+          this.loadHireDetails(talentId);
+
+          // Also update the table if it exists
+          if (this.marketTableComponent) {
+            this.marketTableComponent.loadMarketEngagements();
+          }
         },
         error: (error) => {
           console.error('❌ Failed to reconsider offer:', error);
+
+          // Detailed error logging
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            error: error.error,
+            message: error.message,
+            url: error.url
+          });
+
           this.toastService.openSnackBar(
-            error?.error?.message || 'Failed to reconsider offer',
+            error?.error?.message || error?.statusText || 'Failed to reconsider offer',
             'error'
           );
         },
       });
   }
 
-  // Helper method
+  // Helper method for date formatting
   private formatDateForPayload(date: Date): string {
-    // Try this format if the current one doesn't work:
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    // Format: DD-MM-YYYY HH:mm (as shown in your example)
     const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}-${month}-${year} ${hours}:${minutes}`;
-    // Or: return date.toISOString(); // If backend expects ISO format
   }
 
-  updateRating(star: number) {
-    if (!this.hire) return;
 
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
-    if (!scouterId) return;
 
-    const parsed = this.parseSatisfactoryComment(
-      this.hire.satisFactoryCommentByScouter
-    );
 
-    const payload = {
-      scouterId,
-      remark: parsed.remark || 'Rating updated',
-      rating: star,
-    };
-
-    this.scouterService.updateMarketComment(
-      this.hire.marketHireId,
-      payload
-    )
-      .subscribe({
-        next: () => {
-          const updated = {
-            scouterId,
-            dateOfComment: new Date().toISOString(),
-            remark: payload.remark,
-            rating: star,
-          };
-
-          // ✅ backend format
-          this.hire!.satisFactoryCommentByScouter = JSON.stringify(updated);
-
-          // ✅ frontend normalized
-          this.hire!.yourRating = star;
-
-          this.showSuccessFeedback('Rating updated successfully');
-        },
-      });
-  }
 
   onRatingUpdated(updateData: { hireId: string; rating: number }) {
     if (this.hire && this.hire.id === updateData.hireId) {

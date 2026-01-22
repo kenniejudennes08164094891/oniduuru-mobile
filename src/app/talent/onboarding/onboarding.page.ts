@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, ToastController } from '@ionic/angular';
 import { CommonModule, NgClass } from '@angular/common';
 import { TalentService } from 'src/app/services/talent.service';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-onboarding',
@@ -17,9 +18,10 @@ import { TalentService } from 'src/app/services/talent.service';
 export class OnboardingPage {
   constructor(
     private router: Router,
-    private toastCtrl: ToastController,
+    // private toastCtrl: ToastController,
+    private toast: ToastsService,
     private talentService: TalentService
-  ) {}
+  ) { }
 
   // ------------------- STEPS -------------------
   steps = [
@@ -228,13 +230,19 @@ export class OnboardingPage {
         const backendMsg = err?.error?.message?.toString()?.toLowerCase() ?? '';
 
         if (backendMsg.includes('email')) {
-          this.showToast('Email already exists. Please use another email.');
+          // this.showToast('Email already exists. Please use another email.');
+          this.toast.openSnackBar('Email already exists. Please use another email.', 'error');
+
         } else if (backendMsg.includes('phone')) {
-          this.showToast(
-            'Phone number already in use. Please use another number.'
-          );
+          // this.showToast(
+          //   'Phone number already in use. Please use another number.'
+          // );
+          this.toast.openSnackBar('Phone number already in use. Please use another number.', 'error');
+
         } else {
-          this.showToast(err?.error?.message ?? 'Failed to create profile');
+          // this.showToast(err?.error?.message ?? 'Failed to create profile');
+          this.toast.openSnackBar(`${err?.error?.message ?? 'Failed to create profile'}`, 'error');
+
         }
         console.error('Onboard Talent Error:', err);
         this.error =
@@ -243,16 +251,7 @@ export class OnboardingPage {
     });
   }
 
-  async showToast(message: string) {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 3000,
-      position: 'top',
-      color: 'danger',
-    });
-    toast.present();
-  }
-
+ 
   // ------------------- API: VERIFY OTP -------------------
   verifyOtp() {
     const otpValue = this.otp.join('');

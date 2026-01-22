@@ -1,8 +1,6 @@
 <ion-content class="flex flex-col h-full">
   <!-- HEADER -->
-  <div
-    class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
-  >
+  <div class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0">
     <h2 class="text-lg font-bold text-white">
       Talents residing around {{ currentLocation }}
     </h2>
@@ -16,11 +14,8 @@
     <!-- Search + Filter Row -->
     <div class="flex flex-col justify-between gap-3 px-4 sm:px-6 py-4 mt-6">
       <!-- Skill Level Filter -->
-      <select
-        [(ngModel)]="selectedSkillLevel"
-        aria-label="Filter by Skill Level"
-        class="w-full sm:w-1/4 px-3 py-3 border border-gray-300 bg-white rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-gray-700"
-      >
+      <select [(ngModel)]="selectedSkillLevel" aria-label="Filter by Skill Level"
+        class="w-full sm:w-1/4 px-3 py-3 border border-gray-300 bg-white rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-gray-700">
         <option class="text-gray-200" value="" disabled selected hidden>
           Filter by Skill Level
         </option>
@@ -32,169 +27,128 @@
 
       <!-- Search Box -->
       <div class="relative w-full sm:w-1/2">
-        <ion-icon
-          name="search-outline"
-          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        ></ion-icon>
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Search by user"
-          class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-gray-400"
-        />
+        <ion-icon name="search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
+        <input type="text" [(ngModel)]="searchQuery" placeholder="Search by user"
+          class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-gray-400" />
       </div>
     </div>
 
-    <!-- TABLE -->
-    <div
-      *ngIf="paginatedHires.length > 0; else noDataPage"
-      class="overflow-x-auto px-2 flex-grow mt-[25%]"
-    >
-      <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="border-b text-xs uppercase text-gray-500">
-          <tr>
-            <th></th>
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Proximity</th>
-            <th class="px-4 py-3">Skill Level</th>
-            <th class="px-4 py-3">Pay Range</th>
-            <th class="px-4 py-3">Status</th>
-          </tr>
-        </thead>
 
-        <tbody
-          *ngIf="paginatedHires.length > 0; else noDataPage"
-          class="divide-y divide-gray-100"
-        >
-          <tr
-            (click)="openTalentModal(hire)"
-            *ngFor="let hire of paginatedHires"
-            class="hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <!-- Checkbox -->
-            <td class="px- py-3 w-10 text-center">
-              <input type="checkbox" class="accent-indigo-600" />
-            </td>
+    <div *ngIf="hasData; else noDataPage">
 
-            <!-- Profile + Name -->
-            <td
-              class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
-            >
-              <img
-                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
-                [src]="hire.profilePic"
-                alt="{{ hire.name }}"
-              />
-              <div>
-                <p class="text-sm sm:text-base font-medium text-gray-900">
-                  {{ hire.name }}
-                </p>
-                <p class="text-xs sm:text-sm text-gray-500">
-                  {{ hire.email }}
-                </p>
-              </div>
-            </td>
+      <!-- TABLE -->
+      <div *ngIf="paginatedHires.length > 0; else noDataPage" class="overflow-x-auto px-2 flex-grow mt-[25%]">
+        <table class="min-w-full text-sm text-left text-gray-700">
+          <thead class="border-b text-xs uppercase text-gray-500">
+            <tr>
+              <th></th>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Proximity</th>
+              <th class="px-4 py-3">Skill Level</th>
+              <th class="px-4 py-3">Pay Range</th>
+              <th class="px-4 py-3">Status</th>
+            </tr>
+          </thead>
 
-            <!-- Proximity -->
-            <td
-              class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
-            >
-              {{ hire.proximity }}
-            </td>
+          <tbody *ngIf="paginatedHires.length > 0; else noDataPage" class="divide-y divide-gray-100">
+            <tr (click)="openTalentModal(hire)" *ngFor="let hire of paginatedHires"
+              class="hover:bg-gray-50 transition-colors cursor-pointer">
+              <!-- Checkbox -->
+              <td class="px- py-3 w-10 text-center">
+                <input type="checkbox" class="accent-indigo-600" />
+              </td>
 
-            <!-- Skill Level -->
-            <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.skillSet[0].skillLevel }}
-            </td>
+              <!-- Profile + Name -->
+              <td class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
+                <img class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
+                  [src]="hire.profilePic" alt="{{ hire.name }}" />
+                <div>
+                  <p class="text-sm sm:text-base font-medium text-gray-900">
+                    {{ hire.name }}
+                  </p>
+                  <p class="text-xs sm:text-sm text-gray-500">
+                    {{ hire.email }}
+                  </p>
+                </div>
+              </td>
 
-            <!-- Pay Range -->
-            <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.payRange }}
-            </td>
+              <!-- Proximity -->
+              <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
+                {{ hire.proximity || 'Not specified' }}
+              </td>
 
-            <!-- Status -->
-            <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
-              <span
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [style.backgroundColor]="getStatusColor(hire.status)"
-                ></span>
-                <span>{{ hire.status }}</span>
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <!-- Skill Level -->
+              <td class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                {{ hire.skillSet[0]?.skillLevel || 'Not specified' }}
+              </td>
 
-    <!-- Pagination -->
-    <div
-      *ngIf="paginatedHires.length > 0"
-      class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200"
-    >
-      <button
-        (click)="prevPage()"
-        [disabled]="currentPage === 1"
-        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        <ion-icon name="chevron-back-outline"></ion-icon>
-        Previous
-      </button>
+              <!-- Pay Range cell in the modal template -->
+              <td class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                {{ (hire.payRange || 'Negotiable')  }}
+              </td>
 
-      <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
-        <span
-          class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
-        >
-          {{ currentPage }}
+              <!-- Status -->
+              <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
+                  <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.status)"></span>
+                  <span>{{ hire.status }}</span>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+
+
+      <!-- Pagination -->
+      <div *ngIf="paginatedHires.length > 0"
+        class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200">
+        <button (click)="prevPage()" [disabled]="currentPage === 1"
+          class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+          Previous
+        </button>
+
+        <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
+          <span class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md">
+            {{ currentPage }}
+          </span>
+          <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
+            {{ totalPages }}
+          </span>
         </span>
-        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
-          {{ totalPages }}
-        </span>
-      </span>
 
-      <button
-        (click)="nextPage()"
-        [disabled]="currentPage === totalPages"
-        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        Next <ion-icon name="chevron-forward-outline"></ion-icon>
-      </button>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+          class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+          Next <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- No Data Full Page -->
   <ng-template #noDataPage>
-    <div
-      class="flex flex-col items-center justify-center flex-grow px-6 py-10 mt-[25%]"
-    >
-      <img
-        class="w-[232px] h-[246px]"
-        [src]="images.NoDataImage"
-        alt="No Data"
-      />
+    <div class="flex flex-col items-center justify-center flex-grow px-6 py-10">
+      <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
       <div class="text-center space-y-2 mt-6">
         <h3 class="text-[#000000] font-semibold text-[20px]">
-          Oops! No Data Available
+          Oops! No Talents Found
         </h3>
         <p class="text-[#000000] text-[16px]">
           No record exists for "{{ currentLocation }}"
         </p>
+        <button (click)="closeModal()" class="mt-4 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+          Try Different Search
+        </button>
       </div>
     </div>
   </ng-template>
 
   <!-- Close button stays always visible -->
   <div class="flex justify-end px-5 py-5">
-    <button
-      (click)="closeModal()"
-      class="text-white hover:text-gray-700 bg-[#000000] px-3 py-2 rounded-lg"
-    >
+    <button (click)="closeModal()" class="text-white hover:text-gray-700 bg-[#000000] px-3 py-2 rounded-lg">
       Close dialog
     </button>
   </div>

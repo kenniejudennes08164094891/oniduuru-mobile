@@ -19,10 +19,14 @@ import { IonicStorageModule } from '@ionic/storage-angular';
 import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
 import { DebugInterceptor } from './interceptors/debug.interceptor';
+import { GoogleMapsModule } from '@angular/google-maps';
+
 
 @NgModule({
   declarations: [AppComponent, ChatBotComponent],
   imports: [
+    GoogleMapsModule,
+
     BrowserModule,
     IonicModule.forRoot(),
     AppRoutingModule,
@@ -61,4 +65,4 @@ import { DebugInterceptor } from './interceptors/debug.interceptor';
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule {}
+export class AppModule { }

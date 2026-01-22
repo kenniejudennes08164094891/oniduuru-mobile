@@ -15,8 +15,7 @@ import { Subscription } from 'rxjs';
 })
 export class FindProfessionalsByLocationModalComponent
   extends BaseModal
-  implements OnDestroy
-{
+  implements OnDestroy {
   @Input() hires: MockPayment[] = [];
   @Input() location: string = '';
 
@@ -38,9 +37,45 @@ export class FindProfessionalsByLocationModalComponent
     super(modalCtrl, platform);
   }
 
+  // In FindProfessionalsByLocationModalComponent, add this method to fix encoding
+  private fixNairaEncoding(text: string): string {
+    if (!text || typeof text !== 'string') return text;
+
+    // Comprehensive Naira symbol encoding fixes
+    return text
+      .replace(/â\x82¦/g, '₦')
+      .replace(/â‚¦/g, '₦')
+      .replace(/â€Â¦/g, '₦')
+      .replace(/\u00a3/g, '₦')
+      .replace(/\\u20a6/g, '₦')
+      .replace(/&#8358;/g, '₦')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+  }
+
+  // Update ngOnInit to log and fix encoding
   override ngOnInit() {
     super.ngOnInit();
     this.currentLocation = this.location || 'Unknown';
+
+    // Fix encoding for all hires
+    if (this.hires && Array.isArray(this.hires)) {
+      this.hires = this.hires.map(hire => {
+        if (hire.payRange) {
+          hire.payRange = this.fixNairaEncoding(hire.payRange);
+        }
+        return hire;
+      });
+    }
+
+    // Debug logging
+    console.log('🔍 Modal opened with data:', {
+      location: this.currentLocation,
+      hiresCount: this.hires?.length,
+      hires: this.hires,
+      firstHire: this.hires?.[0],
+      firstPayRange: this.hires?.[0]?.payRange
+    });
 
     // 👇 auto-dismiss modal on navigation
     this.navSub = this.router.events.subscribe((event) => {
@@ -58,21 +93,36 @@ export class FindProfessionalsByLocationModalComponent
     this.dismiss();
   }
 
+  // In , modify the filteredAndSearchedHires getter:
   get filteredAndSearchedHires() {
-    return this.hires.filter((hire: MockPayment) => {
+    if (!this.hires || this.hires.length === 0) {
+      return [];
+    }
+
+    return this.hires.filter((hire: any) => {
       const matchesSearch =
-        hire.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        hire.email.toLowerCase().includes(this.searchQuery.toLowerCase());
+        !this.searchQuery ||
+        hire.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        hire.email?.toLowerCase().includes(this.searchQuery.toLowerCase());
 
       const matchesSkill =
         !this.selectedSkillLevel ||
-        hire.skillSet.some(
-          (s: SkillSet) =>
-            s.skillLevel.toLowerCase() === this.selectedSkillLevel.toLowerCase()
+        hire.skillSet?.some((s: any) =>
+          s.skillLevel?.toLowerCase() === this.selectedSkillLevel.toLowerCase()
         );
 
       return matchesSearch && matchesSkill;
+    }).map(hire => {
+      // Ensure skillSet has at least one item
+      if (!hire.skillSet || !Array.isArray(hire.skillSet) || hire.skillSet.length === 0) {
+        hire.skillSet = [{ jobTitle: 'Not specified', skillLevel: 'Not specified', amount: 0 }];
+      }
+      return hire;
     });
+  }
+
+  get hasData(): boolean {
+    return this.filteredAndSearchedHires.length > 0;
   }
 
   get totalPages(): number {
@@ -115,6 +165,9 @@ export class FindProfessionalsByLocationModalComponent
     });
     await modal.present();
   }
+
+
+
 }
 
 // import { Component, Input } from '@angular/core';

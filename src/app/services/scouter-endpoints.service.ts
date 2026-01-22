@@ -869,11 +869,62 @@ export class ScouterEndpointsService {
   }
 
   // ============ TALENT & SKILLSETS ============
+  // In scouter-endpoints.service.ts
+
+  /**
+   * POST /market/v1/hire-talent
+   * Hire a Talent (API to be used only by Scouters!)
+   */
+  hireTalent(payload: {
+    talentId: string;
+    talentName: string;
+    scouterId: string;
+    scouterName: string;
+    scouterPhoneNumber: string;
+    talentEmail: string;
+    scouterEmail: string;
+    startDate: string;
+    amountToPay: string;
+    jobDescription: string;
+  }): Observable<any> {
+    const url = `${this.baseUrl}/market/v1/hire-talent`;
+
+    console.log('📝 Hiring talent with payload:', payload);
+
+    return this.http.post<any>(url, payload, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    }).pipe(
+      timeout(15000),
+      tap((response) => {
+        console.log('✅ Talent hired successfully:', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to hire talent:', error);
+        return throwError(() => new Error(error.error?.message || 'Failed to hire talent'));
+      })
+    );
+  }
+
+  /**
+   * GET /talent/v1/fetch-all-skillsets
+   * Fetch All Talent's skillsets
+   */
   fetchAllSkillsets(): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.fetchAllTalentSkillsets}`;
+    const url = `${this.baseUrl}/talent/v1/fetch-all-skillsets`;
+
     return this.http.get<any>(url, {
       headers: this.jwtInterceptor.customHttpHeaders,
-    });
+    }).pipe(
+      timeout(15000),
+      tap((response) => {
+        console.log('✅ Skillsets fetched:', response?.data?.length || 0);
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch skillsets:', error);
+        // Return empty array if API fails
+        return of({ message: 'Using fallback skills', data: [] });
+      })
+    );
   }
 
   fetchSkillDropdown(): Observable<any> {
@@ -882,6 +933,152 @@ export class ScouterEndpointsService {
       headers: this.jwtInterceptor.customHttpHeaders,
     });
   }
+
+/**
+ * GET /talent/v1/fetch-all-talents
+ * Get List of All Talent (Super admin/scouter use only!)
+ * 
+ * Parameters:
+ * - location: string (optional) - Displays list of all talent address
+ * - skillset: array[string] (optional) - Displays list of all skillsets
+ * - limit: number - Displays 10 Talents per page
+ * - pageNo: number - Page number
+ */
+/**
+ * GET /talent/v1/fetch-all-talents
+ * Get List of All Talent (Super admin/scouter use only!)
+ */
+fetchAllTalents(params?: {
+  location?: string;
+  skillset?: string[];
+  limit?: number;
+  pageNo?: number;
+}): Observable<any> {
+  const url = `${this.baseUrl}/talent/v1/fetch-all-talents`;
+
+  // Build query parameters
+  let httpParams = new HttpParams();
+
+  // Add optional location parameter
+  if (params?.location && params.location.trim() !== '') {
+    httpParams = httpParams.set('location', params.location.trim());
+  }
+
+  // Add optional skillset parameter (array of strings)
+  if (params?.skillset && params.skillset.length > 0) {
+    httpParams = httpParams.set('skillset', params.skillset.join(','));
+  }
+
+  // Add pagination parameters with defaults
+  const limit = params?.limit || 10;
+  httpParams = httpParams.set('limit', limit.toString());
+
+  const pageNo = params?.pageNo || 1;
+  httpParams = httpParams.set('pageNo', pageNo.toString());
+
+  console.log('🔍 Fetching all talents with params:', {
+    url,
+    params: httpParams.toString()
+  });
+
+  return this.http.get(url, {
+    headers: this.jwtInterceptor.customHttpHeaders,
+    params: httpParams,
+    responseType: 'text' // Keep as text to handle base64
+  }).pipe(
+    timeout(15000),
+    map((rawResponse) => {
+      console.log('✅ Raw API Response received');
+      
+      try {
+        // Parse the JSON response
+        const response = JSON.parse(rawResponse);
+        
+        // Check if response.data is a base64 string
+        if (response.data && typeof response.data === 'string') {
+          try {
+            console.log('🔍 Decoding base64 response...');
+            // Decode base64
+            const decodedBase64 = atob(response.data);
+            // Parse JSON from decoded string
+            const decodedData = JSON.parse(decodedBase64);
+            
+            // Return the decoded data
+            return {
+              ...response,
+              decodedData: decodedData,
+              // Put talents in the main data property for easy access
+              talents: decodedData.mappedTalents || decodedData.talents || []
+            };
+          } catch (decodeError) {
+            console.error('❌ Failed to decode base64:', decodeError);
+            // If decoding fails, return original response
+            return response;
+          }
+        }
+        
+        // If no base64 decoding needed, return as-is
+        return response;
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON response:', parseError);
+        throw new Error('Invalid JSON response from server');
+      }
+    }),
+    catchError((error) => {
+      console.error('❌ Failed to fetch talents:', error);
+      
+      let errorMessage = 'Failed to fetch talents';
+      if (error.status === 401) {
+        errorMessage = 'Unauthorized. Super admin/scouter access only.';
+      } else if (error.status === 403) {
+        errorMessage = 'Forbidden. Insufficient permissions.';
+      } else if (error.status === 404) {
+        errorMessage = 'API endpoint not found.';
+      } else if (error.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      }
+
+      return throwError(() => new Error(errorMessage || error.error?.message || 'Failed to fetch talents'));
+    })
+  );
+}
+
+
+/**
+ * Fix UTF-8 encoding issues - specifically the Naira symbol
+ */
+private fixNairaEncoding(text: string): string {
+  if (!text || typeof text !== 'string') return text;
+  return text.replace(/â‚¦/g, '₦');
+}
+
+private fixEncodingInResponse(response: any): any {
+  if (!response) return response;
+  
+  const processObject = (obj: any): any => {
+    if (typeof obj === 'string') {
+      return this.fixNairaEncoding(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => processObject(item));
+    }
+    
+    if (obj && typeof obj === 'object') {
+      const result: any = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          result[key] = processObject(obj[key]);
+        }
+      }
+      return result;
+    }
+    
+    return obj;
+  };
+  
+  return processObject(response);
+}
 
   // ============ SCOUTER MANAGEMENT ============
   fetchAllScouters(pagination: PaginationParams): Observable<any> {
@@ -1120,139 +1317,139 @@ export class ScouterEndpointsService {
       );
   }
 
- private transformMarketResponse(response: any): any {
-  console.log('🔍 RAW API Response for transformation:', response);
+  private transformMarketResponse(response: any): any {
+    console.log('🔍 RAW API Response for transformation:', response);
 
-  if (!response) {
-    console.log('❌ No response received');
-    return { data: [], total: 0, currentPage: 1, totalPages: 1 };
-  }
-
-  // ✅ DECODE the base64 details field
-  let decodedDetails: any[] = [];
-  
-  if (response.details && typeof response.details === 'string') {
-    try {
-      console.log('🔍 Attempting to decode base64 details...');
-      
-      // Decode base64
-      const decodedString = atob(response.details);
-      
-      // Parse JSON
-      decodedDetails = JSON.parse(decodedString);
-      console.log('✅ Successfully parsed JSON. Items found:', decodedDetails.length);
-      
-      // ✅ LOG THE ACTUAL DATA STRUCTURE
-      if (decodedDetails.length > 0) {
-        console.log('✅ First item keys:', Object.keys(decodedDetails[0]));
-        console.log('✅ First item satisFactoryCommentByScouter:', decodedDetails[0].satisFactoryCommentByScouter);
-        console.log('✅ First item satisFactoryCommentByTalent:', decodedDetails[0].satisFactoryCommentByTalent);
-      }
-    } catch (error) {
-      console.error('❌ Failed to decode or parse details:', error);
+    if (!response) {
+      console.log('❌ No response received');
+      return { data: [], total: 0, currentPage: 1, totalPages: 1 };
     }
-  }
 
-  // Transform the API response to match your frontend structure
-  const transformedData = decodedDetails.map((item: any, index: number) => {
-    console.log(`🔍 Processing item ${index}:`, {
-      itemKeys: Object.keys(item),
-      satisFactoryCommentByScouter: item.satisFactoryCommentByScouter,
-      satisFactoryCommentByTalent: item.satisFactoryCommentByTalent,
-      item: item
-    });
-    
-    // Parse amount
-    let amount = 0;
-    if (item.amountToPay) {
+    // ✅ DECODE the base64 details field
+    let decodedDetails: any[] = [];
+
+    if (response.details && typeof response.details === 'string') {
       try {
-        const amountString = item.amountToPay.toString().replace(/,/g, '');
-        amount = parseFloat(amountString);
-      } catch (e) {
-        console.warn('Could not parse amount:', item.amountToPay);
+        console.log('🔍 Attempting to decode base64 details...');
+
+        // Decode base64
+        const decodedString = atob(response.details);
+
+        // Parse JSON
+        decodedDetails = JSON.parse(decodedString);
+        console.log('✅ Successfully parsed JSON. Items found:', decodedDetails.length);
+
+        // ✅ LOG THE ACTUAL DATA STRUCTURE
+        if (decodedDetails.length > 0) {
+          console.log('✅ First item keys:', Object.keys(decodedDetails[0]));
+          console.log('✅ First item satisFactoryCommentByScouter:', decodedDetails[0].satisFactoryCommentByScouter);
+          console.log('✅ First item satisFactoryCommentByTalent:', decodedDetails[0].satisFactoryCommentByTalent);
+        }
+      } catch (error) {
+        console.error('❌ Failed to decode or parse details:', error);
       }
     }
-    
-    // Create the transformed object
-    const transformedItem: TotalHires = {
-      // Basic fields
-      id: item.talentId || item.id || `hire-${index}-${Date.now()}`,
-      profilePic: item.talentPicture || 'assets/images/default-avatar.png',
-      name: item.talentName || 'Unknown Talent',
-      email: item.talentEmail || 'No email',
-      date: item.dateOfHire || item.createdAt 
-        ? this.formatDate(item.dateOfHire || item.createdAt)
-        : 'N/A',
-      startDate: item.startDate 
-        ? this.formatDate(item.startDate)
-        : 'N/A',
-      amount: amount,
-      offerStatus: this.mapStatus(item.hireStatus || item.status),
-      status: this.mapActiveStatus(item.hireStatus || item.status),
-      
-      // Job details
-      jobDescription: item.jobDescription || 'No description provided',
-      
-      // ✅ CRITICAL: Map the comment fields DIRECTLY from API
-      satisFactoryCommentByScouter: item.satisFactoryCommentByScouter || '',
-      satisFactoryCommentByTalent: item.satisFactoryCommentByTalent || '',
-      
-      // Frontend fields - will be populated in setHireData
-      yourComment: '', // Will be filled by setHireData
-      yourRating: 0,   // Will be filled by setHireData
-      talentComment: '', // Will be filled by setHireData
-      talentRating: 0,   // Will be filled by setHireData
-      
-      // Backend IDs
-      marketHireId: item.marketHireId || item.id,
-      scouterId: item.scouterId,
-      talentId: item.talentId,
-      
-      // Phone numbers
-      scouterPhoneNumber: item.scouterPhoneNumber,
-      talentPhoneNumber: item.talentPhoneNumber,
-      
-      // Other API fields
-      talentName: item.talentName,
-      scouterName: item.scouterName,
-      talentEmail: item.talentEmail,
-      scouterEmail: item.scouterEmail,
-      dateOfHire: item.dateOfHire,
-      amountToPay: item.amountToPay,
-      hireStatus: item.hireStatus,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-      talentIdWithDate: item.talentIdWithDate,
-      talentPicture: item.talentPicture,
-      scouterPicture: item.scouterPicture,
-      
-      // Debug
-      _originalData: item,
-    };
-    
-    console.log(`✅ Transformed item ${index}:`, {
-      satisFactoryCommentByScouter: transformedItem.satisFactoryCommentByScouter,
-      satisFactoryCommentByTalent: transformedItem.satisFactoryCommentByTalent,
-      keys: Object.keys(transformedItem)
+
+    // Transform the API response to match your frontend structure
+    const transformedData = decodedDetails.map((item: any, index: number) => {
+      console.log(`🔍 Processing item ${index}:`, {
+        itemKeys: Object.keys(item),
+        satisFactoryCommentByScouter: item.satisFactoryCommentByScouter,
+        satisFactoryCommentByTalent: item.satisFactoryCommentByTalent,
+        item: item
+      });
+
+      // Parse amount
+      let amount = 0;
+      if (item.amountToPay) {
+        try {
+          const amountString = item.amountToPay.toString().replace(/,/g, '');
+          amount = parseFloat(amountString);
+        } catch (e) {
+          console.warn('Could not parse amount:', item.amountToPay);
+        }
+      }
+
+      // Create the transformed object
+      const transformedItem: TotalHires = {
+        // Basic fields
+        id: item.talentId || item.id || `hire-${index}-${Date.now()}`,
+        profilePic: item.talentPicture || 'assets/images/default-avatar.png',
+        name: item.talentName || 'Unknown Talent',
+        email: item.talentEmail || 'No email',
+        date: item.dateOfHire || item.createdAt
+          ? this.formatDate(item.dateOfHire || item.createdAt)
+          : 'N/A',
+        startDate: item.startDate
+          ? this.formatDate(item.startDate)
+          : 'N/A',
+        amount: amount,
+        offerStatus: this.mapStatus(item.hireStatus || item.status),
+        status: this.mapActiveStatus(item.hireStatus || item.status),
+
+        // Job details
+        jobDescription: item.jobDescription || 'No description provided',
+
+        // ✅ CRITICAL: Map the comment fields DIRECTLY from API
+        satisFactoryCommentByScouter: item.satisFactoryCommentByScouter || '',
+        satisFactoryCommentByTalent: item.satisFactoryCommentByTalent || '',
+
+        // Frontend fields - will be populated in setHireData
+        yourComment: '', // Will be filled by setHireData
+        yourRating: 0,   // Will be filled by setHireData
+        talentComment: '', // Will be filled by setHireData
+        talentRating: 0,   // Will be filled by setHireData
+
+        // Backend IDs
+        marketHireId: item.marketHireId || item.id,
+        scouterId: item.scouterId,
+        talentId: item.talentId,
+
+        // Phone numbers
+        scouterPhoneNumber: item.scouterPhoneNumber,
+        talentPhoneNumber: item.talentPhoneNumber,
+
+        // Other API fields
+        talentName: item.talentName,
+        scouterName: item.scouterName,
+        talentEmail: item.talentEmail,
+        scouterEmail: item.scouterEmail,
+        dateOfHire: item.dateOfHire,
+        amountToPay: item.amountToPay,
+        hireStatus: item.hireStatus,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        talentIdWithDate: item.talentIdWithDate,
+        talentPicture: item.talentPicture,
+        scouterPicture: item.scouterPicture,
+
+        // Debug
+        _originalData: item,
+      };
+
+      console.log(`✅ Transformed item ${index}:`, {
+        satisFactoryCommentByScouter: transformedItem.satisFactoryCommentByScouter,
+        satisFactoryCommentByTalent: transformedItem.satisFactoryCommentByTalent,
+        keys: Object.keys(transformedItem)
+      });
+
+      return transformedItem;
     });
-    
-    return transformedItem;
-  });
 
-  console.log('✅ Final transformed data:', transformedData);
+    console.log('✅ Final transformed data:', transformedData);
 
-  const totals = response.paginationParams?.totals || transformedData.length;
-  const limit = response.paginationParams?.limit || 10;
-  
-  return {
-    data: transformedData,
-    total: totals,
-    currentPage: response.paginationParams?.pageNo || 1,
-    totalPages: Math.ceil(totals / limit) || 1,
-    message: response.message,
-    rawResponse: response,
-  };
-}
+    const totals = response.paginationParams?.totals || transformedData.length;
+    const limit = response.paginationParams?.limit || 10;
+
+    return {
+      data: transformedData,
+      total: totals,
+      currentPage: response.paginationParams?.pageNo || 1,
+      totalPages: Math.ceil(totals / limit) || 1,
+      message: response.message,
+      rawResponse: response,
+    };
+  }
   // Add this helper method to format dates
   private formatDate(dateString: string): string {
     if (!dateString) return 'N/A';
@@ -1573,6 +1770,100 @@ export class ScouterEndpointsService {
           );
         })
       );
+  }
+
+
+  // In scouter-endpoints.service.ts
+  /**
+   * GET /market/v1/talent-market-profile/fetch-one/{talentId}
+   * Fetch Talent's Market Bio records
+   * Talent's use only!
+   * 
+   * @param talentId - Format: "talent/5831/29September2025"
+   */
+  fetchTalentMarketProfile(talentId: string): Observable<any> {
+    if (!talentId || talentId.trim() === '') {
+      return throwError(() => new Error('Invalid talentId provided'));
+    }
+
+    // URL encode the talentId to handle special characters like slashes
+    const encodedTalentId = encodeURIComponent(talentId);
+    const url = `${this.baseUrl}/market/v1/talent-market-profile/fetch-one/${encodedTalentId}`;
+
+    console.log('📊 Fetching talent market profile:', {
+      talentId,
+      encodedTalentId,
+      url
+    });
+
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+    }).pipe(
+      timeout(15000),
+      tap((response) => {
+        console.log('✅ Talent market profile fetched successfully:', response);
+
+        // Process the response if needed
+        if (response.details) {
+          // Parse stringified JSON fields
+          try {
+            if (response.details.skillSets && typeof response.details.skillSets === 'string') {
+              response.details.skillSets = JSON.parse(response.details.skillSets);
+            }
+          } catch (error) {
+            console.warn('⚠️ Could not parse skillSets:', error);
+          }
+
+          try {
+            if (response.details.marketReviews && typeof response.details.marketReviews === 'string') {
+              response.details.marketReviews = JSON.parse(response.details.marketReviews);
+            }
+          } catch (error) {
+            console.warn('⚠️ Could not parse marketReviews:', error);
+          }
+
+          try {
+            if (response.details.pictorialDocumentations && typeof response.details.pictorialDocumentations === 'string') {
+              response.details.pictorialDocumentations = JSON.parse(response.details.pictorialDocumentations);
+            }
+          } catch (error) {
+            console.warn('⚠️ Could not parse pictorialDocumentations:', error);
+          }
+        }
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to fetch talent market profile:', error);
+
+        let errorMessage = 'Failed to load talent market profile';
+        if (error.status === 401) {
+          errorMessage = 'Unauthorized. Please login again.';
+        } else if (error.status === 403) {
+          errorMessage = 'Access denied. This endpoint is for talent use only.';
+        } else if (error.status === 404) {
+          errorMessage = 'Talent market profile not found.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /**
+   * Helper method to decode base64 metadata from response
+   * @param metaData - Base64 encoded string from API response
+   */
+  decodeTalentMetaData(metaData: string): any {
+    if (!metaData) return null;
+
+    try {
+      const decodedString = atob(metaData);
+      return JSON.parse(decodedString);
+    } catch (error) {
+      console.error('❌ Failed to decode talent metadata:', error);
+      return null;
+    }
   }
 }
 

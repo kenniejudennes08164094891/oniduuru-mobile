@@ -6,6 +6,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-upload-screenshot-popup-modal',
@@ -28,7 +29,8 @@ export class UploadScreenshotPopupModalComponent
     platform: Platform,
     private router: Router,
     private paymentService: PaymentService,
-    private toastCtrl: ToastController
+    // private toastCtrl: ToastController
+    private toast: ToastsService
   ) {
     super(modalCtrl, platform);
   }
@@ -77,13 +79,11 @@ export class UploadScreenshotPopupModalComponent
         transactionId: 'INV-2025-0615-013',
       });
 
-      const toast = await this.toastCtrl.create({
-        message: 'Receipt uploaded successfully ✅',
-        duration: 2000,
-        position: 'bottom',
-        color: 'success',
-      });
-      await toast.present();
+    
+
+               this.toast.openSnackBar('Receipt uploaded successfully ✅', 'success');
+
+
 
       // close current modal
       await this.dismiss();

@@ -16,7 +16,7 @@
 
 <div *ngIf="activeTab === 'skillSet'">
   <app-skill-set-tab
-    [hire]="hire"
+    [skillSet]="skillSet"
     [selectedSkills]="selectedSkills"
     (skillSelectionChanged)="onSkillSelectionChanged($event)"
   ></app-skill-set-tab>
@@ -24,10 +24,14 @@
 
 <div *ngIf="activeTab === 'reelsAndDocumentation'">
   <app-reels-and-documentation-tab
+    [pictorialDocumentations]="pictorialDocumentations"
     [hire]="hire"
   ></app-reels-and-documentation-tab>
 </div>
 
 <div *ngIf="activeTab === 'recentReviews'">
-  <app-recent-reviews-tab [hire]="hire"></app-recent-reviews-tab>
+  <app-recent-reviews-tab
+    [marketReviews]="marketReviews"
+    [hire]="hire"
+  ></app-recent-reviews-tab>
 </div>

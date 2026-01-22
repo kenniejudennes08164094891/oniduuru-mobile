@@ -1,28 +1,36 @@
 <!-- skill-set-tab.component.html -->
-<table class="min-w-full border border-gray-200 text-sm">
-  <tbody>
-    <tr *ngFor="let skill of hire?.skillSet" class="hover:bg-gray-50 border-b">
-      <td class="px-3 sm:px-6 py-6 flex items-center gap-2 sm:gap-3">
-        <input
-          type="checkbox"
-          [checked]="isChecked(skill)"
-          (change)="onCheckboxChange($event, skill)"
-        />
-        <img [src]="images.SkillSetIcon" alt="👉" />
-        <div>
-          <p class="text-sm sm:text-base font-medium text-gray-900">
-            {{ skill.jobTitle }}
-          </p>
-          <p class="text-xs sm:text-sm text-gray-500">
-            {{ skill.skillLevel || "N/A" }}
-          </p>
-        </div>
-      </td>
-      <td
-        class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
-      >
-        {{ skill.amount | currency : "NGN" }}
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div *ngIf="skillSet.length > 0; else noSkills" class="overflow-x-auto">
+  <table class="min-w-full border border-gray-200 text-sm">
+    <tbody>
+      <tr *ngFor="let skill of skillSet" class="hover:bg-gray-50 border-b">
+        <td class="px-3 sm:px-6 py-6 flex items-center gap-2 sm:gap-3">
+          <input
+            type="checkbox"
+            [checked]="isChecked(skill)"
+            (change)="onCheckboxChange($event, skill)"
+            class="h-4 w-4 text-blue-600"
+          />
+          <div>
+            <p class="text-sm sm:text-base font-medium text-gray-900">
+              {{ skill.jobTitle }}
+            </p>
+            <p class="text-xs sm:text-sm text-gray-500">
+              {{ skill.skillLevel || "N/A" }}
+            </p>
+          </div>
+        </td>
+        <td
+          class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap font-semibold"
+        >
+          {{ formatPrice(skill.amount) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #noSkills>
+  <div class="text-center py-8 text-gray-500">
+    <p>No skills available for this talent</p>
+  </div>
+</ng-template>

@@ -20,6 +20,10 @@ export class HireTalentPageComponent implements OnInit {
   userEmail: string = '';
   starredEmail: string = '';
 
+  // DEVELOPMENT FLAG - Set to true to bypass OTP
+  private bypassOtp: boolean = true;
+
+
   constructor(
     private router: Router,
     private navCtrl: NavController,
@@ -30,6 +34,15 @@ export class HireTalentPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+  // Check if we should bypass OTP
+    if (this.bypassOtp) {
+      console.log('🚀 DEVELOPMENT MODE: Bypassing OTP verification');
+      this.autoNavigateToDashboard();
+      return;
+    }
+    
+
+
     this.loadUserEmail();
     this.sendInitialOtp(); // Send OTP automatically when page loads
     this.startCountdown();
@@ -38,6 +51,24 @@ export class HireTalentPageComponent implements OnInit {
       const firstInput = document.querySelector('input') as HTMLInputElement;
       if (firstInput) firstInput.focus();
     }, 0);
+  }
+
+
+
+   // Auto-navigate method for development
+  private autoNavigateToDashboard(): void {
+    console.log('🔓 Auto-navigating to dashboard (OTP bypassed)');
+    
+    // Show a success message
+    this.toastService.openSnackBar('OTP bypassed - Development mode', 'success');
+    
+    // Auto-fill OTP for visual feedback
+    this.otp = ['1', '2', '3', '4'];
+    
+    // Navigate after a short delay
+    setTimeout(() => {
+      this.navigateToNextPage();
+    }, 1000);
   }
 
   private loadUserEmail(): void {
@@ -110,7 +141,7 @@ export class HireTalentPageComponent implements OnInit {
   private sendInitialOtp(): void {
     if (!this.userEmail) {
       console.warn('❌ No email found for automatic OTP');
-      this.toastService.openSnackBar('No email found. Please contact support.', 'danger');
+      this.toastService.openSnackBar('No email found. Please contact support.', 'error');
       return;
     }
 
@@ -133,7 +164,7 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = 'OTP service unavailable. Please contact support.';
         }
         
-        this.toastService.openSnackBar(errorMessage, 'danger');
+        this.toastService.openSnackBar(errorMessage, 'error');
       }
     });
   }
@@ -187,7 +218,7 @@ export class HireTalentPageComponent implements OnInit {
   // Resend OTP - IMPROVED
   resendOtp() {
     if (!this.userEmail) {
-      this.toastService.openSnackBar('No email found for OTP', 'danger');
+      this.toastService.openSnackBar('No email found for OTP', 'error');
       return;
     }
 
@@ -207,22 +238,29 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = error.error.message;
         }
         
-        this.toastService.openSnackBar(errorMessage, 'danger');
+        this.toastService.openSnackBar(errorMessage, 'error');
       }
     });
   }
 
-  // Verify OTP - IMPROVED
+  // Modified verifyOtp method to also accept bypass
   async verifyOtp() {
+    // If bypass is enabled, skip verification
+    if (this.bypassOtp) {
+      console.log('🚀 DEVELOPMENT: Bypassing OTP check');
+      this.navigateToNextPage();
+      return;
+    }
+    
     const enteredOtp = this.otp.join('');
     
     if (enteredOtp.length !== 4) {
-      this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'danger');
+      this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'error');
       return;
     }
 
     if (!this.userEmail) {
-      this.toastService.openSnackBar('No email found for verification', 'danger');
+      this.toastService.openSnackBar('No email found for verification', 'error');
       return;
     }
 
@@ -251,7 +289,7 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = 'Invalid OTP format.';
         }
         
-        this.toastService.openSnackBar(errorMessage, 'danger');
+        this.toastService.openSnackBar(errorMessage, 'error');
         
         // Clear OTP fields on failure
         this.otp = new Array(4).fill('');
@@ -262,7 +300,6 @@ export class HireTalentPageComponent implements OnInit {
       }
     });
   }
-
 
   // Add this method to your component for paste support
 onPaste(event: ClipboardEvent): void {

@@ -88,31 +88,14 @@ export class ConcludeYourHiringProcessPageComponent
   }
 
   async hireTalent() {
-    // console.log('Hiring talent...', this.formData);
-    // const toast = await this.toastCtrl.create({
-    //   message: 'Hire offer sent!',
-    //   duration: 2000,
-    //   color: 'success',
-    //   position: 'bottom',
-    // });
-    // await toast.present();
-
+  
     this.toastService.openSnackBar('Hire offer sent! ✅', 'success');
 
     this.location.back();
   }
 
   async updateRecord() {
-    // console.log('Updating record...', this.formData);
-
-    // const toast = await this.toastCtrl.create({
-    //   message: 'Record updated successfully ✅',
-    //   duration: 2000,
-    //   color: 'success',
-    //   position: 'bottom',
-    // });
-
-    // await toast.present();
+ 
 
     this.toastService.openSnackBar('Record updated successfully ✅', 'success');
 

@@ -13,6 +13,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { WithdrawReceiptModalComponent } from '../withdraw-receipt-modal/withdraw-receipt-modal.component'; // <-- added
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-withdraw-funds-popup-modal',
@@ -58,7 +59,8 @@ export class WithdrawFundsPopupModalComponent
     modalCtrl: ModalController,
     platform: Platform,
     private paymentService: PaymentService,
-    private toastCtrl: ToastController,
+    // private toastCtrl: ToastController,
+    private toast: ToastsService, 
     private ngZone: NgZone,
     private endpointService: EndpointService
   ) {
@@ -102,27 +104,22 @@ export class WithdrawFundsPopupModalComponent
   // --------------------
   // New: submit + receipt popup
   // --------------------
-  private async presentToast(message: string, color = 'danger') {
-    const t = await this.toastCtrl.create({
-      message,
-      duration: 2000,
-      color,
-      position: 'bottom',
-    });
-    await t.present();
-  }
 
   private validateInputs(): boolean {
     if (!this.bank) {
-      this.presentToast('Please choose a bank');
+      // this.presentToast('Please choose a bank');
+               this.toast.openSnackBar('Please choose a bank', 'error');
+
       return false;
     }
     if (!this.accountNumber || !/^\d{10,11}$/.test(this.accountNumber)) {
-      this.presentToast('Enter a valid account number (10–11 digits)');
+      // this.presentToast('Enter a valid account number (10–11 digits)');
+                this.toast.openSnackBar('Enter a valid account number (10–11 digits)', 'error');
       return false;
     }
     if (!this.amount || this.amount <= 0) {
-      this.presentToast('Enter a valid amount greater than zero');
+      // this.presentToast('Enter a valid amount greater than zero');
+                this.toast.openSnackBar('Enter a valid amount greater than zero', 'error');
       return false;
     }
     // if (!this.agreed) {

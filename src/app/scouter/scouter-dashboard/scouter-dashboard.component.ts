@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
+import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisibilitySharedState.service';
 
 export interface RecentHire {
   id: string;
@@ -87,17 +88,20 @@ export class ScouterDashboardComponent implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private scouterEndpointsService: ScouterEndpointsService,
-    private toastService: ToastsService
-    , private endpointService: EndpointService
+    private toastService: ToastsService,
+    private endpointService: EndpointService,
+    private toggleVisibilityService: ToggleVisibilitySharedStateService
   ) { }
 
   // Add this method to check what's being passed to the child component
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.getScouterDetails();
     this.setTimeOfDay();
-
-
     this.fetchWalletBalance();
+    
+    // Initialize balance visibility state
+    await this.initializeBalanceVisibility();
+    
 
     // Just load from localStorage - data is already initialized by AppInitService
     this.loadNotificationCount();
@@ -139,9 +143,24 @@ export class ScouterDashboardComponent implements OnInit {
   }
 
 
-  toggleBalanceVisibility(): void {
-    this.balanceHidden = !this.balanceHidden;
+  async toggleBalanceVisibility(): Promise<void> {
+    // Use the service to toggle and save
+    this.balanceHidden = await this.toggleVisibilityService.toggleBalanceVisibility(this.balanceHidden);
+    console.log('👁️ Dashboard balance visibility toggled to:', this.balanceHidden);
   }
+
+  private async initializeBalanceVisibility(): Promise<void> {
+    try {
+      this.balanceHidden = await this.toggleVisibilityService.getBalanceVisibility();
+      console.log('🔍 Dashboard initialized balance visibility:', this.balanceHidden);
+    } catch (error) {
+      console.error('Error initializing balance visibility:', error);
+      this.balanceHidden = false; // Default value
+    }
+  }
+
+
+
 
   private fetchWalletBalance(): void {
     this.walletLoading = true;

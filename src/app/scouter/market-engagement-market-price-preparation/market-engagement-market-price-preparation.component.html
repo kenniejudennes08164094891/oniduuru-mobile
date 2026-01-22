@@ -76,7 +76,7 @@
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Your Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon name="star" (click)="updateRating(star)" [class.text-yellow-500]="star <= hire.yourRating"
+        <ion-icon name="star"  [class.text-yellow-500]="star <= hire.yourRating"
           [class.text-gray-400]="star > hire.yourRating" class="cursor-pointer text-xl">
         </ion-icon>
       </ng-container>

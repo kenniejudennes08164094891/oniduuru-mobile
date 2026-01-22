@@ -1,4 +1,3 @@
-// reconsider-offer-modal.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -19,6 +18,7 @@ export class ReconsiderOfferModalComponent implements OnInit {
   @Input() originalAmount: number = 0;
   @Input() originalJobDescription: string = '';
   @Input() isModalOpen: boolean = false;
+  @Input() status: string = 'Offer Rejected'; // ADD THIS LINE
 
   @Output() submitted = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter<void>();
@@ -393,5 +393,13 @@ export class ReconsiderOfferModalComponent implements OnInit {
     return Array(5)
       .fill(0)
       .map((_, index) => (index < rating ? '★' : '☆'));
+  }
+
+
+  getSubmitButtonText(): string {
+    if (this.isSubmitting) {
+      return "Sending Offer...";
+    }
+    return this.status === 'Offer Rejected' ? "Send Revised Offer" : "Update Offer";
   }
 }

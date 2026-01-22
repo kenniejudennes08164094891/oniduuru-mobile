@@ -9,6 +9,7 @@ import {
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastController } from '@ionic/angular';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 export interface TotalHires {
   id: string;
@@ -102,7 +103,8 @@ export class ViewAllHiresPageComponent implements OnInit {
     private router: Router,
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
-    private toastController: ToastController
+    // private toastController: ToastController
+    private toast: ToastsService
   ) { }
 
   ngOnInit() {
@@ -160,7 +162,7 @@ export class ViewAllHiresPageComponent implements OnInit {
           underperformers: []
         };
 
-        this.showError('Failed to load talent performance data. Using mock data.');
+        this.toast.openSnackBar('Failed to load talent performance data. Using mock data.', 'error');
         this.fallbackToMockPerformanceData(); // Optional: fallback to mock data
       }
     });
@@ -320,7 +322,8 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.totalPages = 1;
         this.isLoading = false;
 
-        this.showError('Failed to load market engagements. Please try again.');
+        // this.showError('Failed to load market engagements. Please try again.');
+        this.toast.openSnackBar('Failed to load market engagements. Please try again.', 'error');
       },
     });
   }
@@ -346,126 +349,126 @@ export class ViewAllHiresPageComponent implements OnInit {
 
 
 
-// Single method that handles both string and TotalHires
-// Single method that handles both string and TotalHires
-viewMarketPricePreposition(data: string | TotalHires) {
-  let talentIdToUse: string;
-  let hireObject: TotalHires | undefined;
+  // Single method that handles both string and TotalHires
+  // Single method that handles both string and TotalHires
+  viewMarketPricePreposition(data: string | TotalHires) {
+    let talentIdToUse: string;
+    let hireObject: TotalHires | undefined;
 
-  if (typeof data === 'string') {
-    // Handle string (talentId)
-    console.log('📊 Navigating to market price for talent ID:', data);
-    
-    hireObject = this.MockRecentHires.find(h => 
-      h.id === data || 
-      h.talentId === data ||
-      h.marketHireId === data
-    );
-    
-    talentIdToUse = hireObject?.talentId || data;
-  } else {
-    // Handle TotalHires object
-    console.log('📊 Navigating with hire object:', data.name);
-    hireObject = data;
-    
-    // IMPORTANT: Use the correct ID that the API expects
-    talentIdToUse = data.talentId || data.id || data.marketHireId;
-  }
+    if (typeof data === 'string') {
+      // Handle string (talentId)
+      console.log('📊 Navigating to market price for talent ID:', data);
 
-  console.log('🎯 Talent ID to navigate with:', talentIdToUse);
-  
-  // Create a clean hire object to pass
-  const hireDataToPass = hireObject ? {
-    ...hireObject,
-    // Ensure all required properties exist
-    jobDescription: hireObject.jobDescription || '',
-    yourComment: hireObject.yourComment || '',
-    yourRating: hireObject.yourRating || 0,
-    talentComment: hireObject.talentComment || '',
-    talentRating: hireObject.talentRating || 0,
-  } : undefined;
-  
-  this.router.navigate([
-    '/scouter/market-engagement-market-price-preparation',
-    talentIdToUse
-  ], {
-    state: {
-      hireData: hireDataToPass || {
-        id: talentIdToUse,
-        talentId: talentIdToUse,
-        name: hireObject?.name || 'Unknown Talent',
-        email: hireObject?.email || '',
-        profilePic: hireObject?.profilePic || 'assets/images/default-avatar.png'
-      },
-      shouldOpenModal: false, // Don't open modal automatically
-      source: 'view-hires-page'
+      hireObject = this.MockRecentHires.find(h =>
+        h.id === data ||
+        h.talentId === data ||
+        h.marketHireId === data
+      );
+
+      talentIdToUse = hireObject?.talentId || data;
+    } else {
+      // Handle TotalHires object
+      console.log('📊 Navigating with hire object:', data.name);
+      hireObject = data;
+
+      // IMPORTANT: Use the correct ID that the API expects
+      talentIdToUse = data.talentId || data.id || data.marketHireId;
     }
-  });
-}
-// Private helper method for navigation
-private navigateWithHire(hire: TotalHires) {
-  console.log('🚀 Navigating to talent detail page:', hire.name);
-  console.log('📊 Hire data being passed:', {
-    id: hire.id,
-    talentId: hire.talentId,
-    name: hire.name
-  });
-  
-  // CRITICAL: Use hire.talentId instead of hire.id if talentId is what the API expects
-  const talentIdToUse = hire.talentId || hire.id;
-  
-  this.router.navigate([
-    '/scouter/market-engagement-market-price-preparation',
-    talentIdToUse
-  ], {
-    queryParams: {
-      talentId: hire.talentId,
-      name: hire.name,
-      email: hire.email,
-      source: 'view-hires-page' // Add source for debugging
-    },
-    state: {
-      hireData: hire // Pass the full object in state
-    }
-  });
-}
 
+    console.log('🎯 Talent ID to navigate with:', talentIdToUse);
 
-onPerformanceTalentClick(talentData: TalentPerformanceData) {
-  console.log('📊 Performance talent clicked:', talentData.talentName);
-  console.log('🎯 Talent ID from performance data:', talentData.concernedTalentId);
+    // Create a clean hire object to pass
+    const hireDataToPass = hireObject ? {
+      ...hireObject,
+      // Ensure all required properties exist
+      jobDescription: hireObject.jobDescription || '',
+      yourComment: hireObject.yourComment || '',
+      yourRating: hireObject.yourRating || 0,
+      talentComment: hireObject.talentComment || '',
+      talentRating: hireObject.talentRating || 0,
+    } : undefined;
 
-  // Check if the ID is in the correct format
-  if (!talentData.concernedTalentId.startsWith('talent/')) {
-    console.warn('⚠️ Talent ID might not be in correct format:', talentData.concernedTalentId);
-  }
-
-  // Find in current data
-  const hire = this.MockRecentHires.find(h => 
-    h.talentId === talentData.concernedTalentId || 
-    (h as any).talentIdWithDate === talentData.concernedTalentId
-  );
-  
-  if (hire) {
-    console.log('✅ Found in current data');
-    this.viewMarketPricePreposition(hire);
-  } else {
-    // Navigate with the concernedTalentId directly
-    console.log('📤 Navigating directly with concernedTalentId');
-    
     this.router.navigate([
       '/scouter/market-engagement-market-price-preparation',
-      talentData.concernedTalentId
+      talentIdToUse
     ], {
-      queryParams: {
-        talentId: talentData.concernedTalentId,
-        name: talentData.talentName,
-        email: talentData.talentEmail,
-        source: 'performance-category'
+      state: {
+        hireData: hireDataToPass || {
+          id: talentIdToUse,
+          talentId: talentIdToUse,
+          name: hireObject?.name || 'Unknown Talent',
+          email: hireObject?.email || '',
+          profilePic: hireObject?.profilePic || 'assets/images/default-avatar.png'
+        },
+        shouldOpenModal: false, // Don't open modal automatically
+        source: 'view-hires-page'
       }
     });
   }
-}
+  // Private helper method for navigation
+  private navigateWithHire(hire: TotalHires) {
+    console.log('🚀 Navigating to talent detail page:', hire.name);
+    console.log('📊 Hire data being passed:', {
+      id: hire.id,
+      talentId: hire.talentId,
+      name: hire.name
+    });
+
+    // CRITICAL: Use hire.talentId instead of hire.id if talentId is what the API expects
+    const talentIdToUse = hire.talentId || hire.id;
+
+    this.router.navigate([
+      '/scouter/market-engagement-market-price-preparation',
+      talentIdToUse
+    ], {
+      queryParams: {
+        talentId: hire.talentId,
+        name: hire.name,
+        email: hire.email,
+        source: 'view-hires-page' // Add source for debugging
+      },
+      state: {
+        hireData: hire // Pass the full object in state
+      }
+    });
+  }
+
+
+  onPerformanceTalentClick(talentData: TalentPerformanceData) {
+    console.log('📊 Performance talent clicked:', talentData.talentName);
+    console.log('🎯 Talent ID from performance data:', talentData.concernedTalentId);
+
+    // Check if the ID is in the correct format
+    if (!talentData.concernedTalentId.startsWith('talent/')) {
+      console.warn('⚠️ Talent ID might not be in correct format:', talentData.concernedTalentId);
+    }
+
+    // Find in current data
+    const hire = this.MockRecentHires.find(h =>
+      h.talentId === talentData.concernedTalentId ||
+      (h as any).talentIdWithDate === talentData.concernedTalentId
+    );
+
+    if (hire) {
+      console.log('✅ Found in current data');
+      this.viewMarketPricePreposition(hire);
+    } else {
+      // Navigate with the concernedTalentId directly
+      console.log('📤 Navigating directly with concernedTalentId');
+
+      this.router.navigate([
+        '/scouter/market-engagement-market-price-preparation',
+        talentData.concernedTalentId
+      ], {
+        queryParams: {
+          talentId: talentData.concernedTalentId,
+          name: talentData.talentName,
+          email: talentData.talentEmail,
+          source: 'performance-category'
+        }
+      });
+    }
+  }
 
 
   setActiveCategoryTable(categoryKey: string) {
@@ -864,13 +867,5 @@ onPerformanceTalentClick(talentData: TalentPerformanceData) {
     this.loadMarketEngagements(statusParams, this.currentPage, this.searchTerm);
   }
 
-  private async showError(message: string) {
-    const toast = await this.toastController.create({
-      message: message,
-      duration: 3000,
-      position: 'bottom',
-      color: 'danger'
-    });
-    await toast.present();
-  }
+
 }

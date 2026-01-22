@@ -128,6 +128,45 @@ export interface satisFactoryComment {
   rating: number;
 }
 
+// talent-market-profile.model.ts
+export interface TalentSkill {
+  skill: string;
+  pricing: string;
+  skillLevel: string;
+}
+
+export interface MarketReview {
+  // Define based on your actual review structure
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export interface PictorialDocumentation {
+  // Define based on your actual structure
+  imageUrl: string;
+  caption: string;
+  date: string;
+}
+
+export interface TalentMarketProfile {
+  fullName: string;
+  talentProfilePic: string;
+  location: string;
+  valueProposition: string;
+  skillSets: TalentSkill[];
+  marketReviews: MarketReview[];
+  pictorialDocumentations: PictorialDocumentation[];
+}
+
+export interface TalentMarketProfileResponse {
+  message: string;
+  details: TalentMarketProfile;
+  metaData: string; // Base64 encoded metadata
+}
+
+
 export interface TotalHires {
   // Basic fields
   id: string;
@@ -142,7 +181,7 @@ export interface TotalHires {
 
   // Job details
   jobDescription: string;
-  
+
   // ✅ ENSURE THESE ARE IN THE INTERFACE
   yourComment: string;
   yourRating: number;
@@ -161,7 +200,7 @@ export interface TotalHires {
   // API response fields - ✅ MAKE SURE THESE ARE INCLUDED
   satisFactoryCommentByScouter?: string;
   satisFactoryCommentByTalent?: string;
-  
+
   // Other API fields
   talentName?: string;
   scouterName?: string;
@@ -1808,6 +1847,7 @@ export interface resendOTP {
   email?: string | null;
   phoneNumber?: string | null;
 }
+
 export interface PaginationParams {
   skillset?: string[] | any;
   location?: string | any;
@@ -2085,8 +2125,9 @@ export const transfer: Transfer[] = [
   },
 ];
 
+
+
 // MARKET
-// models/market-engagement.model.ts
 export interface MarketEngagement {
   id: string;
   talentName: string;

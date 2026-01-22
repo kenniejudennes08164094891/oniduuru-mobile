@@ -1,41 +1,52 @@
-<div
-  *ngFor="let review of hire?.recentReview"
-  class="flex items-center justify-between gap-2 "
->
-  <div class="flex items-center gap-6">
-    <!-- Profile Picture -->
-    <img
-      [src]="review?.profilePic || images.ProfileIcon"
-      alt="Talent"
-      class="h-12 w-12 rounded-full object-cover"
-    />
+<!-- recent-reviews-tab.component.html -->
+<div *ngIf="formattedReviews.length > 0; else noReviews" class="space-y-4">
+  <div
+    *ngFor="let review of formattedReviews"
+    class="flex items-center justify-between gap-2 p-4 border rounded-lg"
+  >
+    <div class="flex items-center gap-4">
+      <!-- Profile Picture -->
+      <img
+        [src]="review.profilePic"
+        alt="Reviewer"
+        class="h-12 w-12 rounded-full object-cover"
+      />
 
-    <!-- Review Details -->
-    <div class="space-y-1 w-[70%]">
-      <!-- Reviewer Name -->
-      <h4 class="font-semibold text-gray-800">
-        {{ review?.name || "Unknown" }}
-      </h4>
+      <!-- Review Details -->
+      <div class="space-y-1">
+        <!-- Reviewer Name -->
+        <h4 class="font-semibold text-gray-800">
+          {{ review.name }}
+        </h4>
 
-      <!-- Reviewer Comment -->
-      <p class="text-gray-600 text-sm">
-        {{ review?.comment.slice([0,10]) || "No comment available" }}
-      </p>
+        <!-- Reviewer Comment -->
+        <p class="text-gray-600 text-sm line-clamp-2">
+          {{ review.comment }}
+        </p>
 
-      <!-- Star Rating -->
-      <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon
-          name="star"
-          [class.text-yellow-500]="star <= (review?.yourRating ?? 0)"
-          [class.text-gray-400]="star > (review?.yourRating ?? 0)"
-          class="text-base"
-        ></ion-icon>
-      </ng-container>
+        <!-- Star Rating -->
+        <div class="flex">
+          <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+            <ion-icon
+              name="star"
+              [class.text-yellow-500]="star <= review.yourRating"
+              [class.text-gray-400]="star > review.yourRating"
+              class="text-base"
+            ></ion-icon>
+          </ng-container>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Review Date -->
-  <p class="text-sm text-gray-500">
-    {{ review?.date | date : "mediumDate" }}
-  </p>
+    <!-- Review Date -->
+    <p class="text-sm text-gray-500 whitespace-nowrap">
+      {{ review.date | date : "mediumDate" }}
+    </p>
+  </div>
 </div>
+
+<ng-template #noReviews>
+  <div class="text-center py-8 text-gray-500">
+    <p>No reviews available for this talent</p>
+  </div>
+</ng-template>

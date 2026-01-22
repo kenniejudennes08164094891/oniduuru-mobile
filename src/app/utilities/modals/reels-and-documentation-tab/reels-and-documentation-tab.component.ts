@@ -1,5 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { MockRecentHires, MockPayment } from 'src/app/models/mocks';
+// reels-and-documentation-tab.component.ts
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-reels-and-documentation-tab',
@@ -8,18 +8,44 @@ import { MockRecentHires, MockPayment } from 'src/app/models/mocks';
   standalone: false,
 })
 export class ReelsAndDocumentationTabComponent implements OnInit {
-  // hire!: MockPayment; // single user
-  @Input() hire: any; // ✅ receive hire directly
+  @Input() pictorialDocumentations: any[] = [];
+  @Input() hire: any; // Keep for fallback
+  
+  // Store the pictures with error handling
+  pictures: string[] = [];
 
   ngOnInit() {
-    // ✅ Select just one user (change ID as needed)
-    this.hire = MockRecentHires.find((h) => h.id === '1')!;
+    // If no API data, use hire data or defaults
+    if (!this.pictorialDocumentations || this.pictorialDocumentations.length === 0) {
+      if (this.hire?.pictures) {
+        this.pictures = this.hire.pictures;
+      } else {
+        // Default placeholder images
+        this.pictures = [
+          'assets/images/portfolio1.jpg',
+          'assets/images/portfolio2.jpg',
+          'assets/images/portfolio3.jpg'
+        ];
+      }
+    } else {
+      // Use API data
+      this.pictures = [...this.pictorialDocumentations];
+    }
   }
 
-  getPictureUrls(pictures: File[] | string[]): string[] {
-    if (!pictures) return [];
-    return pictures.map((pic) =>
-      typeof pic === 'string' ? pic : URL.createObjectURL(pic)
-    );
+  // Method to handle image load errors
+  handleImageError(index: number) {
+    // Use a fallback image
+    const fallbackImage = `assets/images/portfolio${(index % 3) + 1}.jpg`;
+    this.pictures[index] = fallbackImage;
+  }
+  
+  // Check if there's a video (reel) - you might need to adjust based on your API response
+  get hasVideo(): boolean {
+    return false; // Adjust based on your API response
+  }
+  
+  get videoUrl(): string | null {
+    return null; // Adjust based on your API response
   }
 }
