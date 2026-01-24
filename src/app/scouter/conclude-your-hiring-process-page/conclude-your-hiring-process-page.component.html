@@ -10,8 +10,6 @@
   <div
     class="paid-dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
   >
-    <!-- <div class="background absolute inset-0 bg-black bg-opacity-0 z-0"></div> -->
-
     <div class="flex items-center gap-5 mb-3 text-white">
       <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
       <span class="font-semibold text-[24px] leading-tight"
@@ -33,7 +31,7 @@
     <span>Pricing</span>
   </div>
 
-  <!-- skill-set-tab.component.html -->
+  <!-- Skill Set Table -->
   <table class="min-w-full border border-gray-200 text-sm py-6">
     <tbody>
       <tr
@@ -54,14 +52,14 @@
         <td
           class="px-3 sm:px-6 py-3 text-xs sm:text-sm font-semibold text-gray-600 whitespace-nowrap"
         >
-          {{ skill.amount | currency : "₦" }}
+          {{ skill.amount | currency: "₦" }}
         </td>
       </tr>
     </tbody>
   </table>
 
   <div class="text-right py-6 font-semibold">
-    Σ Total: {{ totalPrice | currency : "₦" }}
+    Σ Total: {{ totalPrice | currency: "₦" }}
   </div>
 
   <p
@@ -70,9 +68,9 @@
     Kindly Complete the details below
   </p>
 
-  <form class="mt-10 space-y-4">
+  <form class="mt-10 space-y-4" (ngSubmit)="previewData()">
     <div class="space-y-3">
-      <label>Purpose of scouting for professionals</label>
+      <label>Purpose of scouting for professionals (Job Description)</label>
       <textarea
         [(ngModel)]="formData.purpose"
         name="purpose"
@@ -85,9 +83,9 @@
     </div>
 
     <div class="space-y-3">
-      <label>Input amount you intend to pay</label>
+      <label>Input amount you intend to pay (in Naira)</label>
       <input
-        [ngModel]="formData.amount | number : '1.0-0'"
+        [ngModel]="formData.amount | number: '1.0-0'"
         (ngModelChange)="onAmountChange($event)"
         name="amount"
         placeholder="1,000,000"
@@ -106,6 +104,7 @@
         class="py-2 px-2 w-full placeholder:text-gray-400 text-[18px] font-medium border border-gray-300 bg-gray-50 rounded-md"
         type="date"
         required
+        [min]="getMinDate()"
         [disabled]="isFormDisabled"
       />
     </div>
@@ -114,10 +113,9 @@
       <!-- Show only Preview before confirmation -->
       <button
         *ngIf="!previewConfirmed"
-        type="button"
-        class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white disabled:bg-gray-400"
-        [disabled]="!isFormValid || isFormDisabled"
-        (click)="previewData()"
+        type="submit"
+        class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        [disabled]="!isFormValid"
       >
         Proceed
       </button>
@@ -126,20 +124,45 @@
       <ng-container *ngIf="previewConfirmed">
         <button
           type="button"
-          class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white"
+          class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           (click)="hireTalent()"
+          [disabled]="isLoading"
         >
-          Hire Talent
+          <span *ngIf="!isLoading">Confirm & Hire Talent</span>
+          <span *ngIf="isLoading">Processing...</span>
         </button>
 
+        <!-- Show Update button when form is disabled (after preview) -->
         <button
-          *ngIf="!isUpdated"
+          *ngIf="!isFormEditable && !isLoading"
           type="button"
-          class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white"
-          (click)="updateRecord()"
-          [disabled]="isFormDisabled"
+          class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white hover:bg-gray-600 transition-colors"
+          (click)="enableFormEditing()"
         >
           Update Record
+        </button>
+
+        <!-- Show Save button when in edit mode -->
+        <button
+          *ngIf="isFormEditable"
+          type="button"
+          class="bg-[#000000] py-2 w-full mx-auto rounded-lg text-white hover:bg-[#000000] transition-colors"
+          (click)="saveUpdatedRecord()"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">Save Changes</span>
+          <span *ngIf="isLoading">Saving...</span>
+        </button>
+
+        <!-- Show Cancel button when in edit mode -->
+        <button
+          *ngIf="isFormEditable"
+          type="button"
+          class="bg-gray-300 py-2 w-full mx-auto rounded-lg text-black hover:bg-gray-400 transition-colors"
+          (click)="cancelFormEditing()"
+          [disabled]="isLoading"
+        >
+          Cancel Update
         </button>
       </ng-container>
     </div>
@@ -148,18 +171,7 @@
   <!-- Preview Modal -->
   <ion-modal [isOpen]="isPreviewOpen" (didDismiss)="closePreview()">
     <ng-template>
-      <!-- <ion-header>
-        <ion-toolbar>
-          <ion-title>Preview Hiring Details</ion-title>
-          <ion-buttons slot="end">
-            <ion-button (click)="closePreview()">Close</ion-button>
-          </ion-buttons>
-        </ion-toolbar>
-      </ion-header> -->
-
       <ion-content class="ion-padding">
-        <!-- <ion-content class="ion-padding bg-white"> -->
-        <!-- Modal Container -->
         <div class="bg-white rounded-xl overflow-hidden shadow-md">
           <!-- Modal Header -->
           <div class="bg-white px-6 py-5 flex flex-col justify items-center">
@@ -178,25 +190,22 @@
           </div>
 
           <!-- Modal Footer -->
-          <div class="px-6 py-4 bg-white flex flex-col gap-3 justify-">
+          <div class="px-6 py-4 bg-white flex flex-col gap-3">
             <button
-              fill="solid"
-              class="rounded-md bg-[#000000] text-white py-2"
+              class="rounded-md bg-[#000000] text-white py-2 hover:bg-gray-800 transition-colors"
               (click)="confirmPreview()"
             >
-              Yes
+              Yes, Confirm Details
             </button>
 
-            <ion-button
-              class="rounded-md shadow-lg w-full text-black"
-              fill="clear"
-              (click)="onCancel()"
+            <button
+              class="rounded-md bg-gray-200 text-black py-2 hover:bg-gray-300 transition-colors"
+              (click)="closePreview()"
             >
-              No
-            </ion-button>
+              No, Go Back
+            </button>
           </div>
         </div>
-        <!-- </ion-content> -->
       </ion-content>
     </ng-template>
   </ion-modal>

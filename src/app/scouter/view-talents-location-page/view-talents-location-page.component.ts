@@ -1,12 +1,15 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
-import { imageIcons } from 'src/app/models/stores';
+import { Router } from '@angular/router';
 import { ModalController, Platform } from '@ionic/angular';
 import { FindProfessionalsByLocationModalComponent } from 'src/app/utilities/modals/find-professionals-by-location-modal/find-professionals-by-location-modal.component';
-import { Router } from '@angular/router';
 import { ProceedToHireTalentPopupModalComponent } from 'src/app/utilities/modals/proceed-to-hire-talent-popup-modal/proceed-to-hire-talent-popup-modal.component';
-import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
-import { Subscription } from 'rxjs';
 import { ViewAllTalentsPopupModalComponent } from 'src/app/utilities/modals/view-all-talents-popup-modal/view-all-talents-popup-modal.component';
+import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { imageIcons } from 'src/app/models/stores';
+import { Subscription } from 'rxjs';
+
+// Import environment
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-view-talents-location-page',
@@ -36,8 +39,8 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
   // UI properties
   headerHidden = false;
   images = imageIcons;
-  scouterName: string = ''; // Initialize as empty string
-  scouterProfilePic: string = ''; // Add profile picture property
+  scouterName: string = '';
+  scouterProfilePic: string = '';
   currentLocation: string = 'Lagos';
   activeTab: 'location' | 'skill' = 'location';
   showSkillSetTab = false;
@@ -76,21 +79,37 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDwlkVSi56mNcDtPasXHj-viQIGs2DIN0c&libraries=places`;
-      script.async = true;
-      script.defer = true;
+      // Use environment variable for API key
+      const apiKey = environment.googleMapsApiKey;
+      if (!apiKey) {
+        console.error('Google Maps API key is not configured in environment');
+        reject(new Error('Google Maps API key missing'));
+        return;
+      }
 
-      script.onload = () => resolve();
-      script.onerror = reject;
+      const script = document.createElement('script');
+      // Use environment variable in the script URL
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true; // Add defer attribute for better loading
+
+      script.onload = () => {
+        console.log('Google Maps API loaded successfully');
+        resolve();
+      };
+      script.onerror = (error) => {
+        console.error('Failed to load Google Maps API:', error);
+        reject(error);
+      };
+      
       document.head.appendChild(script);
     });
   }
 
   async ngOnInit() {
     try {
-      this.loadUserFromLocalStorage(); // Load user data first
-      await this.fetchScouterProfile(); // Then try to fetch from API
+      this.loadUserFromLocalStorage();
+      await this.fetchScouterProfile();
       await this.loadGoogleMapsScript();
       await this.loadTalents();
       this.loadSkills();
@@ -102,7 +121,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
   }
 
   ngAfterViewInit(): void {
-    // Initialize map on first load
     if (this.activeTab === 'location') {
       setTimeout(() => this.initializeMapWithTalents(), 100);
     }
@@ -110,17 +128,13 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
 
   private loadUserFromLocalStorage() {
     try {
-      // Try to get user data from localStorage
       let userData = null;
       
-      // Check for user_profile_data first
       const userProfileData = localStorage.getItem('user_profile_data');
       if (userProfileData) {
         userData = JSON.parse(userProfileData);
         console.log('Found user data in user_profile_data:', userData);
-      } 
-      // If not found, check for user_data
-      else {
+      } else {
         const userDataStr = localStorage.getItem('user_data');
         if (userDataStr) {
           userData = JSON.parse(userDataStr);
@@ -128,9 +142,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
         }
       }
       
-      // If user data is found, extract the name
       if (userData) {
-        // Check different possible property names for the user's name
         if (userData.fullName) {
           this.scouterName = userData.fullName;
         } else if (userData.name) {
@@ -140,10 +152,9 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
         } else if (userData.username) {
           this.scouterName = userData.username;
         } else if (userData.email) {
-          this.scouterName = userData.email.split('@')[0]; // Use email username as fallback
+          this.scouterName = userData.email.split('@')[0];
         }
         
-        // Extract profile picture if available
         if (userData.profilePicture) {
           this.scouterProfilePic = userData.profilePicture;
         } else if (userData.avatar) {
@@ -156,11 +167,11 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
         this.cdr.detectChanges();
       } else {
         console.log('No user data found in localStorage');
-        this.scouterName = 'Scouter'; // Default fallback
+        this.scouterName = 'Scouter';
       }
     } catch (error) {
       console.error('Error loading user from localStorage:', error);
-      this.scouterName = 'Scouter'; // Default fallback
+      this.scouterName = 'Scouter';
     }
   }
 
@@ -175,14 +186,12 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
           this.scouterService.fetchScouterProfile(scouterId).subscribe({
             next: (response) => {
               if (response.details?.fullName) {
-                // Only update if we don't already have a name from localStorage
                 if (!this.scouterName || this.scouterName === 'Scouter') {
                   this.scouterName = response.details.fullName;
                   this.cdr.detectChanges();
                 }
               }
               
-              // Update profile picture from API if available
               if (response.details?.profilePicture) {
                 this.scouterProfilePic = response.details.profilePicture;
                 this.cdr.detectChanges();
@@ -199,7 +208,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
     }
   }
 
-  // Rest of your existing methods remain the same...
   private async initGoogleMap() {
     if (this.mapError) {
       this.mapError = false;
@@ -217,11 +225,9 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
 
       const defaultCenter = { lat: 6.5244, lng: 3.3792 };
 
-      // Check if map already exists but container was recreated
       if (this.map && this.mapInitialized) {
         console.log('Map exists, checking if container is valid');
         try {
-          // Try to trigger resize first
           this.forceMapResize();
           return;
         } catch (e) {
@@ -254,7 +260,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
       this.infoWindow = new google.maps.InfoWindow();
       this.mapInitialized = true;
 
-      // Initialize map with markers
       setTimeout(() => {
         this.forceMapResize();
         
@@ -275,12 +280,10 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
   private forceMapResize() {
     if (!this.map) return;
     
-    // Clear any existing timeout
     if (this.mapResizeTimeout) {
       clearTimeout(this.mapResizeTimeout);
     }
     
-    // Multiple resize triggers with delays to ensure map renders properly
     setTimeout(() => {
       if (this.map) {
         google.maps.event.trigger(this.map, 'resize');
@@ -290,7 +293,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
     this.mapResizeTimeout = setTimeout(() => {
       if (this.map) {
         google.maps.event.trigger(this.map, 'resize');
-        // Re-center the map after resize
         if (this.markers.length > 0) {
           this.fitMapBounds();
         } else {
@@ -300,6 +302,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
       }
     }, 300);
   }
+
   async performSearch() {
     const query = this.searchQuery.toLowerCase().trim();
 
@@ -320,11 +323,9 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
         const filtered = this.transformApiResponse(response);
         this.apiTalents = filtered;
 
-        // Switch to location tab if not already there
         if (this.activeTab !== 'location') {
           this.openLocationTab();
         } else {
-          // Update map markers
           this.addTalentMarkers(filtered);
         }
 
@@ -353,7 +354,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
       return nameMatch || skillMatch || locationMatch;
     });
 
-    // Switch to location tab if not already there
     if (this.activeTab !== 'location') {
       this.openLocationTab();
     } else {
@@ -445,7 +445,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
           <p><strong>Skills:</strong> ${talent.skillSet?.map((s: any) => s.jobTitle).join(', ') || 'N/A'}</p>
           <p><strong>Pay Range:</strong> ${talent.payRange || 'N/A'}</p>
           <p><strong>Location:</strong> ${talent.proximity || 'N/A'}</p>
-          <button id="view-profile-${talent.id}"
+          <button id="view-profile-${talent.talentId}"
                   class="mt-2 w-full bg-blue-600 text-white py-1 px-3 rounded text-sm hover:bg-blue-700 transition">
             View Profile
           </button>
@@ -457,7 +457,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
       this.infoWindow.open(this.map, marker);
 
       setTimeout(() => {
-        const button = document.getElementById(`view-profile-${talent.id}`);
+        const button = document.getElementById(`view-profile-${talent.talentId}`);
         if (button) {
           button.addEventListener('click', () => {
             this.openTalentModal(talent);
@@ -519,8 +519,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
     });
     this.markers = [];
   }
-
-  // ============ DATA LOADING ============
 
   private loadSkills() {
     this.loadingSkills = true;
@@ -588,12 +586,10 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
 
     this.isMapInitializing = true;
 
-    // Small delay to ensure DOM is ready
     setTimeout(async () => {
       try {
         await this.initGoogleMap();
         
-        // Add markers after map is initialized
         if (this.map && this.apiTalents.length > 0) {
           this.addTalentMarkers(this.apiTalents);
         }
@@ -632,7 +628,7 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
       payRange = this.fixNairaEncoding(payRange);
 
       const mappedTalent = {
-        id: talent.id || talent.talentId || `talent-${index}`,
+        id: talent.talentId || talent.talentId || `talent-${index}`,
         profilePic: profilePic,
         name: talent.fullName?.trim() || `Talent ${index + 1}`,
         email: talent.email || 'no-email@example.com',
@@ -718,8 +714,6 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
     return statusMap[status?.toLowerCase()] || 'Active';
   }
 
-  // ============ TAB MANAGEMENT ============
-
   toggleDropdown() {
     this.dropdownOpen = !this.dropdownOpen;
     this.filteredSkills = this.allSkills.filter(
@@ -768,13 +762,11 @@ export class ViewTalentsLocationPageComponent implements OnInit, AfterViewInit, 
     this.activeTab = 'location';
     this.showSkillSetTab = false;
     
-    // Force change detection first
     this.cdr.detectChanges();
     
-    // Then reinitialize map after DOM update
     setTimeout(() => {
       this.initializeMapWithTalents();
-    }, 300); // Increased delay to ensure DOM is ready
+    }, 300);
   }
 
   async openFindProfessionalsByLocationModal() {
