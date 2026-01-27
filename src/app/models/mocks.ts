@@ -166,7 +166,7 @@ export interface TalentMarketProfileResponse {
   metaData: string; // Base64 encoded metadata
 }
 
-
+// THIS IS THE MAIN TYPE DEFINITION
 export interface TotalHires {
   // Basic fields
   id: string;

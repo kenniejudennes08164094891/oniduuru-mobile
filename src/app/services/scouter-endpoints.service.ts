@@ -6,7 +6,11 @@ import { map, retry, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { endpoints } from '../models/endpoint';
 import { JwtInterceptorService } from '../services/jwt-interceptor.service';
-import { FilterScouterParam, PaginationParams, TotalHires } from 'src/app/models/mocks';
+import {
+  FilterScouterParam,
+  PaginationParams,
+  TotalHires,
+} from 'src/app/models/mocks';
 import { ToastController } from '@ionic/angular';
 
 @Injectable({
@@ -25,8 +29,8 @@ export class ScouterEndpointsService {
   constructor(
     private http: HttpClient,
     private jwtInterceptor: JwtInterceptorService,
-    private toast: ToastController
-  ) { }
+    private toast: ToastController,
+  ) {}
 
   // ============ AUTHENTICATION & ONBOARDING ============
   completeScouterRegistration(tempUserId: string): Observable<any> {
@@ -39,7 +43,7 @@ export class ScouterEndpointsService {
   createScouterProfile(payload: any): Observable<any> {
     return this.http.post<any>(
       `${this.baseUrl}/${endpoints.onboardScouter}`, // ✅ USING CONSTANT
-      payload
+      payload,
       // { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
     );
   }
@@ -93,7 +97,7 @@ export class ScouterEndpointsService {
     return this.http.post<any>(
       `${this.baseUrl}/${endpoints.verifyOTP}`,
       {}, // Empty body since we're using query params
-      { params }
+      { params },
     );
   }
 
@@ -103,15 +107,16 @@ export class ScouterEndpointsService {
     // Try multiple patterns
     const urlPatterns = [
       // Pattern 1: Query parameter (most likely)
-      `${this.baseUrl}/${endpoints.fetchScouterProfile
+      `${this.baseUrl}/${
+        endpoints.fetchScouterProfile
       }?scouterId=${encodeURIComponent(scouterId)}`,
       // Pattern 2: Path parameter
       `${this.baseUrl}/${endpoints.fetchScouterProfile}/${encodeURIComponent(
-        scouterId
+        scouterId,
       )}`,
       // Pattern 3: Alternative endpoint
       `${this.baseUrl}/scouters/v1/get-scouter-profile/${encodeURIComponent(
-        scouterId
+        scouterId,
       )}`,
     ];
 
@@ -145,7 +150,7 @@ export class ScouterEndpointsService {
             },
             error: (error) => {
               console.log(
-                `❌ Endpoint ${currentIndex + 1} failed: ${error.status}`
+                `❌ Endpoint ${currentIndex + 1} failed: ${error.status}`,
               );
               currentIndex++;
 
@@ -164,7 +169,7 @@ export class ScouterEndpointsService {
   }
   private tryEndpoints(
     endpoints: string[],
-    index: number = 0
+    index: number = 0,
   ): Observable<any> {
     if (index >= endpoints.length) {
       return throwError(() => new Error('All profile endpoints failed'));
@@ -190,18 +195,18 @@ export class ScouterEndpointsService {
             return throwError(
               () =>
                 new Error(
-                  `All profile endpoints failed. Last error: ${error?.message}`
-                )
+                  `All profile endpoints failed. Last error: ${error?.message}`,
+                ),
             );
           }
-        })
+        }),
       );
   }
 
   // In scouter-endpoints.service.ts
   public updateScouterProfile(
     scouterId: string,
-    scouter: any
+    scouter: any,
   ): Observable<any> {
     // Normalize scouterId and try multiple URL formats to be resilient to
     // different backend routing conventions (e.g. with/without `scouter/` or
@@ -221,36 +226,37 @@ export class ScouterEndpointsService {
       const pId = typeof payloadId === 'string' ? payloadId : String(payloadId);
       const pNumeric = this.extractNumericId(pId) || pId;
       candidateUrls.push(
-        `${environment.baseUrl}/scouters/v1/edit-scouter-profile/${pNumeric}`
+        `${environment.baseUrl}/scouters/v1/edit-scouter-profile/${pNumeric}`,
       );
       candidateUrls.push(
-        `${environment.baseUrl}/scouters/v1/edit-scouter-profile/scouter/${pNumeric}`
+        `${environment.baseUrl}/scouters/v1/edit-scouter-profile/scouter/${pNumeric}`,
       );
     }
 
     // Standard candidates based on the provided scouterId
     candidateUrls.push(
-      `${environment.baseUrl}/${endpoints.updateScouterProfile}/${numericId}`
+      `${environment.baseUrl}/${endpoints.updateScouterProfile}/${numericId}`,
     );
     candidateUrls.push(
-      `${environment.baseUrl}/scouters/v1/edit-scouter-profile/scouter/${numericId}`
+      `${environment.baseUrl}/scouters/v1/edit-scouter-profile/scouter/${numericId}`,
     );
     candidateUrls.push(
-      `${environment.baseUrl
-      }/scouters/v1/edit-scouter-profile/${encodeURIComponent(scouterId)}`
+      `${
+        environment.baseUrl
+      }/scouters/v1/edit-scouter-profile/${encodeURIComponent(scouterId)}`,
     );
 
     console.log(
       '🚀 UPDATE PROFILE REQUEST - Trying URLs:',
       candidateUrls,
       'payload:',
-      scouter
+      scouter,
     );
 
     // Ensure we use application/json for PATCH (some backends reject merge-patch)
     const headers = this.jwtInterceptor.customHttpHeaders.set(
       'Content-Type',
-      'application/json'
+      'application/json',
     );
 
     // Try each candidate URL until one succeeds
@@ -261,7 +267,7 @@ export class ScouterEndpointsService {
 
         if (response === null || response === undefined) {
           console.warn(
-            '⚠️ Backend returned null response - operation likely succeeded'
+            '⚠️ Backend returned null response - operation likely succeeded',
           );
           return {
             success: true,
@@ -275,7 +281,7 @@ export class ScouterEndpointsService {
           Object.keys(response).length === 0
         ) {
           console.warn(
-            '⚠️ Backend returned empty object - operation likely succeeded'
+            '⚠️ Backend returned empty object - operation likely succeeded',
           );
           return {
             success: true,
@@ -289,7 +295,7 @@ export class ScouterEndpointsService {
       catchError((error) => {
         console.error(
           '❌ Profile update failed after trying candidate URLs:',
-          error
+          error,
         );
 
         let errorMessage = 'Failed to update profile';
@@ -305,7 +311,7 @@ export class ScouterEndpointsService {
         }
 
         return throwError(() => new Error(errorMessage));
-      })
+      }),
     );
   }
 
@@ -345,7 +351,7 @@ export class ScouterEndpointsService {
   // Enhanced alternative endpoint handler
   private tryAlternativeEndpoints(
     urls: string[],
-    payload: any
+    payload: any,
   ): Observable<any> {
     if (urls.length === 0) {
       // All formats failed - provide detailed error
@@ -377,7 +383,7 @@ export class ScouterEndpointsService {
         tap((response) => {
           console.log(
             `✅ SUCCESS with alternative endpoint: ${currentUrl}`,
-            response
+            response,
           );
         }),
         catchError((error) => {
@@ -396,7 +402,7 @@ export class ScouterEndpointsService {
           Status: ${error.status}
         `);
           return throwError(() => finalError);
-        })
+        }),
       );
   }
 
@@ -437,13 +443,13 @@ export class ScouterEndpointsService {
       '📷 Uploading profile picture to:',
       url,
       'payload scouterId:',
-      payload.scouterId
+      payload.scouterId,
     );
 
     // Send object (let HttpClient set JSON headers) but ensure Auth header is present
     const headers = this.jwtInterceptor.customHttpHeaders.set(
       'Content-Type',
-      'application/json'
+      'application/json',
     );
 
     // Primary attempt: send JSON payload
@@ -452,7 +458,7 @@ export class ScouterEndpointsService {
       catchError((error) => {
         console.warn(
           '❌ Profile picture upload failed, attempting fallbacks:',
-          error?.status || error?.message
+          error?.status || error?.message,
         );
 
         // Normalize server message (can be string or array)
@@ -473,7 +479,7 @@ export class ScouterEndpointsService {
         // 400, prefer calling the update (replace) endpoint directly.
         if (error?.status === 400 || serverMessage.includes('replace')) {
           console.warn(
-            'ℹ️ Server indicates replace/create semantics. Calling update endpoint...'
+            'ℹ️ Server indicates replace/create semantics. Calling update endpoint...',
           );
           return this.updateScouterPictureDirect(payload);
         }
@@ -487,11 +493,11 @@ export class ScouterEndpointsService {
 
         return this.http.post<any>(url, numericPayload, { headers }).pipe(
           tap((r) =>
-            console.log('✅ Upload with numeric scouterId succeeded:', r)
+            console.log('✅ Upload with numeric scouterId succeeded:', r),
           ),
           catchError((uploadErr) => {
             const numericMsg = String(
-              uploadErr?.error?.message || uploadErr?.message || ''
+              uploadErr?.error?.message || uploadErr?.message || '',
             ).toLowerCase();
 
             // If numeric attempt fails because the scouter does not exist,
@@ -503,7 +509,7 @@ export class ScouterEndpointsService {
               uploadErr?.status === 401
             ) {
               console.warn(
-                'ℹ️ Numeric id attempt failed. Trying update endpoint with original payload...'
+                'ℹ️ Numeric id attempt failed. Trying update endpoint with original payload...',
               );
               return this.updateScouterPictureDirect(payload);
             }
@@ -518,9 +524,9 @@ export class ScouterEndpointsService {
               console.error('❌ Failed to construct FormData fallback:', fmErr);
               return throwError(() => uploadErr);
             }
-          })
+          }),
         );
-      })
+      }),
     );
   }
 
@@ -531,13 +537,13 @@ export class ScouterEndpointsService {
     const updateUrl = `${environment?.baseUrl}/${endpoints.updateProfilePic}`;
     const headers = this.jwtInterceptor.customHttpHeaders.set(
       'Content-Type',
-      'application/json'
+      'application/json',
     );
 
     console.log(
       '📷 Calling direct update endpoint for profile picture:',
       updateUrl,
-      payload.scouterId
+      payload.scouterId,
     );
 
     return this.http.post<any>(updateUrl, payload, { headers }).pipe(
@@ -545,7 +551,7 @@ export class ScouterEndpointsService {
       catchError((err) => {
         console.error('❌ Direct update endpoint failed:', err);
         return throwError(() => err);
-      })
+      }),
     );
   }
 
@@ -559,7 +565,7 @@ export class ScouterEndpointsService {
 
     const base64 = payload.base64Picture.replace(
       /^data:image\/[a-zA-Z]+;base64,/,
-      ''
+      '',
     );
     // Convert base64 to Blob
     const byteCharacters = atob(base64);
@@ -590,7 +596,7 @@ export class ScouterEndpointsService {
       catchError((error) => {
         console.error('❌ FormData upload failed:', error);
         return throwError(() => error);
-      })
+      }),
     );
   }
 
@@ -601,14 +607,14 @@ export class ScouterEndpointsService {
     const updateUrl = `${environment?.baseUrl}/${endpoints.updateProfilePic}`;
     const headers = this.jwtInterceptor.customHttpHeaders.set(
       'Content-Type',
-      'application/json'
+      'application/json',
     );
 
     console.log(
       '📷 Replacing profile picture via update endpoint:',
       updateUrl,
       'scouterId:',
-      payload.scouterId
+      payload.scouterId,
     );
 
     // First try the explicit update endpoint. If it does not exist (404) or
@@ -619,7 +625,7 @@ export class ScouterEndpointsService {
       catchError((err) => {
         console.warn(
           '⚠️ Replace via update endpoint failed:',
-          err?.status || err?.message
+          err?.status || err?.message,
         );
 
         // If update endpoint missing or server suggests using upload, try upload endpoint
@@ -632,22 +638,22 @@ export class ScouterEndpointsService {
           const uploadUrl = `${environment?.baseUrl}/${endpoints.uploadProfilePic}`;
           console.log(
             '� Falling back to upload endpoint for replace:',
-            uploadUrl
+            uploadUrl,
           );
           return this.http.post<any>(uploadUrl, payload, { headers }).pipe(
             tap((r) => console.log('✅ Replace via upload succeeded:', r)),
             catchError((uploadErr) => {
               console.error(
                 '❌ Fallback replace via upload failed:',
-                uploadErr
+                uploadErr,
               );
               return throwError(() => uploadErr);
-            })
+            }),
           );
         }
 
         return throwError(() => err);
-      })
+      }),
     );
   }
 
@@ -669,7 +675,7 @@ export class ScouterEndpointsService {
           const payloadRaw = parts[1].replace(/-/g, '+').replace(/_/g, '/');
           const padded = payloadRaw.padEnd(
             payloadRaw.length + ((4 - (payloadRaw.length % 4)) % 4),
-            '='
+            '=',
           );
           const decoded = JSON.parse(atob(padded));
 
@@ -688,7 +694,7 @@ export class ScouterEndpointsService {
             numericId = tokenScouterRaw;
             console.log(
               '🔐 Using token scouterId (full format) for picture payload:',
-              numericId
+              numericId,
             );
           } else if (tokenScouterRaw) {
             // If token contains only a numeric id, don't override formats that include 'scouter/'
@@ -699,7 +705,7 @@ export class ScouterEndpointsService {
               numericId = String(tokenNumeric);
               console.log(
                 '🔐 Using token scouterId (numeric) for picture payload:',
-                numericId
+                numericId,
               );
             }
           }
@@ -733,14 +739,15 @@ export class ScouterEndpointsService {
     // some environments expect the complete identifier. Then try numeric id.
     if (typeof scouterId === 'string' && scouterId.trim() !== '') {
       candidates.push(
-        `${environment?.baseUrl}/${endpoints.getPictureByScouterId
-        }/${encodeURIComponent(scouterId)}`
+        `${environment?.baseUrl}/${
+          endpoints.getPictureByScouterId
+        }/${encodeURIComponent(scouterId)}`,
       );
     }
 
     if (numericId) {
       candidates.push(
-        `${environment?.baseUrl}/${endpoints.getPictureByScouterId}/${numericId}`
+        `${environment?.baseUrl}/${endpoints.getPictureByScouterId}/${numericId}`,
       );
     }
 
@@ -751,7 +758,7 @@ export class ScouterEndpointsService {
 
     console.log(
       '📷 Attempting to fetch profile picture using candidates:',
-      candidates
+      candidates,
     );
 
     const tryFetch = (urls: string[]): Observable<any> => {
@@ -765,13 +772,13 @@ export class ScouterEndpointsService {
               '⚠️ Picture fetch failed for:',
               url,
               'status:',
-              error?.status
+              error?.status,
             );
             // If 401/404 treat as no picture and try next candidate
             if (urls.length > 1) return tryFetch(urls.slice(1));
             // Final fallback: return null so UI can continue
             return of(null);
-          })
+          }),
         );
     };
 
@@ -797,7 +804,7 @@ export class ScouterEndpointsService {
           const payloadRaw = parts[1].replace(/-/g, '+').replace(/_/g, '/');
           const padded = payloadRaw.padEnd(
             payloadRaw.length + ((4 - (payloadRaw.length % 4)) % 4),
-            '='
+            '=',
           );
           const decoded = JSON.parse(atob(padded));
           const tokenScouter =
@@ -824,13 +831,14 @@ export class ScouterEndpointsService {
       }
 
       const id = ids[0];
-      const url = `${environment?.baseUrl}/${endpoints.deleteProfilePicture
-        }/${encodeURIComponent(id)}`;
+      const url = `${environment?.baseUrl}/${
+        endpoints.deleteProfilePicture
+      }/${encodeURIComponent(id)}`;
       console.log(
         '📷 Attempting delete profile picture using id:',
         id,
         'url:',
-        url
+        url,
       );
 
       return this.http
@@ -841,11 +849,11 @@ export class ScouterEndpointsService {
             console.warn(
               '⚠️ Delete failed for id:',
               id,
-              err?.status || err?.message
+              err?.status || err?.message,
             );
             // Try next id format
             return tryDelete(ids.slice(1));
-          })
+          }),
         );
     };
 
@@ -891,18 +899,22 @@ export class ScouterEndpointsService {
 
     console.log('📝 Hiring talent with payload:', payload);
 
-    return this.http.post<any>(url, payload, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    }).pipe(
-      timeout(15000),
-      tap((response) => {
-        console.log('✅ Talent hired successfully:', response);
-      }),
-      catchError((error) => {
-        console.error('❌ Failed to hire talent:', error);
-        return throwError(() => new Error(error.error?.message || 'Failed to hire talent'));
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
       })
-    );
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log('✅ Talent hired successfully:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to hire talent:', error);
+          return throwError(
+            () => new Error(error.error?.message || 'Failed to hire talent'),
+          );
+        }),
+      );
   }
 
   /**
@@ -912,19 +924,21 @@ export class ScouterEndpointsService {
   fetchAllSkillsets(): Observable<any> {
     const url = `${this.baseUrl}/talent/v1/fetch-all-skillsets`;
 
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    }).pipe(
-      timeout(15000),
-      tap((response) => {
-        console.log('✅ Skillsets fetched:', response?.data?.length || 0);
-      }),
-      catchError((error) => {
-        console.error('❌ Failed to fetch skillsets:', error);
-        // Return empty array if API fails
-        return of({ message: 'Using fallback skills', data: [] });
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
       })
-    );
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log('✅ Skillsets fetched:', response?.data?.length || 0);
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to fetch skillsets:', error);
+          // Return empty array if API fails
+          return of({ message: 'Using fallback skills', data: [] });
+        }),
+      );
   }
 
   fetchSkillDropdown(): Observable<any> {
@@ -934,151 +948,169 @@ export class ScouterEndpointsService {
     });
   }
 
-/**
- * GET /talent/v1/fetch-all-talents
- * Get List of All Talent (Super admin/scouter use only!)
- * 
- * Parameters:
- * - location: string (optional) - Displays list of all talent address
- * - skillset: array[string] (optional) - Displays list of all skillsets
- * - limit: number - Displays 10 Talents per page
- * - pageNo: number - Page number
- */
-/**
- * GET /talent/v1/fetch-all-talents
- * Get List of All Talent (Super admin/scouter use only!)
- */
-fetchAllTalents(params?: {
-  location?: string;
-  skillset?: string[];
-  limit?: number;
-  pageNo?: number;
-}): Observable<any> {
-  const url = `${this.baseUrl}/talent/v1/fetch-all-talents`;
+  /**
+   * GET /talent/v1/fetch-all-talents
+   * Get List of All Talent (Super admin/scouter use only!)
+   *
+   * Parameters:
+   * - location: string (optional) - Displays list of all talent address
+   * - skillset: array[string] (optional) - Displays list of all skillsets
+   * - limit: number - Displays 10 Talents per page
+   * - pageNo: number - Page number
+   */
+  /**
+   * GET /talent/v1/fetch-all-talents
+   * Get List of All Talent (Super admin/scouter use only!)
+   */
+  fetchAllTalents(params?: {
+    location?: string;
+    skillset?: string[];
+    limit?: number;
+    pageNo?: number;
+  }): Observable<any> {
+    const url = `${this.baseUrl}/talent/v1/fetch-all-talents`;
 
-  // Build query parameters
-  let httpParams = new HttpParams();
+    // Build query parameters
+    let httpParams = new HttpParams();
 
-  // Add optional location parameter
-  if (params?.location && params.location.trim() !== '') {
-    httpParams = httpParams.set('location', params.location.trim());
-  }
+    // Add optional location parameter - DON'T trim to allow partial matches
+    if (params?.location && params.location.trim() !== '') {
+      // Try different formats to get more results
+      const location = params.location.trim();
 
-  // Add optional skillset parameter (array of strings)
-  if (params?.skillset && params.skillset.length > 0) {
-    httpParams = httpParams.set('skillset', params.skillset.join(','));
-  }
+      // For common locations, try variations
+      if (location.toLowerCase() === 'lagos') {
+        // Try multiple variations
+        httpParams = httpParams.set('location', 'lagos');
+      } else {
+        httpParams = httpParams.set('location', location);
+      }
+    }
 
-  // Add pagination parameters with defaults
-  const limit = params?.limit || 10;
-  httpParams = httpParams.set('limit', limit.toString());
+    // Add optional skillset parameter (array of strings)
+    if (params?.skillset && params.skillset.length > 0) {
+      httpParams = httpParams.set('skillset', params.skillset.join(','));
+    }
 
-  const pageNo = params?.pageNo || 1;
-  httpParams = httpParams.set('pageNo', pageNo.toString());
+    // Add pagination parameters with defaults
+    const limit = params?.limit || 10;
+    httpParams = httpParams.set('limit', limit.toString());
 
-  console.log('🔍 Fetching all talents with params:', {
-    url,
-    params: httpParams.toString()
-  });
+    const pageNo = params?.pageNo || 1;
+    httpParams = httpParams.set('pageNo', pageNo.toString());
 
-  return this.http.get(url, {
-    headers: this.jwtInterceptor.customHttpHeaders,
-    params: httpParams,
-    responseType: 'text' // Keep as text to handle base64
-  }).pipe(
-    timeout(15000),
-    map((rawResponse) => {
-      console.log('✅ Raw API Response received');
-      
-      try {
-        // Parse the JSON response
-        const response = JSON.parse(rawResponse);
-        
-        // Check if response.data is a base64 string
-        if (response.data && typeof response.data === 'string') {
+    console.log('🔍 Fetching all talents with params:', {
+      url,
+      params: httpParams.toString(),
+    });
+
+    return this.http
+      .get(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: httpParams,
+        responseType: 'text', // Keep as text to handle base64
+      })
+      .pipe(
+        timeout(15000),
+        map((rawResponse) => {
+          console.log('✅ Raw API Response received');
+
           try {
-            console.log('🔍 Decoding base64 response...');
-            // Decode base64
-            const decodedBase64 = atob(response.data);
-            // Parse JSON from decoded string
-            const decodedData = JSON.parse(decodedBase64);
-            
-            // Return the decoded data
-            return {
-              ...response,
-              decodedData: decodedData,
-              // Put talents in the main data property for easy access
-              talents: decodedData.mappedTalents || decodedData.talents || []
-            };
-          } catch (decodeError) {
-            console.error('❌ Failed to decode base64:', decodeError);
-            // If decoding fails, return original response
+            // Parse the JSON response
+            const response = JSON.parse(rawResponse);
+
+            // Check if response.data is a base64 string
+            if (response.data && typeof response.data === 'string') {
+              try {
+                console.log('🔍 Decoding base64 response...');
+                // Decode base64
+                const decodedBase64 = atob(response.data);
+                // Parse JSON from decoded string
+                const decodedData = JSON.parse(decodedBase64);
+
+                // Return the decoded data
+                return {
+                  ...response,
+                  decodedData: decodedData,
+                  // Put talents in the main data property for easy access
+                  talents:
+                    decodedData.mappedTalents || decodedData.talents || [],
+                };
+              } catch (decodeError) {
+                console.error('❌ Failed to decode base64:', decodeError);
+                // If decoding fails, return original response
+                return response;
+              }
+            }
+
+            // If no base64 decoding needed, return as-is
             return response;
+          } catch (parseError) {
+            console.error('❌ Failed to parse JSON response:', parseError);
+            throw new Error('Invalid JSON response from server');
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to fetch talents:', error);
+
+          let errorMessage = 'Failed to fetch talents';
+          if (error.status === 401) {
+            errorMessage = 'Unauthorized. Super admin/scouter access only.';
+          } else if (error.status === 403) {
+            errorMessage = 'Forbidden. Insufficient permissions.';
+          } else if (error.status === 404) {
+            errorMessage = 'API endpoint not found.';
+          } else if (error.status === 500) {
+            errorMessage = 'Server error. Please try again later.';
+          }
+
+          return throwError(
+            () =>
+              new Error(
+                errorMessage ||
+                  error.error?.message ||
+                  'Failed to fetch talents',
+              ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Fix UTF-8 encoding issues - specifically the Naira symbol
+   */
+  private fixNairaEncoding(text: string): string {
+    if (!text || typeof text !== 'string') return text;
+    return text.replace(/â‚¦/g, '₦');
+  }
+
+  private fixEncodingInResponse(response: any): any {
+    if (!response) return response;
+
+    const processObject = (obj: any): any => {
+      if (typeof obj === 'string') {
+        return this.fixNairaEncoding(obj);
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.map((item) => processObject(item));
+      }
+
+      if (obj && typeof obj === 'object') {
+        const result: any = {};
+        for (const key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            result[key] = processObject(obj[key]);
           }
         }
-        
-        // If no base64 decoding needed, return as-is
-        return response;
-      } catch (parseError) {
-        console.error('❌ Failed to parse JSON response:', parseError);
-        throw new Error('Invalid JSON response from server');
-      }
-    }),
-    catchError((error) => {
-      console.error('❌ Failed to fetch talents:', error);
-      
-      let errorMessage = 'Failed to fetch talents';
-      if (error.status === 401) {
-        errorMessage = 'Unauthorized. Super admin/scouter access only.';
-      } else if (error.status === 403) {
-        errorMessage = 'Forbidden. Insufficient permissions.';
-      } else if (error.status === 404) {
-        errorMessage = 'API endpoint not found.';
-      } else if (error.status === 500) {
-        errorMessage = 'Server error. Please try again later.';
+        return result;
       }
 
-      return throwError(() => new Error(errorMessage || error.error?.message || 'Failed to fetch talents'));
-    })
-  );
-}
+      return obj;
+    };
 
-
-/**
- * Fix UTF-8 encoding issues - specifically the Naira symbol
- */
-private fixNairaEncoding(text: string): string {
-  if (!text || typeof text !== 'string') return text;
-  return text.replace(/â‚¦/g, '₦');
-}
-
-private fixEncodingInResponse(response: any): any {
-  if (!response) return response;
-  
-  const processObject = (obj: any): any => {
-    if (typeof obj === 'string') {
-      return this.fixNairaEncoding(obj);
-    }
-    
-    if (Array.isArray(obj)) {
-      return obj.map(item => processObject(item));
-    }
-    
-    if (obj && typeof obj === 'object') {
-      const result: any = {};
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          result[key] = processObject(obj[key]);
-        }
-      }
-      return result;
-    }
-    
-    return obj;
-  };
-  
-  return processObject(response);
-}
+    return processObject(response);
+  }
 
   // ============ SCOUTER MANAGEMENT ============
   fetchAllScouters(pagination: PaginationParams): Observable<any> {
@@ -1103,7 +1135,7 @@ private fixEncodingInResponse(response: any): any {
 
   toggleScouterPaymentStatus(
     data: any,
-    uniqueIdentifier: string
+    uniqueIdentifier: string,
   ): Observable<any> {
     const encodedScouterId = encodeURIComponent(uniqueIdentifier);
     const url = `${this.baseUrl}/${endpoints.toggleScouterPaymentStatus}/${encodedScouterId}`;
@@ -1139,7 +1171,7 @@ private fixEncodingInResponse(response: any): any {
         catchError((error) => {
           console.error('❌ Failed to log complaint:', error);
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -1162,7 +1194,7 @@ private fixEncodingInResponse(response: any): any {
           console.error('❌ Notifications API Error:', error);
           // Return empty notifications array on error
           return of({ notifications: [] });
-        })
+        }),
       );
   }
 
@@ -1194,7 +1226,7 @@ private fixEncodingInResponse(response: any): any {
             message: error.error?.message || 'Failed to clear notifications',
             status: error.status,
           }));
-        })
+        }),
       );
   }
 
@@ -1206,7 +1238,7 @@ private fixEncodingInResponse(response: any): any {
       searchText?: string;
       limit?: number;
       pageNo?: number;
-    }
+    },
   ): Observable<any> {
     if (!scouterId || scouterId.trim() === '') {
       console.error('❌ Invalid scouterId provided:', scouterId);
@@ -1245,7 +1277,7 @@ private fixEncodingInResponse(response: any): any {
       encodedScouterId,
       params: httpParams.toString(),
       fullUrl: `${url}?${httpParams.toString()}`,
-      expectedCurlFormat: `curl -X 'GET' '${url}?${httpParams.toString()}' -H 'accept: */*' -H 'Authorization: Bearer ...'`
+      expectedCurlFormat: `curl -X 'GET' '${url}?${httpParams.toString()}' -H 'accept: */*' -H 'Authorization: Bearer ...'`,
     });
 
     // Get headers and add debug
@@ -1257,8 +1289,8 @@ private fixEncodingInResponse(response: any): any {
       tokenPreview: token ? token.substring(0, 30) + '...' : 'No token',
       headers: {
         hasAuthorization: headers.has('Authorization'),
-        authorizationValue: headers.get('Authorization')
-      }
+        authorizationValue: headers.get('Authorization'),
+      },
     });
 
     // Make the request
@@ -1275,7 +1307,7 @@ private fixEncodingInResponse(response: any): any {
             message: response.message,
             hasDetails: !!response.details,
             detailsLength: response.details?.length,
-            pagination: response.paginationParams
+            pagination: response.paginationParams,
           });
         }),
         map((response) => {
@@ -1291,29 +1323,43 @@ private fixEncodingInResponse(response: any): any {
             url: url,
             requestDetails: {
               scouterId: scouterId,
-              params: params
-            }
+              params: params,
+            },
           });
 
           // Handle specific error cases
           if (error.status === 401) {
             console.warn('⚠️ Unauthorized - Token may be expired or invalid');
-            return throwError(() => new Error('Session expired. Please login again.'));
+            return throwError(
+              () => new Error('Session expired. Please login again.'),
+            );
           } else if (error.status === 404) {
             console.warn('⚠️ Endpoint not found:', url);
-            return throwError(() => new Error('API endpoint not found. Please check the URL.'));
+            return throwError(
+              () => new Error('API endpoint not found. Please check the URL.'),
+            );
           } else if (error.status === 0) {
             console.warn('⚠️ Network error - CORS or connectivity issue');
-            return throwError(() => new Error('Network error. Please check your internet connection.'));
+            return throwError(
+              () =>
+                new Error(
+                  'Network error. Please check your internet connection.',
+                ),
+            );
           } else if (error.status === 400) {
             console.warn('⚠️ Bad request - Check parameters');
-            return throwError(() => new Error('Invalid request. Please check your parameters.'));
+            return throwError(
+              () => new Error('Invalid request. Please check your parameters.'),
+            );
           }
 
           return throwError(
-            () => new Error(error.error?.message || 'Failed to load market engagements')
+            () =>
+              new Error(
+                error.error?.message || 'Failed to load market engagements',
+              ),
           );
-        })
+        }),
       );
   }
 
@@ -1337,13 +1383,22 @@ private fixEncodingInResponse(response: any): any {
 
         // Parse JSON
         decodedDetails = JSON.parse(decodedString);
-        console.log('✅ Successfully parsed JSON. Items found:', decodedDetails.length);
+        console.log(
+          '✅ Successfully parsed JSON. Items found:',
+          decodedDetails.length,
+        );
 
         // ✅ LOG THE ACTUAL DATA STRUCTURE
         if (decodedDetails.length > 0) {
           console.log('✅ First item keys:', Object.keys(decodedDetails[0]));
-          console.log('✅ First item satisFactoryCommentByScouter:', decodedDetails[0].satisFactoryCommentByScouter);
-          console.log('✅ First item satisFactoryCommentByTalent:', decodedDetails[0].satisFactoryCommentByTalent);
+          console.log(
+            '✅ First item satisFactoryCommentByScouter:',
+            decodedDetails[0].satisFactoryCommentByScouter,
+          );
+          console.log(
+            '✅ First item satisFactoryCommentByTalent:',
+            decodedDetails[0].satisFactoryCommentByTalent,
+          );
         }
       } catch (error) {
         console.error('❌ Failed to decode or parse details:', error);
@@ -1356,7 +1411,7 @@ private fixEncodingInResponse(response: any): any {
         itemKeys: Object.keys(item),
         satisFactoryCommentByScouter: item.satisFactoryCommentByScouter,
         satisFactoryCommentByTalent: item.satisFactoryCommentByTalent,
-        item: item
+        item: item,
       });
 
       // Parse amount
@@ -1377,12 +1432,11 @@ private fixEncodingInResponse(response: any): any {
         profilePic: item.talentPicture || 'assets/images/default-avatar.png',
         name: item.talentName || 'Unknown Talent',
         email: item.talentEmail || 'No email',
-        date: item.dateOfHire || item.createdAt
-          ? this.formatDate(item.dateOfHire || item.createdAt)
-          : 'N/A',
-        startDate: item.startDate
-          ? this.formatDate(item.startDate)
-          : 'N/A',
+        date:
+          item.dateOfHire || item.createdAt
+            ? this.formatDate(item.dateOfHire || item.createdAt)
+            : 'N/A',
+        startDate: item.startDate ? this.formatDate(item.startDate) : 'N/A',
         amount: amount,
         offerStatus: this.mapStatus(item.hireStatus || item.status),
         status: this.mapActiveStatus(item.hireStatus || item.status),
@@ -1396,9 +1450,9 @@ private fixEncodingInResponse(response: any): any {
 
         // Frontend fields - will be populated in setHireData
         yourComment: '', // Will be filled by setHireData
-        yourRating: 0,   // Will be filled by setHireData
+        yourRating: 0, // Will be filled by setHireData
         talentComment: '', // Will be filled by setHireData
-        talentRating: 0,   // Will be filled by setHireData
+        talentRating: 0, // Will be filled by setHireData
 
         // Backend IDs
         marketHireId: item.marketHireId || item.id,
@@ -1428,9 +1482,11 @@ private fixEncodingInResponse(response: any): any {
       };
 
       console.log(`✅ Transformed item ${index}:`, {
-        satisFactoryCommentByScouter: transformedItem.satisFactoryCommentByScouter,
-        satisFactoryCommentByTalent: transformedItem.satisFactoryCommentByTalent,
-        keys: Object.keys(transformedItem)
+        satisFactoryCommentByScouter:
+          transformedItem.satisFactoryCommentByScouter,
+        satisFactoryCommentByTalent:
+          transformedItem.satisFactoryCommentByTalent,
+        keys: Object.keys(transformedItem),
       });
 
       return transformedItem;
@@ -1459,7 +1515,7 @@ private fixEncodingInResponse(response: any): any {
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       });
     } catch (error) {
       console.warn('Could not parse date:', dateString);
@@ -1469,18 +1525,19 @@ private fixEncodingInResponse(response: any): any {
 
   // Update status mapping to handle your specific status values
   private mapStatus(
-    apiStatus: string
+    apiStatus: string,
   ): 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' {
     const statusMap: { [key: string]: any } = {
       'awaiting-acceptance': 'Awaiting Acceptance',
       'offer-accepted': 'Offer Accepted',
       'offer-declined': 'Offer Rejected',
-      'accepted': 'Offer Accepted',
-      'pending': 'Awaiting Acceptance',
-      'rejected': 'Offer Rejected',
+      accepted: 'Offer Accepted',
+      pending: 'Awaiting Acceptance',
+      rejected: 'Offer Rejected',
     };
 
-    const mappedStatus = statusMap[apiStatus?.toLowerCase()] || 'Awaiting Acceptance';
+    const mappedStatus =
+      statusMap[apiStatus?.toLowerCase()] || 'Awaiting Acceptance';
     console.log(`🔍 Status mapping: ${apiStatus} -> ${mappedStatus}`);
     return mappedStatus;
   }
@@ -1490,9 +1547,9 @@ private fixEncodingInResponse(response: any): any {
       'awaiting-acceptance': 'Pending',
       'offer-accepted': 'Active',
       'offer-declined': 'Away',
-      'accepted': 'Active',
-      'pending': 'Pending',
-      'rejected': 'Away',
+      accepted: 'Active',
+      pending: 'Pending',
+      rejected: 'Away',
     };
 
     return statusMap[apiStatus?.toLowerCase()] || 'Pending';
@@ -1507,7 +1564,7 @@ private fixEncodingInResponse(response: any): any {
   // Enhanced version with market ID handling for super admins
   public getScouterStats(
     scouterId: string,
-    includeMarketIds: boolean = false
+    includeMarketIds: boolean = false,
   ): Observable<any> {
     if (!scouterId || scouterId.trim() === '') {
       return throwError(() => new Error('Invalid scouterId provided'));
@@ -1532,7 +1589,7 @@ private fixEncodingInResponse(response: any): any {
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Scouter stats fetched successfully:', response)
+          console.log('✅ Scouter stats fetched successfully:', response),
         ),
         catchError((error) => {
           console.error('❌ Failed to fetch scouter stats:', error);
@@ -1548,7 +1605,7 @@ private fixEncodingInResponse(response: any): any {
           }
 
           return throwError(() => new Error(errorMessage));
-        })
+        }),
       );
   }
 
@@ -1559,7 +1616,7 @@ private fixEncodingInResponse(response: any): any {
    */
   public getScouterTalentStats(
     scouterId: string,
-    talentId: string
+    talentId: string,
   ): Observable<any> {
     if (
       !scouterId ||
@@ -1568,7 +1625,7 @@ private fixEncodingInResponse(response: any): any {
       talentId.trim() === ''
     ) {
       return throwError(
-        () => new Error('Invalid scouterId or talentId provided')
+        () => new Error('Invalid scouterId or talentId provided'),
       );
     }
 
@@ -1585,7 +1642,10 @@ private fixEncodingInResponse(response: any): any {
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Scouter-talent stats fetched successfully:', response)
+          console.log(
+            '✅ Scouter-talent stats fetched successfully:',
+            response,
+          ),
         ),
         catchError((error) => {
           console.error('❌ Failed to fetch scouter-talent stats:', error);
@@ -1593,10 +1653,10 @@ private fixEncodingInResponse(response: any): any {
             () =>
               new Error(
                 error.error?.message ||
-                'Failed to load scouter-talent statistics'
-              )
+                  'Failed to load scouter-talent statistics',
+              ),
           );
-        })
+        }),
       );
   }
 
@@ -1609,7 +1669,7 @@ private fixEncodingInResponse(response: any): any {
       catchError((error) => {
         console.error(
           '❌ Failed to fetch comprehensive dashboard data:',
-          error
+          error,
         );
         // Return fallback data structure
         return of({
@@ -1623,7 +1683,7 @@ private fixEncodingInResponse(response: any): any {
             awaiting: 0,
           },
         });
-      })
+      }),
     );
   }
 
@@ -1639,8 +1699,9 @@ private fixEncodingInResponse(response: any): any {
       scouterId: string;
       remark: string;
       rating: number;
+      paymentMethod?: string; // Make this optional for backward compatibility
     },
-    retryCount: number = 3
+    retryCount: number = 3,
   ): Observable<any> {
     const encodedMarketHireId = encodeURIComponent(marketHireId);
     const url = `${this.baseUrl}/market/v1/market-comment/scouter/${encodedMarketHireId}`;
@@ -1654,7 +1715,7 @@ private fixEncodingInResponse(response: any): any {
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Market comment updated successfully:', response)
+          console.log('✅ Market comment updated successfully:', response),
         ),
         catchError((error) => {
           console.error('❌ Failed to update market comment:', error);
@@ -1665,22 +1726,22 @@ private fixEncodingInResponse(response: any): any {
             (error.status === 0 || error.status === 502 || error.status === 503)
           ) {
             console.log(
-              `🔄 Retrying market comment update... ${retryCount} attempts left`
+              `🔄 Retrying market comment update... ${retryCount} attempts left`,
             );
             return this.updateMarketComment(
               marketHireId,
               payload,
-              retryCount - 1
+              retryCount - 1,
             );
           }
 
           return throwError(
             () =>
               new Error(
-                error.error?.message || 'Failed to update market comment'
-              )
+                error.error?.message || 'Failed to update market comment',
+              ),
           );
-        })
+        }),
       );
   }
 
@@ -1702,7 +1763,7 @@ private fixEncodingInResponse(response: any): any {
       talentId: string;
       scouterId: string;
       marketHireId: string;
-    }
+    },
   ): Observable<any> {
     const encodedTalentId = encodeURIComponent(params.talentId);
     const encodedScouterId = encodeURIComponent(params.scouterId);
@@ -1723,19 +1784,19 @@ private fixEncodingInResponse(response: any): any {
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Market offer toggled successfully:', response)
+          console.log('✅ Market offer toggled successfully:', response),
         ),
         catchError((error) => {
           console.error('❌ Failed to toggle market offer:', error);
           return throwError(
             () =>
-              new Error(error.error?.message || 'Failed to update offer status')
+              new Error(
+                error.error?.message || 'Failed to update offer status',
+              ),
           );
-        })
+        }),
       );
   }
-
-
 
   /**
    * Get talent performance grading (categorization)
@@ -1758,27 +1819,30 @@ private fixEncodingInResponse(response: any): any {
       .pipe(
         timeout(15000),
         tap((response) =>
-          console.log('✅ Talent performance grading fetched:', response)
+          console.log('✅ Talent performance grading fetched:', response),
         ),
         catchError((error) => {
-          console.error('❌ Failed to fetch talent performance grading:', error);
+          console.error(
+            '❌ Failed to fetch talent performance grading:',
+            error,
+          );
           return throwError(
             () =>
               new Error(
-                error.error?.message || 'Failed to load talent performance data'
-              )
+                error.error?.message ||
+                  'Failed to load talent performance data',
+              ),
           );
-        })
+        }),
       );
   }
-
 
   // In scouter-endpoints.service.ts
   /**
    * GET /market/v1/talent-market-profile/fetch-one/{talentId}
    * Fetch Talent's Market Bio records
    * Talent's use only!
-   * 
+   *
    * @param talentId - Format: "talent/5831/29September2025"
    */
   fetchTalentMarketProfile(talentId: string): Observable<any> {
@@ -1793,61 +1857,85 @@ private fixEncodingInResponse(response: any): any {
     console.log('📊 Fetching talent market profile:', {
       talentId,
       encodedTalentId,
-      url
+      url,
     });
 
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    }).pipe(
-      timeout(15000),
-      tap((response) => {
-        console.log('✅ Talent market profile fetched successfully:', response);
-
-        // Process the response if needed
-        if (response.details) {
-          // Parse stringified JSON fields
-          try {
-            if (response.details.skillSets && typeof response.details.skillSets === 'string') {
-              response.details.skillSets = JSON.parse(response.details.skillSets);
-            }
-          } catch (error) {
-            console.warn('⚠️ Could not parse skillSets:', error);
-          }
-
-          try {
-            if (response.details.marketReviews && typeof response.details.marketReviews === 'string') {
-              response.details.marketReviews = JSON.parse(response.details.marketReviews);
-            }
-          } catch (error) {
-            console.warn('⚠️ Could not parse marketReviews:', error);
-          }
-
-          try {
-            if (response.details.pictorialDocumentations && typeof response.details.pictorialDocumentations === 'string') {
-              response.details.pictorialDocumentations = JSON.parse(response.details.pictorialDocumentations);
-            }
-          } catch (error) {
-            console.warn('⚠️ Could not parse pictorialDocumentations:', error);
-          }
-        }
-      }),
-      catchError((error) => {
-        console.error('❌ Failed to fetch talent market profile:', error);
-
-        let errorMessage = 'Failed to load talent market profile';
-        if (error.status === 401) {
-          errorMessage = 'Unauthorized. Please login again.';
-        } else if (error.status === 403) {
-          errorMessage = 'Access denied. This endpoint is for talent use only.';
-        } else if (error.status === 404) {
-          errorMessage = 'Talent market profile not found.';
-        } else if (error.error?.message) {
-          errorMessage = error.error.message;
-        }
-
-        return throwError(() => new Error(errorMessage));
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
       })
-    );
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log(
+            '✅ Talent market profile fetched successfully:',
+            response,
+          );
+
+          // Process the response if needed
+          if (response.details) {
+            // Parse stringified JSON fields
+            try {
+              if (
+                response.details.skillSets &&
+                typeof response.details.skillSets === 'string'
+              ) {
+                response.details.skillSets = JSON.parse(
+                  response.details.skillSets,
+                );
+              }
+            } catch (error) {
+              console.warn('⚠️ Could not parse skillSets:', error);
+            }
+
+            try {
+              if (
+                response.details.marketReviews &&
+                typeof response.details.marketReviews === 'string'
+              ) {
+                response.details.marketReviews = JSON.parse(
+                  response.details.marketReviews,
+                );
+              }
+            } catch (error) {
+              console.warn('⚠️ Could not parse marketReviews:', error);
+            }
+
+            try {
+              if (
+                response.details.pictorialDocumentations &&
+                typeof response.details.pictorialDocumentations === 'string'
+              ) {
+                response.details.pictorialDocumentations = JSON.parse(
+                  response.details.pictorialDocumentations,
+                );
+              }
+            } catch (error) {
+              console.warn(
+                '⚠️ Could not parse pictorialDocumentations:',
+                error,
+              );
+            }
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to fetch talent market profile:', error);
+
+          let errorMessage = 'Failed to load talent market profile';
+          if (error.status === 401) {
+            errorMessage = 'Unauthorized. Please login again.';
+          } else if (error.status === 403) {
+            errorMessage =
+              'Access denied. This endpoint is for talent use only.';
+          } else if (error.status === 404) {
+            errorMessage = 'Talent market profile not found.';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
   }
 
   /**
@@ -1866,4 +1954,3 @@ private fixEncodingInResponse(response: any): any {
     }
   }
 }
-

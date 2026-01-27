@@ -23,7 +23,7 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
   // Form state
   comment: string = '';
   rating: number = 0;
-  paymentOption: string = 'wallet';
+  paymentOption: string = 'wallet'; // This now maps to paymentMethod
   attachments: File[] = [];
   location: string = '';
   isLoading: boolean = false;
@@ -32,7 +32,7 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
   constructor(
     private toastController: ToastController,
     private toast: ToastsService,
-        private scouterService: ScouterEndpointsService,
+    private scouterService: ScouterEndpointsService,
     private authService: AuthService
   ) { }
 
@@ -115,9 +115,16 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
       rating: this.rating,
       hasRatingSelected: this.hasRatingSelected,
       comment: this.comment?.trim(),
+      paymentOption: this.paymentOption,
       isFormValid: hasRating
     });
     return hasRating;
+  }
+
+  // Map payment option to API paymentMethod
+  private getPaymentMethod(): string {
+    // Map 'wallet' to 'WALLET' and 'bank' to 'BANK_TRANSFER'
+    return this.paymentOption === 'bank' ? 'BANK_TRANSFER' : 'WALLET';
   }
 
   // Submit comment to API
@@ -126,14 +133,13 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
 
     if (!this.isFormValid()) {
       if (this.rating === 0) {
-        // await this.showToast('Please provide a rating before submitting!');
         await this.toast.openSnackBar('Please provide a rating before submitting!', 'warning');
       }
       return;
     }
 
     if (!this.hire?.id) {
-      // await this.showToast('Invalid hire data');
+      await this.toast.openSnackBar('Invalid hire data', 'error');
       return;
     }
 
@@ -141,7 +147,6 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId) {
-      // await this.showToast('User not authenticated');
       await this.toast.openSnackBar('User not authenticated', 'error');
       return;
     }
@@ -149,24 +154,25 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
     // Check if we have marketHireId (required for API)
     if (!this.hire.marketHireId) {
       console.error('❌ Missing marketHireId for API call:', this.hire);
-      // await this.showToast('Unable to submit evaluation: Missing market data');
       await this.toast.openSnackBar('Unable to submit evaluation: Missing market data', 'error');
       return;
     }
 
     this.isLoading = true;
 
-    // Prepare payload according to API specification
+    // Prepare payload according to NEW API specification with paymentMethod
     const payload = {
       scouterId: scouterId,
       remark: this.comment.trim() || 'No comment provided',
       rating: this.rating,
+      paymentMethod: this.getPaymentMethod() // NEW FIELD ADDED
     };
 
-    console.log('📝 Submitting evaluation:', {
+    console.log('📝 Submitting evaluation with new payload:', {
       marketHireId: this.hire.marketHireId,
       payload,
-      hireData: this.hire
+      hireData: this.hire,
+      paymentMethod: payload.paymentMethod
     });
 
     // Call the API endpoint
@@ -178,12 +184,13 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
         this.hire.yourRating = this.rating;
         this.hire.yourComment = this.comment;
 
-        // Create the new comment object
+        // Create the new comment object with payment method
         const newComment = {
           scouterId: scouterId,
           dateOfComment: new Date().toISOString(),
           remark: this.comment,
-          rating: this.rating
+          rating: this.rating,
+          paymentMethod: this.getPaymentMethod() // Include in stored comment
         };
 
         // Handle satisFactoryCommentByScouter update
@@ -211,7 +218,6 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
           rating: this.rating,
         });
 
-        // this.showToast('Evaluation submitted successfully!', 'success');
         this.toast.openSnackBar('Evaluation submitted successfully!', 'success');
         this.resetForm();
         this.closeModal();
@@ -226,6 +232,11 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
           errorMessage = 'Session expired. Please login again.';
         } else if (error.status === 404) {
           errorMessage = 'Market engagement not found.';
+        } else if (error.status === 400) {
+          // Check for payment method validation error
+          if (error.error?.message?.includes('paymentMethod')) {
+            errorMessage = 'Invalid payment method. Please select a valid payment option.';
+          }
         }
 
         this.toast.openSnackBar(errorMessage, 'error');
