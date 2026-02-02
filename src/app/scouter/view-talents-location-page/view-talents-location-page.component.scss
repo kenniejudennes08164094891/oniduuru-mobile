@@ -49,7 +49,15 @@
 .ol-attribution.ol-uncollapsible {
   display: none !important;
 }
-
+/* Add to view-talents-location-page.component.scss */
 .hidden {
-  display: none;
+  display: none !important;
 }
+
+.block {
+  display: block !important;
+}
+
+
+
+

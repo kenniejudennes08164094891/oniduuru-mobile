@@ -15,7 +15,8 @@ import { MatIconModule } from '@angular/material/icon';
       [ngClass]="{
         error: isErrorMessage,
         success: isSuccessMessage,
-        warn: isWarningMessage
+        warn: isWarningMessage,
+        info: isInfoMessage
       }"
     >
       <div class="flex items-center ">
@@ -69,6 +70,11 @@ import { MatIconModule } from '@angular/material/icon';
         background-color: #eb470c; //rgb(241, 158, 4);
         color: white;
       }
+
+      .info {
+        background-color: #0288d1;
+        color: white;
+      }
     `,
   ],
 })
@@ -76,6 +82,7 @@ export class ToastComponent {
   isErrorMessage: boolean;
   isWarningMessage: boolean | any;
   isSuccessMessage: boolean | any;
+  isInfoMessage: boolean | any;
 
   constructor(
     public snackBarRef: MatSnackBarRef<ToastComponent>,
@@ -84,5 +91,6 @@ export class ToastComponent {
     this.isSuccessMessage = data.panelClass.includes('success');
     this.isErrorMessage = data.panelClass.includes('error');
     this.isWarningMessage = data.panelClass.includes('warn');
+    this.isInfoMessage = data.panelClass.includes('info');
   }
 }

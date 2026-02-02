@@ -4,31 +4,26 @@
 
 <ion-content class="ion-padding" *ngIf="hire">
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="flex justify-center items-center py-10">
+  <!-- <div *ngIf="isLoading" class="flex justify-center items-center py-10">
     <div class="text-center">
       <ion-spinner></ion-spinner>
       <p class="mt-2 text-gray-600">Loading hire details...</p>
     </div>
-  </div>
+  </div> -->
 
   <!-- Content when data is loaded -->
   <div *ngIf="hire && !isLoading">
     <!-- Top Section -->
     <div
-      class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden bg-gradient-to-r from-[#000343] to-[#1f2937]"
-    >
+      class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden bg-gradient-to-r from-[#000343] to-[#1f2937]">
       <div class="absolute inset-0 opacity-10 bg-pattern z-0"></div>
       <div class="relative z-10 text-white">
         <div class="flex items-start gap-3">
-          <img
-            [src]="images.ViewHireFolderIcon"
-            alt="Hire Icon"
-            class="h-10 w-10"
-          />
+          <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" class="h-10 w-10" />
           <div>
             <span class="font-medium text-[24px] leading-tight">{{
               userName
-            }}</span>
+              }}</span>
             <p class="text-gray-300 text-sm leading-relaxed">
               View your hires with talent stated above
             </p>
@@ -61,24 +56,31 @@
       <span> <strong>Date of Hire:</strong> {{ hire.date }} </span>
     </p>
 
+    <!-- Display Scouter Comment - FIXED -->
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
-      <span> <strong>Your own comment:</strong> {{ hire.yourComment }} </span>
+      <span>
+        <strong>Your own comment:</strong>
+        <span *ngIf="hire?.yourComment; else noScouterComment">
+          {{ hire.yourComment }}
+        </span>
+        <ng-template #noScouterComment>
+          <span class="text-gray-500 italic">No comment added yet</span>
+        </ng-template>
+      </span>
     </p>
 
-    <!-- Rating -->
+
+    <!-- For scouter Rating display: -->
     <div class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Your Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon
-          name="star"
-          (click)="updateRating(star)"
-          [class.text-yellow-500]="star <= hire.yourRating"
-          [class.text-gray-400]="star > hire.yourRating"
-          class="cursor-pointer text-xl"
-        ></ion-icon>
+        <ion-icon name="star"  [class.text-yellow-500]="star <= hire.yourRating"
+          [class.text-gray-400]="star > hire.yourRating" class="cursor-pointer text-xl">
+        </ion-icon>
       </ng-container>
+
     </div>
   </div>
 
@@ -88,10 +90,8 @@
       <span class="flex gap-1">
         <strong>Hire Status:</strong>
         <span class="inline-flex items-center gap-2">
-          <span
-            class="inline-block h-3 w-3 rounded-full"
-            [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus) }"
-          ></span>
+          <span class="inline-block h-3 w-3 rounded-full"
+            [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus) }"></span>
           {{ hire.offerStatus }}
         </span>
       </span>
@@ -99,7 +99,7 @@
 
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
-      <span> <strong>Talent’s Email:</strong> {{ hire.email }} </span>
+      <span> <strong>Talent's Email:</strong> {{ hire.email }} </span>
     </p>
 
     <p class="flex items-center gap-2">
@@ -110,69 +110,57 @@
     <p class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <span>
-        <strong>Comment by Talent:</strong> {{ hire.talentComment }}
+        <strong>Comment by Talent:</strong>
+        <span *ngIf="hire?.talentComment; else noTalentComment">
+          {{ hire.talentComment }}
+        </span>
+        <ng-template #noTalentComment>
+          <span class="text-gray-500 italic">No comment from talent yet</span>
+        </ng-template>
       </span>
     </p>
 
-    <!-- Talent Rating -->
+    <!-- For Talent Rating display: -->
     <div class="flex items-center gap-2">
       <ion-icon name="checkmark-circle" class="check-icon"></ion-icon>
       <strong>Talent Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon
-          name="star"
-          [class.text-yellow-500]="star <= hire.talentRating"
-          [class.text-gray-400]="star < hire.talentRating"
-          class="text-xl"
-        ></ion-icon>
+        <ion-icon name="star" [class.text-yellow-500]="star <= hire.talentRating"
+          [class.text-gray-400]="star > hire.talentRating" class="text-xl">
+        </ion-icon>
       </ng-container>
+
     </div>
   </div>
 
-  <!-- In your market-engagement-market-price-preparation.component.html -->
-  <!-- In your market-engagement-market-price-preparation.component.html -->
-  <app-market-engagement-tabs
-    [initialHire]="hire"
-    (hireSelected)="onTableHireClick($event)"
-  >
+
+
+
+  <app-market-engagement-tabs [initialHire]="hire" (hireSelected)="onTableHireClick($event)">
   </app-market-engagement-tabs>
 
-  <app-total-delivery-evaluation
-    *ngIf="isTotalDeliveryModalOpen"
-    [hire]="selectedModalHire || hire"
-    [isModalOpen]="isTotalDeliveryModalOpen"
-    (close)="closeTotalDeliveryModal()"
-    (ratingUpdated)="onRatingUpdated($event)"
-  ></app-total-delivery-evaluation>
+  <app-total-delivery-evaluation *ngIf="isTotalDeliveryModalOpen" [hire]="selectedModalHire || hire"
+    [isModalOpen]="isTotalDeliveryModalOpen" (close)="closeTotalDeliveryModal()"
+    (ratingUpdated)="onRatingUpdated($event)">
+  </app-total-delivery-evaluation>
 
   <!-- Reconsider Confirmation Modal -->
-  <app-reconsider-confirmation-modal
-    [talentName]="selectedTalentForReconsider?.name || ''"
-    [isModalOpen]="isReconsiderModalOpen"
-    (confirmed)="onReconsiderConfirmed()"
-    (cancelled)="onReconsiderCancelled()"
-    (close)="closeReconsiderModal()"
-  ></app-reconsider-confirmation-modal>
+  <app-reconsider-confirmation-modal [talentName]="selectedTalentForReconsider?.name || ''"
+    [isModalOpen]="isReconsiderModalOpen" (confirmed)="onReconsiderConfirmed()" (cancelled)="onReconsiderCancelled()"
+    (close)="closeReconsiderModal()"></app-reconsider-confirmation-modal>
 
   <!-- Reconsider Offer Form Modal -->
-  <app-reconsider-offer-modal
-    [talentId]="selectedTalentForReconsider?.id || ''"
-    [talentName]="selectedTalentForReconsider?.name || ''"
-    [originalAmount]="selectedTalentForReconsider?.amount || 0"
+  <app-reconsider-offer-modal [talentId]="selectedTalentForReconsider?.id || ''"
+    [talentName]="selectedTalentForReconsider?.name || ''" [originalAmount]="selectedTalentForReconsider?.amount || 0"
     [originalJobDescription]="selectedTalentForReconsider?.jobDescription || ''"
-    [isModalOpen]="isReconsiderOfferModalOpen"
-    (submitted)="onReconsiderSubmitted($event)"
-    (cancelled)="onReconsiderCancelled()"
-    (close)="closeReconsiderModal()"
-  ></app-reconsider-offer-modal>
+    [isModalOpen]="isReconsiderOfferModalOpen" (submitted)="onReconsiderSubmitted($event)"
+    (cancelled)="onReconsiderCancelled()" (close)="closeReconsiderModal()"></app-reconsider-offer-modal>
 
   <!-- Error State -->
   <div *ngIf="!hire && !isLoading" class="text-center py-10">
     <p class="text-gray-600">Unable to load hire details.</p>
-    <button
-      (click)="loadHireDetails(route.snapshot.paramMap.get('id') || '')"
-      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
-    >
+    <button (click)="loadHireDetails(route.snapshot.paramMap.get('id') || '')"
+      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg">
       Retry
     </button>
   </div>

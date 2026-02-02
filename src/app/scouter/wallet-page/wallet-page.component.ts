@@ -8,6 +8,8 @@ import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
 import { Router } from '@angular/router';
+import { ToastsService } from 'src/app/services/toasts.service';
+import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisibilitySharedState.service';
 
 @Component({
   selector: 'app-wallet-page',
@@ -18,6 +20,7 @@ import { Router } from '@angular/router';
 export class WalletPageComponent implements OnInit {
   @ViewChild(IonContent) content!: IonContent;
   @ViewChild('dropdownSection') dropdownSection!: ElementRef;
+  @ViewChild('chartCanvas') chartCanvas!: any;
 
   headerHidden: boolean = false;
   images = imageIcons;
@@ -31,41 +34,320 @@ export class WalletPageComponent implements OnInit {
   totalWithdrawal: number = 0;
   totalTransfer: number = 0;
 
+  // Histogram data
+  histogramLoading = false;
+  histogramData: any = null;
+  selectedYear: string = '';
+  selectedFilter: string = '';
+
   copied: boolean = false;
   filterOpen: boolean = false;
-  selectedFilter: string = 'Last 10 years';
-  years: string[] = [
-    '2025',
-    '2024',
-    '2023',
-    '2022',
-    '2021',
-    '2020',
-    '2019',
-    '2018',
-    '2017',
-    '2016',
-  ];
+  years: string[] = [];
 
   loadingWallet = false;
   walletError = false;
-  walletNotFound = false; // New flag for wallet not created
+  walletNotFound = false;
 
   constructor(
     private clipboard: Clipboard,
-    private toastCtrl: ToastController,
+    private toast: ToastsService,
     private endpointService: EndpointService,
     private authService: AuthService,
     private userService: UserService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private toggleVisibilityService: ToggleVisibilitySharedStateService
+  ) { }
 
-  ngOnInit() {
+  async ngOnInit(): Promise<void> {
+    // Initialize balance visibility state
+    await this.initializeBalanceVisibility();
+    
+    // Continue with other initialization
     this.initializeUserData();
+    this.generateYears();
+    await this.fetchHistogramData();
   }
 
   async ngAfterViewInit(): Promise<void> {
     await this.fetchWalletDetails();
+  }
+
+  async toggleBalance(): Promise<void> {
+    // Use the service to toggle and save
+    this.balanceHidden = await this.toggleVisibilityService.toggleBalanceVisibility(this.balanceHidden);
+    console.log('👁️ Balance visibility toggled to:', this.balanceHidden);
+  }
+
+  private async initializeBalanceVisibility(): Promise<void> {
+    try {
+      this.balanceHidden = await this.toggleVisibilityService.getBalanceVisibility();
+      console.log('🔍 Initialized balance visibility:', this.balanceHidden);
+    } catch (error) {
+      console.error('Error initializing balance visibility:', error);
+      this.balanceHidden = false; // Default value
+    }
+  }
+
+
+
+  // ========== YEAR FILTER METHODS ==========
+  private generateYears(): void {
+    const currentYear = new Date().getFullYear();
+    const startYear = 2020; // Adjust based on your app's start year
+    this.years = [];
+
+    for (let year = currentYear; year >= startYear; year--) {
+      this.years.push(year.toString());
+    }
+
+    this.selectedYear = currentYear.toString();
+    this.selectedFilter = this.selectedYear;
+  }
+
+  selectFilter(year: string): void {
+    console.log('🔍 Selecting year filter:', year);
+
+    this.selectedFilter = year;
+    this.selectedYear = year;
+    this.filterOpen = false;
+    this.histogramData = null;
+
+    this.fetchHistogramData();
+
+    setTimeout(() => {
+      const yOffset = this.dropdownSection.nativeElement.offsetTop;
+      this.content.scrollToPoint(0, yOffset + 100, 500);
+    }, 300);
+  }
+
+  // ========== HISTOGRAM DATA METHODS ==========
+  private fetchHistogramData(): void {
+    this.histogramLoading = true;
+
+    const { uniqueId } = this.getUserIdentifiers();
+
+    if (!uniqueId) {
+      console.error('❌ No uniqueId found for histogram data');
+      this.histogramLoading = false;
+      this.useFallbackHistogramData();
+      return;
+    }
+
+    console.log('📊 Fetching histogram data for:', {
+      uniqueId: uniqueId,
+      year: this.selectedYear,
+      currentYear: new Date().getFullYear()
+    });
+
+    this.endpointService.fetchMonthlyStats(uniqueId, this.selectedYear).subscribe({
+      next: (res: any) => {
+        console.log('✅ Histogram API Response Status:', res?.message || 'No message');
+        console.log('✅ Histogram Data Structure:', {
+          hasData: !!res?.data,
+          hasLabels: !!res?.data?.labels,
+          depositAmounts: res?.data?.fundDeposits?.amounts,
+          withdrawalAmounts: res?.data?.fundWithdrawals?.amounts,
+          transferAmounts: res?.data?.fundTransfers?.amounts
+        });
+
+        // Check if we actually got data
+        if (res?.data?.fundDeposits?.amounts) {
+          console.log('💰 Deposit amounts:', res.data.fundDeposits.amounts);
+          console.log('💰 Withdrawal amounts:', res.data.fundWithdrawals.amounts);
+          console.log('💰 Transfer amounts:', res.data.fundTransfers.amounts);
+
+          // Check if any data is non-zero
+          const hasData = res.data.fundDeposits.amounts.some((val: number) => val > 0) ||
+            res.data.fundWithdrawals.amounts.some((val: number) => val > 0) ||
+            res.data.fundTransfers.amounts.some((val: number) => val > 0);
+
+          console.log('📈 Has non-zero data:', hasData);
+        }
+
+        this.handleHistogramResponse(res);
+        this.histogramLoading = false;
+      },
+      error: (err: any) => {
+        console.error('❌ Error fetching histogram data:', {
+          status: err?.status,
+          message: err?.message,
+          error: err?.error
+        });
+        this.histogramLoading = false;
+        this.useFallbackHistogramData();
+      }
+    });
+  }
+
+  private handleHistogramResponse(res: any): void {
+    if (res && res.data) {
+      this.histogramData = res.data;
+      console.log('📦 Setting histogramData:', {
+        labels: this.histogramData.labels,
+        depositAmounts: this.histogramData.fundDeposits?.amounts,
+        withdrawalAmounts: this.histogramData.fundWithdrawals?.amounts,
+        transferAmounts: this.histogramData.fundTransfers?.amounts
+      });
+      this.updateChartWithHistogramData();
+    } else {
+      console.warn('⚠️ No histogram data found in response:', res);
+      this.useFallbackHistogramData();
+    }
+  }
+
+  private updateChartWithHistogramData(): void {
+    if (!this.histogramData) {
+      console.error('❌ No histogramData available for chart update');
+      return;
+    }
+
+    console.log('📊 Updating chart with histogram data:', {
+      labels: this.histogramData.labels,
+      depositAmounts: this.histogramData.fundDeposits?.amounts,
+      withdrawalAmounts: this.histogramData.fundWithdrawals?.amounts,
+      transferAmounts: this.histogramData.fundTransfers?.amounts
+    });
+
+    // Ensure we have arrays
+    const depositData = Array.isArray(this.histogramData.fundDeposits?.amounts)
+      ? [...this.histogramData.fundDeposits.amounts]
+      : [];
+
+    const withdrawalData = Array.isArray(this.histogramData.fundWithdrawals?.amounts)
+      ? [...this.histogramData.fundWithdrawals.amounts]
+      : [];
+
+    const transferData = Array.isArray(this.histogramData.fundTransfers?.amounts)
+      ? [...this.histogramData.fundTransfers.amounts]
+      : [];
+
+    console.log('📈 Extracted data arrays:', {
+      depositData,
+      withdrawalData,
+      transferData
+    });
+
+    // Create a completely new object to trigger change detection
+    const newChartData: ChartData<'bar'> = {
+      labels: this.histogramData.labels?.map((label: string) =>
+        label.substring(0, 3)
+      ) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [
+        {
+          label: 'Deposits',
+          data: depositData,
+          backgroundColor: '#0033FF',
+          borderRadius: 6,
+          barPercentage: 0.7,
+        },
+        {
+          label: 'Withdrawals',
+          data: withdrawalData,
+          backgroundColor: '#434348',
+          borderRadius: 6,
+          barPercentage: 0.7,
+        },
+        {
+          label: 'Transfers',
+          data: transferData,
+          backgroundColor: '#9CA3AF',
+          borderRadius: 6,
+          barPercentage: 0.7,
+        }
+      ]
+    };
+
+    // Assign to the component property
+    this.monthlyBarChartData = newChartData;
+
+    console.log('✅ Chart data updated. New chart data:', {
+      labels: this.monthlyBarChartData.labels,
+      datasets: this.monthlyBarChartData.datasets.map(d => ({
+        label: d.label,
+        data: d.data
+      }))
+    });
+
+    // Force Angular to detect changes
+    setTimeout(() => {
+      this.refreshChart();
+      // Also trigger change detection
+      this.monthlyBarChartData = { ...this.monthlyBarChartData };
+    }, 100);
+  }
+
+  private useFallbackHistogramData(): void {
+    console.log('🔄 Using fallback data for year:', this.selectedYear);
+
+    const yearData = this.transactionData[this.selectedYear];
+
+    if (yearData) {
+      this.monthlyBarChartData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [
+          {
+            label: 'Deposits',
+            data: [...yearData[0]],
+            backgroundColor: '#0033FF',
+            borderRadius: 6,
+          },
+          {
+            label: 'Withdrawals',
+            data: [...yearData[1]],
+            backgroundColor: '#434348',
+            borderRadius: 6,
+          },
+          {
+            label: 'Transfers',
+            data: [...yearData[2]],
+            backgroundColor: '#9CA3AF',
+            borderRadius: 6,
+          }
+        ]
+      };
+    }
+
+    setTimeout(() => this.refreshChart(), 100);
+  }
+
+  hasNoData(): boolean {
+    if (!this.histogramData) return true;
+
+    // Check if all amounts are zero or undefined
+    const depositAmounts = this.histogramData.fundDeposits?.amounts || [];
+    const withdrawalAmounts = this.histogramData.fundWithdrawals?.amounts || [];
+    const transferAmounts = this.histogramData.fundTransfers?.amounts || [];
+
+    const allDepositsZero = depositAmounts.every((val: number) => val === 0 || val === undefined);
+    const allWithdrawalsZero = withdrawalAmounts.every((val: number) => val === 0 || val === undefined);
+    const allTransfersZero = transferAmounts.every((val: number) => val === 0 || val === undefined);
+
+    const hasNoData = allDepositsZero && allWithdrawalsZero && allTransfersZero;
+
+    console.log('📊 Checking if has no data:', {
+      depositAmounts,
+      withdrawalAmounts,
+      transferAmounts,
+      allDepositsZero,
+      allWithdrawalsZero,
+      allTransfersZero,
+      hasNoData
+    });
+
+    return hasNoData;
+  }
+
+  private refreshChart(): void {
+    try {
+      if (this.chartCanvas && this.chartCanvas.chart) {
+        console.log('🔄 Refreshing chart...');
+        this.chartCanvas.chart.update('none'); // Use 'none' for instant update
+      } else {
+        console.warn('⚠️ Chart canvas not found for refresh');
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing chart:', error);
+    }
   }
 
   /**
@@ -86,6 +368,27 @@ export class WalletPageComponent implements OnInit {
       localStorageUser
     );
   }
+
+
+
+
+
+
+  /**
+   *  refresh histogram
+   */
+  refreshWalletData(event?: any): void {
+    this.fetchWalletDetails();
+    this.fetchHistogramData(); // Refresh histogram data too
+    if (event) {
+      event.target.complete();
+    }
+  }
+
+
+
+
+
 
   /**
    * Extract username from multiple data sources
@@ -195,15 +498,31 @@ export class WalletPageComponent implements OnInit {
     if (res && res.data) {
       const walletData = res.data;
 
-      // Update wallet information
-      this.walletBalance = Number(walletData.balance) || 0;
-      this.accountNumber =
-        walletData.accountNumber || walletData.accountNumber || 'Not available';
+      // Extract and display wallet information from the payload
+      console.log('🔍 Wallet Data Received:', walletData);
 
-      // Update user name from wallet data if available
-      if (walletData.walletName || walletData.accountName) {
-        this.userName = walletData.walletName || walletData.accountName;
+      // 1. Wallet Account Number (wallet_id)
+      this.accountNumber = walletData.wallet_id || 'Not available';
+
+      // 2. Wallet Name
+      if (walletData.firstName || walletData.lastName) {
+        this.userName = `${walletData.firstName || ''} ${walletData.middleName || ''} ${walletData.lastName || ''}`.trim();
+      } else if (walletData.firstName) {
+        this.userName = walletData.firstName;
       }
+
+      // 3. Wallet Account Balance
+      this.walletBalance = parseFloat(walletData.currentAcctBalance) || 0;
+
+      // Additional debug logging
+      console.log('💰 Wallet Info Extracted:', {
+        accountNumber: this.accountNumber,
+        userName: this.userName,
+        walletBalance: this.walletBalance,
+        fullName: walletData.firstName,
+        middleName: walletData.middleName,
+        lastName: walletData.lastName
+      });
 
       // Update transaction totals if available
       if (walletData.totalDeposit !== undefined) {
@@ -216,7 +535,7 @@ export class WalletPageComponent implements OnInit {
         this.totalTransfer = Number(walletData.totalTransfer) || 0;
       }
 
-      console.log('Wallet data loaded successfully:', walletData);
+      console.log('✅ Wallet data loaded successfully:', walletData);
     } else {
       console.warn('No wallet data found in response:', res);
       this.walletError = true;
@@ -236,10 +555,9 @@ export class WalletPageComponent implements OnInit {
     } else {
       this.walletError = true;
       this.walletNotFound = false;
-      this.showToast(
-        'Unable to load wallet details. Please try again later.',
-        'danger'
-      );
+    
+      this.toast.openSnackBar('Unable to load wallet details. Please try again later.', 'error');
+
     }
   }
 
@@ -250,33 +568,14 @@ export class WalletPageComponent implements OnInit {
     this.router.navigate(['/scouter/wallet-page/wallet-profile']);
   }
 
-  /**
-   * Show toast message
-   */
-  private async showToast(
-    message: string,
-    color: string = 'primary'
-  ): Promise<void> {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 3000,
-      color,
-      position: 'bottom',
-    });
-    await toast.present();
-  }
 
-  // Existing methods remain the same...
-  toggleBalance() {
-    this.balanceHidden = !this.balanceHidden;
-  }
+
 
   copyAccountNumber() {
     if (this.accountNumber && this.accountNumber !== 'Loading...') {
       this.clipboard.copy(this.accountNumber);
       this.copied = true;
-      this.showToast('Account number copied!', 'success');
-
+      this.toast.openSnackBar('Account number copied!', 'success');
       setTimeout(() => {
         this.copied = false;
       }, 2000);
@@ -294,32 +593,6 @@ export class WalletPageComponent implements OnInit {
     }
   }
 
-  selectFilter(year: string) {
-    this.selectedFilter = year;
-    this.filterOpen = false;
-
-    const [deposits, withdrawals, transfers] = this.transactionData[year] || [
-      [],
-      [],
-      [],
-    ];
-    this.monthlyBarChartData.datasets[0].data = deposits;
-    this.monthlyBarChartData.datasets[1].data = withdrawals;
-    this.monthlyBarChartData.datasets[2].data = transfers;
-
-    this.monthlyBarChartData = { ...this.monthlyBarChartData };
-  }
-
-  /**
-   * Refresh wallet data
-   */
-  refreshWalletData(event?: any): void {
-    this.fetchWalletDetails().finally(() => {
-      if (event) {
-        event.target.complete();
-      }
-    });
-  }
 
   // Store different datasets per year
   transactionData: Record<string, number[][]> = {
@@ -376,41 +649,27 @@ export class WalletPageComponent implements OnInit {
     // add more years here
   };
 
-  // --- MONTHLY BAR CHART ---
+  // ========== CHART CONFIGURATION ==========
   monthlyBarChartData: ChartData<'bar'> = {
-    labels: [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ],
-
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
       {
         label: 'Deposits',
-        data: [5, 4, 5, 3, 5, 2, 3, 4, 5, 1, 5, 3],
-        backgroundColor: '#0033FF', // blue-dot
-        // borderRadius: 6,
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        backgroundColor: '#0033FF',
+        borderRadius: 6,
       },
       {
         label: 'Withdrawals',
-        data: [4, 2, 2, 4, 5, 5, 4, 5, 3, 3, 1, 4],
-        backgroundColor: '#434348', // gray-dot
-        // borderRadius: 6,
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        backgroundColor: '#434348',
+        borderRadius: 6,
       },
       {
         label: 'Transfers',
-        data: [1, 3, 2, 4, 3, 5, 2, 6, 4, 3, 2, 1],
-        backgroundColor: '#9CA3AF', // dark-dot
-        // borderRadius: 6,
+        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        backgroundColor: '#9CA3AF',
+        borderRadius: 6,
       },
     ],
   };
@@ -422,19 +681,51 @@ export class WalletPageComponent implements OnInit {
       legend: {
         position: 'top',
         labels: {
-          color: '#49536E', // matches text color in Wallet
+          color: '#49536E',
+          font: { size: 14 },
+          padding: 20
         },
       },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.raw as number;
+            return `${label}: ₦${value.toLocaleString('en-NG', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`;
+          }
+        }
+      }
     },
     scales: {
       x: {
         ticks: { color: '#49536E' },
-        grid: { color: '#D9DCE5' },
+        grid: {
+          color: '#D9DCE5',
+          drawBorder: false // This should be valid
+        } as any, // Use type assertion to fix TypeScript error
       },
       y: {
         beginAtZero: true,
-        ticks: { color: '#49536E', stepSize: 2 },
-        grid: { color: '#D9DCE5' },
+        ticks: {
+          color: '#49536E',
+          callback: function (value: any) {
+            if (typeof value === 'number') {
+              return '₦' + Number(value).toLocaleString('en-NG', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+              });
+            }
+            return value;
+          }
+        },
+        grid: {
+          color: '#D9DCE5',
+          drawBorder: false
+        } as any,
       },
     },
   };

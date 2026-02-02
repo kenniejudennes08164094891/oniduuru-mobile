@@ -34,6 +34,13 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
   isDragging = false;
   dragStartPosition = { x: 0, y: 0 };
 
+  private touchStartTimeout: any;
+  private isTouchTap = false;
+
+  private lastTouchStart = 0;
+
+
+
   // Visibility properties
   showChatButton = false;
   private routerSubscription?: Subscription;
@@ -44,7 +51,7 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private chatVisibilityService: ChatVisibilityService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadPositionFromStorage();
@@ -115,87 +122,71 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
     return chatRoutes.some((route) => url.startsWith(route));
   }
 
-  openChat() {
-    if (this.showChatButton && !this.isDragging) {
-      this.router.navigate(['/chat']);
-    }
-  }
 
-  // Draggable functionality methods
-  onMouseDown(event: MouseEvent) {
-    if (this.showChatButton) {
-      event.preventDefault();
-      event.stopPropagation();
+
+
+onPointerDown(event: PointerEvent) {
+  if (this.showChatButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const startX = event.clientX;
+    const startY = event.clientY;
+    
+    this.dragStartPosition = {
+      x: startX - this.position.x,
+      y: startY - this.position.y,
+    };
+    
+    const onPointerMove = (moveEvent: PointerEvent) => {
       this.isDragging = true;
-      this.dragStartPosition = {
-        x: event.clientX - this.position.x,
-        y: event.clientY - this.position.y,
-      };
-    }
-  }
-
-  onTouchStart(event: TouchEvent) {
-    if (this.showChatButton) {
-      event.preventDefault();
-      event.stopPropagation();
-      const touch = event.touches[0];
-      this.isDragging = true;
-      this.dragStartPosition = {
-        x: touch.clientX - this.position.x,
-        y: touch.clientY - this.position.y,
-      };
-    }
-  }
-
-  @HostListener('document:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent) {
-    if (this.isDragging) {
-      this.position.x = event.clientX - this.dragStartPosition.x;
-      this.position.y = event.clientY - this.dragStartPosition.y;
+      this.position.x = moveEvent.clientX - this.dragStartPosition.x;
+      this.position.y = moveEvent.clientY - this.dragStartPosition.y;
       this.constrainToViewport();
-    }
-  }
-
-  @HostListener('document:touchmove', ['$event'])
-  onTouchMove(event: TouchEvent) {
-    if (this.isDragging) {
-      const touch = event.touches[0];
-      this.position.x = touch.clientX - this.dragStartPosition.x;
-      this.position.y = touch.clientY - this.dragStartPosition.y;
-      this.constrainToViewport();
-      event.preventDefault();
-    }
-  }
-
-  @HostListener('document:mouseup')
-  onMouseUp() {
-    if (this.isDragging) {
+    };
+    
+    const onPointerUp = (upEvent: PointerEvent) => {
+      const endX = upEvent.clientX;
+      const endY = upEvent.clientY;
+      
+      // Calculate distance moved
+      const distance = Math.sqrt(
+        Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+      );
+      
+      // If moved less than 8px, treat as click
+      if (distance < 8) {
+        this.openChat();
+      }
+      
+      if (this.isDragging) {
+        this.savePositionToStorage();
+      }
+      
       this.isDragging = false;
-      this.savePositionToStorage();
-    }
+      
+      // Clean up listeners
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+    };
+    
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
   }
+}
 
-  @HostListener('document:touchend')
-  onTouchEnd() {
-    if (this.isDragging) {
-      this.isDragging = false;
-      this.savePositionToStorage();
-    }
+openChat() {
+  if (this.showChatButton) {
+    this.router.navigate(['/chat']);
   }
-
-  @HostListener('window:resize')
-  onWindowResize() {
-    this.constrainToViewport();
-    this.savePositionToStorage();
-  }
-
+}
   private constrainToViewport() {
     const buttonWidth = 56; // w-14 = 3.5rem = 56px
     const buttonHeight = 56;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const padding = 8; // 8px padding from edges
-    
+
     this.position.x = Math.max(
       padding,
       Math.min(this.position.x, viewportWidth - buttonWidth - padding)
@@ -214,9 +205,9 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
       this.constrainToViewport();
     } else {
       // Default position: bottom right with some padding
-      this.position = { 
+      this.position = {
         x: window.innerWidth - 72, // 56px (button) + 16px (padding)
-        y: window.innerHeight - 72 
+        y: window.innerHeight - 72
       };
     }
   }
@@ -227,9 +218,9 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   // Optional: Method to reset to default position
   resetPosition() {
-    this.position = { 
-      x: window.innerWidth - 72, 
-      y: window.innerHeight - 72 
+    this.position = {
+      x: window.innerWidth - 72,
+      y: window.innerHeight - 72
     };
     this.savePositionToStorage();
   }
@@ -256,7 +247,7 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
         this.messagesContainer.nativeElement.scrollTop =
           this.messagesContainer.nativeElement.scrollHeight;
       }
-    } catch (err) {}
+    } catch (err) { }
   }
 
   loadMessages() {

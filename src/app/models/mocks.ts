@@ -113,9 +113,110 @@ export interface MockPayment {
   location: Location;
 }
 
+
+
+
 export interface FilterScouterParam {
   key: string;
   param: string;
+}
+
+export interface satisFactoryComment {
+  scouterId: string;
+  dateOfComment: string;
+  remark: string;
+  rating: number;
+}
+
+// talent-market-profile.model.ts
+export interface TalentSkill {
+  skill: string;
+  pricing: string;
+  skillLevel: string;
+}
+
+export interface MarketReview {
+  // Define based on your actual review structure
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export interface PictorialDocumentation {
+  // Define based on your actual structure
+  imageUrl: string;
+  caption: string;
+  date: string;
+}
+
+export interface TalentMarketProfile {
+  fullName: string;
+  talentProfilePic: string;
+  location: string;
+  valueProposition: string;
+  skillSets: TalentSkill[];
+  marketReviews: MarketReview[];
+  pictorialDocumentations: PictorialDocumentation[];
+}
+
+export interface TalentMarketProfileResponse {
+  message: string;
+  details: TalentMarketProfile;
+  metaData: string; // Base64 encoded metadata
+}
+
+// THIS IS THE MAIN TYPE DEFINITION
+export interface TotalHires {
+  // Basic fields
+  id: string;
+  profilePic: string;
+  name: string;
+  email: string;
+  date: string;
+  startDate: string;
+  amount: number;
+  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+  status: 'Active' | 'Pending' | 'Away' | string;
+
+  // Job details
+  jobDescription: string;
+
+  // ✅ ENSURE THESE ARE IN THE INTERFACE
+  yourComment: string;
+  yourRating: number;
+  talentComment: string;
+  talentRating: number;
+
+  // Backend IDs
+  marketHireId: string;
+  scouterId: string;
+  talentId: string;
+
+  // Phone numbers
+  scouterPhoneNumber?: string;
+  talentPhoneNumber?: string;
+
+  // API response fields - ✅ MAKE SURE THESE ARE INCLUDED
+  satisFactoryCommentByScouter?: string;
+  satisFactoryCommentByTalent?: string;
+
+  // Other API fields
+  talentName?: string;
+  scouterName?: string;
+  talentEmail?: string;
+  scouterEmail?: string;
+  dateOfHire?: string;
+  amountToPay?: string;
+  hireStatus?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  talentIdWithDate?: string;
+  talentPicture?: string;
+  scouterPicture?: string;
+
+  // Debug
+  _originalData?: any;
 }
 
 export const MockRecentHires: MockPayment[] = [
@@ -1746,6 +1847,7 @@ export interface resendOTP {
   email?: string | null;
   phoneNumber?: string | null;
 }
+
 export interface PaginationParams {
   skillset?: string[] | any;
   location?: string | any;
@@ -2023,8 +2125,9 @@ export const transfer: Transfer[] = [
   },
 ];
 
+
+
 // MARKET
-// models/market-engagement.model.ts
 export interface MarketEngagement {
   id: string;
   talentName: string;

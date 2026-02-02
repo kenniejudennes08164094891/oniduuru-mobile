@@ -1,6 +1,7 @@
+
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
-import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
@@ -9,6 +10,8 @@ import { ReconsiderOfferModalComponent } from 'src/app/utilities/modals/reconsid
 import { ReconsiderConfirmationModalComponent } from 'src/app/utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
 import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component';
 import { ToastsService } from 'src/app/services/toasts.service';
+
+
 
 @Component({
   selector: 'app-market-engagement-market-price-preparation',
@@ -20,9 +23,14 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   @ViewChild(MarketEngagementsTableComponent)
   marketTableComponent!: MarketEngagementsTableComponent;
 
-  hire: MockPayment | undefined;
+
+  private isTabSwitchInProgress: boolean = false;
+
+  activeTab: 'engagements' | 'stats' = 'engagements';
+
+  hire: TotalHires | undefined;
   images = imageIcons;
-  userName: string = 'Viki West';
+  userName: string = '';
   isLoading: boolean = false;
   private previousTalentId: string | null = null;
 
@@ -43,35 +51,86 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     private authService: AuthService,
     private modalCtrl: ModalController,
     private toastService: ToastsService
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Subscribe to route param changes
     this.route.paramMap.subscribe((params) => {
       const talentId = params.get('id');
 
+      console.log('🔄 Route changed - Talent ID:', talentId);
+
       if (talentId) {
-        // Check if talent changed
-        if (this.previousTalentId !== talentId) {
-          this.previousTalentId = talentId;
-          this.checkNavigationState();
+        // Check navigation state FIRST (this contains the actual hire data)
+        this.checkNavigationState(talentId);
+
+        // Reset loading state
+        this.isLoading = true;
+
+        // Always load hire details when param changes
+        this.previousTalentId = talentId;
+
+        // If we have state data, use it immediately
+        if (this.selectedModalHire) {
+          console.log('✅ Using hire data from navigation state:', this.selectedModalHire.name);
+          this.setHireData(this.selectedModalHire);
+          this.isLoading = false;
+
+
+          // Check if we need to open a modal
+          if (this.shouldOpenModalOnLoad) {
+            this.openModalAfterDataLoad();
+          }
+        } else {
+          // Otherwise load from API
           this.loadHireDetails(talentId);
         }
+
+        // Reset modal states
+        this.shouldOpenModalOnLoad = false;
+        this.modalTypeToOpen = '';
       }
     });
   }
 
-  private checkNavigationState() {
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras?.state) {
-      const state = navigation.extras.state as any;
+  ngOnDestroy() {
+    this.closeTotalDeliveryModal();
+    this.closeReconsiderModal();
+  }
 
-      if (state.shouldOpenModal && state.hireData) {
-        this.shouldOpenModalOnLoad = true;
-        this.modalTypeToOpen = state.modalType || '';
-        this.selectedModalHire = state.hireData;
-        console.log('Modal should open after load:', this.modalTypeToOpen);
-      }
+  private checkNavigationState(talentId: string) {
+    const navigation = this.router.getCurrentNavigation();
+
+    // Check BOTH extras.state and history.state
+    let stateData = null;
+
+    if (navigation?.extras?.state) {
+      stateData = navigation.extras.state as any;
+      console.log('📦 Navigation extras state:', stateData);
+    } else if (history.state) {
+      // Fallback to history.state
+      stateData = history.state;
+      console.log('📦 History state:', stateData);
+    }
+
+    if (stateData?.hireData) {
+      const hireData = stateData.hireData;
+      console.log('✅ Found hire data in navigation state:', {
+        name: hireData.name,
+        id: hireData.id,
+        talentId: hireData.talentId,
+        matchesRouteId: hireData.id === talentId || hireData.talentId === talentId
+      });
+
+      // Always set the state data regardless of ID match
+      this.shouldOpenModalOnLoad = stateData.shouldOpenModal || false;
+      this.modalTypeToOpen = stateData.modalType || '';
+      this.selectedModalHire = hireData;
+
+      console.log('📊 Modal states set:', {
+        shouldOpenModal: this.shouldOpenModalOnLoad,
+        modalType: this.modalTypeToOpen
+      });
     }
   }
 
@@ -87,51 +146,254 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       return;
     }
 
-    console.log('🔍 Loading hire details for talent:', talentId);
+    console.log('🔍 Loading hire details for talent ID:', talentId);
 
-    this.scouterService
-      .getAllMarketsByScouter(scouterId, {
-        talentId: talentId,
-        limit: 10,
-      })
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Hire details response:', response);
+    this.scouterService.getAllMarketsByScouter(scouterId, {
+      talentId: talentId,
+      limit: 10,
+    }).subscribe({
+      next: (response: any) => {
+        console.log('📊 RAW API RESPONSE STRUCTURE:', {
+          response: response,
+          rawResponse: response.rawResponse, // Check if this exists
+          data: response.data,
+          firstItem: response.data?.[0],
+          firstItemKeys: response.data?.[0] ? Object.keys(response.data[0]) : []
+        });
 
-          if (response?.data && response.data.length > 0) {
-            const hireData = response.data[0];
-            this.hire = hireData;
-            this.userName = hireData?.name || 'Unknown Talent';
+        const data = response.data as TotalHires[] || [];
 
-            // Check if we need to open a modal after loading
-            if (this.shouldOpenModalOnLoad) {
-              this.openModalAfterDataLoad();
-            }
-          } else {
-            this.loadMockData(talentId);
+        if (data.length > 0) {
+          const hireData = data[0];
+          console.log('🎯 HIRE DATA FOR PARSING:', {
+            hireData: hireData,
+            allFields: Object.keys(hireData),
+            satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
+            satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent,
+            // Check if it's in _originalData
+            originalData: hireData._originalData,
+            originalComments: hireData._originalData?.satisFactoryCommentByScouter
+          });
 
-            if (this.shouldOpenModalOnLoad) {
-              setTimeout(() => {
-                this.openModalAfterDataLoad();
-              }, 500);
-            }
-          }
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Error loading hire details:', error);
-          this.loadMockData(talentId);
+          this.setHireData(hireData);
+        } else {
+          console.warn('⚠️ No data returned');
+        }
 
-          if (this.shouldOpenModalOnLoad) {
-            setTimeout(() => {
-              this.openModalAfterDataLoad();
-            }, 500);
-          }
-
-          this.isLoading = false;
-        },
-      });
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        console.error('❌ Error loading hire details:', error);
+        this.isLoading = false;
+      }
+    });
   }
+
+
+  private loadAllDataAndFindTalent(scouterId: string, talentId: string) {
+    console.log('🔄 Loading all data to search for talent:', talentId);
+
+    this.scouterService.getAllMarketsByScouter(scouterId, {
+      limit: 100,
+    }).subscribe({
+      next: (response: any) => {
+        const allData = response.data as TotalHires[] || [];
+        console.log(`📊 Total records loaded: ${allData.length}`);
+
+        // Try to find the talent by various methods
+        let hireData = this.findTalentInData(allData, talentId);
+
+        if (hireData) {
+          console.log('✅ Found in all data:', hireData.name);
+          this.setHireData(hireData);
+        } else {
+          console.error('❌ Talent not found in any data');
+          this.loadMockData(talentId);
+        }
+
+        this.isLoading = false;
+      },
+      error: (error: any) => {
+        console.error('❌ Error loading all data:', error);
+        this.loadMockData(talentId);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private findTalentInData(data: TotalHires[], talentId: string): TotalHires | undefined {
+    // Try multiple matching strategies
+    const strategies = [
+      // 1. Exact talentId match (most important)
+      (item: TotalHires) => item.talentId === talentId,
+      // 2. Check if talentId contains the search string
+      (item: TotalHires) => item.talentId?.includes(talentId),
+      // 3. Check if id contains the search string
+      (item: TotalHires) => item.id?.toString().includes(talentId),
+      // 4. Check if talentIdWithDate contains the search string
+      (item: TotalHires) => (item as any).talentIdWithDate?.includes(talentId),
+      // 5. Check if email contains the search string
+      (item: TotalHires) => item.email?.toLowerCase().includes(talentId.toLowerCase()),
+      // 6. Check if name contains the search string
+      (item: TotalHires) => item.name?.toLowerCase().includes(talentId.toLowerCase()),
+    ];
+
+    for (let i = 0; i < strategies.length; i++) {
+      const match = data.find(strategies[i]);
+      if (match) {
+        console.log(`✅ Found with strategy ${i}: ${match.name}`);
+        return match;
+      }
+    }
+
+    return undefined;
+  }
+
+  private findExactTalent(data: TotalHires[], talentId: string): TotalHires | undefined {
+    console.log(`🔍 Searching for ${talentId} in ${data.length} records`);
+
+    // Try multiple matching strategies in order of priority
+    const matchStrategies = [
+      // 1. Exact ID match
+      (item: TotalHires) => item.id === talentId,
+      // 2. Exact talentId match
+      (item: TotalHires) => item.talentId === talentId,
+      // 3. Check if talentId contains the ID (partial match)
+      (item: TotalHires) => item.talentId?.includes(talentId),
+      // 4. Check if ID contains talentId (partial match)
+      (item: TotalHires) => item.id?.includes(talentId),
+      // 5. Check talentIdWithDate if it exists
+      (item: TotalHires) => (item as any).talentIdWithDate?.includes(talentId),
+    ];
+
+    for (let i = 0; i < matchStrategies.length; i++) {
+      const match = data.find(matchStrategies[i]);
+      if (match) {
+        console.log(`✅ Found with strategy ${i}: ${match.name}`);
+        return match;
+      }
+    }
+
+    console.log('❌ No exact match found');
+    return undefined;
+  }
+
+
+
+  private setHireData(hireData: TotalHires) {
+
+    // First check all possible field names
+    console.log('🔍 ALL POSSIBLE COMMENT FIELDS:', {
+      satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
+      scouterComment: (hireData as any).scouterComment,
+      comments: (hireData as any).comments,
+      remark: (hireData as any).remark,
+      // Check the actual object structure
+      allKeys: Object.keys(hireData)
+    });
+
+    // Try multiple possible field names
+    const scouterCommentRaw =
+      hireData.satisFactoryCommentByScouter ||
+      (hireData as any).scouterComment ||
+      (hireData as any).comments?.scouter ||
+      '';
+
+    const talentCommentRaw =
+      hireData.satisFactoryCommentByTalent ||
+      (hireData as any).talentComment ||
+      (hireData as any).comments?.talent ||
+      '';
+
+
+
+
+    console.log('🔍 Setting hire data:', {
+      id: hireData.id,
+      name: hireData.name,
+      satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
+      satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent
+    });
+
+    // Parse comments with better error handling
+    const scouterParsed = this.parseSatisfactoryComment(
+      hireData.satisFactoryCommentByScouter
+    );
+
+    const talentParsed = this.parseSatisfactoryComment(
+      hireData.satisFactoryCommentByTalent
+    );
+
+    console.log('🧪 PARSED RESULTS:', {
+      scouter: scouterParsed,
+      talent: talentParsed,
+      rawScouter: hireData.satisFactoryCommentByScouter,
+      rawTalent: hireData.satisFactoryCommentByTalent
+    });
+
+    this.hire = {
+      ...hireData,
+
+      // Map the API fields to your frontend fields
+      yourComment: scouterParsed.remark?.trim() || '',
+      yourRating: Number(scouterParsed.rating) || 0,
+
+      talentComment: talentParsed.remark?.trim() || '',
+      talentRating: Number(talentParsed.rating) || 0,
+    };
+
+    this.userName = hireData?.name || 'Unknown Talent';
+
+    console.log('✅ Final hire object:', {
+      yourComment: this.hire.yourComment,
+      yourRating: this.hire.yourRating,
+      talentComment: this.hire.talentComment,
+      talentRating: this.hire.talentRating
+    });
+
+    if (this.shouldOpenModalOnLoad) {
+      this.openModalAfterDataLoad();
+    }
+  }
+
+  // Helper method to fix malformed JSON
+  private fixMalformedJSON(jsonString: string): string {
+    if (!jsonString) return jsonString;
+
+    try {
+      // Try to parse first
+      JSON.parse(jsonString);
+      return jsonString; // Already valid
+    } catch (error) {
+      // Fix common JSON issues
+      let fixed = jsonString;
+
+      // 1. Fix missing quotes around property names
+      fixed = fixed.replace(/(\w+):/g, '"$1":');
+
+      // 2. Fix trailing commas
+      fixed = fixed.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+      // 3. Fix missing closing brackets
+      if (fixed.startsWith('{') && !fixed.endsWith('}')) {
+        fixed = fixed + '}';
+      }
+
+      // 4. Fix unescaped quotes in strings
+      fixed = fixed.replace(/:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match, content) => {
+        return ': "' + content.replace(/"/g, '\\"') + '"';
+      });
+
+      try {
+        JSON.parse(fixed);
+        return fixed;
+      } catch (e) {
+        console.warn('Could not fix JSON:', jsonString);
+        return jsonString;
+      }
+    }
+  }
+
 
   private openModalAfterDataLoad() {
     console.log('Opening modal after data load:', this.modalTypeToOpen);
@@ -155,22 +417,71 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     }, 300);
   }
 
-  // Handle table hire click
-  onTableHireClick(hire: MockPayment) {
-    console.log('📋 Table hire clicked:', hire.name);
+  onTableHireClick(hire: TotalHires) {
+    console.log('📋 Table hire clicked in detail page:', hire.name);
 
-    const navigationExtras: NavigationExtras = {
-      state: {
-        shouldOpenModal: true,
-        modalType: this.getModalTypeForHire(hire),
-        hireData: hire,
-      },
-    };
+    // Check current route talent ID
+    const currentTalentId = this.route.snapshot.paramMap.get('id');
 
-    this.router.navigate(
-      ['/scouter/market-engagement-market-price-preparation', hire.id],
-      navigationExtras
-    );
+    if (currentTalentId === hire.id || currentTalentId === hire.talentId) {
+      // Already on the same talent page - update the current hire
+      this.setHireData(hire);
+
+      console.log('✅ Updated current hire to:', hire.name);
+
+      // IMPORTANT: Check if we should open a modal based on status
+      if (hire.offerStatus === 'Offer Rejected') {
+        console.log('✅ Opening Reconsider Modal from table click');
+        this.openReconsiderModal(hire);
+      } else if (hire.offerStatus === 'Offer Accepted') {
+        console.log('✅ Opening Total Delivery Modal from table click');
+        this.openTotalDeliveryModal(hire);
+      }
+    } else {
+      // Navigate to the talent's detail page
+      const navigationExtras: NavigationExtras = {
+        state: {
+          shouldOpenModal: true,
+          modalType: this.getModalTypeForHire(hire),
+          hireData: hire,
+        },
+      };
+
+      this.router.navigate(
+        ['/scouter/market-engagement-market-price-preparation', hire.id],
+        navigationExtras
+      );
+    }
+  }
+
+  private updateStatsWithHire(hire: TotalHires) {
+    console.log('📊 Updating stats with hire:', hire.name);
+
+    // Update the current hire
+    this.setHireData(hire);
+
+
+    // This will automatically update the stats component through the tabs component
+    // since the initialHire input is bound
+  }
+
+
+
+  private assignHire(hireData: TotalHires) {
+    this.setHireData(hireData);
+  }
+
+
+  private openModalForCurrentHire(hire: any) {
+    console.log('Opening modal for current hire:', hire.name);
+
+    const modalType = this.getModalTypeForHire(hire);
+
+    if (modalType === 'reconsider') {
+      this.openReconsiderModal(hire);
+    } else if (modalType === 'total-delivery') {
+      this.openTotalDeliveryModal(hire);
+    }
   }
 
   private getModalTypeForHire(hire: any): string {
@@ -182,8 +493,31 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     return 'none'; // No modal for other statuses
   }
 
+  // Add this to your setTab method or create a new method
+  setTab(tab: 'engagements' | 'stats') {
+    this.isTabSwitchInProgress = true;
+    this.activeTab = tab;
+
+    // Close any open modals when switching tabs
+    if (this.isTotalDeliveryModalOpen) {
+      this.closeTotalDeliveryModal();
+    }
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      this.isTabSwitchInProgress = false;
+    }, 100);
+  }
+
+
+
   // Open modals based on status
   openTotalDeliveryModal(hire: any) {
+    if (!this.shouldOpenModal()) {
+      console.log('Modal opening blocked by conditions');
+      return;
+    }
+
     console.log('Opening Total Delivery Modal for:', hire.name);
 
     if (hire.offerStatus !== 'Offer Accepted') {
@@ -194,18 +528,19 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     this.selectedModalHire = hire;
     this.isTotalDeliveryModalOpen = true;
   }
-
-  debugModalStates() {
-    console.log('🔍 Modal States:', {
-      isReconsiderModalOpen: this.isReconsiderModalOpen,
-      isReconsiderOfferModalOpen: this.isReconsiderOfferModalOpen,
-      selectedTalentForReconsider: this.selectedTalentForReconsider
-        ? this.selectedTalentForReconsider.name
-        : 'null',
-    });
-  }
+  // debugModalStates() {
+  //   console.log('🔍 Modal States:', {
+  //     isReconsiderModalOpen: this.isReconsiderModalOpen,
+  //     isReconsiderOfferModalOpen: this.isReconsiderOfferModalOpen,
+  //     selectedTalentForReconsider: this.selectedTalentForReconsider
+  //       ? this.selectedTalentForReconsider.name
+  //       : 'null',
+  //   });
+  // }
 
   // Call debug in relevant places
+
+
   openReconsiderModal(hire: any) {
     console.log('Opening Reconsider Modal for:', hire.name);
 
@@ -218,12 +553,38 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     this.isReconsiderModalOpen = true;
 
     // Debug
-    this.debugModalStates();
+    // this.debugModalStates();
   }
   // Modal close handlers
   closeTotalDeliveryModal() {
+    console.log('Closing total delivery modal');
+
+    // First, set the flag to false
     this.isTotalDeliveryModalOpen = false;
-    this.selectedModalHire = null;
+
+    // Clear the selected hire after a delay to ensure modal closes
+    setTimeout(() => {
+      this.selectedModalHire = null;
+    }, 100);
+
+    // Clear any navigation state flags
+    this.shouldOpenModalOnLoad = false;
+    this.modalTypeToOpen = '';
+  }
+
+  private shouldOpenModal(): boolean {
+    // Don't open modal if we're loading
+    if (this.isLoading) return false;
+
+    // Don't open modal if tab switch is in progress
+    if (this.isTabSwitchInProgress) return false;
+
+    // Don't open modal if it's already open
+    if (this.isTotalDeliveryModalOpen || this.isReconsiderModalOpen || this.isReconsiderOfferModalOpen) {
+      return false;
+    }
+
+    return true;
   }
 
   closeReconsiderModal() {
@@ -293,30 +654,59 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId || !this.selectedTalentForReconsider) return;
+    if (!scouterId || !this.selectedTalentForReconsider) {
+      console.error('❌ Missing required data');
+      return;
+    }
 
     // ✅ Get the actual market hire data
     const talentData = this.selectedTalentForReconsider;
 
-    // ✅ Check if we have proper IDs
-    if (!talentData.marketHireId || !talentData.talentIdWithDate) {
+    // ✅ Check if we have proper IDs - CRITICAL: Use the correct IDs from the API response
+    if (!talentData.marketHireId || !talentData.talentId) {
       console.error('❌ Missing required IDs for reconsider offer:', {
         marketHireId: talentData.marketHireId,
+        talentId: talentData.talentId,
         talentIdWithDate: talentData.talentIdWithDate,
+        id: talentData.id,
+        allKeys: Object.keys(talentData)
       });
-      this.toastService.openSnackBar(
-        'Cannot reconsider offer: Missing required data. Please refresh and try again.',
-        'error'
-      );
-      return;
+
+      // Try alternative ID sources
+      const marketHireId = talentData.marketHireId || talentData.id;
+      const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
+
+      if (!marketHireId || !talentId) {
+        this.toastService.openSnackBar(
+          'Cannot reconsider offer: Missing required data. Please refresh and try again.',
+          'error'
+        );
+        return;
+      }
     }
 
     // Prepare payload according to the endpoint specification
     const currentDate = new Date();
     const formattedCurrentDate = this.formatDateForPayload(currentDate);
-    const formattedStartDate = this.formatDateForPayload(
-      new Date(offerData.startDate)
-    );
+
+    // Parse the date properly
+    let formattedStartDate;
+    try {
+      formattedStartDate = this.formatDateForPayload(
+        new Date(offerData.startDate)
+      );
+    } catch (error) {
+      console.warn('⚠️ Could not parse start date, using current date:', error);
+      formattedStartDate = formattedCurrentDate;
+    }
+
+    // Prepare the satisfactory comment
+    const satisFactoryCommentByScouter = JSON.stringify({
+      scouterId: scouterId,
+      dateOfComment: formattedCurrentDate,
+      remark: offerData.satisfactoryComment || "(Proposal Reconsidered)",
+      rating: offerData.satisfactoryRating || 0,
+    });
 
     const payload = {
       hireStatus: 'awaiting-acceptance',
@@ -324,30 +714,29 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       jobDescription: offerData.jobDescription,
       startDate: formattedStartDate,
       dateOfHire: formattedCurrentDate,
-      satisFactoryCommentByScouter: JSON.stringify({
-        scouterId: scouterId,
-        dateOfComment: formattedCurrentDate,
-        remark: '(Proposal Reconsidered)',
-        rating: 0,
-      }),
+      satisFactoryCommentByScouter: satisFactoryCommentByScouter,
     };
+
+    // Use the correct IDs - try multiple sources
+    const marketHireId = talentData.marketHireId || talentData.id;
+    const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
 
     console.log('✅ Sending reconsider offer with:', {
       payload,
       params: {
-        talentId: talentData.talentIdWithDate,
+        talentId: talentId,
         scouterId: scouterId,
-        marketHireId: talentData.marketHireId,
+        marketHireId: marketHireId,
       },
+      rawPayload: JSON.stringify(payload, null, 2)
     });
 
     // Call the PATCH endpoint
     this.scouterService
       .toggleMarketStatus(payload, {
-        // ✅ Use correct method name
-        talentId: talentData.talentIdWithDate,
+        talentId: talentId,
         scouterId: scouterId,
-        marketHireId: talentData.marketHireId,
+        marketHireId: marketHireId,
       })
       .subscribe({
         next: (response) => {
@@ -356,69 +745,50 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
             'Offer reconsidered successfully!',
             'success'
           );
+
+          // Refresh the data after successful reconsideration
+          this.loadHireDetails(talentId);
+
+          // Also update the table if it exists
+          if (this.marketTableComponent) {
+            this.marketTableComponent.loadMarketEngagements();
+          }
         },
         error: (error) => {
           console.error('❌ Failed to reconsider offer:', error);
+
+          // Detailed error logging
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            error: error.error,
+            message: error.message,
+            url: error.url
+          });
+
           this.toastService.openSnackBar(
-            error?.error?.message || 'Failed to reconsider offer',
+            error?.error?.message || error?.statusText || 'Failed to reconsider offer',
             'error'
           );
         },
       });
   }
 
-  // Helper method
+  // Helper method for date formatting
   private formatDateForPayload(date: Date): string {
-    // Try this format if the current one doesn't work:
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    // Format: DD-MM-YYYY HH:mm (as shown in your example)
     const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}-${month}-${year} ${hours}:${minutes}`;
-    // Or: return date.toISOString(); // If backend expects ISO format
   }
 
-  // Other existing methods...
-  updateRating(star: number) {
-    if (!this.hire) return;
 
-    const hire = this.hire;
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId) {
-      console.error('❌ No scouter ID found');
-      return;
-    }
 
-    const payload = {
-      scouterId: scouterId,
-      remark: hire.yourComment || 'Rating updated via detail page',
-      rating: star,
-    };
-
-    console.log('⭐ Updating rating for hire:', hire.id, 'to:', star);
-
-    this.scouterService.updateMarketComment(hire.id, payload).subscribe({
-      next: (response) => {
-        console.log('✅ Rating updated successfully:', response);
-        hire.yourRating = star;
-
-        const index = MockRecentHires.findIndex((h) => h.id === hire.id);
-        if (index !== -1) {
-          MockRecentHires[index].yourRating = star;
-        }
-
-        this.showSuccessFeedback('Rating updated successfully!');
-      },
-      error: (error) => {
-        console.error('❌ Failed to update rating:', error);
-        this.showErrorFeedback('Failed to update rating');
-      },
-    });
-  }
 
   onRatingUpdated(updateData: { hireId: string; rating: number }) {
     if (this.hire && this.hire.id === updateData.hireId) {
@@ -439,7 +809,20 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   }
 
   private loadMockData(talentId: string) {
-    const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
+    console.log('🔍 Searching mock data for:', talentId);
+
+    // First try exact match with talentId
+    let mock = MockRecentHires.find((m) => m.talentId === talentId);
+
+    // Then try partial matches
+    if (!mock) {
+      mock = MockRecentHires.find((m) =>
+        m.talentId?.includes(talentId) ||
+        m.id?.toString().includes(talentId) ||
+        m.email?.toLowerCase().includes(talentId.toLowerCase())
+      );
+    }
+
     if (mock) {
       this.hire = {
         ...mock,
@@ -448,15 +831,16 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         yourRating: mock.yourRating ?? 0,
         talentComment: mock.talentComment ?? '',
         talentRating: mock.talentRating ?? 0,
-      } as MockPayment;
+      } as TotalHires;
       this.userName = this.hire?.name || 'Unknown Talent';
+      console.log('✅ Found in mock data:', this.hire.name);
     } else {
       console.error('❌ No mock data found for talent ID:', talentId);
       this.hire = this.createFallbackHire(talentId);
     }
   }
 
-  private createFallbackHire(talentId: string): MockPayment {
+  private createFallbackHire(talentId: string): TotalHires {
     return {
       id: talentId,
       profilePic: 'assets/images/default-avatar.png',
@@ -472,7 +856,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       yourRating: 0,
       talentComment: '',
       talentRating: 0,
-    } as MockPayment;
+    } as TotalHires;
   }
 
   private updateReconsideredOffer(offerData: any) {
@@ -495,6 +879,84 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     //   }
     // });
   }
+
+  private parseSatisfactoryComment(
+    raw?: string
+  ): { remark: string; rating: number } {
+    console.log('🔄 Parsing comment:', raw);
+
+    if (!raw || raw === 'undefined' || raw === 'null') {
+      console.log('⚠️ No comment or invalid value');
+      return { remark: '', rating: 0 };
+    }
+
+    try {
+      // If it's already a valid JSON string, parse it directly
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        const parsed = JSON.parse(raw);
+        console.log('✅ Parsed JSON:', parsed);
+        return {
+          remark: parsed?.remark || parsed?.comments || '',
+          rating: Number(parsed?.rating || parsed?.score || 0)
+        };
+      }
+
+      // Try to fix and parse malformed JSON
+      const fixed = this.fixMalformedJSON(raw);
+      const parsed = JSON.parse(fixed);
+      console.log('✅ Fixed and parsed:', parsed);
+
+      return {
+        remark: parsed?.remark || parsed?.comments || parsed?.comment || '',
+        rating: Number(parsed?.rating || parsed?.score || 0)
+      };
+    } catch (error) {
+      console.error('❌ Failed to parse comment:', error, 'Raw:', raw);
+      // Return as plain text if not JSON
+      return { remark: raw, rating: 0 };
+    }
+  }
+
+
+
+
+  // Format date for display
+  formatCommentDate(dateString: string): string {
+    if (!dateString) return '';
+
+    try {
+      // Try to parse various date formats
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return dateString; // Return original if can't parse
+      }
+
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  }
+  // Helper method to format hire status for display
+  formatHireStatus(status: string): string {
+    if (!status) return 'Unknown';
+
+    const statusMap: { [key: string]: string } = {
+      'offer-accepted': 'Offer Accepted',
+      'awaiting-acceptance': 'Awaiting Acceptance',
+      'offer-rejected': 'Offer Rejected',
+      'pending': 'Pending'
+    };
+
+    return statusMap[status] || status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+
 
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {

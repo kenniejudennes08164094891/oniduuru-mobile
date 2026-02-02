@@ -7,6 +7,7 @@ import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 
 Chart.register(...registerables);
@@ -77,7 +78,8 @@ export class TalentDashboardComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private endpointService: EndpointService,
-    private toastr: ToastrService
+    // private toastr: ToastrService
+    private toast: ToastsService
 
   ) { }
 
@@ -400,7 +402,7 @@ export class TalentDashboardComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error fetching talent stats:', error);
-      this.toastr.error('Unable to load dashboard statistics.');
+      this.toast.openSnackBar('Unable to load dashboard statistics.', 'error');
       // fallback to showing zeros (keep prepared new-user view)
       this.prepareNewUserDashboard();
     }
@@ -543,7 +545,8 @@ export class TalentDashboardComponent implements OnInit {
 
     if (!talentId) {
 
-      this.toastr.warning('Talent ID not found. Please log in again.');
+      this.toast.openSnackBar('Talent ID not found. Please log in again.', 'warning');
+
       return;
     }
 

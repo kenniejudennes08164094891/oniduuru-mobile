@@ -13,6 +13,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { TransferFundsReceiptModalComponent } from '../transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-transfer-funds-popup-modal',
@@ -60,7 +61,8 @@ export class TransferFundsPopupModalComponent
     modalCtrl: ModalController,
     platform: Platform,
     private paymentService: PaymentService,
-    private toastCtrl: ToastController,
+    // private toastCtrl: ToastController,
+    private toast: ToastsService,
     private ngZone: NgZone,
     private fb: FormBuilder // ✅ inject FormBuilder
   ) {
@@ -88,12 +90,8 @@ export class TransferFundsPopupModalComponent
 
   async createFundTransfer() {
     if (this.transferForm.invalid) {
-      const toast = await this.toastCtrl.create({
-        message: 'Please fill all fields correctly.',
-        duration: 2000,
-        color: 'danger',
-      });
-      await toast.present();
+  
+      this.toast.openSnackBar('Please fill all fields correctly.', 'error');
       return;
     }
 

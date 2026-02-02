@@ -38,7 +38,7 @@ export class MarketEngagementsTableComponent implements OnInit {
     private modalCtrl: ModalController,
     private route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadMarketEngagements();
@@ -140,67 +140,66 @@ export class MarketEngagementsTableComponent implements OnInit {
 
     try {
       this.selectedHire = hire;
+
+      // CRITICAL: Always emit to parent components first
       this.hireSelected.emit(hire);
 
-      // Check if we're already on this talent's detail page
-      const isSameTalent = this.currentRouteTalentId === hire.id;
-
       console.log(
-        `Opening modal for ${hire.name}, Status: ${hire.offerStatus}, Same talent: ${isSameTalent}`
+        `Opening modal for ${hire.name}, Status: ${hire.offerStatus}`
       );
 
-      if (hire.offerStatus === 'Offer Rejected') {
-        // For rejected offers, open reconsider modal
-        this.selectedTalentForReconsider = hire;
-        this.isReconsiderModalOpen = true;
-      } else if (hire.offerStatus === 'Offer Accepted') {
-        // For accepted offers
-        if (isSameTalent) {
-          // Already on talent detail page - open modal directly
-          if (!hire.yourRating || hire.yourRating <= 0) {
-            this.toastService.openSnackBar(
-              `⭐ No rating provided yet. Set your own rating ↑`,
-              'warning'
-            );
-          }
-          this.isModalOpen = true;
-        } else {
-          // Navigate to talent detail page for total delivery modal
-          const navigationExtras: NavigationExtras = {
-            state: {
-              shouldOpenModal: true,
-              modalType: 'total-delivery',
-              hireData: hire,
-            },
-          };
-
-          this.router.navigate(
-            ['/scouter/market-engagement-market-price-preparation', hire.id],
-            navigationExtras
-          );
-        }
-      } else if (hire.offerStatus === 'Awaiting Acceptance') {
-        // For awaiting acceptance - show info toast and navigate
+      // ✅ ADD TOAST FOR AWAITING ACCEPTANCE STATUS
+      if (hire.offerStatus === 'Awaiting Acceptance') {
         this.toastService.openSnackBar(
-          `This offer is ${hire.offerStatus}. Waiting for talent's response.`,
-          'warning'
+          `Offer is awaiting acceptance from ${hire.name}. Check back later for updates.`,
+          'warning',
         );
 
-        if (!isSameTalent) {
-          this.router.navigate([
-            '/scouter/market-engagement-market-price-preparation',
-            hire.id,
-          ]);
-        }
+        return;
+      }
+
+      // Check if we're already on the detail page
+      const isOnDetailPage = this.router.url.includes('market-engagement-market-price-preparation');
+      const currentRouteTalentId = this.route.parent?.snapshot.paramMap.get('id');
+
+      if (isOnDetailPage && (currentRouteTalentId === hire.id || currentRouteTalentId === hire.talentId)) {
+        // We're on the same talent's detail page
+        console.log('✅ Already on same talent page, updating view');
+
+        // DON'T open modals here - let the detail page handle it
+        // The detail page will open modals based on the hire status
+        console.log(`ℹ️ Not opening modal in table - detail page will handle it`);
       } else {
-        // For other statuses
-        this.toastService.openSnackBar(`${hire.offerStatus}`, 'warning');
+        // Navigate to talent detail page with state to open modal
+        const navigationExtras: NavigationExtras = {
+          state: {
+            shouldOpenModal: true,
+            modalType: this.getModalTypeForHire(hire),
+            hireData: hire,
+          },
+        };
+
+        console.log(`🚀 Navigating to detail page with modal type: ${this.getModalTypeForHire(hire)}`);
+        this.router.navigate(
+          ['/scouter/market-engagement-market-price-preparation', hire.id],
+          navigationExtras
+        );
       }
     } finally {
       setTimeout(() => {
         this.isProcessingClick = false;
       }, 500);
     }
+  }
+
+  // Add this helper method
+  private getModalTypeForHire(hire: any): string {
+    if (hire.offerStatus === 'Offer Rejected') {
+      return 'reconsider';
+    } else if (hire.offerStatus === 'Offer Accepted') {
+      return 'total-delivery';
+    }
+    return 'none';
   }
 
   onReconsiderConfirmed() {
@@ -369,35 +368,7 @@ export class MarketEngagementsTableComponent implements OnInit {
     }
   }
 
-  private updateOfferOnBackend(offerData: any) {
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
 
-    if (!scouterId) return;
-
-    const payload = {
-      scouterId: scouterId,
-      talentId: offerData.talentId,
-      marketId: offerData.talentId,
-      newAmount: offerData.amount,
-      newJobDescription: offerData.jobDescription,
-      newStartDate: offerData.startDate,
-      additionalComments: offerData.comments,
-      action: 'reconsider_offer',
-    };
-
-    // Call your service method
-    // this.scouterService.reconsiderOffer(payload).subscribe({
-    //   next: (response) => {
-    //     console.log('Offer reconsidered successfully:', response);
-    //   },
-    //   error: (error) => {
-    //     console.error('Failed to reconsider offer:', error);
-    //   }
-    // });
-  }
-
-  // Other existing methods...
   closeModal() {
     this.selectedHire = null;
     this.isModalOpen = false;

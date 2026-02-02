@@ -79,7 +79,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       if (!allowedTypes.includes(file.type)) {
         this.toastService.openSnackBar(
           'Invalid file type. Please upload an image (PNG, JPG, JPEG, GIF, SVG).',
-          'danger'
+          'error'
         );
 
         this.removeScreenshot();
@@ -89,9 +89,10 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       // ✅ Validate file size (e.g., max 2MB)
       const maxSizeInMB = 2;
       if (file.size > maxSizeInMB * 1024 * 1024) {
-        this.showToast(
+      
+        this.toastService.openSnackBar(
           `File is too large. Max size is ${maxSizeInMB}MB.`,
-          'danger'
+          'error'
         );
         this.removeScreenshot();
         return;
@@ -113,12 +114,20 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   // Extra input validation (for walletAcc & walletName)
   private validateForm(): boolean {
     if (!this.amount || this.amount <= 0) {
-      this.showToast('Enter a valid amount greater than zero.', 'warning');
+      // this.showToast('Enter a valid amount greater than zero.', 'warning');
+      this.toastService.openSnackBar(
+        'Enter a valid amount greater than zero.',
+        'warning'
+      );
       return false;
     }
 
     if (!this.walletAccNo || !/^\d{10,11}$/.test(this.walletAccNo)) {
-      this.showToast(
+      // this.showToast(
+      //   'Enter a valid wallet account number (10–11 digits).',
+      //   'warning'
+      // );
+      this.toastService.openSnackBar(
         'Enter a valid wallet account number (10–11 digits).',
         'warning'
       );
@@ -126,7 +135,11 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     }
 
     if (!this.walletName || !/^[A-Za-z ]+$/.test(this.walletName)) {
-      this.showToast(
+      // this.showToast(
+      //   'Wallet name is required and must contain only letters.',
+      //   'warning'
+      // );
+      this.toastService.openSnackBar(
         'Wallet name is required and must contain only letters.',
         'warning'
       );
@@ -134,10 +147,9 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     }
 
     if (!this.selectedFile) {
-      this.showToast('Please upload a valid receipt screenshot.', 'danger');
       this.toastService.openSnackBar(
         'Please upload a valid receipt screenshot.',
-        'warning'
+        'error'
       );
       return false;
     }
@@ -257,19 +269,9 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
         this.copied = false;
       }, 2000);
     } catch (err) {
-      this.toastService.openSnackBar('Failed to copy ❌', 'danger');
+      this.toastService.openSnackBar('Failed to copy ❌', 'error');
     }
   }
 
-  private async showToast(message: string, color: string) {
-    // const toast = await this.toastCtrl.create({
-    //   message,
-    //   duration: 2000,
-    //   position: 'bottom',
-    //   color,
-    // });
-    // await toast.present();
 
-    this.toastService.openSnackBar(message, color);
-  }
 }

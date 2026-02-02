@@ -5,6 +5,8 @@ import {
   AfterViewChecked,
   OnInit,
   OnDestroy,
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import { ChatService, ChatMessage } from '../../services/chat.service';
 import { ChatVisibilityService } from '../../services/chat-visibility.service';
@@ -24,6 +26,7 @@ import { NavigationStart, Router } from '@angular/router';
 })
 export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
+  @Output() chatClosed = new EventEmitter<void>();
 
   images = imageIcons;
   newMessage = '';
@@ -38,7 +41,7 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     private chatService: ChatService,
     private chatVisibilityService: ChatVisibilityService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.chatVisibilityService.setChatPageOpen(true);
@@ -61,19 +64,21 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     });
   }
 
-  // NEW METHOD: Force immediate background removal
+  // MODIFIED: Only cleans up and hides chat, no navigation
   goBackImmediately() {
-    // Remove background image BEFORE navigation
+    // Remove background image
     this.removeBackgroundImmediately();
-    
-    // Force cleanup
+    this.chatClosed.emit();
+
+    // Force cleanup and set flag to prevent further actions
     this.isNavigatingAway = true;
     this.cleanup();
-    
-    // Navigate immediately
-    setTimeout(() => {
-      this.router.navigate(['/scouter/dashboard']);
-    }, 0);
+
+    // Notify chat service/page that chat is being closed
+    this.chatVisibilityService.setChatPageOpen(false);
+
+    window.history.back();
+
   }
 
   // NEW METHOD: Remove background image from DOM immediately
@@ -82,7 +87,7 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     headers.forEach(header => {
       header.setAttribute('style', 'display: none !important; opacity: 0 !important; visibility: hidden !important; background-image: none !important;');
     });
-    
+
     // Also remove any background from toolbars
     const toolbars = document.querySelectorAll('ion-toolbar.chatBotPageHeaderBg');
     toolbars.forEach(toolbar => {
@@ -95,6 +100,7 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.isNavigatingAway = true;
     this.removeBackgroundImmediately();
     this.cleanup();
+    this.chatVisibilityService.setChatPageOpen(false);
   }
 
   ngOnDestroy() {

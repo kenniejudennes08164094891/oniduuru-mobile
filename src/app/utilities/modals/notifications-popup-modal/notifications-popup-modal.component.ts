@@ -137,7 +137,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
         console.error('❌ Error fetching notifications:', err);
         this.toastService.openSnackBar(
           'Failed to load notifications',
-          'danger'
+          'error'
         );
         // Store 0 count on error
         this.storeNotificationCount(0);
@@ -153,7 +153,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
       console.error('❌ No valid loggedInUniqueId found');
       this.toastService.openSnackBar(
         'Unable to identify user. Please log in again.',
-        'danger'
+        'error'
       );
 
       // After clearing, update the global count
@@ -193,7 +193,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
           errorMessage = 'Please log in again.';
         }
 
-        this.toastService.openSnackBar(errorMessage, 'danger');
+        this.toastService.openSnackBar(errorMessage, 'error');
       },
     });
   }

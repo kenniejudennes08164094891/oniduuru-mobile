@@ -1,11 +1,7 @@
 <ion-app>
-  <!-- Wallet Menu -->
-  <ion-menu
-    side="start"
-    menuId="scouter-menu"
-    contentId="main-content"
-    class="scouter-menu-bg"
-  >
+  <!-- Wallet Menu - Only show on wallet pages -->
+  <ion-menu *ngIf="showWalletMenu()" side="start" menuId="scouter-menu" contentId="main-content"
+    class="scouter-menu-bg">
     <ion-header>
       <ion-toolbar class="menu-toolbar">
         <ion-title class="menu-title">Wallets (₦)</ion-title>
@@ -14,58 +10,31 @@
 
     <ion-content>
       <ion-list class="px-4 flex flex-col gap-2">
-        <ion-item
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/wallet-page')"
-        >
-          <!-- <ion-icon slot="start" name="home-outline"></ion-icon> -->
+        <!-- Always show -->
+        <ion-item button class="menu-button" (click)="navigateAndCloseMenu('/scouter/wallet-page')">
           <ion-label>Wallet Dashboard</ion-label>
         </ion-item>
 
-        <ion-item
-          *ngIf="!hasWalletProfile"
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/wallet-page/wallet-profile')"
-        >
-          <!-- <ion-icon slot="start" name="wallet-outline"></ion-icon> -->
+        <!-- ✅ SIMPLE CONDITION: Show only if NO wallet profile -->
+        <ion-item *ngIf="!hasWalletProfile" button class="menu-button"
+          (click)="navigateAndCloseMenu('/scouter/wallet-page/wallet-profile')">
           <ion-label>Wallet Profile</ion-label>
         </ion-item>
 
-        <ion-item
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/wallet-page/fund-wallet')"
-        >
-          <!-- <ion-icon slot="start" name="cash-outline"></ion-icon> -->
+        <!-- Always show -->
+        <ion-item button class="menu-button" (click)="navigateAndCloseMenu('/scouter/wallet-page/fund-wallet')">
           <ion-label>Fund Wallet</ion-label>
         </ion-item>
 
-        <ion-item
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/wallet-page/withdraw-funds')"
-        >
-          <!-- <ion-icon slot="start" name="card-outline"></ion-icon> -->
+        <ion-item button class="menu-button" (click)="navigateAndCloseMenu('/scouter/wallet-page/withdraw-funds')">
           <ion-label>Withdraw to Bank</ion-label>
         </ion-item>
 
-        <ion-item
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/wallet-page/fund-transfer')"
-        >
-          <!-- <ion-icon slot="start" name="swap-horizontal-outline"></ion-icon> -->
+        <ion-item button class="menu-button" (click)="navigateAndCloseMenu('/scouter/wallet-page/fund-transfer')">
           <ion-label>Funds Transfer</ion-label>
         </ion-item>
 
-        <ion-item
-          button
-          class="menu-button"
-          (click)="navigateAndCloseMenu('/scouter/dashboard')"
-        >
-          <!-- <ion-icon slot="start" name="home-outline"></ion-icon> -->
+        <ion-item button class="menu-button" (click)="navigateAndCloseMenu('/scouter/dashboard')">
           <ion-label>Dashboard</ion-label>
         </ion-item>
       </ion-list>
@@ -75,6 +44,6 @@
   <!-- Main Content -->
   <ion-router-outlet id="main-content"></ion-router-outlet>
 
-  <!-- Floating Chat Bot Component (NOT Chat Page) -->
+  <!-- Floating Chat Bot Component -->
   <app-chat-bot></app-chat-bot>
 </ion-app>

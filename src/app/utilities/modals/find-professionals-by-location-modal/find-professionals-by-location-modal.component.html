@@ -1,201 +1,133 @@
-<ion-content class="flex flex-col h-full">
-  <!-- HEADER -->
-  <div
-    class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
-  >
-    <h2 class="text-lg font-bold text-white">
-      Talents residing around {{ currentLocation }}
-    </h2>
-    <p (click)="closeModal()" class="text-2xl font-bold text-white">
-      <ion-icon name="close-outline"></ion-icon>
-    </p>
-  </div>
-
-  <!-- Main Content -->
-  <div class="flex flex-col">
-    <!-- Search + Filter Row -->
-    <div class="flex flex-col justify-between gap-3 px-4 sm:px-6 py-4 mt-6">
-      <!-- Skill Level Filter -->
-      <select
-        [(ngModel)]="selectedSkillLevel"
-        aria-label="Filter by Skill Level"
-        class="w-full sm:w-1/4 px-3 py-3 border border-gray-300 bg-white rounded-xl shadow-sm text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none text-gray-700"
-      >
-        <option class="text-gray-200" value="" disabled selected hidden>
-          Filter by Skill Level
-        </option>
-        <option value="Beginner">Beginner</option>
-        <option value="Intermediate">Intermediate</option>
-        <option value="Expert">Expert</option>
-        <option value="">-- Return all data --</option>
-      </select>
-
-      <!-- Search Box -->
-      <div class="relative w-full sm:w-1/2">
-        <ion-icon
-          name="search-outline"
-          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        ></ion-icon>
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Search by user"
-          class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder:text-gray-400"
-        />
+<ion-content class="ion-no-padding">
+  <!-- Google Maps Modal -->
+  <div class="relative w-full bg-black">
+    
+    <!-- Google Map Container -->
+    <div #mapContainer id="googleMap" class="absolute inset-0 z-0" 
+         [style.height.px]="getMapHeight()"></div>
+    
+    <!-- Header with Location Info -->
+    <div class="absolute top-0 left-0 right-0 z-20 px-4 pt-4">
+      <div class="flex justify-between items-center">
+        <!-- Location Display -->
+        <div class="glass-effect rounded-2xl px-5 py-3.5 backdrop-blur-lg">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"></div>
+            </div>
+            <div>
+              <h2 class="text-white font-semibold text-base truncate max-w-[200px]">
+                {{ currentLocation }}
+              </h2>
+              <p class="text-gray-300 text-xs mt-0.5">
+                {{ filteredHires.length }} professional{{ filteredHires.length !== 1 ? 's' : '' }} available
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Close Button -->
+        <button 
+          (click)="closeModal()"
+          class="glass-effect w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-500/20 transition-colors backdrop-blur-lg"
+          aria-label="Close modal"
+        >
+          <ion-icon name="close" class="text-lg text-white"></ion-icon>
+        </button>
       </div>
     </div>
 
-    <!-- TABLE -->
-    <div
-      *ngIf="paginatedHires.length > 0; else noDataPage"
-      class="overflow-x-auto px-2 flex-grow mt-[25%]"
-    >
-      <table class="min-w-full text-sm text-left text-gray-700">
-        <thead class="border-b text-xs uppercase text-gray-500">
-          <tr>
-            <th></th>
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Proximity</th>
-            <th class="px-4 py-3">Skill Level</th>
-            <th class="px-4 py-3">Pay Range</th>
-            <th class="px-4 py-3">Status</th>
-          </tr>
-        </thead>
+    <!-- Filter Controls - Moved to top with reduced height -->
+    <div class="absolute top-20 left-4 right-4 z-20">
+      <div class="glass-effect rounded-2xl p-4 backdrop-blur-lg shadow-xl">
+        <!-- Skill Filter Dropdown -->
+        <div class="w-full">
+          <label class="block text-gray-300 text-xs font-medium mb-2">
+            FILTER BY SKILL
+          </label>
+          <div class="relative">
+            <select
+              [(ngModel)]="selectedSkill"
+              (ngModelChange)="filterTalents()"
+              class="w-full px-4 py-3 bg-black/60 border border-gray-700/70 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 appearance-none transition-all"
+              aria-label="Filter by skill"
+            >
+              <option value="">All Skills</option>
+              <option *ngFor="let skill of allSkills" [value]="skill">
+                {{ skill }}
+              </option>
+            </select>
+            <ion-icon 
+              name="chevron-down" 
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"
+            ></ion-icon>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <tbody
-          *ngIf="paginatedHires.length > 0; else noDataPage"
-          class="divide-y divide-gray-100"
-        >
-          <tr
-            (click)="openTalentModal(hire)"
-            *ngFor="let hire of paginatedHires"
-            class="hover:bg-gray-50 transition-colors cursor-pointer"
+    <!-- Loading State -->
+    <div *ngIf="loading" class="absolute inset-0 flex items-center justify-center bg-black/95 z-30">
+      <div class="text-center p-8 rounded-2xl glass-effect backdrop-blur-lg">
+        <div class="w-14 h-14 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin mb-4 mx-auto"></div>
+        <p class="text-white text-sm font-medium">Loading professionals map...</p>
+        <p class="text-gray-400 text-xs mt-1">Fetching location data</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="absolute inset-0 flex items-center justify-center bg-black/95 z-30">
+      <div class="text-center p-8 max-w-md rounded-2xl glass-effect backdrop-blur-lg">
+        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ion-icon name="alert-circle" class="text-red-500 text-2xl"></ion-icon>
+        </div>
+        <h3 class="text-white text-lg font-semibold mb-2">Map Error</h3>
+        <p class="text-gray-300 text-sm mb-4">{{ error }}</p>
+        <div class="flex gap-3">
+          <button
+            (click)="loadData()"
+            class="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors"
           >
-            <!-- Checkbox -->
-            <td class="px- py-3 w-10 text-center">
-              <input type="checkbox" class="accent-indigo-600" />
-            </td>
-
-            <!-- Profile + Name -->
-            <td
-              class="w-[260px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
-            >
-              <img
-                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
-                [src]="hire.profilePic"
-                alt="{{ hire.name }}"
-              />
-              <div>
-                <p class="text-sm sm:text-base font-medium text-gray-900">
-                  {{ hire.name }}
-                </p>
-                <p class="text-xs sm:text-sm text-gray-500">
-                  {{ hire.email }}
-                </p>
-              </div>
-            </td>
-
-            <!-- Proximity -->
-            <td
-              class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
-            >
-              {{ hire.proximity }}
-            </td>
-
-            <!-- Skill Level -->
-            <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.skillSet[0].skillLevel }}
-            </td>
-
-            <!-- Pay Range -->
-            <td
-              class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
-            >
-              {{ hire.payRange }}
-            </td>
-
-            <!-- Status -->
-            <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
-              <span
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
-              >
-                <span
-                  class="h-2 w-2 rounded-full"
-                  [style.backgroundColor]="getStatusColor(hire.status)"
-                ></span>
-                <span>{{ hire.status }}</span>
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <div
-      *ngIf="paginatedHires.length > 0"
-      class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200"
-    >
-      <button
-        (click)="prevPage()"
-        [disabled]="currentPage === 1"
-        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        <ion-icon name="chevron-back-outline"></ion-icon>
-        Previous
-      </button>
-
-      <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
-        <span
-          class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
-        >
-          {{ currentPage }}
-        </span>
-        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
-          {{ totalPages }}
-        </span>
-      </span>
-
-      <button
-        (click)="nextPage()"
-        [disabled]="currentPage === totalPages"
-        class="pagination-button flex items-center px-3 py-2 gap-2 border border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-      >
-        Next <ion-icon name="chevron-forward-outline"></ion-icon>
-      </button>
-    </div>
-  </div>
-
-  <!-- No Data Full Page -->
-  <ng-template #noDataPage>
-    <div
-      class="flex flex-col items-center justify-center flex-grow px-6 py-10 mt-[25%]"
-    >
-      <img
-        class="w-[232px] h-[246px]"
-        [src]="images.NoDataImage"
-        alt="No Data"
-      />
-      <div class="text-center space-y-2 mt-6">
-        <h3 class="text-[#000000] font-semibold text-[20px]">
-          Oops! No Data Available
-        </h3>
-        <p class="text-[#000000] text-[16px]">
-          No record exists for "{{ currentLocation }}"
-        </p>
+            Try Again
+          </button>
+          <button
+            (click)="closeModal()"
+            class="flex-1 px-4 py-2.5 bg-gray-700 text-white text-sm font-medium rounded-xl hover:bg-gray-600 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
-  </ng-template>
 
-  <!-- Close button stays always visible -->
-  <div class="flex justify-end px-5 py-5">
-    <button
-      (click)="closeModal()"
-      class="text-white hover:text-gray-700 bg-[#000000] px-3 py-2 rounded-lg"
-    >
-      Close dialog
-    </button>
+    <!-- No Data State -->
+    <div *ngIf="!loading && !error && filteredHires.length === 0" 
+         class="absolute inset-0 flex items-center justify-center bg-black/95 z-30">
+      <div class="text-center p-8 max-w-md rounded-2xl glass-effect backdrop-blur-lg">
+        <div class="w-24 h-24 mx-auto mb-6 relative">
+          <div class="absolute inset-0 border-4 border-red-500/10 rounded-full animate-ping"></div>
+          <div class="absolute inset-6 border-2 border-red-500/20 rounded-full animate-ping" style="animation-delay: 0.5s;"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <ion-icon name="location" class="text-4xl text-gray-400"></ion-icon>
+          </div>
+        </div>
+        <h3 class="text-white text-lg font-semibold mb-2">No Professionals Found</h3>
+        <p class="text-gray-300 text-sm mb-6">
+          {{ selectedSkill ? 'No professionals with "' + selectedSkill + '" skill' : 'No professionals available in this location' }}
+        </p>
+        <button
+          (click)="selectedSkill = ''; filterTalents();"
+          class="px-5 py-2.5 bg-gray-700 text-white text-sm font-medium rounded-xl hover:bg-gray-600 transition-colors"
+          *ngIf="selectedSkill"
+        >
+          Clear Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- Space at bottom for info window -->
+    <div class="absolute bottom-0 left-0 right-0 h-40 pointer-events-none z-10 bg-gradient-to-t from-black/50 to-transparent"></div>
+
   </div>
 </ion-content>

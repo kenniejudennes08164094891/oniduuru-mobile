@@ -13,7 +13,7 @@ export class ToastsService {
   openSnackBar(
     message: string,
     panelClass: string,
-    type: 'success' | 'error' | 'warning' | 'info' = 'success',
+    type: 'success' | 'error' | 'warn' | 'info' = 'success',
     duration?: number,
   ) {
     this.snackBar.openFromComponent(ToastComponent, {

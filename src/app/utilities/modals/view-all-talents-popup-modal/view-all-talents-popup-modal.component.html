@@ -1,51 +1,130 @@
 <ion-content class="ion-padding">
-  <div class="space-y-6 p-4">
-    <div class="flex items-start gap-3">
-      <div
-        class="h-32 w-32 rounded-full overflow-hidden flex items-center justify-center bg-gray-100"
-      >
-        <img
-          class="h-full w-full object-cover"
-          [src]="hire?.profilePic"
-          alt="Talent"
-        />
-      </div>
-
-      <div class="space-y-1 mt-1.5">
-        <h5 class="text-[14px] text-[#101828]">{{ hire?.name }}</h5>
-        <p class="text-[12px] text-[#79797B]">{{ hire?.proximity }}</p>
-        <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-          <ion-icon
-            name="star"
-            [class.text-yellow-500]="star <= (hire?.yourRating ?? 0)"
-            [class.text-gray-400]="star > (hire?.yourRating ?? 0)"
-            class="text-xl"
-          ></ion-icon>
-        </ng-container>
-      </div>
+  <div class="space-y-6 p-4 h-full flex flex-col">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-8">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p class="mt-4 text-gray-600">Loading talent profile...</p>
     </div>
 
-    <p class="w-[90%] text-[14px] text-[#000000] font-light p-1">
-      {{ hire?.aboutTalent }}
-    </p>
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="text-center py-8">
+      <div class="text-red-600 mb-4">
+        <ion-icon name="warning-outline" class="text-3xl"></ion-icon>
+        <p class="mt-2">{{ error }}</p>
+      </div>
+      <button
+        (click)="loadTalentMarketProfile()"
+        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Retry
+      </button>
+    </div>
+
+    <!-- Content when data is loaded -->
+    <div *ngIf="!loading && !error" class="flex-1 flex flex-col">
+      <!-- Empty state for no talent data -->
+      <div
+        *ngIf="!hasTalentData"
+        class="text-center py-12 flex-1 flex items-center justify-center"
+      >
+        <div class="max-w-md mx-auto">
+          <div class="text-gray-400 mb-4">
+            <ion-icon name="person-outline" class="text-5xl"></ion-icon>
+          </div>
+          <h3 class="text-lg font-medium text-gray-700 mb-2">No Talent Data</h3>
+          <p class="text-gray-500 mb-6">
+            Unable to load talent profile information.
+          </p>
+          <button
+            (click)="closeModal()"
+            class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+
+      <!-- Talent profile when data exists -->
+      <div *ngIf="hasTalentData" class="flex-1 flex flex-col">
+        <!-- Profile Header -->
+        <div class="mb-6">
+          <div class="flex items-start gap-3">
+            <div
+              class="h-32 w-32 rounded-full overflow-hidden flex items-center justify-center bg-gray-100"
+            >
+              <img
+                class="h-full w-full object-cover"
+                [src]="profilePic"
+                alt="Talent"
+                (error)="handleImageError($event)"
+              />
+            </div>
+
+            <div class="space-y-1 mt-1.5">
+              <h5 class="text-[14px] text-[#101828]">{{ fullName }}</h5>
+              <p class="text-[12px] text-[#79797B]">{{ location }}</p>
+              <!-- Display rating with default 5 stars -->
+              <div class="flex items-center">
+                <!-- Always show 5 stars -->
+                <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+                  <ion-icon
+                    name="star"
+                    [class.text-yellow-500]="star <= displayRating"
+                    [class.text-gray-300]="star > displayRating"
+                    class="text-xl"
+                  >
+                  </ion-icon>
+                </ng-container>
+                <!-- Show review count or indicate default -->
+                <span class="text-xs text-gray-500 ml-2">
+                  <ng-container *ngIf="marketReviews.length > 0">
+                    ({{ marketReviews.length }} review{{
+                      marketReviews.length !== 1 ? "s" : ""
+                    }})
+                  </ng-container>
+                  <!-- <ng-container *ngIf="isDefaultRating">
+                    (New talent)
+                  </ng-container> -->
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p class="w-[90%] text-[14px] text-[#000000] font-light p-1 mt-4">
+            {{ valueProposition }}
+          </p>
+        </div>
+
+        <!-- Tab Component -->
+        <div class="flex-1">
+          <app-view-all-talents-switch-tab
+            [hire]="hire"
+            [marketProfile]="marketProfile"
+            [skillSet]="skillSet"
+            [marketReviews]="marketReviews"
+            [pictorialDocumentations]="pictorialDocumentations"
+            [selectedSkills]="selectedSkills"
+            (skillSelectionChanged)="onSkillSelectionChanged($event)"
+          >
+          </app-view-all-talents-switch-tab>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <app-view-all-talents-switch-tab
-    [hire]="hire"
-    [selectedSkills]="selectedSkills"
-    (skillSelectionChanged)="onSkillSelectionChanged($event)"
-  ></app-view-all-talents-switch-tab>
-
-  <!-- ✅ Hire button only if skills are selected -->
+  <!-- Hire button -->
   <div
-    *ngIf="hasSelectedSkill"
-    class="sticky bottom-0 left-0 right-0 bg-white mt-10 pt-2 pb-16 flex justify-end"
+    *ngIf="hasSelectedSkill && !loading && !error && hasTalentData"
+    class="sticky -bottom-5 left-0 right-0 bg-white border-t border-gray-200 pt-4 pb-6 px-4 mt-6"
   >
     <button
-      class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+      class="px-4 py-3 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700 font-medium"
       (click)="hireTalent()"
     >
-      Hire Talent
+      Hire Talent ({{ selectedSkills.length }} skill{{
+        selectedSkills.length !== 1 ? "s" : ""
+      }}
+      selected)
     </button>
   </div>
 </ion-content>

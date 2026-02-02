@@ -1,33 +1,54 @@
-<!-- view-all-talents-switch-tab.component.html -->
-<div class="flex border-b border-gray-300 mb-4 overflow-x-auto scrollbar-hide">
-  <button
-    *ngFor="let tab of tabs"
-    class="min-w-[150px] px-4 py-5 text-center font-medium text-sm transition relative flex-shrink-0"
-    [ngClass]="
-      activeTab === tab.key
-        ? 'text-[#0033FF] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0033FF]'
-        : 'text-gray-500'
-    "
-    (click)="setTab(tab.key)"
-  >
-    {{ tab.label }}
-  </button>
-</div>
+<div class="mb-6">
+  <div class="flex border-b border-gray-300 overflow-x-auto scrollbar-hide">
+    <button
+      *ngFor="let tab of tabs"
+      class="min-w-[150px] px-4 py-5 text-center font-medium text-sm transition relative flex-shrink-0 flex items-center justify-center gap-2"
+      [ngClass]="
+        activeTab === tab.key
+          ? 'text-[#0033FF] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0033FF]'
+          : 'text-gray-500 hover:text-gray-700'
+      "
+      (click)="setTab(tab.key)"
+      [title]="!hasTabContent(tab.key) ? 'No content available' : ''"
+    >
+      {{ tab.label }}
+      <span *ngIf="tab.count > 0" 
+            class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
+        {{ tab.count }}
+      </span>
+      <ion-icon *ngIf="!hasTabContent(tab.key)" 
+                name="information-circle-outline" 
+                class="text-gray-400 text-sm"
+                title="No content available">
+      </ion-icon>
+    </button>
+  </div>
 
-<div *ngIf="activeTab === 'skillSet'">
-  <app-skill-set-tab
-    [hire]="hire"
-    [selectedSkills]="selectedSkills"
-    (skillSelectionChanged)="onSkillSelectionChanged($event)"
-  ></app-skill-set-tab>
-</div>
+  <!-- Tab Content Area -->
+  <div class="mt-4">
+    <!-- Skill Set Tab -->
+    <div *ngIf="activeTab === 'skillSet'">
+      <app-skill-set-tab
+        [skillSet]="skillSet"
+        [selectedSkills]="selectedSkills"
+        (skillSelectionChanged)="onSkillSelectionChanged($event)"
+      ></app-skill-set-tab>
+    </div>
 
-<div *ngIf="activeTab === 'reelsAndDocumentation'">
-  <app-reels-and-documentation-tab
-    [hire]="hire"
-  ></app-reels-and-documentation-tab>
-</div>
+    <!-- Portfolio Tab -->
+    <div *ngIf="activeTab === 'reelsAndDocumentation'">
+      <app-reels-and-documentation-tab
+        [pictorialDocumentations]="pictorialDocumentations"
+        [hire]="hire"
+      ></app-reels-and-documentation-tab>
+    </div>
 
-<div *ngIf="activeTab === 'recentReviews'">
-  <app-recent-reviews-tab [hire]="hire"></app-recent-reviews-tab>
+    <!-- Reviews Tab -->
+    <div *ngIf="activeTab === 'recentReviews'">
+      <app-recent-reviews-tab
+        [marketReviews]="marketReviews"
+        [hire]="hire"
+      ></app-recent-reviews-tab>
+    </div>
+  </div>
 </div>

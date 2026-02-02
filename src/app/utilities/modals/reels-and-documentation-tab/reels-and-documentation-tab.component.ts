@@ -1,5 +1,5 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { MockRecentHires, MockPayment } from 'src/app/models/mocks';
+import { Component, Input, OnInit } from '@angular/core';
+import { imageIcons } from 'src/app/models/stores';
 
 @Component({
   selector: 'app-reels-and-documentation-tab',
@@ -8,18 +8,31 @@ import { MockRecentHires, MockPayment } from 'src/app/models/mocks';
   standalone: false,
 })
 export class ReelsAndDocumentationTabComponent implements OnInit {
-  // hire!: MockPayment; // single user
-  @Input() hire: any; // ✅ receive hire directly
+  @Input() pictorialDocumentations: any[] = [];
+  @Input() hire: any;
+  images =imageIcons;
+
+  pictures: string[] = [];
 
   ngOnInit() {
-    // ✅ Select just one user (change ID as needed)
-    this.hire = MockRecentHires.find((h) => h.id === '1')!;
+    // Use only API data - no fallback mock data
+    if (this.pictorialDocumentations && this.pictorialDocumentations.length > 0) {
+      // Filter out any empty/null values
+      this.pictures = this.pictorialDocumentations
+        .filter(item => item && typeof item === 'string' && item.trim() !== '')
+        .map(item => item.trim());
+    }
   }
 
-  getPictureUrls(pictures: File[] | string[]): string[] {
-    if (!pictures) return [];
-    return pictures.map((pic) =>
-      typeof pic === 'string' ? pic : URL.createObjectURL(pic)
-    );
+  handleImageError(index: number) {
+    // Remove the broken image from the array
+    this.pictures.splice(index, 1);
+    // Create a new array to trigger change detection
+    this.pictures = [...this.pictures];
+  }
+  
+  // If video functionality is added in the future
+  get hasVideo(): boolean {
+    return false; // Currently no video support
   }
 }

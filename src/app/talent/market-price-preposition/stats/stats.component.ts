@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { ChartOptions, ChartData } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
-import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
+import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-stats',
@@ -15,7 +16,7 @@ import { firstValueFrom } from 'rxjs';
 })
 export class StatsComponent {
   headerHidden: false | undefined;
-  hire: MockPayment | undefined;
+  hire: TotalHires | undefined;
   userName: string = 'SeyiAde'; // default name
   isLoading: boolean = false;
 
@@ -70,24 +71,26 @@ export class StatsComponent {
   constructor(
     private route: ActivatedRoute,
     private endpoint: EndpointService,
-    private toastr: ToastrService
+    // private toastr: ToastrService
+    private toast: ToastsService
 
   ) { }
 
   ngOnInit() {
-//     console.log('Stats page loaded');
-// console.log('Talent ID:', sessionStorage.getItem('talentId'));
-// console.log('Scouter ID:', sessionStorage.getItem('scouterId'));
+    //     console.log('Stats page loaded');
+    // console.log('Talent ID:', sessionStorage.getItem('talentId'));
+    // console.log('Scouter ID:', sessionStorage.getItem('scouterId'));
 
     // Step 1: Retrieve IDs from sessionStorage
     const talentId = localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
-  const navState: any = history?.state || {};
-  const scouterId = navState?.scouterId || navState?.hire?.scouterId;
+    const navState: any = history?.state || {};
+    const scouterId = navState?.scouterId || navState?.hire?.scouterId;
 
-  console.log('Talent ID:', talentId, 'Scouter ID:', scouterId);
+    console.log('Talent ID:', talentId, 'Scouter ID:', scouterId);
 
     if (!scouterId || !talentId) {
-      this.toastr.error('Missing IDs! Please log in again.');
+      this.toast.openSnackBar('Missing IDs! Please log in again.', 'error');
+
       return;
     }
 
@@ -136,10 +139,11 @@ export class StatsComponent {
           ],
         };
       },
-      error: (err:any) => {
+      error: (err: any) => {
         this.isLoading = false;
         console.error('Error fetching stats:', err);
-        this.toastr.error('Failed to load market stats.');
+        this.toast.openSnackBar('Failed to load market stats.', 'error');
+
       },
     });
   }

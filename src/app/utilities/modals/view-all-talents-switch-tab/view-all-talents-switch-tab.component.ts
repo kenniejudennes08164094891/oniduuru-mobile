@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 
 type TabKey = 'skillSet' | 'reelsAndDocumentation' | 'recentReviews';
 
@@ -11,17 +10,48 @@ type TabKey = 'skillSet' | 'reelsAndDocumentation' | 'recentReviews';
 })
 export class ViewAllTalentsSwitchTabComponent {
   @Input() hire: any;
-  @Input() selectedSkills: any[] = []; // ✅ receive from modal
+  @Input() selectedSkills: any[] = [];
+  @Input() marketProfile: any;
+  @Input() skillSet: any[] = [];
+  @Input() marketReviews: any[] = [];
+  @Input() pictorialDocumentations: any[] = [];
   @Output() skillSelectionChanged = new EventEmitter<any[]>();
 
   activeTab: TabKey = 'skillSet';
-  hires: MockPayment[] = MockRecentHires;
 
   tabs = [
-    { key: 'skillSet' as TabKey, label: 'Skill Set' },
-    { key: 'reelsAndDocumentation' as TabKey, label: 'Reels & Documentation' },
-    { key: 'recentReviews' as TabKey, label: 'Recent Reviews' },
+    { 
+      key: 'skillSet' as TabKey, 
+      label: 'Skill Set',
+      count: 0 // Will be populated based on data
+    },
+    { 
+      key: 'reelsAndDocumentation' as TabKey, 
+      label: 'Portfolio',
+      count: 0 // Will be populated based on data
+    },
+    { 
+      key: 'recentReviews' as TabKey, 
+      label: 'Reviews',
+      count: 0 // Will be populated based on data
+    },
   ];
+
+  ngOnInit() {
+    // Update tab counts based on actual data
+    this.updateTabCounts();
+  }
+
+  ngOnChanges() {
+    this.updateTabCounts();
+  }
+
+  private updateTabCounts() {
+    // Update counts for each tab
+    this.tabs[0].count = this.skillSet?.length || 0;
+    this.tabs[1].count = this.pictorialDocumentations?.length || 0;
+    this.tabs[2].count = this.marketReviews?.length || 0;
+  }
 
   setTab(tab: TabKey) {
     this.activeTab = tab;
@@ -29,6 +59,16 @@ export class ViewAllTalentsSwitchTabComponent {
 
   onSkillSelectionChanged(skills: any[]) {
     this.selectedSkills = skills;
-    this.skillSelectionChanged.emit(skills); // ✅ bubble up to modal
+    this.skillSelectionChanged.emit(skills);
+  }
+
+  // Helper to check if tab has content
+  hasTabContent(tabKey: TabKey): boolean {
+    switch(tabKey) {
+      case 'skillSet': return (this.skillSet?.length || 0) > 0;
+      case 'reelsAndDocumentation': return (this.pictorialDocumentations?.length || 0) > 0;
+      case 'recentReviews': return (this.marketReviews?.length || 0) > 0;
+      default: return false;
+    }
   }
 }

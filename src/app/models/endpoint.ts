@@ -89,6 +89,8 @@ export const endpoints = {
   toogleTalentStatus: 'talent/v1/toggle-talent-status',
   filterTalentParam: 'talent/v1/filter-talent-param',
 
+
+
   //admin
   verifyScouterPayment: 'scouters/v1/fetch-all-payment-receipts',
   accountActivatiomAmount: 'admin/v1/admin/account-activation-amount',

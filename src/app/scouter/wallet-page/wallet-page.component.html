@@ -18,11 +18,7 @@
   <div *ngIf="!loadingWallet && walletNotFound" class="ion-padding">
     <div class="bg-white rounded-lg p-8 text-center">
       <div class="flex flex-col items-center justify-center py-10">
-        <img
-          class="w-[232px] h-[246px]"
-          [src]="images.NoDataImage"
-          alt="No Wallet"
-        />
+        <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Wallet" />
         <h3 class="text-lg font-semibold text-gray-700 mb-2">
           Wallet Not Found
         </h3>
@@ -30,12 +26,7 @@
           You haven't created a wallet profile yet. Create one to start using
           wallet features.
         </p>
-        <ion-button
-          (click)="navigateToWalletProfile()"
-          fill="solid"
-          color="primary"
-          class="mt-4"
-        >
+        <ion-button (click)="navigateToWalletProfile()" fill="solid" color="primary" class="mt-4">
           Create Wallet Profile
         </ion-button>
       </div>
@@ -43,10 +34,7 @@
   </div>
 
   <!-- Error State -->
-  <div
-    *ngIf="!loadingWallet && walletError && !walletNotFound"
-    class="error-container"
-  >
+  <div *ngIf="!loadingWallet && walletError && !walletNotFound" class="error-container">
     <ion-icon name="warning-outline" class="error-icon"></ion-icon>
     <p>Unable to load wallet details</p>
     <ion-button (click)="refreshWalletData()" fill="solid" color="primary">
@@ -70,16 +58,13 @@
             <p>
               ₦
               {{
-                balanceHidden ? "•••••••" : (walletBalance | number : "1.2-2")
+              balanceHidden ? "•••••••" : (walletBalance | number : "1.2-2")
               }}
             </p>
           </div>
         </div>
-        <ion-icon
-          [name]="balanceHidden ? 'eye-off-outline' : 'eye-outline'"
-          (click)="toggleBalance()"
-          class="cursor-pointer"
-        ></ion-icon>
+        <ion-icon [name]="balanceHidden ? 'eye-off-outline' : 'eye-outline'" (click)="toggleBalance()"
+          class="cursor-pointer"></ion-icon>
       </ion-card-content>
     </ion-card>
 
@@ -127,11 +112,8 @@
           <b>Wallet A/C:</b>
           <br />
           {{ accountNumber }}
-          <ion-icon
-            [name]="copied ? 'checkmark-outline' : 'copy-outline'"
-            class="cursor-pointer ml-2"
-            (click)="copyAccountNumber()"
-          ></ion-icon>
+          <ion-icon [name]="copied ? 'checkmark-outline' : 'copy-outline'" class="cursor-pointer ml-2"
+            (click)="copyAccountNumber()"></ion-icon>
         </p>
       </ion-card-content>
     </ion-card>
@@ -146,62 +128,68 @@
     </div>
 
     <!-- Chart Legend -->
-    <div
-      class="legend flex justify-around items-center py-4 px-8 text-[#333333] text-[18px]"
-    >
+    <div class="legend flex justify-around items-center py-4 px-8 text-[#333333] text-[18px]">
       <span class="blue-dot"></span> Total Fund Deposit
       <span class="gray-dot"></span> Total Fund Withdrawal
       <span class="dark-dot"></span> Total Fund Transfer
     </div>
 
-    <!-- NEW Dropdown -->
+    <!-- Dropdown -->
     <div class="px-4 py-4" #dropdownSection>
-      <div
-        (click)="toggleFilter()"
-        [ngClass]="{
-          'bg-[#B5BECA] text-white': filterOpen,
-          'bg-[#D9DCE5] text-[#49536E]': !filterOpen
-        }"
-        class="flex justify-between items-center py-2 px-2 cursor-pointer"
-      >
-        <p class="text-[14px]">Filter stats in the {{ selectedFilter }}</p>
-        <ion-icon
-          [name]="filterOpen ? 'chevron-up-outline' : 'chevron-down-outline'"
-        ></ion-icon>
+      <div (click)="toggleFilter()" [ngClass]="{
+      'bg-[#B5BECA] text-white': filterOpen,
+      'bg-[#D9DCE5] text-[#49536E]': !filterOpen
+    }" class="flex justify-between items-center py-2 px-2 cursor-pointer">
+        <p class="text-[14px]">Filter stats for year: {{ selectedFilter }}</p>
+        <ion-icon [name]="filterOpen ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
       </div>
 
       <!-- Dropdown Table -->
-      <div
-        *ngIf="filterOpen"
-        class="bg-white border border-[#D9DCE5] shadow-md rounded-b-md mt-1"
-      >
+      <div *ngIf="filterOpen"
+        class="bg-white border border-[#D9DCE5] shadow-md rounded-b-md mt-1 max-h-60 overflow-y-auto">
         <table class="w-full text-left">
           <tbody>
-            <tr
-              *ngFor="let year of years"
-              class="cursor-pointer hover:bg-gray-100"
-              (click)="selectFilter(year)"
-            >
-              <td class="px-4 py-2 text-sm text-[#49536E]">{{ year }}</td>
+            <tr *ngFor="let year of years" class="cursor-pointer hover:bg-gray-100" (click)="selectFilter(year)"
+              [ngClass]="{'bg-blue-50': selectedYear === year}">
+              <td class="px-4 py-3 text-sm text-[#49536E] flex items-center">
+                {{ year }}
+                <ion-icon *ngIf="selectedYear === year" name="checkmark" class="ml-2 text-blue-600"></ion-icon>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- Monthly Performance Bar Chart -->
-    <div class="px-4 py-6">
-      <h3 class="text-lg font-semibold mb-4">Monthly Transactions Overview</h3>
 
-      <div class="overflow-x-auto">
+    <!-- Update the chart section -->
+    <div class="px-4 py-6">
+      <h3 class="text-lg font-semibold mb-4">Monthly Transactions Overview - {{ selectedYear }}</h3>
+
+      <!-- Histogram Loading State -->
+      <div *ngIf="histogramLoading" class="flex flex-col justify-center items-center py-16">
+        <div class="spinner mb-4">
+          <div class="circle circle1"></div>
+          <div class="circle circle2"></div>
+          <div class="circle circle3"></div>
+        </div>
+        <span class="text-gray-600">Loading chart data for {{ selectedYear }}...</span>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!histogramLoading && histogramData && hasNoData()"
+        class="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-lg">
+        <ion-icon name="stats-chart-outline" class="text-6xl text-gray-300 mb-4"></ion-icon>
+        <p class="text-gray-500 text-center mb-2">No transaction data available</p>
+        <p class="text-gray-400 text-sm text-center">No deposits, withdrawals, or transfers recorded for {{ selectedYear
+          }}</p>
+      </div>
+
+      <!-- Histogram Chart -->
+      <div *ngIf="!histogramLoading && histogramData && !hasNoData()" class="overflow-x-auto">
         <div class="min-w-[900px]">
-          <canvas
-            baseChart
-            [data]="monthlyBarChartData"
-            [options]="monthlyBarChartOptions"
-            [type]="'bar'"
-            style="height: 50vh"
-          ></canvas>
+          <canvas #chartCanvas baseChart [data]="monthlyBarChartData" [options]="monthlyBarChartOptions" [type]="'bar'"
+            style="height: 50vh"></canvas>
         </div>
       </div>
     </div>

@@ -180,6 +180,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 
 @Component({
@@ -245,7 +246,8 @@ export class CreateRecordPage implements OnInit {
 
   constructor(
     private endPointService: EndpointService,
-    private toastr: ToastrService,
+    // private toastr: ToastrService,
+    private toast: ToastsService,
     private router: Router,
     private route: ActivatedRoute,
 
@@ -262,7 +264,7 @@ export class CreateRecordPage implements OnInit {
       }, 3000);
 
       // Optionally show a toast
-      this.toastr.success('Phone number copied to clipboard!');
+      this.toast.openSnackBar('Phone number copied to clipboard!', 'success');
 
     });
   }
@@ -280,7 +282,7 @@ export class CreateRecordPage implements OnInit {
         localStorage.setItem('talentId', this.talentId);
         this.loadMarketOrTalentProfile();
       } else {
-        this.toastr.error('Talent ID not found. Please log in again.');
+        this.toast.openSnackBar('Talent ID not found. Please log in again.', 'error');
         this.router.navigate(['/login']);
       }
     });
@@ -324,7 +326,8 @@ export class CreateRecordPage implements OnInit {
       },
       error: (err) => {
         console.error('Error fetching skill dropdown:', err);
-        this.toastr.error('Unable to load skill options.');
+        this.toast.openSnackBar('Unable to load skill options.', 'error');
+
       }
     });
   }
@@ -460,7 +463,8 @@ export class CreateRecordPage implements OnInit {
           this.isEditing = false;
           this.saveText = 'Create Record';
         } else {
-          this.toastr.error('No profile data found.');
+          this.toast.openSnackBar('No profile data found.', 'error');
+
         }
 
         this.isLoading = false;
@@ -468,7 +472,8 @@ export class CreateRecordPage implements OnInit {
 
       error: (err) => {
         console.error('Unexpected error:', err);
-        this.toastr.error('Error loading profiles.');
+        this.toast.openSnackBar('Error loading profiles.', 'error');
+
         this.isLoading = false;
       }
     });
@@ -515,14 +520,16 @@ export class CreateRecordPage implements OnInit {
 
   saveMarketProfile(): void {
     if (!this.talentId) {
-      this.toastr.error('Talent ID not found.');
+      this.toast.openSnackBar('Talent ID not found.', 'error');
+
       return;
     }
     this.isLoading = true;   // start spinner
     this.saveText = this.isEditing ? 'Updating...' : 'Creating...';
     // Validate basic fields (optional)
     if (!this.marketProfile.skillSets || this.marketProfile.skillSets.length === 0) {
-      this.toastr.warning('Please add at least one skill.');
+      this.toast.openSnackBar('Please add at least one skill.', 'warning');
+
       return;
     }
 
@@ -547,7 +554,8 @@ export class CreateRecordPage implements OnInit {
     apiCall.subscribe({
       next: (res: any) => {
         console.debug('Save response:', res);
-        this.toastr.success(this.isEditing ? 'Market profile updated!' : 'Market profile created!');
+        this.toast.openSnackBar(this.isEditing ? 'Market profile updated!' : 'Market profile created!', 'success');
+
         this.isEditing = true;
         this.saveText = 'Update Record';
         this.isLoading = false;
@@ -557,7 +565,8 @@ export class CreateRecordPage implements OnInit {
       error: (err: any) => {
         console.error('Save error:', err);
         // If backend returns 409 or message indicating already exists, you can handle it here
-        this.toastr.error(err?.error?.message || 'Failed to save market profile.');
+        this.toast.openSnackBar(err?.error?.message || 'Failed to save market profile.', 'error');
+
         this.isLoading = false;
         this.saveText = this.isEditing ? 'Update Record' : 'Create Record';
       }
