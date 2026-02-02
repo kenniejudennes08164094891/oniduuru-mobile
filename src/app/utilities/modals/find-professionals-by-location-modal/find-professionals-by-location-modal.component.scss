@@ -6,49 +6,45 @@
 //   --background: transparent; // override Ionic default background
 // }
 
-
-
-
-
 // Update the CSS to ensure proper positioning
 .profile-card-overlay {
   position: absolute !important;
   z-index: 1000 !important;
   pointer-events: auto !important;
-  
+
   .profile-card {
     background: white;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    border: 2px solid #FF2D2D;
+    border: 2px solid #ff2d2d;
     position: relative;
     padding: 20px;
-    
+
     .card-header {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 16px;
-      
+
       .avatar-container {
         width: 60px;
         height: 60px;
         border-radius: 50%;
         overflow: hidden;
-        border: 3px solid #FF2D2D;
-        
+        border: 3px solid #ff2d2d;
+
         .profile-avatar {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
       }
-      
+
       .profile-info {
         flex: 1;
         min-width: 0;
-        
+
         .profile-name {
           margin: 0 0 8px 0;
           font-size: 18px;
@@ -58,12 +54,12 @@
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        
+
         .skill-tags {
           display: flex;
           flex-wrap: wrap;
           gap: 4px;
-          
+
           .skill-tag {
             background: #f0f0f0;
             color: #666;
@@ -72,9 +68,9 @@
             font-size: 11px;
             white-space: nowrap;
           }
-          
+
           .more-skills {
-            color: #FF2D2D;
+            color: #ff2d2d;
             font-size: 11px;
             font-weight: bold;
             margin-left: 4px;
@@ -82,10 +78,10 @@
         }
       }
     }
-    
+
     .view-profile-btn {
       width: 100%;
-      background: linear-gradient(135deg, #FF2D2D, #FF6B6B);
+      background: linear-gradient(135deg, #ff2d2d, #ff6b6b);
       color: white;
       border: none;
       border-radius: 12px;
@@ -93,16 +89,16 @@
       font-weight: bold;
       cursor: pointer;
       transition: transform 0.2s;
-      
+
       &:hover {
         transform: scale(1.02);
       }
-      
+
       &:active {
         transform: scale(0.98);
       }
     }
-    
+
     .close-card-btn {
       position: absolute;
       top: 12px;
@@ -117,10 +113,210 @@
       justify-content: center;
       cursor: pointer;
       transition: background 0.2s;
-      
+
       &:hover {
         background: #e0e0e0;
       }
     }
   }
+}
+
+/* Pulse animation keyframes */
+@keyframes radarScan {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Enhanced keyframes for smoother effect */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  33.3% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  66.6% {
+    transform: scale(1.4);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* Pulse overlay styling */
+.pulse-overlay {
+  pointer-events: none;
+  animation: radarPulse 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.pulse-overlay.active {
+  animation-duration: 1.2s;
+}
+
+/* Profile card styling */
+.profile-card-overlay {
+  position: fixed !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+
+  .profile-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    border: 2px solid #ff2d2d;
+    position: relative;
+    padding: 20px;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+
+      .avatar-container {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #ff2d2d;
+
+        .profile-avatar {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .profile-info {
+        flex: 1;
+        min-width: 0;
+
+        .profile-name {
+          margin: 0 0 8px 0;
+          font-size: 18px;
+          font-weight: bold;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .skill-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+
+          .skill-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            white-space: nowrap;
+          }
+
+          .more-skills {
+            color: #ff2d2d;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 4px;
+          }
+        }
+      }
+    }
+
+    .view-profile-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #ff2d2d, #ff6b6b);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .close-card-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #f5f5f5;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #e0e0e0;
+      }
+    }
+  }
+}
+
+/* Glass effect for UI elements */
+.glass-effect {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  border: 4px solid rgba(255, 45, 45, 0.2);
+  border-top: 4px solid #ff2d2d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error state */
+.error-container {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 45, 45, 0.3);
+}
+
+/* Map container */
+#googleMap {
+  width: 100%;
+  height: 100%;
 }

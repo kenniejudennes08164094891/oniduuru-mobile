@@ -1243,101 +1243,15 @@ export class ViewTalentsLocationPageComponent
     }, 300);
   }
 
-  async openFindProfessionalsByLocationModal() {
-    if (this.activeTab !== 'location') {
-      this.openLocationTab();
-      await new Promise((resolve) => setTimeout(resolve, 400));
-    }
-
-    this.loadingTalents = true;
-
-    const subscription = this.scouterService
-      .fetchAllTalents({
-        location: this.currentLocation,
-        limit: 100,
-        pageNo: 1,
-      })
-      .subscribe({
-        next: (response) => {
-          this.loadingTalents = false;
-
-          console.log('🌍 API Response for modal:', response);
-
-          let hires = [];
-
-          // Try multiple response structures
-          if (response.decodedData && response.decodedData.mappedTalents) {
-            hires = this.transformApiResponse(response);
-            console.log(
-              `🌍 Got ${hires.length} hires from decodedData.mappedTalents`,
-            );
-          } else if (response.mappedTalents) {
-            hires = this.mapTalentsToFormat(response.mappedTalents);
-            console.log(`🌍 Got ${hires.length} hires from mappedTalents`);
-          } else if (response.data && typeof response.data === 'string') {
-            hires = this.decodeAndTransformResponse(response);
-            console.log(
-              `🌍 Got ${hires.length} hires from decoded base64 data`,
-            );
-          } else if (response.talents) {
-            hires = this.mapTalentsToFormat(response.talents);
-            console.log(`🌍 Got ${hires.length} hires from talents`);
-          } else {
-            // Fallback to current apiTalents
-            hires = [...this.apiTalents];
-            console.log(`🌍 Using current apiTalents: ${hires.length} hires`);
-          }
-
-          console.log('🌍 Passing to modal:', {
-            location: this.currentLocation,
-            hiresCount: hires.length,
-            hiresSample: hires
-              .slice(0, 3)
-              .map((h) => ({ name: h.name, address: h.address })),
-          });
-
-          // Create the new modal with dark blurry map
-          this.modalCtrl
-            .create({
-              component: FindProfessionalsByLocationModalComponent,
-              componentProps: {
-                hires: hires,
-                location: this.currentLocation || 'Unknown',
-                allSkills: this.allSkills,
-              },
-              cssClass: 'dark-blurry-map-modal',
-              backdropDismiss: true,
-              showBackdrop: true,
-            })
-            .then((modal) => {
-              modal.present();
-              modal.onDidDismiss().then(() => {
-                this.refreshMap();
-              });
-            });
-        },
-        error: (error) => {
-          this.loadingTalents = false;
-          console.error('❌ Failed to load location hires:', error);
-          // Fallback to current talents
-          this.modalCtrl
-            .create({
-              component: FindProfessionalsByLocationModalComponent,
-              componentProps: {
-                hires: [...this.apiTalents],
-                location: this.currentLocation || 'Unknown',
-                allSkills: this.allSkills,
-              },
-              cssClass: 'dark-blurry-map-modal',
-              backdropDismiss: true,
-              showBackdrop: true,
-            })
-            .then((modal) => modal.present());
-        },
-      });
-
-    this.subscriptions.add(subscription);
+  openFindProfessionalsByLocationModal() {
+  // Simply switch to location tab
+  if (this.activeTab !== 'location') {
+    this.openLocationTab();
   }
+  
+  // You can optionally trigger a data refresh
+  this.refreshDataForTab();
+}
 
   private decodeAndTransformResponse(response: any): any[] {
     try {
