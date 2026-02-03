@@ -21,6 +21,7 @@ export class ForgotPasswordPhoneVerifyOtpComponent implements OnInit {
   resendDisabled = true;
   countdown = 120;
   otpDigits: string[] = ['', '', '', ''];
+  submitBtn: string = "Proceed";
 
   constructor(
     private fb: FormBuilder,
@@ -102,19 +103,22 @@ export class ForgotPasswordPhoneVerifyOtpComponent implements OnInit {
   verifyOtp(): void {
     if (this.form.invalid) return;
 
+    this.submitBtn = "Processing...";
     const otp = this.otpDigits.join('');
     this.loading = true;
     this.error = '';
 
     // Call verification API
     this.authService.verifyOTP({ otp, phoneNumber: this.phoneNumber, email: '' }).subscribe({
-      next: () => {
+      next: async () => {
         this.loading = false;
         // navigate to reset password page
-        this.router.navigate(['/auth/forgot-password/reset'], { state: { talentId: this.talentId } });
+        this.submitBtn = "Proceed";
+       await this.router.navigate(['/auth/forgot-password/reset'], { state: { talentId: this.talentId } });
       },
       error: (err) => {
         this.loading = false;
+        this.submitBtn = "Proceed";
         this.error = 'Invalid OTP. Please try again.';
         this.toastr.openSnackBar('Invalid OTP. Please try again.', 'error', 'error');
       },
@@ -148,8 +152,8 @@ export class ForgotPasswordPhoneVerifyOtpComponent implements OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/auth/forgot-password/verify-otp/phone'], {
+  async goBack(): Promise<void> {
+   await this.router.navigate(['/auth/forgot-password/verify-otp/phone'], {
       state: history.state,
     });
   }
