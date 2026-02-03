@@ -60,16 +60,16 @@ export class ForgotPasswordResetComponent implements OnInit {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  submit() {
+  async submit() {
     if (this.form.invalid) return;
 
     const password = this.form.value.password;
     // TODO: call API to reset password with talentId and password
     this.toastr.openSnackBar('Password updated successfully', 'success', 'success');
-    this.router.navigate(['/auth/forgot-password/reset-success']);
+   await this.router.navigate(['/auth/forgot-password/reset-success']);
   }
 
-  goBack() {
-    this.router.navigate(['/auth/forgot-password/verify-otp'], { state: { talentId: this.talentId } });
+  async goBack() {
+   await this.router.navigate(['/auth/forgot-password/verify-otp'], { state: { talentId: this.talentId } });
   }
 }

@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, Subscription } from 'rxjs';
 import { imageIcons } from 'src/app/models/stores';
 import { AuthService } from 'src/app/services/auth.service';
+import {ToastsService} from "../../services/toasts.service";
 
 @Component({
   selector: 'app-forgot-password',
@@ -44,11 +45,13 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
      SUBSCRIPTIONS
   ========================= */
   private subscriptions = new Subscription();
+  submitText:string = "Submit";
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private toast: ToastsService
   ) { }
 
   /* =========================
@@ -167,57 +170,188 @@ export class ForgotPasswordComponent implements OnInit, OnDestroy {
 
 
   onSubmitSecurityAnswer(): void {
+    const form = this.forgotPasswordForm;
     const requiredControls = [
       'uniqueIdentifier',
       'securityQuestion',
       'securityAnswer',
     ];
 
-    let hasError = false;
-
-    requiredControls.forEach((controlName) => {
-      const control = this.forgotPasswordForm.get(controlName);
+    // Validate form controls
+    const hasError = requiredControls.some((controlName) => {
+      const control = form.get(controlName);
       control?.markAsTouched();
-      if (control?.invalid) {
-        hasError = true;
-      }
+      return control?.invalid;
     });
 
     if (hasError) return;
 
+    const uniqueIdentifier: string = form.value.uniqueIdentifier;
+    const question = form.value.securityQuestion;
+    const answer = form.value.securityAnswer;
+
+    // Determine user type
+    const isTalent = uniqueIdentifier?.includes('talent');
+    const isScouter = uniqueIdentifier?.includes('scouter');
+
+    if (!isTalent && !isScouter) {
+      this.toast.openSnackBar('Invalid user identifier', 'error');
+      return;
+    }
+
+    this.submitText = 'processing...';
+    sessionStorage.setItem('uniqueIdentifier', uniqueIdentifier);
+
     const payload = {
-      talentId: this.forgotPasswordForm.value.uniqueIdentifier,
+      ...(isTalent
+        ? { talentId: uniqueIdentifier }
+        : { scouterId: uniqueIdentifier }),
       answerSecurityQuestion: {
-        question: this.forgotPasswordForm.value.securityQuestion,
-        answer: this.forgotPasswordForm.value.securityAnswer,
+        question,
+        answer,
       },
     };
 
-    this.authService.validateTalentSecurityQuestion(payload).subscribe({
-      next: () => {
-        // Blur the currently focused element to avoid aria-hidden focus conflicts
-        try {
-          const active = document.activeElement as HTMLElement | null;
-          if (active) active.blur();
-        } catch (e) {
-          // ignore
-        }
+    const request$ = isTalent
+      ? this.authService.validateTalentSecurityQuestion(payload)
+      : this.authService.validateScouterSecurityQuestion(payload);
 
-        // Navigate to OTP page (use setTimeout to ensure blur takes effect)
-        setTimeout(() => {
-          this.router.navigate(['/auth/forgot-password/verify-otp'], {
-            state: {
-              talentId: payload.talentId,
-              flow: 'forgot-password',
-            },
-          });
-        }, 0);
+    request$.subscribe({
+      next: () => {
+        this.resetSubmitState();
+        this.navigateToOtp(uniqueIdentifier);
       },
-      error: (err) => {
+      error: (err: any) => {
+        this.resetSubmitState();
         console.error('Security validation failed', err);
+        this.toast.openSnackBar(
+          err?.message ?? 'Oops an error occurred!',
+          'error'
+        );
       },
     });
   }
+
+  /* ----------------- Helpers ----------------- */
+
+  private resetSubmitState(): void {
+    try {
+      (document.activeElement as HTMLElement | null)?.blur();
+    } catch {
+      /* ignore */
+    }
+    this.submitText = 'Submit';
+  }
+
+  private navigateToOtp(identifier: string): void {
+    setTimeout(() => {
+      this.router.navigate(['/auth/forgot-password/verify-otp'], {
+        state: {
+          talentId: identifier,
+          flow: 'forgot-password',
+        },
+      });
+    }, 0);
+  }
+
+
+  // onSubmitSecurityAnswer(): void {
+  //   const requiredControls = [
+  //     'uniqueIdentifier',
+  //     'securityQuestion',
+  //     'securityAnswer',
+  //   ];
+  //
+  //   let hasError = false;
+  //
+  //   requiredControls.forEach((controlName) => {
+  //     const control = this.forgotPasswordForm.get(controlName);
+  //     control?.markAsTouched();
+  //     if (control?.invalid) {
+  //       hasError = true;
+  //     }
+  //   });
+  //
+  //   if (hasError) return;
+  //
+  //   this.submitText = "processing...";
+  //   if(this.forgotPasswordForm.value.uniqueIdentifier?.includes('talent')){
+  //     const payload =  {
+  //       talentId: this.forgotPasswordForm.value.uniqueIdentifier,
+  //       answerSecurityQuestion: {
+  //         question: this.forgotPasswordForm.value.securityQuestion,
+  //         answer: this.forgotPasswordForm.value.securityAnswer,
+  //       },
+  //     };
+  //     sessionStorage.setItem('uniqueIdentifier',this.forgotPasswordForm.value.uniqueIdentifier);
+  //     this.authService.validateTalentSecurityQuestion(payload).subscribe({
+  //       next: () => {
+  //         // Blur the currently focused element to avoid aria-hidden focus conflicts
+  //         try {
+  //           const active = document.activeElement as HTMLElement | null;
+  //           if (active) active.blur();
+  //           this.submitText = "Submit";
+  //         } catch (e) {
+  //           // ignore
+  //         }
+  //
+  //         // Navigate to OTP page (use setTimeout to ensure blur takes effect)
+  //         setTimeout(async () => {
+  //           await this.router.navigate(['/auth/forgot-password/verify-otp'], {
+  //             state: {
+  //               talentId: payload.talentId,
+  //               flow: 'forgot-password',
+  //             },
+  //           });
+  //         }, 0);
+  //       },
+  //       error: (err:any) => {
+  //         this.submitText = "Submit";
+  //         console.error('Security validation failed', err);
+  //         this.toast.openSnackBar(err?.message ?? "Oops an error occurred!", "error")
+  //       },
+  //     });
+  //   }else if(this.forgotPasswordForm.value.uniqueIdentifier?.includes('scouter')){
+  //     const payloadValue =  {
+  //       scouterId: this.forgotPasswordForm.value.uniqueIdentifier,
+  //       answerSecurityQuestion: {
+  //         question: this.forgotPasswordForm.value.securityQuestion,
+  //         answer: this.forgotPasswordForm.value.securityAnswer,
+  //       },
+  //     };
+  //     sessionStorage.setItem('uniqueIdentifier',this.forgotPasswordForm.value.uniqueIdentifier);
+  //     console.clear();
+  //     console.log("payloadValue>>",payloadValue);
+  //     this.authService.validateScouterSecurityQuestion(payloadValue).subscribe({
+  //       next: () => {
+  //         // Blur the currently focused element to avoid aria-hidden focus conflicts
+  //         try {
+  //           const active = document.activeElement as HTMLElement | null;
+  //           if (active) active.blur();
+  //           this.submitText = "Submit";
+  //         } catch (e) {
+  //           // ignore
+  //         }
+  //
+  //         // Navigate to OTP page (use setTimeout to ensure blur takes effect)
+  //         setTimeout(async () => {
+  //           await this.router.navigate(['/auth/forgot-password/verify-otp'], {
+  //             state: {
+  //               talentId: payloadValue.scouterId,
+  //               flow: 'forgot-password',
+  //             },
+  //           });
+  //         }, 0);
+  //       },
+  //       error: (err:any) => {
+  //         this.submitText = "Submit";
+  //         console.error('Security validation failed', err);
+  //         this.toast.openSnackBar(err?.message ?? "Oops an error occurred!", "error")
+  //       },
+  //     });
+  //   }
+  //
+  // }
 
   /* =========================
      OTP LOGIC (UNCHANGED)

@@ -12,11 +12,11 @@ export class ForgotPasswordResetSuccessComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  goToLogin(): void {
-    this.router.navigate(['/auth/login']);
+ async goToLogin(): Promise<void> {
+   await this.router.navigate(['/auth/login']);
   }
 
-  cancel(): void {
-    this.router.navigate(['/auth/forgot-password']);
+ async cancel(): Promise<void> {
+   await this.router.navigate(['/auth/forgot-password']);
   }
 }

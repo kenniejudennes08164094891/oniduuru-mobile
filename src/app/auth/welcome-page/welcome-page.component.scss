@@ -8,12 +8,15 @@
     flex: 1 1 auto;
 }
 
-body {
-    font-family: 'Euclid Circular A';
-    background-image: url('/assets/images/bg-image.png');
-    background-size: cover;
-    background-position: center;
-    // background-color: transparent;
+body{
+  font-family: 'Euclid Circular A';
+  background-image: url('/assets/images/bg-image.png');
+  background-size: cover;
+  background-position: center;
+}
+
+div,p,span,a,h1,h2,h3,h4,h5,h6,button{
+  font-family: 'Euclid Circular A';
 }
 
 .text-animation {
@@ -34,5 +37,5 @@ body {
 }
 
 
-// 
+//
 

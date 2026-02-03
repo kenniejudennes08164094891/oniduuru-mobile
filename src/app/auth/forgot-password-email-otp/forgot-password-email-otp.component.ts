@@ -6,7 +6,7 @@ import { AuthService } from 'src/app/services/auth.service';
   selector: 'app-forgot-password-email-otp',
   templateUrl: './forgot-password-email-otp.component.html',
   styleUrls: ['./forgot-password-email-otp.component.scss'],
-})     
+})
 export class ForgotPasswordEmailOtpComponent implements OnInit {
   form!: FormGroup;
   talentId!: string;
@@ -36,10 +36,10 @@ export class ForgotPasswordEmailOtpComponent implements OnInit {
     const email = this.form.value.email;
 
     this.authService.resendOTP({ email, phoneNumber: '' }).subscribe({
-      next: () => {
+      next: async () => {
         this.loading = false;
         // Navigate to OTP verification page
-        this.router.navigate(['/auth/forgot-password/verify-otp/email-verify'], {
+        await this.router.navigate(['/auth/forgot-password/verify-otp/email-verify'], {
           state: { talentId: this.talentId, email: email },
         });
       },
@@ -53,8 +53,8 @@ export class ForgotPasswordEmailOtpComponent implements OnInit {
     });
   }
 
-  goBack() {
-    this.router.navigate(['/auth/forgot-password/verify-otp'], {
+ async goBack() {
+   await this.router.navigate(['/auth/forgot-password/verify-otp'], {
       state: history.state,
     });
   }

@@ -21,6 +21,7 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
   resendDisabled = true;
   countdown = 120;
   otpDigits: string[] = ['', '', '', ''];
+  submitBtn: string = "Proceed";
 
   constructor(
     private fb: FormBuilder,
@@ -104,20 +105,23 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
   verifyOtp(): void {
     if (this.form.invalid) return;
 
+    this.submitBtn = "Processing...";
     const otp = this.otpDigits.join('');
     this.loading = true;
     this.error = '';
 
     // Call verification API
     this.authService.verifyOTP({ otp, phoneNumber: '', email: this.email }).subscribe({
-      next: () => {
+      next: async () => {
         this.loading = false;
         // navigate to reset password page
-        this.router.navigate(['/auth/forgot-password/reset'], { state: { talentId: this.talentId } });
+        this.submitBtn = "Proceed";
+        await this.router.navigate(['/auth/forgot-password/reset'], { state: { talentId: this.talentId } });
       },
       error: (err) => {
         this.loading = false;
         this.error = 'Invalid OTP. Please try again.';
+        this.submitBtn = "Proceed";
         this.toastr.openSnackBar('Invalid OTP. Please try again.', 'error', 'error');
       },
     });
