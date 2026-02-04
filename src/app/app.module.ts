@@ -20,7 +20,7 @@ import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 import { ChatBotComponent } from './components/chat-bot/chat-bot.component';
 import { DebugInterceptor } from './interceptors/debug.interceptor';
 import { GoogleMapsModule } from '@angular/google-maps';
-
+import { NgChartsModule } from 'ng2-charts';
 
 @NgModule({
   declarations: [AppComponent, ChatBotComponent],
@@ -31,6 +31,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
     IonicModule.forRoot(),
     AppRoutingModule,
     IonicStorageModule.forRoot(),
+    NgChartsModule,
     MaterialModule,
     BrowserAnimationsModule,
     HttpClientModule,
@@ -65,4 +66,4 @@ import { GoogleMapsModule } from '@angular/google-maps';
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class AppModule { }
+export class AppModule {}
