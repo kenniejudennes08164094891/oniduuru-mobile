@@ -110,13 +110,13 @@ export class FundWalletRequestPageComponent implements OnInit {
         return;
       }
 
-      // Use require() which works with CommonJS modules
-      const html2canvas = require('html2canvas');
+      // Dynamically import html2canvas
+      const html2canvas = (await import('html2canvas')).default;
 
       const canvas = await html2canvas(element, {
         scale: 3,
         useCORS: true,
-      });
+      } as any); // type assertion
 
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
