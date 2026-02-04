@@ -94,7 +94,7 @@ export class TalentDashboardComponent implements OnInit {
 
     if (!this.talentId) {
       console.warn('No talentId found. Redirecting to login.');
-      this.router.navigate(['/login']);
+     await this.router.navigate(['/login']);
       return;
     }
 
@@ -115,7 +115,7 @@ export class TalentDashboardComponent implements OnInit {
     }
 
     // Spinner fade
-    setTimeout(() => (this.showSpinner = false), 900);
+    // setTimeout(() => (this.showSpinner = false), 900);
   }
   // ---------- loadDashboardData() ----------
   async loadDashboardData(): Promise<void> {
@@ -224,7 +224,7 @@ export class TalentDashboardComponent implements OnInit {
     this.walletBalance = 30000.0;
 
     // Hide Spinner a bit later
-    setTimeout(() => (this.showSpinner = false), 900);
+   setTimeout(() => (this.showSpinner = false), 2000);
 
     console.log('✅ Mock data loaded successfully.');
   }
@@ -432,9 +432,9 @@ export class TalentDashboardComponent implements OnInit {
 
     try {
       this.endpointService.fetchMarketsByTalent(talentId, paginationParams, '', '').subscribe({
-        next: (response: any) => {
+        next: async (response: any) => {
           const markets = base64JsonDecode(response?.details) || [];
-          this.router.navigate(['/view-hires'], { state: { markets } });
+         await this.router.navigate(['/view-hires'], { state: { markets } });
         },
         error: (error) => {
           console.error('Error fetching markets by talent:', error);
@@ -444,7 +444,7 @@ export class TalentDashboardComponent implements OnInit {
       });
     } catch (err) {
       console.error('Error while requesting markets:', err);
-      this.router.navigate(['/view-hires']);
+     await this.router.navigate(['/view-hires']);
     }
   }
 
@@ -466,6 +466,8 @@ export class TalentDashboardComponent implements OnInit {
   }
 
   private async loadTalentProfile(): Promise<void> {
+    this.showSpinner = true;
+    this.loading = "Fetching Talent's Dashboard...";
     console.log("✔️ loadTalentProfile() started");
 
     // 1. Get talentId safely
@@ -517,6 +519,7 @@ export class TalentDashboardComponent implements OnInit {
           }
         } catch (err) {
           console.error("❌ Failed to parse onboarding JSON:", err);
+          setTimeout(() =>  this.showSpinner = false, 2000);
           onboardingObj = {};
         }
       }
@@ -534,6 +537,7 @@ export class TalentDashboardComponent implements OnInit {
 
     } catch (error) {
       console.error('❌ Error loading talent profile:', error);
+      setTimeout(() =>  this.showSpinner = true, 2000);
     }
   }
 

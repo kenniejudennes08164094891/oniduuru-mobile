@@ -1,9 +1,15 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  OnDestroy,
+} from '@angular/core';
 import { IonContent } from '@ionic/angular';
+import { Subscription } from 'rxjs';
+import { ChartData, ChartOptions } from 'chart.js'; // Add this import
 import { imageIcons } from 'src/app/models/stores';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { ToastController } from '@ionic/angular';
-import { ChartOptions, ChartData } from 'chart.js';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
@@ -17,7 +23,7 @@ import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisib
   styleUrls: ['./wallet-page.component.scss'],
   standalone: false,
 })
-export class WalletPageComponent implements OnInit {
+export class WalletPageComponent implements OnInit, OnDestroy {
   @ViewChild(IonContent) content!: IonContent;
   @ViewChild('dropdownSection') dropdownSection!: ElementRef;
   @ViewChild('chartCanvas') chartCanvas!: any;
@@ -29,10 +35,38 @@ export class WalletPageComponent implements OnInit {
   accountNumber: string = 'Loading...';
   balanceHidden: boolean = false;
 
-  // Additional wallet data
+  // Wallet stats data from API
+  walletStats: any = null;
+  loadingStats: boolean = false;
+  statsError: boolean = false;
+
+  // Calculated totals from stats
   totalDeposit: number = 0;
   totalWithdrawal: number = 0;
   totalTransfer: number = 0;
+
+  // Status counts for display
+  depositStatus: any = {
+    successful: 0,
+    pending: 0,
+    invalid: 0,
+    reversed: 0,
+    failed: 0,
+  };
+
+  withdrawalStatus: any = {
+    approved: 0,
+    pending: 0,
+    declined: 0,
+    reversed: 0,
+  };
+
+  transferStatus: any = {
+    successful: 0,
+    pending: 0,
+    declined: 0,
+    reversed: 0,
+  };
 
   // Histogram data
   histogramLoading = false;
@@ -48,6 +82,8 @@ export class WalletPageComponent implements OnInit {
   walletError = false;
   walletNotFound = false;
 
+  private subscriptions: Subscription = new Subscription();
+
   constructor(
     private clipboard: Clipboard,
     private toast: ToastsService,
@@ -55,32 +91,49 @@ export class WalletPageComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
-    private toggleVisibilityService: ToggleVisibilitySharedStateService
-  ) { }
+    private toggleVisibilityService: ToggleVisibilitySharedStateService,
+  ) {}
 
   async ngOnInit(): Promise<void> {
     // Initialize balance visibility state
     await this.initializeBalanceVisibility();
-    
+
     // Continue with other initialization
     this.initializeUserData();
     this.generateYears();
-    await this.fetchHistogramData();
+
+    // Fetch all data
+    await this.fetchAllData();
   }
 
   async ngAfterViewInit(): Promise<void> {
+    // Wallet details are now fetched in fetchAllData()
+  }
+
+  async fetchAllData(): Promise<void> {
+    // Fetch wallet details first
     await this.fetchWalletDetails();
+
+    // Then fetch wallet stats
+    this.fetchWalletStats();
+
+    // Finally fetch histogram data
+    await this.fetchHistogramData();
   }
 
   async toggleBalance(): Promise<void> {
     // Use the service to toggle and save
-    this.balanceHidden = await this.toggleVisibilityService.toggleBalanceVisibility(this.balanceHidden);
+    this.balanceHidden =
+      await this.toggleVisibilityService.toggleBalanceVisibility(
+        this.balanceHidden,
+      );
     console.log('👁️ Balance visibility toggled to:', this.balanceHidden);
   }
 
   private async initializeBalanceVisibility(): Promise<void> {
     try {
-      this.balanceHidden = await this.toggleVisibilityService.getBalanceVisibility();
+      this.balanceHidden =
+        await this.toggleVisibilityService.getBalanceVisibility();
       console.log('🔍 Initialized balance visibility:', this.balanceHidden);
     } catch (error) {
       console.error('Error initializing balance visibility:', error);
@@ -88,7 +141,107 @@ export class WalletPageComponent implements OnInit {
     }
   }
 
+  // ========== WALLET STATS METHODS ==========
+  private fetchWalletStats(): void {
+    this.loadingStats = true;
+    this.statsError = false;
 
+    const { uniqueId } = this.getUserIdentifiers();
+
+    if (!uniqueId) {
+      console.error('❌ No uniqueId found for wallet stats');
+      this.loadingStats = false;
+      this.statsError = true;
+      return;
+    }
+
+    console.log('📊 Fetching wallet stats for:', {
+      uniqueId: uniqueId,
+    });
+
+    const statsSubscription = this.endpointService
+      .fetchWalletStats(uniqueId)
+      .subscribe({
+        next: (res: any) => {
+          console.log('✅ Wallet Stats API Response:', res);
+          this.handleWalletStatsResponse(res);
+          this.loadingStats = false;
+        },
+        error: (err: any) => {
+          console.error('❌ Error fetching wallet stats:', {
+            status: err?.status,
+            message: err?.message,
+            error: err?.error,
+          });
+          this.loadingStats = false;
+          this.statsError = true;
+          this.useFallbackStats();
+        },
+      });
+
+    this.subscriptions.add(statsSubscription);
+  }
+
+  private handleWalletStatsResponse(res: any): void {
+    if (res && res.data) {
+      this.walletStats = res.data;
+
+      // Update totals from API data
+      this.totalDeposit = res.data.totalFundDepositAmounts || 0;
+      this.totalWithdrawal = res.data.totalFundWithdrawalAmounts || 0;
+      this.totalTransfer = res.data.totalFundTransferAmounts || 0;
+
+      // Update status counts
+      if (res.data.fundDepositStatus) {
+        this.depositStatus = {
+          successful: res.data.fundDepositStatus.totalSuccess || 0,
+          pending: res.data.fundDepositStatus.totalPending || 0,
+          invalid: res.data.fundDepositStatus.totalInvalid || 0,
+          reversed: res.data.fundDepositStatus.totalReversed || 0,
+          failed: res.data.fundDepositStatus.totalFailed || 0,
+        };
+      }
+
+      if (res.data.fundWithdrawalStatus) {
+        this.withdrawalStatus = {
+          approved: res.data.fundWithdrawalStatus.totalApproved || 0,
+          pending: res.data.fundWithdrawalStatus.totalPending || 0,
+          declined: res.data.fundWithdrawalStatus.totalDeclined || 0,
+          reversed: res.data.fundWithdrawalStatus.totalReversed || 0,
+        };
+      }
+
+      if (res.data.fundTransferStatus) {
+        this.transferStatus = {
+          successful: res.data.fundTransferStatus.totalSuccess || 0,
+          pending: res.data.fundTransferStatus.totalPending || 0,
+          declined: res.data.fundTransferStatus.totalDeclined || 0,
+          reversed: res.data.fundTransferStatus.totalReversed || 0,
+        };
+      }
+
+      console.log('✅ Wallet stats updated:', {
+        totalDeposit: this.totalDeposit,
+        totalWithdrawal: this.totalWithdrawal,
+        totalTransfer: this.totalTransfer,
+        depositStatus: this.depositStatus,
+        withdrawalStatus: this.withdrawalStatus,
+        transferStatus: this.transferStatus,
+      });
+    } else {
+      console.warn('⚠️ No wallet stats data found in response:', res);
+      this.useFallbackStats();
+    }
+  }
+
+  private useFallbackStats(): void {
+    console.log('🔄 Using fallback wallet stats');
+
+    // Use existing wallet data as fallback
+    this.totalDeposit = this.totalDeposit || 0;
+    this.totalWithdrawal = this.totalWithdrawal || 0;
+    this.totalTransfer = this.totalTransfer || 0;
+  }
 
   // ========== YEAR FILTER METHODS ==========
   private generateYears(): void {
@@ -136,47 +289,32 @@ export class WalletPageComponent implements OnInit {
     console.log('📊 Fetching histogram data for:', {
       uniqueId: uniqueId,
       year: this.selectedYear,
-      currentYear: new Date().getFullYear()
+      currentYear: new Date().getFullYear(),
     });
 
-    this.endpointService.fetchMonthlyStats(uniqueId, this.selectedYear).subscribe({
-      next: (res: any) => {
-        console.log('✅ Histogram API Response Status:', res?.message || 'No message');
-        console.log('✅ Histogram Data Structure:', {
-          hasData: !!res?.data,
-          hasLabels: !!res?.data?.labels,
-          depositAmounts: res?.data?.fundDeposits?.amounts,
-          withdrawalAmounts: res?.data?.fundWithdrawals?.amounts,
-          transferAmounts: res?.data?.fundTransfers?.amounts
-        });
+    const histogramSubscription = this.endpointService
+      .fetchMonthlyStats(uniqueId, this.selectedYear)
+      .subscribe({
+        next: (res: any) => {
+          console.log(
+            '✅ Histogram API Response Status:',
+            res?.message || 'No message',
+          );
+          this.handleHistogramResponse(res);
+          this.histogramLoading = false;
+        },
+        error: (err: any) => {
+          console.error('❌ Error fetching histogram data:', {
+            status: err?.status,
+            message: err?.message,
+            error: err?.error,
+          });
+          this.histogramLoading = false;
+          this.useFallbackHistogramData();
+        },
+      });
 
-        // Check if we actually got data
-        if (res?.data?.fundDeposits?.amounts) {
-          console.log('💰 Deposit amounts:', res.data.fundDeposits.amounts);
-          console.log('💰 Withdrawal amounts:', res.data.fundWithdrawals.amounts);
-          console.log('💰 Transfer amounts:', res.data.fundTransfers.amounts);
-
-          // Check if any data is non-zero
-          const hasData = res.data.fundDeposits.amounts.some((val: number) => val > 0) ||
-            res.data.fundWithdrawals.amounts.some((val: number) => val > 0) ||
-            res.data.fundTransfers.amounts.some((val: number) => val > 0);
-
-          console.log('📈 Has non-zero data:', hasData);
-        }
-
-        this.handleHistogramResponse(res);
-        this.histogramLoading = false;
-      },
-      error: (err: any) => {
-        console.error('❌ Error fetching histogram data:', {
-          status: err?.status,
-          message: err?.message,
-          error: err?.error
-        });
-        this.histogramLoading = false;
-        this.useFallbackHistogramData();
-      }
-    });
+    this.subscriptions.add(histogramSubscription);
   }
 
   private handleHistogramResponse(res: any): void {
@@ -186,7 +324,7 @@ export class WalletPageComponent implements OnInit {
         labels: this.histogramData.labels,
         depositAmounts: this.histogramData.fundDeposits?.amounts,
         withdrawalAmounts: this.histogramData.fundWithdrawals?.amounts,
-        transferAmounts: this.histogramData.fundTransfers?.amounts
+        transferAmounts: this.histogramData.fundTransfers?.amounts,
       });
       this.updateChartWithHistogramData();
     } else {
@@ -201,37 +339,41 @@ export class WalletPageComponent implements OnInit {
       return;
     }
 
-    console.log('📊 Updating chart with histogram data:', {
-      labels: this.histogramData.labels,
-      depositAmounts: this.histogramData.fundDeposits?.amounts,
-      withdrawalAmounts: this.histogramData.fundWithdrawals?.amounts,
-      transferAmounts: this.histogramData.fundTransfers?.amounts
-    });
-
     // Ensure we have arrays
     const depositData = Array.isArray(this.histogramData.fundDeposits?.amounts)
       ? [...this.histogramData.fundDeposits.amounts]
       : [];
 
-    const withdrawalData = Array.isArray(this.histogramData.fundWithdrawals?.amounts)
+    const withdrawalData = Array.isArray(
+      this.histogramData.fundWithdrawals?.amounts,
+    )
       ? [...this.histogramData.fundWithdrawals.amounts]
       : [];
 
-    const transferData = Array.isArray(this.histogramData.fundTransfers?.amounts)
+    const transferData = Array.isArray(
+      this.histogramData.fundTransfers?.amounts,
+    )
       ? [...this.histogramData.fundTransfers.amounts]
       : [];
-
-    console.log('📈 Extracted data arrays:', {
-      depositData,
-      withdrawalData,
-      transferData
-    });
 
     // Create a completely new object to trigger change detection
     const newChartData: ChartData<'bar'> = {
       labels: this.histogramData.labels?.map((label: string) =>
-        label.substring(0, 3)
-      ) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        label.substring(0, 3),
+      ) || [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ],
       datasets: [
         {
           label: 'Deposits',
@@ -253,20 +395,12 @@ export class WalletPageComponent implements OnInit {
           backgroundColor: '#9CA3AF',
           borderRadius: 6,
           barPercentage: 0.7,
-        }
-      ]
+        },
+      ],
     };
 
     // Assign to the component property
     this.monthlyBarChartData = newChartData;
-
-    console.log('✅ Chart data updated. New chart data:', {
-      labels: this.monthlyBarChartData.labels,
-      datasets: this.monthlyBarChartData.datasets.map(d => ({
-        label: d.label,
-        data: d.data
-      }))
-    });
 
     // Force Angular to detect changes
     setTimeout(() => {
@@ -283,7 +417,20 @@ export class WalletPageComponent implements OnInit {
 
     if (yearData) {
       this.monthlyBarChartData = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ],
         datasets: [
           {
             label: 'Deposits',
@@ -302,8 +449,8 @@ export class WalletPageComponent implements OnInit {
             data: [...yearData[2]],
             backgroundColor: '#9CA3AF',
             borderRadius: 6,
-          }
-        ]
+          },
+        ],
       };
     }
 
@@ -318,9 +465,15 @@ export class WalletPageComponent implements OnInit {
     const withdrawalAmounts = this.histogramData.fundWithdrawals?.amounts || [];
     const transferAmounts = this.histogramData.fundTransfers?.amounts || [];
 
-    const allDepositsZero = depositAmounts.every((val: number) => val === 0 || val === undefined);
-    const allWithdrawalsZero = withdrawalAmounts.every((val: number) => val === 0 || val === undefined);
-    const allTransfersZero = transferAmounts.every((val: number) => val === 0 || val === undefined);
+    const allDepositsZero = depositAmounts.every(
+      (val: number) => val === 0 || val === undefined,
+    );
+    const allWithdrawalsZero = withdrawalAmounts.every(
+      (val: number) => val === 0 || val === undefined,
+    );
+    const allTransfersZero = transferAmounts.every(
+      (val: number) => val === 0 || val === undefined,
+    );
 
     const hasNoData = allDepositsZero && allWithdrawalsZero && allTransfersZero;
 
@@ -331,7 +484,7 @@ export class WalletPageComponent implements OnInit {
       allDepositsZero,
       allWithdrawalsZero,
       allTransfersZero,
-      hasNoData
+      hasNoData,
     });
 
     return hasNoData;
@@ -341,7 +494,7 @@ export class WalletPageComponent implements OnInit {
     try {
       if (this.chartCanvas && this.chartCanvas.chart) {
         console.log('🔄 Refreshing chart...');
-        this.chartCanvas.chart.update('none'); // Use 'none' for instant update
+        this.chartCanvas.chart.update('none');
       } else {
         console.warn('⚠️ Chart canvas not found for refresh');
       }
@@ -358,37 +511,29 @@ export class WalletPageComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const userProfile = this.userService.getProfileData();
     const localStorageUser = JSON.parse(
-      localStorage.getItem('user_data') || '{}'
+      localStorage.getItem('user_data') || '{}',
     );
 
     // Set username from available sources
     this.userName = this.extractUserName(
       currentUser,
       userProfile,
-      localStorageUser
+      localStorageUser,
     );
   }
 
-
-
-
-
-
   /**
-   *  refresh histogram
+   *  refresh all data
    */
   refreshWalletData(event?: any): void {
     this.fetchWalletDetails();
-    this.fetchHistogramData(); // Refresh histogram data too
+    this.fetchWalletStats();
+    this.fetchHistogramData();
+
     if (event) {
       event.target.complete();
     }
   }
-
-
-
-
-
 
   /**
    * Extract username from multiple data sources
@@ -410,7 +555,7 @@ export class WalletPageComponent implements OnInit {
       ];
 
       const validName = nameCandidates.find(
-        (name) => name && typeof name === 'string' && name.trim().length > 0
+        (name) => name && typeof name === 'string' && name.trim().length > 0,
       );
 
       if (validName) {
@@ -431,16 +576,20 @@ export class WalletPageComponent implements OnInit {
 
       const { walletId, uniqueId } = this.getUserIdentifiers();
 
-      this.endpointService.fetchMyWallet(walletId, uniqueId).subscribe({
-        next: (res: any) => {
-          this.handleWalletResponse(res);
-          this.loadingWallet = false;
-        },
-        error: (err: any) => {
-          this.handleWalletError(err);
-          this.loadingWallet = false;
-        },
-      });
+      const walletSubscription = this.endpointService
+        .fetchMyWallet(walletId, uniqueId)
+        .subscribe({
+          next: (res: any) => {
+            this.handleWalletResponse(res);
+            this.loadingWallet = false;
+          },
+          error: (err: any) => {
+            this.handleWalletError(err);
+            this.loadingWallet = false;
+          },
+        });
+
+      this.subscriptions.add(walletSubscription);
     } catch (err) {
       console.error('Unexpected error in fetchWalletDetails:', err);
       this.loadingWallet = false;
@@ -458,7 +607,7 @@ export class WalletPageComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     const userProfile = this.userService.getProfileData();
     const localStorageUser = JSON.parse(
-      localStorage.getItem('user_data') || '{}'
+      localStorage.getItem('user_data') || '{}',
     );
 
     const userData = currentUser || userProfile || localStorageUser;
@@ -498,7 +647,6 @@ export class WalletPageComponent implements OnInit {
     if (res && res.data) {
       const walletData = res.data;
 
-      // Extract and display wallet information from the payload
       console.log('🔍 Wallet Data Received:', walletData);
 
       // 1. Wallet Account Number (wallet_id)
@@ -506,7 +654,8 @@ export class WalletPageComponent implements OnInit {
 
       // 2. Wallet Name
       if (walletData.firstName || walletData.lastName) {
-        this.userName = `${walletData.firstName || ''} ${walletData.middleName || ''} ${walletData.lastName || ''}`.trim();
+        this.userName =
+          `${walletData.firstName || ''} ${walletData.middleName || ''} ${walletData.lastName || ''}`.trim();
       } else if (walletData.firstName) {
         this.userName = walletData.firstName;
       }
@@ -514,26 +663,14 @@ export class WalletPageComponent implements OnInit {
       // 3. Wallet Account Balance
       this.walletBalance = parseFloat(walletData.currentAcctBalance) || 0;
 
-      // Additional debug logging
       console.log('💰 Wallet Info Extracted:', {
         accountNumber: this.accountNumber,
         userName: this.userName,
         walletBalance: this.walletBalance,
         fullName: walletData.firstName,
         middleName: walletData.middleName,
-        lastName: walletData.lastName
+        lastName: walletData.lastName,
       });
-
-      // Update transaction totals if available
-      if (walletData.totalDeposit !== undefined) {
-        this.totalDeposit = Number(walletData.totalDeposit) || 0;
-      }
-      if (walletData.totalWithdrawal !== undefined) {
-        this.totalWithdrawal = Number(walletData.totalWithdrawal) || 0;
-      }
-      if (walletData.totalTransfer !== undefined) {
-        this.totalTransfer = Number(walletData.totalTransfer) || 0;
-      }
 
       console.log('✅ Wallet data loaded successfully:', walletData);
     } else {
@@ -555,9 +692,10 @@ export class WalletPageComponent implements OnInit {
     } else {
       this.walletError = true;
       this.walletNotFound = false;
-    
-      this.toast.openSnackBar('Unable to load wallet details. Please try again later.', 'error');
-
+      this.toast.openSnackBar(
+        'Unable to load wallet details. Please try again later.',
+        'error',
+      );
     }
   }
 
@@ -567,9 +705,6 @@ export class WalletPageComponent implements OnInit {
   navigateToWalletProfile(): void {
     this.router.navigate(['/scouter/wallet-page/wallet-profile']);
   }
-
-
-
 
   copyAccountNumber() {
     if (this.accountNumber && this.accountNumber !== 'Loading...') {
@@ -592,7 +727,6 @@ export class WalletPageComponent implements OnInit {
       }, 50);
     }
   }
-
 
   // Store different datasets per year
   transactionData: Record<string, number[][]> = {
@@ -617,7 +751,7 @@ export class WalletPageComponent implements OnInit {
       [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
     ],
     '2021': [
-      [5, 10, 8, 12, 15, 7, 9, 11, 6, 13, 14, 10], // deposits
+      [5, 10, 8, 12, 15, 7, 9, 11, 6, 13, 14, 10],
       [7, 12, 9, 10, 16, 8, 14, 13, 11, 15, 10, 12],
       [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
     ],
@@ -626,32 +760,24 @@ export class WalletPageComponent implements OnInit {
       [3, 5, 2, 4, 6, 1, 3, 2, 4, 5, 6, 3],
       [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
     ],
-    '2019': [
-      [7, 12, 9, 10, 16, 8, 14, 13, 11, 15, 10, 12],
-      [3, 5, 2, 4, 6, 1, 3, 2, 4, 5, 6, 3],
-      [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
-    ],
-    '2018': [
-      [7, 12, 9, 10, 16, 8, 14, 13, 11, 15, 10, 12],
-      [3, 5, 2, 4, 6, 1, 3, 2, 4, 5, 6, 3],
-      [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
-    ],
-    '2017': [
-      [7, 12, 9, 10, 16, 8, 14, 13, 11, 15, 10, 12],
-      [3, 5, 2, 4, 6, 1, 3, 2, 4, 5, 6, 3],
-      [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2],
-    ],
-    '2016': [
-      [7, 12, 9, 10, 16, 8, 14, 13, 11, 15, 10, 12],
-      [2, 4, 3, 5, 2, 6, 4, 3, 2, 5, 4, 2], // withdrawal
-      [1, 3, 2, 4, 3, 5, 2, 6, 4, 3, 2, 1], // transfers
-    ],
-    // add more years here
   };
 
   // ========== CHART CONFIGURATION ==========
   monthlyBarChartData: ChartData<'bar'> = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    labels: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ],
     datasets: [
       {
         label: 'Deposits',
@@ -683,30 +809,30 @@ export class WalletPageComponent implements OnInit {
         labels: {
           color: '#49536E',
           font: { size: 14 },
-          padding: 20
+          padding: 20,
         },
       },
       tooltip: {
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         callbacks: {
-          label: (context) => {
+          label: (context: any) => {
             const label = context.dataset.label || '';
             const value = context.raw as number;
             return `${label}: ₦${value.toLocaleString('en-NG', {
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2
+              maximumFractionDigits: 2,
             })}`;
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       x: {
         ticks: { color: '#49536E' },
         grid: {
           color: '#D9DCE5',
-          drawBorder: false // This should be valid
-        } as any, // Use type assertion to fix TypeScript error
+          drawBorder: false,
+        } as any,
       },
       y: {
         beginAtZero: true,
@@ -714,19 +840,27 @@ export class WalletPageComponent implements OnInit {
           color: '#49536E',
           callback: function (value: any) {
             if (typeof value === 'number') {
-              return '₦' + Number(value).toLocaleString('en-NG', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-              });
+              return (
+                '₦' +
+                Number(value).toLocaleString('en-NG', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })
+              );
             }
             return value;
-          }
+          },
         },
         grid: {
           color: '#D9DCE5',
-          drawBorder: false
+          drawBorder: false,
         } as any,
       },
     },
   };
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.unsubscribe();
+  }
 }

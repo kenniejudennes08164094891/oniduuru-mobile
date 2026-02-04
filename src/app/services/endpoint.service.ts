@@ -14,7 +14,7 @@ export class EndpointService {
   constructor(
     private http: HttpClient,
     private jwtInterceptor: JwtInterceptorService,
-    private authService: AuthService
+    private authService: AuthService,
   ) {}
 
   // ✅ Talent Profile APIs
@@ -54,7 +54,7 @@ export class EndpointService {
   // ✅ Talent Market Profile APIs
   public createTalentMarketProfileData(
     payload: any,
-    talentId: string
+    talentId: string,
   ): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -74,7 +74,7 @@ export class EndpointService {
 
   public updateTalentMarketProfileData(
     payload: any,
-    talentId: string
+    talentId: string,
   ): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -88,7 +88,7 @@ export class EndpointService {
     talentId: string,
     paginationParams: PaginationParams = { limit: 10, pageNo: 1 },
     statusParams: string = '',
-    scouterId: string = ''
+    scouterId: string = '',
   ): Observable<any> {
     const encodedTalentId = encodeURIComponent(talentId);
     const url = `${environment.baseUrl}/${endpoints.getMarketsByTalentId}/${encodedTalentId}`;
@@ -149,7 +149,7 @@ export class EndpointService {
 
   public updateTalentSecurityQuestions(
     payload: any,
-    talentId: string
+    talentId: string,
   ): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -191,7 +191,7 @@ export class EndpointService {
   // ✅ Cloudinary Helpers
   public fetchUrlFromCloudinary(
     apiUrl: string,
-    formData: FormData
+    formData: FormData,
   ): Observable<any> {
     return this.http.post<any>(apiUrl, formData);
   }
@@ -242,7 +242,7 @@ export class EndpointService {
 
   public fetchMyWallet(
     wallet_id?: string | null,
-    uniqueId?: string | null
+    uniqueId?: string | null,
   ): Observable<any> {
     let params = new HttpParams();
     if (wallet_id && wallet_id.trim() !== '') {
@@ -306,47 +306,86 @@ export class EndpointService {
 
           // Re-throw other errors
           return throwError(() => error);
-        })
+        }),
       );
   }
 
-public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
-  // DON'T encode the uniqueId - your API expects the format "scouter/6985/29September2025"
-  // Encoding changes slashes to %2F which might not be what the API expects
-  const url = `${environment.baseUrl}/wallets/v1/my-monthly-stats`;
-  
-  const params = new HttpParams()
-    .set('uniqueId', uniqueId) // Don't encode here
-    .set('year', year);
+  // Add this method to your EndpointService class
 
-  console.log('🔍 [DEBUG] Making histogram API call:', {
-    url: url,
-    params: params.toString(),
-    fullUrl: `${url}?${params.toString()}`,
-    uniqueId: uniqueId,
-    year: year,
-    isUniqueIdEncoded: uniqueId.includes('%2F') // Check if it's already encoded
-  });
+  // ✅ Fetch wallet stats
+  public fetchWalletStats(uniqueId: string): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/my-wallet-stats`;
 
-  return this.http.get<any>(url, {
-    headers: this.jwtInterceptor.customHttpHeaders,
-    params: params
-  }).pipe(
-    tap((response) => {
-      console.log('📡 Histogram API Raw Response:', response);
-    }),
-    catchError((error) => {
-      console.error('❌ Histogram data fetch error:', {
-        status: error.status,
-        message: error.message,
-        error: error.error,
-        url: url,
-        params: params.toString()
-      });
-      return throwError(() => error);
-    })
-  );
-}
+    const params = new HttpParams().set('uniqueId', uniqueId);
+
+    console.log('🔍 [DEBUG] Making wallet stats API call:', {
+      url: url,
+      params: params.toString(),
+      fullUrl: `${url}?${params.toString()}`,
+      uniqueId: uniqueId,
+    });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📡 Wallet Stats API Raw Response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Wallet stats fetch error:', {
+            status: error.status,
+            message: error.message,
+            error: error.error,
+            url: url,
+            params: params.toString(),
+          });
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
+    // DON'T encode the uniqueId - your API expects the format "scouter/6985/29September2025"
+    // Encoding changes slashes to %2F which might not be what the API expects
+    const url = `${environment.baseUrl}/wallets/v1/my-monthly-stats`;
+
+    const params = new HttpParams()
+      .set('uniqueId', uniqueId) // Don't encode here
+      .set('year', year);
+
+    console.log('🔍 [DEBUG] Making histogram API call:', {
+      url: url,
+      params: params.toString(),
+      fullUrl: `${url}?${params.toString()}`,
+      uniqueId: uniqueId,
+      year: year,
+      isUniqueIdEncoded: uniqueId.includes('%2F'), // Check if it's already encoded
+    });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📡 Histogram API Raw Response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Histogram data fetch error:', {
+            status: error.status,
+            message: error.message,
+            error: error.error,
+            url: url,
+            params: params.toString(),
+          });
+          return throwError(() => error);
+        }),
+      );
+  }
 
   public fundsDeposit(payload: any): Observable<any> {
     const body = JSON.stringify(payload);
@@ -356,26 +395,87 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
     });
   }
 
-  public fetchMyDeposits(pagination: any = {}): Observable<any> {
-    const url = `${environment.baseUrl}/${endpoints.fetchMyDeposits}`;
+  //  Fetch deposits with filtering
+  public fetchMyDeposits(
+    uniqueId: string,
+    statusParams?: string,
+    limit: number = 10,
+    pageNo: number = 1,
+  ): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/fetch-my-deposits`;
+
+    let params = new HttpParams()
+      .set('uniqueId', uniqueId)
+      .set('limit', limit.toString())
+      .set('pageNo', pageNo.toString());
+
+    if (statusParams && statusParams.trim()) {
+      params = params.set('statusParams', statusParams);
+    }
+
+    console.log('🔍 [DEBUG] Fetch deposits request:', {
+      url: url,
+      params: params.toString(),
+      fullUrl: `${url}?${params.toString()}`,
+    });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📡 Deposits API Response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Deposits fetch error:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  //  Fetch single deposit
+  public fetchSingleDeposit(
+    depositReferenceNumber: string,
+    uniqueId: string,
+  ): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/fetch-single-deposit`;
+
+    const params = new HttpParams()
+      .set('depositReferenceNumber', depositReferenceNumber)
+      .set('uniqueId', uniqueId);
+
     return this.http.get<any>(url, {
       headers: this.jwtInterceptor.customHttpHeaders,
+      params: params,
     });
   }
 
-  public fetchSingleDeposit(depositId: string): Observable<any> {
-    const encodedId = encodeURIComponent(depositId);
-    const url = `${environment.baseUrl}/${endpoints.fetchSingleDeposit}/${encodedId}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-    });
-  }
-
-  public calculateCharge(payload: any): Observable<any> {
+  //  Create Paystack customer code
+  public createPaystackCustomerCode(payload: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+  }): Observable<any> {
     const body = JSON.stringify(payload);
-    const url = `${environment.baseUrl}/${endpoints.calculateCharge}`;
+    const url = `${environment.baseUrl}/api-service/v1/paystack/customer-code`;
+
     return this.http.post<any>(url, body, {
       headers: this.jwtInterceptor.customHttpHeaders,
+    });
+  }
+
+  //  Calculate transaction charge
+  public calculateTransactionCharge(amount: string): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/calculate-transaction-charge`;
+
+    const params = new HttpParams().set('amount', amount);
+
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders,
+      params: params,
     });
   }
 
@@ -478,7 +578,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           }
 
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -553,7 +653,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           }
 
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -593,7 +693,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           }
 
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -649,7 +749,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
             userMessage:
               'NIN verification service unavailable. Please try again later.',
           }));
-        })
+        }),
       );
   }
 
@@ -676,7 +776,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
         catchError((error) => {
           console.error('Banks Fetch Error:', error);
           return of(this.getFallbackBanks());
-        })
+        }),
       );
   }
 
@@ -698,7 +798,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           if (response && Array.isArray(response.data)) {
             console.log(
               '🌍 Countries data array found, count:',
-              response.data.length
+              response.data.length,
             );
             return response.data;
           } else if (Array.isArray(response)) {
@@ -707,7 +807,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           } else {
             console.warn(
               '🌍 Unexpected countries response structure:',
-              response
+              response,
             );
             return this.getFallbackCountries();
           }
@@ -720,7 +820,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
             error: error.error,
           });
           return of(this.getFallbackCountries());
-        })
+        }),
       );
   }
   //  Account Verification - Fixed to handle actual API response structure
@@ -782,7 +882,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
             userMessage:
               'Account verification service temporarily unavailable. Please try again later.',
           }));
-        })
+        }),
       );
   }
 
@@ -806,7 +906,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
     const tryEndpoint = (index: number): Observable<any> => {
       if (index >= endpointVariations.length) {
         return throwError(
-          () => new Error('All business verification endpoints failed')
+          () => new Error('All business verification endpoints failed'),
         );
       }
 
@@ -828,7 +928,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
 
             // For other errors or last endpoint, throw the error
             return throwError(() => error);
-          })
+          }),
         );
     };
 
@@ -884,7 +984,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
           userMessage:
             'Business verification service unavailable. Please try again later.',
         }));
-      })
+      }),
     );
   }
 
@@ -983,7 +1083,7 @@ public fetchMonthlyStats(uniqueId: string, year: string): Observable<any> {
   }
   public fetchScouterMarketStatsWithTalent(
     talentId: string,
-    scouterId: string
+    scouterId: string,
   ): Observable<any> {
     let encodedTalentId = encodeURIComponent(talentId);
     let encodedScouterId = encodeURIComponent(scouterId);

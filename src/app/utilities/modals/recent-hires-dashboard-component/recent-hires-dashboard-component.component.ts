@@ -15,6 +15,8 @@ export class RecentHiresDashboardComponent implements OnInit, OnChanges {
 
   // Store the hires
   RecentHires: any[] = [];
+  loading = 'Loading...';
+  showSpinner = true;
 
   constructor(private router: Router) { }
 
@@ -31,6 +33,8 @@ export class RecentHiresDashboardComponent implements OnInit, OnChanges {
   }
 
   private updateHiresData(): void {
+    this.showSpinner = true;
+    this.loading = "Fetching Talent's Hires...";
     console.log('📥 Recent hires component received data:', this.recentHiresData);
 
     // Use input data if available
@@ -62,6 +66,7 @@ export class RecentHiresDashboardComponent implements OnInit, OnChanges {
     } else {
       console.log('⚠️ No recent hires data received or empty array');
       this.RecentHires = [];
+      setTimeout(() => this.showSpinner = false, 2000);
     }
 
     console.log('📊 Final RecentHires state:', this.RecentHires);
@@ -98,6 +103,7 @@ export class RecentHiresDashboardComponent implements OnInit, OnChanges {
       return username.charAt(0).toUpperCase() + username.slice(1);
     }
 
+    setTimeout(() => this.showSpinner = false, 2000);
     return 'Unknown Talent';
   }
 

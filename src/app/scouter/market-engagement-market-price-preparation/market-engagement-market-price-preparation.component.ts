@@ -43,6 +43,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
   private shouldOpenModalOnLoad: boolean = false;
   private modalTypeToOpen: string = '';
+  showSpinner: boolean = true;
+  loading: string = "Fetching Market...";
 
   constructor(
     public route: ActivatedRoute,
@@ -114,6 +116,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     }
 
     if (stateData?.hireData) {
+      setTimeout(() => this.showSpinner = false, 2000);
       const hireData = stateData.hireData;
       console.log('✅ Found hire data in navigation state:', {
         name: hireData.name,
@@ -161,6 +164,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
           firstItemKeys: response.data?.[0] ? Object.keys(response.data[0]) : []
         });
 
+        setTimeout(() => this.showSpinner = false, 2000);
         const data = response.data as TotalHires[] || [];
 
         if (data.length > 0) {
@@ -183,6 +187,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error: any) => {
+        setTimeout(() => this.showSpinner = false, 2000);
         console.error('❌ Error loading hire details:', error);
         this.isLoading = false;
       }

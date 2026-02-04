@@ -16,6 +16,7 @@ import { ForgotPasswordEmailVerifyOtpComponent } from './forgot-password-email-v
 import { ForgotPasswordPhoneVerifyOtpComponent } from './forgot-password-phone-verify-otp/forgot-password-phone-verify-otp.component';
 import { ForgotPasswordResetComponent } from './forgot-password-reset/forgot-password-reset.component';
 import { ForgotPasswordResetSuccessComponent } from './forgot-password-reset-success/forgot-password-reset-success.component';
+import {SpinnerComponent} from "../utilities/spinner/spinner.component";
 
 @NgModule({
   imports: [
@@ -26,6 +27,7 @@ import { ForgotPasswordResetSuccessComponent } from './forgot-password-reset-suc
     WelcomePageComponent,
     MatToolbarModule,
     ReactiveFormsModule,
+    SpinnerComponent,
   ],
   declarations: [AuthPage, LoginComponent, VerifyOtpComponent, ForgotPasswordComponent, ForgotPasswordVerifyOtpComponent, ForgotPasswordEmailOtpComponent, ForgotPasswordPhoneOtpComponent, ForgotPasswordEmailVerifyOtpComponent, ForgotPasswordPhoneVerifyOtpComponent, ForgotPasswordResetComponent, ForgotPasswordResetSuccessComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA], //  THIS MAKES ANGULAR ACCEPT <ion-*> TAGS

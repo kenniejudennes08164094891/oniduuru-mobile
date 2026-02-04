@@ -18,6 +18,7 @@ export class AuthPage implements OnInit {
   loginText = 'Login';
   isLoading = false;
   passwordFieldType: string = 'password';
+  showPageLoader:boolean = false;
 
   constructor(
     private router: Router,
@@ -110,9 +111,10 @@ export class AuthPage implements OnInit {
       );
       return;
     }
+    this.showPageLoader = true;
+    this.loginText = "Authenticating..."
 
     this.isLoading = true;
-    this.loginText = 'Signing in...';
     this.loginForm.disable();
 
     const loginData = this.loginForm.value;
@@ -137,6 +139,7 @@ export class AuthPage implements OnInit {
               sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
               console.log(" Saved onboarding from login:", onboardingObj);
             } catch (e) {
+              this.showPageLoader = false;
               console.error("Failed parsing onboarding at login:", e, onboardingRaw);
             }
           } else {
@@ -157,17 +160,20 @@ export class AuthPage implements OnInit {
           this.toast.openSnackBar(`${res?.message}`, 'success');
           setTimeout(() => this.navigateByRole(role), 500);
         } else {
+          this.showPageLoader = false;
           throw new Error('Invalid response from server - no access token');
         }
       },
       error: (err) => {
         console.error('❌ Login error:', err);
+        this.showPageLoader = false;
         this.handleLoginError(err);
         this.isLoading = false;
         this.loginText = 'Login';
       },
       complete: () => {
         this.isLoading = false;
+        this.showPageLoader = false;
         this.loginText = 'Login';
         this.loginForm.enable();
       },

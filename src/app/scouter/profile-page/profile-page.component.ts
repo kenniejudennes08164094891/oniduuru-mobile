@@ -99,6 +99,8 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     organizationTypes: [] as string[],
     profileImage: '',
   };
+  showSpinner: boolean = true;
+  loading: string = "Fetching Your Profile...";
 
   constructor(
     private router: Router,
@@ -148,7 +150,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   private loadDataWithTracking(): void {
     console.log('📊 Loading data with tracking for scouterId:', this.scouterId);
-
     this.isLoadingProfile = true;
     this.cdr.detectChanges();
 
@@ -171,17 +172,20 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           this.handleProfileResponse(res);
           this.isLoadingProfile = false;
           this.cdr.detectChanges();
+          setTimeout(() => this.showSpinner = false, 2000);
         },
         error: (err) => {
           clearTimeout(loadingTimeout);
           console.error(' Profile data error:', err);
-
+          setTimeout(() => this.showSpinner = false, 2000);
           // Check if it's a timeout or network error
           if (err.message?.includes('Timeout') || err.name === 'TimeoutError') {
             this.handleNetworkError();
+            setTimeout(() => this.showSpinner = false, 2000);
           } else {
             this.handleProfileError(err);
             this.isLoadingProfile = false;
+            setTimeout(() => this.showSpinner = false, 2000);
           }
           this.cdr.detectChanges();
         },

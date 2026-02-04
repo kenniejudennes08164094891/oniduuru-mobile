@@ -11,6 +11,7 @@ import { UtilitiesPageModule } from '../../utilities/utilities.module';
 import { StatsComponent } from './stats/stats.component';
 import { EngagementsComponent } from './engagements/engagements.component';
 import { NgChartsModule } from 'ng2-charts';
+import {EvaluationPageComponent} from "../../components/evaluation-page/evaluation-page.component";
 
 
 @NgModule({
@@ -26,7 +27,8 @@ import { NgChartsModule } from 'ng2-charts';
   ],
   declarations: [
     MarketPricePrepositionPage, StatsComponent, EngagementsComponent
-  ]
+  ],
+  providers: [EvaluationPageComponent ]
 
 })
 export class MarketPricePrepositionPageModule {}

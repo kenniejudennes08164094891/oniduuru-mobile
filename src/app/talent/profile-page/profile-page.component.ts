@@ -67,6 +67,7 @@ export class ProfilePageComponent implements OnInit {
   uploadProgress = 0;
   isUploading = false;
   showSpinner:boolean = true;
+  loading: string = "Fetching Your Profile";
 
   constructor(
     private router: Router,
@@ -118,7 +119,8 @@ export class ProfilePageComponent implements OnInit {
         skills: JSON.parse(talentProfile?.details?.skillSets),
         payRange: talentProfile?.details?.payRange,
       };
-      console.log("talent fetched!!!>>", this.talent);
+      setTimeout(() => this.showSpinner = false, 2000);
+     // console.log("talent fetched!!!>>", this.talent);
     } catch (e: any) {
       this.toast.openSnackBar(e?.message ?? "Oops an error occurred when fetching talent's profile", 'error');
     }
@@ -331,6 +333,8 @@ export class ProfilePageComponent implements OnInit {
 
   updateTalentProfile() {
     this.updateText = "Processing...";
+    this.loading = "Processing...";
+    this.showSpinner = true;
     console.clear();
     //console.log("talent profile>>", this.talent);
     if (this.newSkill.length > 0) { // check if a skill is yet to be added.
@@ -346,11 +350,13 @@ export class ProfilePageComponent implements OnInit {
       this.talentService.updateTalentProfile(this.talentId, payload).subscribe({
         next: async (res: any): Promise<void> => {
           this.updateText = "Save";
+          setTimeout(() => this.showSpinner = false, 2000);
           this.toast.openSnackBar("Your profile has been updated successfully!", 'success');
           await this.ngOnInit(); // ngOnInit is used here to DOM refresh the update;
         },
         error: (err: any) => {
           this.updateText = "Save";
+          setTimeout(() => this.showSpinner = false, 2000);
           this.toast.openSnackBar(err?.message ?? "Oops an error occurred when fetching talent's profile", 'error');
         }
       })
@@ -415,6 +421,7 @@ export class ProfilePageComponent implements OnInit {
   updateSecQuestions() {
     console.clear();
     this.updateSecQBtn = "Processing...";
+    this.loading = "Processing..."
     const securityQuestionsArray = this.questions?.value?.filter((item: any) => item?.questions?.length !== 0 && item?.answer?.length !== 0).map((elem: any) => ({
       question: elem?.question?.toLowerCase(),
       answer: elem?.answer?.toLowerCase()
@@ -422,6 +429,7 @@ export class ProfilePageComponent implements OnInit {
 
     if (securityQuestionsArray.length < 2) {
       this.updateSecQBtn = "Update";
+      setTimeout(() => this.showSpinner = false, 2000);
       this.toast.openSnackBar("At least two security questions is required!", "error");
     } else {
       const payload = {
@@ -430,11 +438,13 @@ export class ProfilePageComponent implements OnInit {
       this.talentService.updateTalentSecurityQuestions(payload, this.talentId).subscribe({
         next: async (response: any): Promise<void> => {
           this.updateSecQBtn = "Update";
+          setTimeout(() => this.showSpinner = false, 2000);
           this.toast.openSnackBar(response.message ?? "Your security questions have been updated successfully!", 'success');
           await this.ngOnInit();
         },
         error: (err: any) => {
           this.updateSecQBtn = "Update";
+          setTimeout(() => this.showSpinner = false, 2000);
           this.toast.openSnackBar(err?.message ?? "Oops an error occurred while creating security questions", 'error');
         }
       })

@@ -12,10 +12,10 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight">
-            Hi Viki West,
+            Hi {{ userName }},
           </span>
           <p class="text-gray-200 text-lg leading-relaxed">
-            Deposit funds into your account or another individual’s account.
+            Deposit funds into your account or another individual's account.
           </p>
         </div>
       </div>
@@ -103,46 +103,53 @@
       class="flex space-x-4 bg-white py-3 md:space-x-6 md:justify-between md:flex-wrap"
     >
       <!-- Successful -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Successful')"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <p class="text-lg font-semibold">{{ successfulCount }}</p>
         <p>Successful</p>
-      </div>
+      </button>
 
       <!-- Invalid -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Invalid')"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <p class="text-lg font-semibold">{{ invalidCount }}</p>
         <p>Invalid</p>
-      </div>
+      </button>
 
       <!-- Reversed -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Reversed')"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <p class="text-lg font-semibold">{{ reversedCount }}</p>
         <p>Reversed</p>
-      </div>
+      </button>
 
       <!-- Failed -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Failed')"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <p class="text-lg font-semibold">{{ failedCount }}</p>
         <p>Failed</p>
-      </div>
+      </button>
 
       <!-- Fetched all -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="loadDeposits()"
+        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
       >
         <p class="text-lg font-semibold">{{ totalCount }}</p>
         <p>Fetched all</p>
-      </div>
+      </button>
     </div>
   </div>
+
+
 
   <!-- TABLE + Pagination -->
   <div class="mt-[10%]">
@@ -209,7 +216,7 @@
                   deposit.status === 'Successful' ? 'bg-[#057A55]' : '',
                   deposit.status === 'Invalid' ? 'bg-[#EB0B00]' : '',
                   deposit.status === 'Failed' ? 'bg-[#EB0B00]' : '',
-                  deposit.status === 'Reversed' ? 'bg-[#0033FF]' : ''
+                  deposit.status === 'Reversed' ? 'bg-[#0033FF]' : '',
                 ]"
               ></span>
               {{ deposit.status }}
@@ -217,7 +224,7 @@
             <td
               class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
             >
-              {{ deposit.date | date : "MMM d, y h:mma" }}
+              {{ deposit.date | date: "MMM d, y h:mma" }}
             </td>
           </tr>
         </tbody>
