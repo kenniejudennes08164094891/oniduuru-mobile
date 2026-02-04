@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import * as html2canvas from 'html2canvas'; // Change this line
+// import * as html2canvas from 'html2canvas'; // Change this line
+// import html2canvas from 'html2canvas';
+
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { imageIcons } from 'src/app/models/stores';
@@ -100,31 +102,61 @@ export class FundWalletRequestPageComponent implements OnInit {
     }
   }
 
+  // async downloadReceipt() {
+  //   this.isLoading = true;
+
+  //   try {
+  //     const element = document.getElementById('receipt');
+  //     if (!element) {
+  //       console.error('Receipt element not found');
+  //       return;
+  //     }
+
+  //     // Use html2canvas with import * as syntax
+  //     const canvas = await html2canvas.default(element, {
+  //       scale: 3,
+  //       useCORS: true,
+  //     });
+
+  //     const imgData = canvas.toDataURL('image/png');
+  //     const link = document.createElement('a');
+  //     link.href = imgData;
+  //     link.download = `deposit-receipt-${this.referenceId}.png`;
+  //     link.click();
+  //   } catch (error) {
+  //     console.error('Download error:', error);
+  //   } finally {
+  //     this.isLoading = false; // stop spinner
+  //   }
+  // }
+
   async downloadReceipt() {
-    this.isLoading = true;
+  this.isLoading = true;
 
-    try {
-      const element = document.getElementById('receipt');
-      if (!element) {
-        console.error('Receipt element not found');
-        return;
-      }
-
-      // Use html2canvas with import * as syntax
-      const canvas = await html2canvas.default(element, {
-        scale: 3,
-        useCORS: true,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = imgData;
-      link.download = `deposit-receipt-${this.referenceId}.png`;
-      link.click();
-    } catch (error) {
-      console.error('Download error:', error);
-    } finally {
-      this.isLoading = false; // stop spinner
+  try {
+    const element = document.getElementById('receipt');
+    if (!element) {
+      console.error('Receipt element not found');
+      return;
     }
+
+    // Use require() which works with CommonJS modules
+    const html2canvas = require('html2canvas');
+    
+    const canvas = await html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = `deposit-receipt-${this.referenceId}.png`;
+    link.click();
+  } catch (error) {
+    console.error('Download error:', error);
+  } finally {
+    this.isLoading = false;
   }
+}
 }
