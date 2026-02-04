@@ -2,6 +2,11 @@
   <app-talent-header></app-talent-header>
 </ion-header>
 
+<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+  <app-spinner [loadingText]="loading"></app-spinner>
+</div>
+
+
 <ion-content class="ion-padding">
   <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
     style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
@@ -166,9 +171,6 @@
 
           <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
             <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id.toString())">
-
-              class="hover:bg-gray-50 transition-colors cursor-pointer">
-
               <!-- Profile + Name -->
               <td class="w-[220px] px-4 sm:px-6 py-3 flex items-center gap-3">
                 <img class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"

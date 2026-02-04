@@ -3,6 +3,10 @@
   </app-scouter-header>
 </ion-header>
 
+<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+  <app-spinner [loadingText]="loading"></app-spinner>
+</div>
+
 <ion-content class="ion-padding">
   <div class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden">
     <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>

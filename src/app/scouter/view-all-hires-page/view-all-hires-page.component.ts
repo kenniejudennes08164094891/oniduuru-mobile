@@ -59,6 +59,8 @@ export class ViewAllHiresPageComponent implements OnInit {
   MockRecentHires: TotalHires[] = [];
   isLoading: boolean = false;
   allMarketData: TotalHires[] = [];
+  showSpinner: boolean = true;
+  loading: string = "Fetching Your Hires";
 
   userName: string = '';
 
@@ -258,6 +260,7 @@ export class ViewAllHiresPageComponent implements OnInit {
 
   loadMarketEngagements(statusParams?: string, pageNo: number = 1, searchText?: string) {
     this.isLoading = true;
+    this.showSpinner = true;
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
@@ -295,7 +298,7 @@ export class ViewAllHiresPageComponent implements OnInit {
           dataType: typeof response.data,
           rawResponse: response.rawResponse
         });
-
+        setTimeout(() => this.showSpinner = false, 2000);
         this.MockRecentHires = response.data || [];
         this.allMarketData = response.data || [];
 
@@ -310,6 +313,7 @@ export class ViewAllHiresPageComponent implements OnInit {
 
       },
       error: (error) => {
+        setTimeout(() => this.showSpinner = false, 2000);
         console.error('❌ Error loading market engagements:', {
           error: error,
           message: error.message,

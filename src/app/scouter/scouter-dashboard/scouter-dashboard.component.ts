@@ -98,10 +98,10 @@ export class ScouterDashboardComponent implements OnInit {
     this.getScouterDetails();
     this.setTimeOfDay();
     this.fetchWalletBalance();
-    
+
     // Initialize balance visibility state
     await this.initializeBalanceVisibility();
-    
+
 
     // Just load from localStorage - data is already initialized by AppInitService
     this.loadNotificationCount();
@@ -119,14 +119,14 @@ export class ScouterDashboardComponent implements OnInit {
       this.paymentStatus = status;
     });
 
-    setTimeout(() => {
-      this.showSpinner = false;
-      // Check if data was loaded
-      console.log('🔄 Dashboard initialized, RecentHires state:', {
-        count: this.RecentHires?.length,
-        data: this.RecentHires
-      });
-    }, 2000);
+    // setTimeout(() => {
+    //   this.showSpinner = false;
+    //   // Check if data was loaded
+    //   console.log('🔄 Dashboard initialized, RecentHires state:', {
+    //     count: this.RecentHires?.length,
+    //     data: this.RecentHires
+    //   });
+    // }, 2000);
 
     this.initializeDashboardData();
   }
@@ -232,16 +232,19 @@ export class ScouterDashboardComponent implements OnInit {
   }
 
   getScouterDetails() {
-
+    this.showSpinner = true;
+    this.loading =  "Fetching Scouter's Dashboard...";
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData);
         this.userName = this.extractUserName(parsedUser);
+        setTimeout(() =>  this.showSpinner = false, 2000);
         //  console.log('✅ User name from localStorage:', this.userName);
         return;
       } catch (error) {
         console.error('Error parsing user_data from localStorage:', error);
+        setTimeout(() =>  this.showSpinner = false, 2000);
       }
     }
 

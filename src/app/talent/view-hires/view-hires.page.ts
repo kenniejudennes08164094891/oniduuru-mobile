@@ -20,7 +20,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   userName: string = 'User';
   private intervalId: any;
   headerHidden: boolean = false;
-
+  loading: string = 'Loading...';
+  showSpinner: boolean = true;
 
 
   constructor(
@@ -42,7 +43,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       return null;
     }
   }
-  goToHireTransaction(hireId: string  | number) {
+  async goToHireTransaction(hireId: string  | number) {
   const selectedHire = this.MockRecentHires.find(h => String (h.id) === hireId);
 
   if (!selectedHire) {
@@ -51,7 +52,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   }
 
   // Navigate to the Market Price Preposition page with the hire object
-  this.router.navigate(['/talent/market-price-preposition', hireId], {
+  await this.router.navigate(['/talent/market-price-preposition', hireId], {
     state: { hire: selectedHire },
   });
 }
@@ -84,6 +85,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   //   }
   // }
   ngOnInit(): void {
+    this.showSpinner = true;
+    this.loading = "Fetching your Hires...";
     const saved = localStorage.getItem('MockRecentHires');
     if (saved) {
       this.MockRecentHires = JSON.parse(saved);
@@ -129,13 +132,16 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         console.clear();
         console.log("decoded>>", decoded); // use this as mock data: marketHires
         this.initialPaginatedHires = decoded;
+        this.MockRecentHires = decoded;
         this.paginatedHiresData = decoded;
         sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
+        setTimeout(() => this.showSpinner = false, 2000);
       },
       error: (err) => {
         console.error('Error fetching markets in view-hires:', err);
         this.initialPaginatedHires = [];
         this.paginatedHiresData = [];
+        setTimeout(() => this.showSpinner = false, 2000);
       }
     });
 
@@ -157,8 +163,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     // Example mock data
     this.marketExpenditures = [];
   }
-goToMarketPreposition(hire: any) {
-  this.router.navigate(['/market-price-preposition', hire.id], {
+async goToMarketPreposition(hire: any) {
+ await this.router.navigate(['/market-price-preposition', hire.id], {
     state: { hire },
   });
 }
@@ -350,7 +356,18 @@ goToMarketPreposition(hire: any) {
 
   get paginatedHires() {
     const start = (this.currentPage - 1) * this.itemsPerPage;
-    return this.filteredAndSearchedHires.slice(start, start + this.itemsPerPage);
+    return this.filteredAndSearchedHires.slice(start, start + this.itemsPerPage).map((item:any) => ({
+      id: Number(item?.id),
+      profilePic: item?.talentPicture,
+      name: item?.talentName,
+      email: item?.talentEmail,
+      date: item?.dateOfHire,
+      startDate: item?.startDate,
+      amount: item?.amountToPay,
+      status: item?.hireStatus,
+      isRated:item?.satisFactoryCommentByScouter?.rating,
+      rating: item?.satisFactoryCommentByScouter?.rating,
+    }))
   }
 
   get totalPages() {
@@ -383,8 +400,10 @@ goToMarketPreposition(hire: any) {
     return this.MockRecentHires.filter(h => h.email === hire.email).length;
   }
 
-  getFormattedAmount(amount: number): string {
-    return `₦${amount.toLocaleString()}`;
+  getFormattedAmount(amount: number): string | any {
+    if(amount){
+      return `₦${amount.toLocaleString()}`;
+    }
   }
 
   viewMarketPricePreposition(id: number) {

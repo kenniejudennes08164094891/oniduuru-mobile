@@ -3,7 +3,9 @@
   </app-talent-header>
 </ion-header>
 
-<app-spinner *ngIf="showSpinner"></app-spinner>
+<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+  <app-spinner [loadingText]="loading"></app-spinner>
+</div>
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
 

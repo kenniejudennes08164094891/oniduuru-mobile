@@ -6,16 +6,20 @@
   </app-scouter-header>
 </ion-header>
 
+<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+  <app-spinner [loadingText]="loading"></app-spinner>
+</div>
+
 <ion-content class="ion-padding" #pageContent>
   <div class="bg-[#F2F4F7]">
     <!-- Debug buttons (optional) -->
     <!-- Debug buttons removed in cleanup -->
 
     <!-- Loading State for Profile -->
-    <div *ngIf="isLoadingProfile" class="minimal-loading">
-      <div class="minimal-spinner"></div>
-      <p class="minimal-text">Loading profile...</p>
-    </div>
+<!--    <div *ngIf="isLoadingProfile" class="minimal-loading">-->
+<!--      <div class="minimal-spinner"></div>-->
+<!--      <p class="minimal-text">Loading profile...</p>-->
+<!--    </div>-->
 
     <div class="space-y-4 mt-10" *ngIf="!isLoadingProfile">
       <!-- Security Question Banner -->

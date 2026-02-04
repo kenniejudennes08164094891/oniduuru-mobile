@@ -9,17 +9,19 @@ import { ViewHiresPageRoutingModule } from './view-hires-routing.module';
 
 import { ViewHiresPage } from './view-hires.page';
 import { SharedModule } from '../../shared/shared.module';
+import {SpinnerComponent} from "../../utilities/spinner/spinner.component";
 
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    ViewHiresPageRoutingModule,
-    SharedModule,
-    EvaluationPageModule
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        IonicModule,
+        ViewHiresPageRoutingModule,
+        SharedModule,
+        EvaluationPageModule,
+        SpinnerComponent
+    ],
   declarations: [ViewHiresPage] // declare the header component here
 })
 export class ViewHiresPageModule {}
