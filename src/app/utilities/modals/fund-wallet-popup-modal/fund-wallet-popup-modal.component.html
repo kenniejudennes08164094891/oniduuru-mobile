@@ -11,7 +11,7 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <form>
+  <form #depositForm="ngForm">
     <div class="flex justify-between items-center gap-4 mt-6 px-10">
       <label class="flex items-center space-x-2">
         <input
@@ -19,6 +19,7 @@
           name="fundType"
           value="Fund Self"
           [(ngModel)]="fundType"
+          (change)="onFundTypeChangeEvent($event)"
         />
         <span>Fund Self</span>
       </label>
@@ -29,10 +30,16 @@
           name="fundType"
           value="Fund Others"
           [(ngModel)]="fundType"
+          (change)="onFundTypeChangeEvent($event)"
         />
         <span>Fund Others</span>
       </label>
     </div>
+    
+    <!-- Fund Type Error -->
+    <p *ngIf="validationErrors.fundType" class="text-red-500 text-sm mt-1 ml-4">
+      {{ validationErrors.fundType }}
+    </p>
 
     <!-- Info Note -->
     <div
@@ -40,26 +47,14 @@
     >
       <ion-icon class="h-7 w-" name="information-circle-outline"></ion-icon>
       <span class="font-normal text-[16px] leading-tight text-[#444444]">
-        <span class="text-[#10182880]"
-          >Send a fund deposit to the account:</span
-        >
-        <br />
-        333345457 (MoniePoint MFB)
-        <ion-icon
-          [name]="copied ? 'checkmark-outline' : 'copy-outline'"
-          class="cursor-pointer"
-          [ngClass]="copied ? 'text-green-500' : 'text-[#0033FF]'"
-          (click)="copyToClipboard('333345457 (MoniePoint MFB)')"
-        ></ion-icon>
-
-        <br />
-        Account Name: (Oniduuru admin wallet account)
+        NB: You'd be redirected to Paystack's Payment Gateway to complete your
+        fund deposit.
       </span>
     </div>
 
     <!-- Amount -->
     <div class="space-y-2 mt-8">
-      <label class="text-[#344054] text-[14px]">Amount</label>
+      <label class="text-[#344054] text-[14px]">Amount *</label>
       <input
         type="text"
         [ngModel]="formattedAmount"
@@ -67,133 +62,125 @@
         name="amount"
         placeholder="₦ 45,000"
         required
-        pattern="^[0-9,]+$"
-        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        [ngClass]="validationErrors.amount ? 'border-red-500' : 'border-[#D9DCE5]'"
+        (blur)="onAmountBlur()"
       />
-      <p *ngIf="!amount && formSubmitted" class="text-red-500 text-sm">
+      <p *ngIf="validationErrors.amount" class="text-red-500 text-sm">
+        {{ validationErrors.amount }}
+      </p>
+      <p *ngIf="!validationErrors.amount && !amount && formSubmitted" class="text-red-500 text-sm">
         Amount is required.
       </p>
     </div>
 
-    <!-- UPLOAD CONTAINER -->
-    <div class="w-full mt-8">
-      <!-- Upload Card -->
-      <div
-        *ngIf="!previewUrl"
-        class="border-2 border-dashed border-gray-300 rounded-lg h-48 sm:h-56 flex flex-col items-center justify-center text-center cursor-pointer transition hover:border-gray-400"
-        (click)="fileInput.click()"
-      >
-        <ion-icon
-          name="cloud-upload-outline"
-          class="text-2xl sm:text-3xl text-gray-500"
-        ></ion-icon>
-        <p class="mt-2 text-sm sm:text-base font-medium text-gray-700">
-          Click to upload <span class="text-gray-500">or drag and drop</span>
-        </p>
-        <p class="text-xs text-gray-500">
-          SVG, PNG, JPG or GIF (max. 800×400px)
-        </p>
-        <input
-          type="file"
-          #fileInput
-          class="hidden"
-          accept=".png,.jpg,.jpeg,.gif,.svg"
-          (change)="onFileSelected($event)"
-        />
-      </div>
-
-      <!-- Preview -->
-      <div *ngIf="previewUrl" class="mt-4 relative">
-        <img
-          [src]="previewUrl"
-          alt="Preview"
-          class="rounded-lg max-h-56 w-full object-contain"
-        />
-
-        <!-- Remove Button -->
-        <button
-          class="absolute top-2 right-2 bg-white rounded-full shadow-md p-1 sm:p-2"
-          (click)="removeScreenshot()"
-        >
-          <ion-icon
-            name="close"
-            class="text-red-500 text-base sm:text-lg"
-          ></ion-icon>
-        </button>
-      </div>
-    </div>
-    <!-- END-->
-
     <!-- Wallet Acc -->
     <div class="space-y-2 mt-8">
-      <label class="text-[#344054] text-[14px]"
-        >Designated Wallet Account</label
-      >
+      <label class="text-[#344054] text-[14px]">Designated Wallet Account *</label>
       <input
-        type="number"
-        [(ngModel)]="walletAccNo"
+        type="text"
+        [ngModel]="walletAccNo"
+        (ngModelChange)="onWalletAccNoChange($event)"
         name="walletAcc"
         placeholder="3056578914"
         required
-        pattern="^[0-9]{10,11}$"
-        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        maxlength="11"
+        class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        [ngClass]="validationErrors.walletAccNo ? 'border-red-500' : 'border-[#D9DCE5]'"
+        inputmode="numeric"
+        pattern="[0-9]*"
       />
-      <p
-        *ngIf="
-          formSubmitted && (!walletAccNo || walletAccNo.toString().length < 10)
-        "
-        class="text-red-500 text-sm"
-      >
-        Enter a valid wallet account number (10–11 digits).
+      <p *ngIf="validationErrors.walletAccNo" class="text-red-500 text-sm">
+        {{ validationErrors.walletAccNo }}
+      </p>
+      <p *ngIf="!validationErrors.walletAccNo && !walletAccNo && formSubmitted" class="text-red-500 text-sm">
+        Wallet account number is required.
       </p>
     </div>
 
     <!-- Wallet Name -->
     <div class="space-y-2 mt-8">
-      <label class="text-[#344054] text-[14px]">Designated Wallet Name</label>
+      <label class="text-[#344054] text-[14px]">Designated Wallet Name *</label>
       <input
         type="text"
-        [(ngModel)]="walletName"
+        [ngModel]="walletName"
+        (ngModelChange)="onWalletNameChange($event)"
         name="walletName"
         placeholder="Viki West"
         required
-        pattern="^[A-Za-z ]+$"
-        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        maxlength="50"
+        class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
+        [ngClass]="validationErrors.walletName ? 'border-red-500' : 'border-[#D9DCE5]'"
       />
-      <p *ngIf="formSubmitted && !walletName" class="text-red-500 text-sm">
-        Wallet name is required and must contain only letters.
+      <p *ngIf="validationErrors.walletName" class="text-red-500 text-sm">
+        {{ validationErrors.walletName }}
+      </p>
+      <p *ngIf="!validationErrors.walletName && !walletName && formSubmitted" class="text-red-500 text-sm">
+        Wallet name is required.
       </p>
     </div>
 
-    <!-- Reason -->
+    <!-- Reason OPTIONAL -->
     <div class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Reason (Optional)</label>
       <textarea
-        [(ngModel)]="reason"
-        required
+        [ngModel]="reason"
+        (ngModelChange)="onReasonChange($event)"
         name="reason"
         placeholder="Write your thoughts here..."
-        pattern="^[A-Za-z0-9 .,!?-]*$"
-        class="border border-[#D9DCE5] px-3 pt-2 pb-10 w-full rounded-lg bg-white placeholder:text-gray-300"
+        maxlength="500"
+        class="border px-3 pt-2 pb-10 w-full rounded-lg bg-white placeholder:text-gray-300"
+        [ngClass]="validationErrors.reason ? 'border-red-500' : 'border-[#D9DCE5]'"
       ></textarea>
+      <p *ngIf="validationErrors.reason" class="text-red-500 text-sm">
+        {{ validationErrors.reason }}
+      </p>
+      <div class="flex justify-between text-xs text-gray-500">
+        <span>{{ reason.length || '' }}/500 characters</span>
+        <span *ngIf="reason">Optional</span>
+      </div>
     </div>
 
     <!-- Terms -->
     <div class="flex items-center gap-4 text-[#101828] mt-8">
-      <input type="checkbox" [(ngModel)]="agreed" name="agreed" />
-      <div>
+      <input 
+        type="checkbox" 
+        [ngModel]="agreed" 
+        (ngModelChange)="onAgreedChange()"
+        name="agreed" 
+        id="termsCheckbox"
+      />
+      <label for="termsCheckbox" class="cursor-pointer">
         I agree with
-        <span href="" class="text-[#0033FF]">terms and conditions</span>
-      </div>
+        <span class="text-[#0033FF] cursor-pointer hover:underline">terms and conditions</span>
+      </label>
     </div>
+    <p *ngIf="validationErrors.agreed" class="text-red-500 text-sm mt-1 ml-6">
+      {{ validationErrors.agreed }}
+    </p>
   </form>
 
-  <div class="bg-white mt-10 pt-2 pb-16 flex justify-end">
+  <div class="bg-white mt-10 pt-2 pb-16">
     <button
-      class="px-4 py-2 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+      class="px-4 py-3 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       (click)="submitDeposit()"
+      [disabled]="isProcessing"
     >
-      Create Fund Deposit
+      <span *ngIf="!isProcessing">Create Fund Deposit</span>
+      <span *ngIf="isProcessing" class="flex items-center justify-center gap-2">
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        Processing...
+      </span>
     </button>
+    
+    <!-- Transaction charge info for Fund Others -->
+    <div *ngIf="fundType === 'Fund Others' && amount && amount > 0" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <p class="text-sm text-blue-800">
+        <strong>Note:</strong> A transaction charge will be applied for funding others' wallets.
+      </p>
+    </div>
   </div>
 </ion-content>

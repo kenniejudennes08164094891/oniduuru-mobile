@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { deposit as depositMocks } from 'src/app/models/mocks';
+import * as html2canvas from 'html2canvas'; // Change this line
+import { EndpointService } from 'src/app/services/endpoint.service';
+import { AuthService } from 'src/app/services/auth.service';
 import { imageIcons } from 'src/app/models/stores';
-import { Deposit } from 'src/app/models/mocks';
-// import jsPDF from 'jspdf';
-import * as html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-fund-wallet-request-page',
@@ -14,30 +13,86 @@ import * as html2canvas from 'html2canvas';
 })
 export class FundWalletRequestPageComponent implements OnInit {
   images = imageIcons;
-  deposits: Deposit[] = depositMocks; // full list
-  deposit?: Deposit; // selected deposit
+  deposit: any = null;
   referenceId: string = '';
-
   isLoading = false;
+  currentUser: any = null;
 
-  constructor(private router: Router, private route: ActivatedRoute) {
-    const nav = this.router.getCurrentNavigation();
-    if (nav?.extras.state) {
-      this.deposit = nav.extras.state['deposit'];
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private endpointService: EndpointService,
+    private authService: AuthService,
+  ) {}
+
+  ngOnInit(): void {
+    this.loadCurrentUser();
+    this.loadDeposit();
+  }
+
+  loadCurrentUser() {
+    const userData =
+      localStorage.getItem('user_data') ||
+      localStorage.getItem('user_profile_data');
+    if (userData) {
+      try {
+        this.currentUser = JSON.parse(userData);
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
     }
   }
 
-  ngOnInit(): void {
+  loadDeposit() {
     const navState = history.state;
+    const depositId = this.route.snapshot.paramMap.get('id');
+
     if (navState && navState.deposit) {
       this.deposit = navState.deposit;
-    } else {
-      const depositId = this.route.snapshot.paramMap.get('id');
-      if (depositId) {
-        console.warn('Deposit not found in state. Fetching by ID:', depositId);
-      }
-    }
+      this.generateReferenceId();
+    } else if (depositId && this.currentUser) {
+      // Fetch from API
+      this.isLoading = true;
 
+      this.endpointService
+        .fetchSingleDeposit(depositId, this.currentUser.scouterId)
+        .subscribe({
+          next: (response) => {
+            this.isLoading = false;
+            if (response?.data) {
+              this.deposit = {
+                id: response.data.depositReferenceNumber,
+                amount: response.data.amount,
+                walletName: response.data.designatedWalletName,
+                walletAcctNo: response.data.designatedWalletAcct,
+                identifier: response.data.identifier || 'Fund Self',
+                status: this.mapStatus(response.data.status),
+                date: new Date(response.data.createdAt || response.data.date),
+                reason: response.data.reasonForDeposit || '',
+              };
+              this.generateReferenceId();
+            }
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error fetching deposit:', error);
+          },
+        });
+    }
+  }
+
+  private mapStatus(apiStatus: string): string {
+    const statusMap: { [key: string]: string } = {
+      success: 'Successful',
+      pending: 'Pending',
+      invalid: 'Invalid',
+      isReversed: 'Reversed',
+      failed: 'Failed',
+    };
+    return statusMap[apiStatus] || apiStatus;
+  }
+
+  private generateReferenceId() {
     if (this.deposit) {
       const timestamp = new Date(this.deposit.date).getTime();
       const rand = Math.floor(100000 + Math.random() * 900000);
@@ -55,7 +110,8 @@ export class FundWalletRequestPageComponent implements OnInit {
         return;
       }
 
-      const canvas = await (html2canvas as any)(element, {
+      // Use html2canvas with import * as syntax
+      const canvas = await html2canvas.default(element, {
         scale: 3,
         useCORS: true,
       });
