@@ -323,14 +323,33 @@ export class AuthService {
   /**
    * Get security questions - Use the correct endpoint
    */
+
   public validateTalentSecurityQuestion(payload: {
     talentId: string;
     answerSecurityQuestion: {
       question: string;
       answer: string;
     };
-  }): Observable<any> {
+  } | any): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
+
+    return this.http.post<any>(url, payload, {
+      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+    }).pipe(
+      catchError((error) => {
+        console.error('❌ Error validating security question:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+  public validateScouterSecurityQuestion(payload: {
+    scouterId: string;
+    answerSecurityQuestion: {
+      question: string;
+      answer: string;
+    };
+  } | any): Observable<any> {
+    const url = `${this.baseUrl}/${endpoints.validateScouterSecurityQuestions}`;
 
     return this.http.post<any>(url, payload, {
       headers: this.jwtInterceptor.customNoAuthHttpHeaders,
@@ -391,14 +410,6 @@ export class AuthService {
   forgotPassword(email: string): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.forgotPasswords}`;
     return this.http.post<any>(url, { email });
-  }
-
-  public ValidateScouterSecurityQ(question: any): Observable<any> {
-    let body = JSON.stringify(question);
-    let url = `${environment?.baseUrl}/${endpoints?.validateScouterSecurityQuestions}`;
-    return this.http.post<any>(url, body, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-    });
   }
 
   /**
