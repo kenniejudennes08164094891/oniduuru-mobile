@@ -5,23 +5,19 @@ import { RouterModule } from '@angular/router';
 
 // adjust this path to where your header really is
 import { TalentHeaderComponent } from '../talent/talent-header/talent-header.component';
-import { HiresTableComponent } from './hires-table/hires-table.component';
+// import { HiresTableComponent } from './hires-table/hires-table.component';
 
 @NgModule({
   declarations: [
     TalentHeaderComponent,
-    HiresTableComponent,
-      // ✅ add it here
+    // HiresTableComponent,
+    // ✅ add it here
   ],
-  imports: [
-    CommonModule,
-    IonicModule,
-    RouterModule
-  ],
+  imports: [CommonModule, IonicModule, RouterModule],
   exports: [
     TalentHeaderComponent,
-    HiresTableComponent,
-     // ✅ now this works
-  ]
+    // HiresTableComponent,
+    // ✅ now this works
+  ],
 })
 export class SharedModule {}

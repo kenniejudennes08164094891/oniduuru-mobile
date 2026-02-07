@@ -1,4 +1,3 @@
-
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
@@ -11,8 +10,6 @@ import { ReconsiderConfirmationModalComponent } from 'src/app/utilities/modals/r
 import { MarketEngagementsTableComponent } from 'src/app/utilities/modals/market-engagements-table/market-engagements-table.component';
 import { ToastsService } from 'src/app/services/toasts.service';
 
-
-
 @Component({
   selector: 'app-market-engagement-market-price-preparation',
   templateUrl: './market-engagement-market-price-preparation.component.html',
@@ -23,14 +20,16 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   @ViewChild(MarketEngagementsTableComponent)
   marketTableComponent!: MarketEngagementsTableComponent;
 
-
   private isTabSwitchInProgress: boolean = false;
+
+  private hasTalentBeenRated: boolean = false;
 
   activeTab: 'engagements' | 'stats' = 'engagements';
 
   hire: TotalHires | undefined;
   images = imageIcons;
   userName: string = '';
+  talentName: string = 'Talent'; // New property for talent name
   isLoading: boolean = false;
   private previousTalentId: string | null = null;
 
@@ -50,8 +49,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private modalCtrl: ModalController,
-    private toastService: ToastsService
-  ) { }
+    private toastService: ToastsService,
+  ) {}
 
   ngOnInit() {
     // Subscribe to route param changes
@@ -72,10 +71,13 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
         // If we have state data, use it immediately
         if (this.selectedModalHire) {
-          console.log('✅ Using hire data from navigation state:', this.selectedModalHire.name);
+          console.log(
+            '✅ Using hire data from navigation state:',
+            this.selectedModalHire.name,
+          );
           this.setHireData(this.selectedModalHire);
+          this.extractTalentName(); // Extract talent name
           this.isLoading = false;
-
 
           // Check if we need to open a modal
           if (this.shouldOpenModalOnLoad) {
@@ -119,7 +121,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         name: hireData.name,
         id: hireData.id,
         talentId: hireData.talentId,
-        matchesRouteId: hireData.id === talentId || hireData.talentId === talentId
+        matchesRouteId:
+          hireData.id === talentId || hireData.talentId === talentId,
       });
 
       // Always set the state data regardless of ID match
@@ -129,9 +132,57 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
       console.log('📊 Modal states set:', {
         shouldOpenModal: this.shouldOpenModalOnLoad,
-        modalType: this.modalTypeToOpen
+        modalType: this.modalTypeToOpen,
       });
     }
+  }
+
+  /**
+   * Extract talent name from hire data
+   */
+  private extractTalentName(): void {
+    if (!this.hire) {
+      this.talentName = 'Talent';
+      return;
+    }
+
+    // Try multiple possible properties for talent name
+    this.talentName =
+      this.hire.name || this.extractNameFromEmail(this.hire.email) || 'Talent';
+
+    console.log('Extracted talent name:', this.talentName);
+  }
+
+  /**
+   * Try to extract a name from email (e.g., john.doe@email.com -> John Doe)
+   */
+  private extractNameFromEmail(email?: string): string | null {
+    if (!email) return null;
+
+    try {
+      const emailPrefix = email.split('@')[0];
+      // Convert "john.doe" to "John Doe"
+      const nameParts = emailPrefix
+        .split('.')
+        .map(
+          (part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+        );
+      return nameParts.join(' ');
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Get display name for the template
+   */
+  getTalentDisplayName(): string {
+    if (this.talentName && this.talentName !== 'Talent') {
+      return this.talentName;
+    }
+
+    // Fallback if we couldn't extract a specific name
+    return 'Talent';
   }
 
   loadHireDetails(talentId: string) {
@@ -148,80 +199,92 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     console.log('🔍 Loading hire details for talent ID:', talentId);
 
-    this.scouterService.getAllMarketsByScouter(scouterId, {
-      talentId: talentId,
-      limit: 10,
-    }).subscribe({
-      next: (response: any) => {
-        console.log('📊 RAW API RESPONSE STRUCTURE:', {
-          response: response,
-          rawResponse: response.rawResponse, // Check if this exists
-          data: response.data,
-          firstItem: response.data?.[0],
-          firstItemKeys: response.data?.[0] ? Object.keys(response.data[0]) : []
-        });
-
-        const data = response.data as TotalHires[] || [];
-
-        if (data.length > 0) {
-          const hireData = data[0];
-          console.log('🎯 HIRE DATA FOR PARSING:', {
-            hireData: hireData,
-            allFields: Object.keys(hireData),
-            satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
-            satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent,
-            // Check if it's in _originalData
-            originalData: hireData._originalData,
-            originalComments: hireData._originalData?.satisFactoryCommentByScouter
+    this.scouterService
+      .getAllMarketsByScouter(scouterId, {
+        talentId: talentId,
+        limit: 10,
+      })
+      .subscribe({
+        next: (response: any) => {
+          console.log('📊 RAW API RESPONSE STRUCTURE:', {
+            response: response,
+            rawResponse: response.rawResponse, // Check if this exists
+            data: response.data,
+            firstItem: response.data?.[0],
+            firstItemKeys: response.data?.[0]
+              ? Object.keys(response.data[0])
+              : [],
           });
 
-          this.setHireData(hireData);
-        } else {
-          console.warn('⚠️ No data returned');
-        }
+          const data = (response.data as TotalHires[]) || [];
 
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('❌ Error loading hire details:', error);
-        this.isLoading = false;
-      }
-    });
+          if (data.length > 0) {
+            const hireData = data[0];
+            console.log('🎯 HIRE DATA FOR PARSING:', {
+              hireData: hireData,
+              allFields: Object.keys(hireData),
+              satisFactoryCommentByScouter:
+                hireData.satisFactoryCommentByScouter,
+              satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent,
+              // Check if it's in _originalData
+              originalData: hireData._originalData,
+              originalComments:
+                hireData._originalData?.satisFactoryCommentByScouter,
+            });
+
+            this.setHireData(hireData);
+            this.extractTalentName(); // Extract talent name after setting data
+          } else {
+            console.warn('⚠️ No data returned');
+          }
+
+          this.isLoading = false;
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading hire details:', error);
+          this.isLoading = false;
+        },
+      });
   }
-
 
   private loadAllDataAndFindTalent(scouterId: string, talentId: string) {
     console.log('🔄 Loading all data to search for talent:', talentId);
 
-    this.scouterService.getAllMarketsByScouter(scouterId, {
-      limit: 100,
-    }).subscribe({
-      next: (response: any) => {
-        const allData = response.data as TotalHires[] || [];
-        console.log(`📊 Total records loaded: ${allData.length}`);
+    this.scouterService
+      .getAllMarketsByScouter(scouterId, {
+        limit: 100,
+      })
+      .subscribe({
+        next: (response: any) => {
+          const allData = (response.data as TotalHires[]) || [];
+          console.log(`📊 Total records loaded: ${allData.length}`);
 
-        // Try to find the talent by various methods
-        let hireData = this.findTalentInData(allData, talentId);
+          // Try to find the talent by various methods
+          let hireData = this.findTalentInData(allData, talentId);
 
-        if (hireData) {
-          console.log('✅ Found in all data:', hireData.name);
-          this.setHireData(hireData);
-        } else {
-          console.error('❌ Talent not found in any data');
+          if (hireData) {
+            console.log('✅ Found in all data:', hireData.name);
+            this.setHireData(hireData);
+            this.extractTalentName(); // Extract talent name
+          } else {
+            console.error('❌ Talent not found in any data');
+            this.loadMockData(talentId);
+          }
+
+          this.isLoading = false;
+        },
+        error: (error: any) => {
+          console.error('❌ Error loading all data:', error);
           this.loadMockData(talentId);
-        }
-
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('❌ Error loading all data:', error);
-        this.loadMockData(talentId);
-        this.isLoading = false;
-      }
-    });
+          this.isLoading = false;
+        },
+      });
   }
 
-  private findTalentInData(data: TotalHires[], talentId: string): TotalHires | undefined {
+  private findTalentInData(
+    data: TotalHires[],
+    talentId: string,
+  ): TotalHires | undefined {
     // Try multiple matching strategies
     const strategies = [
       // 1. Exact talentId match (most important)
@@ -233,9 +296,11 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       // 4. Check if talentIdWithDate contains the search string
       (item: TotalHires) => (item as any).talentIdWithDate?.includes(talentId),
       // 5. Check if email contains the search string
-      (item: TotalHires) => item.email?.toLowerCase().includes(talentId.toLowerCase()),
+      (item: TotalHires) =>
+        item.email?.toLowerCase().includes(talentId.toLowerCase()),
       // 6. Check if name contains the search string
-      (item: TotalHires) => item.name?.toLowerCase().includes(talentId.toLowerCase()),
+      (item: TotalHires) =>
+        item.name?.toLowerCase().includes(talentId.toLowerCase()),
     ];
 
     for (let i = 0; i < strategies.length; i++) {
@@ -249,7 +314,10 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     return undefined;
   }
 
-  private findExactTalent(data: TotalHires[], talentId: string): TotalHires | undefined {
+  private findExactTalent(
+    data: TotalHires[],
+    talentId: string,
+  ): TotalHires | undefined {
     console.log(`🔍 Searching for ${talentId} in ${data.length} records`);
 
     // Try multiple matching strategies in order of priority
@@ -278,10 +346,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     return undefined;
   }
 
-
-
   private setHireData(hireData: TotalHires) {
-
     // First check all possible field names
     console.log('🔍 ALL POSSIBLE COMMENT FIELDS:', {
       satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
@@ -289,7 +354,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       comments: (hireData as any).comments,
       remark: (hireData as any).remark,
       // Check the actual object structure
-      allKeys: Object.keys(hireData)
+      allKeys: Object.keys(hireData),
     });
 
     // Try multiple possible field names
@@ -305,30 +370,27 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       (hireData as any).comments?.talent ||
       '';
 
-
-
-
     console.log('🔍 Setting hire data:', {
       id: hireData.id,
       name: hireData.name,
       satisFactoryCommentByScouter: hireData.satisFactoryCommentByScouter,
-      satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent
+      satisFactoryCommentByTalent: hireData.satisFactoryCommentByTalent,
     });
 
     // Parse comments with better error handling
     const scouterParsed = this.parseSatisfactoryComment(
-      hireData.satisFactoryCommentByScouter
+      hireData.satisFactoryCommentByScouter,
     );
 
     const talentParsed = this.parseSatisfactoryComment(
-      hireData.satisFactoryCommentByTalent
+      hireData.satisFactoryCommentByTalent,
     );
 
     console.log('🧪 PARSED RESULTS:', {
       scouter: scouterParsed,
       talent: talentParsed,
       rawScouter: hireData.satisFactoryCommentByScouter,
-      rawTalent: hireData.satisFactoryCommentByTalent
+      rawTalent: hireData.satisFactoryCommentByTalent,
     });
 
     this.hire = {
@@ -342,13 +404,16 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       talentRating: Number(talentParsed.rating) || 0,
     };
 
+    // Keep the userName for other uses but extract talent name separately
     this.userName = hireData?.name || 'Unknown Talent';
+    this.extractTalentName(); // Extract talent name from the hire data
 
     console.log('✅ Final hire object:', {
+      talentName: this.talentName,
       yourComment: this.hire.yourComment,
       yourRating: this.hire.yourRating,
       talentComment: this.hire.talentComment,
-      talentRating: this.hire.talentRating
+      talentRating: this.hire.talentRating,
     });
 
     if (this.shouldOpenModalOnLoad) {
@@ -380,9 +445,12 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       }
 
       // 4. Fix unescaped quotes in strings
-      fixed = fixed.replace(/:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match, content) => {
-        return ': "' + content.replace(/"/g, '\\"') + '"';
-      });
+      fixed = fixed.replace(
+        /:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g,
+        (match, content) => {
+          return ': "' + content.replace(/"/g, '\\"') + '"';
+        },
+      );
 
       try {
         JSON.parse(fixed);
@@ -393,7 +461,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       }
     }
   }
-
 
   private openModalAfterDataLoad() {
     console.log('Opening modal after data load:', this.modalTypeToOpen);
@@ -426,6 +493,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     if (currentTalentId === hire.id || currentTalentId === hire.talentId) {
       // Already on the same talent page - update the current hire
       this.setHireData(hire);
+      this.extractTalentName();
 
       console.log('✅ Updated current hire to:', hire.name);
 
@@ -434,8 +502,17 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         console.log('✅ Opening Reconsider Modal from table click');
         this.openReconsiderModal(hire);
       } else if (hire.offerStatus === 'Offer Accepted') {
-        console.log('✅ Opening Total Delivery Modal from table click');
-        this.openTotalDeliveryModal(hire);
+        // Check if talent has been rated before opening modal
+        if (this.checkIfTalentHasBeenRated(hire)) {
+          console.log('❌ Talent already rated, not opening modal');
+          this.toastService.openSnackBar(
+            `You have already rated ${hire.name}. You cannot evaluate them again.`,
+            'warning',
+          );
+        } else {
+          console.log('✅ Opening Total Delivery Modal from table click');
+          this.openTotalDeliveryModal(hire);
+        }
       }
     } else {
       // Navigate to the talent's detail page
@@ -449,9 +526,22 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
       this.router.navigate(
         ['/scouter/market-engagement-market-price-preparation', hire.id],
-        navigationExtras
+        navigationExtras,
       );
     }
+  }
+
+  // Add a method to get the hire rating status
+  getHireRatingStatus(hire: any): {
+    rated: boolean;
+    rating: number;
+    comment: string;
+  } {
+    return {
+      rated: this.checkIfTalentHasBeenRated(hire),
+      rating: hire.yourRating || 0,
+      comment: hire.yourComment || '',
+    };
   }
 
   private updateStatsWithHire(hire: TotalHires) {
@@ -459,18 +549,16 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     // Update the current hire
     this.setHireData(hire);
-
+    this.extractTalentName(); // Extract talent name
 
     // This will automatically update the stats component through the tabs component
     // since the initialHire input is bound
   }
 
-
-
   private assignHire(hireData: TotalHires) {
     this.setHireData(hireData);
+    this.extractTalentName(); // Extract talent name
   }
-
 
   private openModalForCurrentHire(hire: any) {
     console.log('Opening modal for current hire:', hire.name);
@@ -509,10 +597,9 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     }, 100);
   }
 
-
-
   // Open modals based on status
   openTotalDeliveryModal(hire: any) {
+    // Check if modal should open
     if (!this.shouldOpenModal()) {
       console.log('Modal opening blocked by conditions');
       return;
@@ -520,26 +607,60 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     console.log('Opening Total Delivery Modal for:', hire.name);
 
+    // Check if hire status is correct
     if (hire.offerStatus !== 'Offer Accepted') {
       console.log(`${hire.offerStatus} - not opening total delivery modal`);
+      return;
+    }
+
+    // CRITICAL: Check if talent has already been rated
+    this.checkIfTalentHasBeenRated(hire);
+
+    if (this.hasTalentBeenRated) {
+      console.log('Talent already rated, showing toast and not opening modal');
+      this.toastService.openSnackBar(
+        `You have already rated ${hire.name}. You cannot evaluate them again.`,
+        'warning',
+      );
       return;
     }
 
     this.selectedModalHire = hire;
     this.isTotalDeliveryModalOpen = true;
   }
-  // debugModalStates() {
-  //   console.log('🔍 Modal States:', {
-  //     isReconsiderModalOpen: this.isReconsiderModalOpen,
-  //     isReconsiderOfferModalOpen: this.isReconsiderOfferModalOpen,
-  //     selectedTalentForReconsider: this.selectedTalentForReconsider
-  //       ? this.selectedTalentForReconsider.name
-  //       : 'null',
-  //   });
-  // }
 
-  // Call debug in relevant places
+  private checkIfTalentHasBeenRated(hire: any): boolean {
+    // Check if scouter has already submitted a rating for this talent
+    const hasRating = hire.yourRating && hire.yourRating > 0;
+    const hasComment = hire.yourComment && hire.yourComment.trim() !== '';
 
+    // Also check the satisFactoryCommentByScouter field
+    let hasAPIComment = false;
+    if (hire.satisFactoryCommentByScouter) {
+      try {
+        const comment = JSON.parse(hire.satisFactoryCommentByScouter);
+        hasAPIComment = comment.rating > 0 || comment.remark?.trim() !== '';
+      } catch (e) {
+        // If it's not JSON, check if it's a non-empty string
+        hasAPIComment = hire.satisFactoryCommentByScouter.trim() !== '';
+      }
+    }
+
+    this.hasTalentBeenRated = hasRating || hasComment || hasAPIComment;
+
+    console.log('Checking if talent has been rated:', {
+      hireName: hire.name,
+      yourRating: hire.yourRating,
+      yourComment: hire.yourComment,
+      satisFactoryCommentByScouter: hire.satisFactoryCommentByScouter,
+      hasRating,
+      hasComment,
+      hasAPIComment,
+      hasTalentBeenRated: this.hasTalentBeenRated,
+    });
+
+    return this.hasTalentBeenRated;
+  }
 
   openReconsiderModal(hire: any) {
     console.log('Opening Reconsider Modal for:', hire.name);
@@ -551,10 +672,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     this.selectedTalentForReconsider = hire;
     this.isReconsiderModalOpen = true;
-
-    // Debug
-    // this.debugModalStates();
   }
+
   // Modal close handlers
   closeTotalDeliveryModal() {
     console.log('Closing total delivery modal');
@@ -580,7 +699,11 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     if (this.isTabSwitchInProgress) return false;
 
     // Don't open modal if it's already open
-    if (this.isTotalDeliveryModalOpen || this.isReconsiderModalOpen || this.isReconsiderOfferModalOpen) {
+    if (
+      this.isTotalDeliveryModalOpen ||
+      this.isReconsiderModalOpen ||
+      this.isReconsiderOfferModalOpen
+    ) {
       return false;
     }
 
@@ -606,7 +729,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       this.isReconsiderOfferModalOpen = true;
       console.log(
         'Offer form modal should now be open:',
-        this.isReconsiderOfferModalOpen
+        this.isReconsiderOfferModalOpen,
       );
     }, 50); // Small delay to ensure DOM updates
   }
@@ -633,8 +756,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     // Show success message
     this.toastService.openSnackBar(
-      `Revised offer sent to ${offerData.talentName}. Status updated to "Awaiting Acceptance".`,
-      'success'
+      `Revised offer sent to ${this.getTalentDisplayName()}. Status updated to "Awaiting Acceptance".`,
+      'success',
     );
 
     // ✅ CALL API FIRST
@@ -669,17 +792,18 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         talentId: talentData.talentId,
         talentIdWithDate: talentData.talentIdWithDate,
         id: talentData.id,
-        allKeys: Object.keys(talentData)
+        allKeys: Object.keys(talentData),
       });
 
       // Try alternative ID sources
       const marketHireId = talentData.marketHireId || talentData.id;
-      const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
+      const talentId =
+        talentData.talentId || talentData.talentIdWithDate || talentData.id;
 
       if (!marketHireId || !talentId) {
         this.toastService.openSnackBar(
           'Cannot reconsider offer: Missing required data. Please refresh and try again.',
-          'error'
+          'error',
         );
         return;
       }
@@ -693,7 +817,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     let formattedStartDate;
     try {
       formattedStartDate = this.formatDateForPayload(
-        new Date(offerData.startDate)
+        new Date(offerData.startDate),
       );
     } catch (error) {
       console.warn('⚠️ Could not parse start date, using current date:', error);
@@ -704,7 +828,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     const satisFactoryCommentByScouter = JSON.stringify({
       scouterId: scouterId,
       dateOfComment: formattedCurrentDate,
-      remark: offerData.satisfactoryComment || "(Proposal Reconsidered)",
+      remark: offerData.satisfactoryComment || '(Proposal Reconsidered)',
       rating: offerData.satisfactoryRating || 0,
     });
 
@@ -719,7 +843,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     // Use the correct IDs - try multiple sources
     const marketHireId = talentData.marketHireId || talentData.id;
-    const talentId = talentData.talentId || talentData.talentIdWithDate || talentData.id;
+    const talentId =
+      talentData.talentId || talentData.talentIdWithDate || talentData.id;
 
     console.log('✅ Sending reconsider offer with:', {
       payload,
@@ -728,7 +853,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         scouterId: scouterId,
         marketHireId: marketHireId,
       },
-      rawPayload: JSON.stringify(payload, null, 2)
+      rawPayload: JSON.stringify(payload, null, 2),
     });
 
     // Call the PATCH endpoint
@@ -743,7 +868,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
           console.log('✅ Offer reconsidered successfully:', response);
           this.toastService.openSnackBar(
             'Offer reconsidered successfully!',
-            'success'
+            'success',
           );
 
           // Refresh the data after successful reconsideration
@@ -763,12 +888,14 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
             statusText: error.statusText,
             error: error.error,
             message: error.message,
-            url: error.url
+            url: error.url,
           });
 
           this.toastService.openSnackBar(
-            error?.error?.message || error?.statusText || 'Failed to reconsider offer',
-            'error'
+            error?.error?.message ||
+              error?.statusText ||
+              'Failed to reconsider offer',
+            'error',
           );
         },
       });
@@ -785,10 +912,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   }
-
-
-
-
 
   onRatingUpdated(updateData: { hireId: string; rating: number }) {
     if (this.hire && this.hire.id === updateData.hireId) {
@@ -816,10 +939,11 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     // Then try partial matches
     if (!mock) {
-      mock = MockRecentHires.find((m) =>
-        m.talentId?.includes(talentId) ||
-        m.id?.toString().includes(talentId) ||
-        m.email?.toLowerCase().includes(talentId.toLowerCase())
+      mock = MockRecentHires.find(
+        (m) =>
+          m.talentId?.includes(talentId) ||
+          m.id?.toString().includes(talentId) ||
+          m.email?.toLowerCase().includes(talentId.toLowerCase()),
       );
     }
 
@@ -833,10 +957,12 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         talentRating: mock.talentRating ?? 0,
       } as TotalHires;
       this.userName = this.hire?.name || 'Unknown Talent';
+      this.extractTalentName(); // Extract talent name
       console.log('✅ Found in mock data:', this.hire.name);
     } else {
       console.error('❌ No mock data found for talent ID:', talentId);
       this.hire = this.createFallbackHire(talentId);
+      this.extractTalentName(); // Extract talent name even from fallback
     }
   }
 
@@ -880,9 +1006,10 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     // });
   }
 
-  private parseSatisfactoryComment(
-    raw?: string
-  ): { remark: string; rating: number } {
+  private parseSatisfactoryComment(raw?: string): {
+    remark: string;
+    rating: number;
+  } {
     console.log('🔄 Parsing comment:', raw);
 
     if (!raw || raw === 'undefined' || raw === 'null') {
@@ -897,7 +1024,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         console.log('✅ Parsed JSON:', parsed);
         return {
           remark: parsed?.remark || parsed?.comments || '',
-          rating: Number(parsed?.rating || parsed?.score || 0)
+          rating: Number(parsed?.rating || parsed?.score || 0),
         };
       }
 
@@ -908,7 +1035,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
       return {
         remark: parsed?.remark || parsed?.comments || parsed?.comment || '',
-        rating: Number(parsed?.rating || parsed?.score || 0)
+        rating: Number(parsed?.rating || parsed?.score || 0),
       };
     } catch (error) {
       console.error('❌ Failed to parse comment:', error, 'Raw:', raw);
@@ -916,9 +1043,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       return { remark: raw, rating: 0 };
     }
   }
-
-
-
 
   // Format date for display
   formatCommentDate(dateString: string): string {
@@ -936,12 +1060,13 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
       });
     } catch (error) {
       return dateString;
     }
   }
+
   // Helper method to format hire status for display
   formatHireStatus(status: string): string {
     if (!status) return 'Unknown';
@@ -950,13 +1075,14 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       'offer-accepted': 'Offer Accepted',
       'awaiting-acceptance': 'Awaiting Acceptance',
       'offer-rejected': 'Offer Rejected',
-      'pending': 'Pending'
+      pending: 'Pending',
     };
 
-    return statusMap[status] || status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return (
+      statusMap[status] ||
+      status.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+    );
   }
-
-
 
   getFormattedAmount(amount: number): string {
     return amount.toLocaleString('en-NG', {

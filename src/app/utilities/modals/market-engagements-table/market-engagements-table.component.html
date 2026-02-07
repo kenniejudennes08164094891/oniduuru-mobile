@@ -31,6 +31,14 @@
           <div>
             <p class="text-sm sm:text-base font-medium text-gray-900">
               {{ hire.name }}
+              <!-- Show rating badge if already rated -->
+              <span
+                *ngIf="hire.yourRating && hire.yourRating > 0"
+                class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full"
+              >
+                <ion-icon name="star" class="text-yellow-500"></ion-icon>
+                Rated: {{ hire.yourRating }}/5
+              </span>
             </p>
             <p class="text-xs sm:text-sm text-gray-500">
               {{ hire.email }}

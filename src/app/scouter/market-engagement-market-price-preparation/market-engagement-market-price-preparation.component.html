@@ -3,14 +3,6 @@
 </ion-header>
 
 <ion-content class="ion-padding" *ngIf="hire">
-  <!-- Loading State -->
-  <!-- <div *ngIf="isLoading" class="flex justify-center items-center py-10">
-    <div class="text-center">
-      <ion-spinner></ion-spinner>
-      <p class="mt-2 text-gray-600">Loading hire details...</p>
-    </div>
-  </div> -->
-
   <!-- Content when data is loaded -->
   <div *ngIf="hire && !isLoading">
     <!-- Top Section -->
@@ -22,10 +14,10 @@
           <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" class="h-10 w-10" />
           <div>
             <span class="font-medium text-[24px] leading-tight">{{
-              userName
+              getTalentDisplayName()
               }}</span>
             <p class="text-gray-300 text-sm leading-relaxed">
-              View your hires with talent stated above
+              View hire details with {{ getTalentDisplayName() }}
             </p>
           </div>
         </div>
@@ -33,6 +25,7 @@
     </div>
   </div>
 
+  <!-- Rest of your template remains exactly the same -->
   <h3 class="pb-3 text-[#000000] text-[16px] font-semibold">
     Market Price Preposition:
   </h3>
@@ -132,9 +125,6 @@
 
     </div>
   </div>
-
-
-
 
   <app-market-engagement-tabs [initialHire]="hire" (hireSelected)="onTableHireClick($event)">
   </app-market-engagement-tabs>

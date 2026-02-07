@@ -90,11 +90,11 @@ export class ViewAllHiresPageComponent implements OnInit {
     topPerformers: TalentPerformanceData[];
     underperformers: TalentPerformanceData[];
   } = {
-      mostHiredTalent: [],
-      leastHiredTalent: [],
-      topPerformers: [],
-      underperformers: []
-    };
+    mostHiredTalent: [],
+    leastHiredTalent: [],
+    topPerformers: [],
+    underperformers: [],
+  };
 
   // Add performance loading state
   isPerformanceLoading: boolean = false;
@@ -104,16 +104,93 @@ export class ViewAllHiresPageComponent implements OnInit {
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
     // private toastController: ToastController
-    private toast: ToastsService
-  ) { }
+    private toast: ToastsService,
+  ) {}
 
   ngOnInit() {
     this.loadUserData();
     this.loadMarketEngagements();
     this.loadTalentPerformanceGrading(); // Add this line
-
   }
 
+  private checkIfTalentHasBeenRated(hire: any): boolean {
+    return (
+      (hire.yourRating && hire.yourRating > 0) ||
+      (hire.yourComment && hire.yourComment.trim() !== '') ||
+      (hire.satisFactoryCommentByScouter &&
+        hire.satisFactoryCommentByScouter.trim() !== '' &&
+        hire.satisFactoryCommentByScouter !== 'undefined' &&
+        hire.satisFactoryCommentByScouter !== 'null')
+    );
+  }
+
+  viewMarketPricePreposition(data: string | TotalHires) {
+    let talentIdToUse: string;
+    let hireObject: TotalHires | undefined;
+
+    if (typeof data === 'string') {
+      // Handle string (talentId)
+      console.log('📊 Navigating to market price for talent ID:', data);
+
+      hireObject = this.MockRecentHires.find(
+        (h) => h.id === data || h.talentId === data || h.marketHireId === data,
+      );
+
+      talentIdToUse = hireObject?.talentId || data;
+    } else {
+      // Handle TotalHires object
+      console.log('📊 Navigating with hire object:', data.name);
+      hireObject = data;
+
+      // Check if talent has already been rated
+      if (
+        this.checkIfTalentHasBeenRated(data) &&
+        data.offerStatus === 'Offer Accepted'
+      ) {
+        this.toast.openSnackBar(
+          `You have already rated ${data.name}. You cannot evaluate them again.`,
+          'warning',
+        );
+        return;
+      }
+
+      // IMPORTANT: Use the correct ID that the API expects
+      talentIdToUse = data.talentId || data.id || data.marketHireId;
+    }
+
+    console.log('🎯 Talent ID to navigate with:', talentIdToUse);
+
+    // Create a clean hire object to pass
+    const hireDataToPass = hireObject
+      ? {
+          ...hireObject,
+          // Ensure all required properties exist
+          jobDescription: hireObject.jobDescription || '',
+          yourComment: hireObject.yourComment || '',
+          yourRating: hireObject.yourRating || 0,
+          talentComment: hireObject.talentComment || '',
+          talentRating: hireObject.talentRating || 0,
+        }
+      : undefined;
+
+    this.router.navigate(
+      ['/scouter/market-engagement-market-price-preparation', talentIdToUse],
+      {
+        state: {
+          hireData: hireDataToPass || {
+            id: talentIdToUse,
+            talentId: talentIdToUse,
+            name: hireObject?.name || 'Unknown Talent',
+            email: hireObject?.email || '',
+            profilePic:
+              hireObject?.profilePic || 'assets/images/default-avatar.png',
+          },
+          shouldOpenModal: false, // Don't open modal automatically
+          source: 'view-hires-page',
+        },
+      },
+    );
+  }
 
   private loadTalentPerformanceGrading() {
     this.isPerformanceLoading = true;
@@ -126,7 +203,10 @@ export class ViewAllHiresPageComponent implements OnInit {
       return;
     }
 
-    console.log('📊 Loading talent performance grading for scouter:', scouterId);
+    console.log(
+      '📊 Loading talent performance grading for scouter:',
+      scouterId,
+    );
 
     this.scouterService.getTalentPerformanceGrading(scouterId).subscribe({
       next: (response) => {
@@ -137,14 +217,14 @@ export class ViewAllHiresPageComponent implements OnInit {
             mostHiredTalent: response.data.mostHiredTalent || [],
             leastHiredTalent: response.data.leastHiredTalent || [],
             topPerformers: response.data.topPerformers || [],
-            underperformers: response.data.underperformers || []
+            underperformers: response.data.underperformers || [],
           };
 
           console.log('📊 Performance data parsed:', {
             mostHired: this.talentPerformanceData.mostHiredTalent.length,
             leastHired: this.talentPerformanceData.leastHiredTalent.length,
             topPerformers: this.talentPerformanceData.topPerformers.length,
-            underperformers: this.talentPerformanceData.underperformers.length
+            underperformers: this.talentPerformanceData.underperformers.length,
           });
         }
 
@@ -159,40 +239,40 @@ export class ViewAllHiresPageComponent implements OnInit {
           mostHiredTalent: [],
           leastHiredTalent: [],
           topPerformers: [],
-          underperformers: []
+          underperformers: [],
         };
 
-        this.toast.openSnackBar('Failed to load talent performance data. Using mock data.', 'error');
+        this.toast.openSnackBar(
+          'Failed to load talent performance data. Using mock data.',
+          'error',
+        );
         this.fallbackToMockPerformanceData(); // Optional: fallback to mock data
-      }
+      },
     });
   }
-
 
   private fallbackToMockPerformanceData() {
     // Optional: Provide mock data when API fails
     // This keeps the UI functional even if API is down
     this.talentPerformanceData = {
-      mostHiredTalent: this.MockRecentHires.slice(0, 2).map(hire => ({
+      mostHiredTalent: this.MockRecentHires.slice(0, 2).map((hire) => ({
         concernedTalentId: hire.talentId || hire.id,
         talentName: hire.name,
         talentEmail: hire.email,
         talentPicture: hire.profilePic,
-        count: '2 occurence'
+        count: '2 occurence',
       })),
-      leastHiredTalent: this.MockRecentHires.slice(2, 4).map(hire => ({
+      leastHiredTalent: this.MockRecentHires.slice(2, 4).map((hire) => ({
         concernedTalentId: hire.talentId || hire.id,
         talentName: hire.name,
         talentEmail: hire.email,
         talentPicture: hire.profilePic,
-        count: '1 occurence'
+        count: '1 occurence',
       })),
       topPerformers: [],
-      underperformers: []
+      underperformers: [],
     };
   }
-
-
 
   // Add this method to your component
   testDirectApiCall() {
@@ -206,21 +286,22 @@ export class ViewAllHiresPageComponent implements OnInit {
 
     console.log('🧪 Direct API Test:', {
       scouterId,
-      expectedFormat: 'scouter/XXXX/DateString'
+      expectedFormat: 'scouter/XXXX/DateString',
     });
 
     // Test the exact format from your curl example
     const testScouterId = 'scouter/6985/29September2025'; // Replace with actual
     console.log('🧪 Testing with scouterId:', testScouterId);
 
-    this.scouterService.getAllMarketsByScouter(testScouterId, { limit: 5 })
+    this.scouterService
+      .getAllMarketsByScouter(testScouterId, { limit: 5 })
       .subscribe({
         next: (response) => {
           console.log('✅ Direct test success:', response);
         },
         error: (error) => {
           console.error('❌ Direct test failed:', error);
-        }
+        },
       });
   }
 
@@ -231,7 +312,7 @@ export class ViewAllHiresPageComponent implements OnInit {
       user: currentUser,
       scouterId: currentUser?.scouterId,
       id: currentUser?.id,
-      allProperties: currentUser ? Object.keys(currentUser) : 'No user'
+      allProperties: currentUser ? Object.keys(currentUser) : 'No user',
     });
 
     if (currentUser) {
@@ -248,7 +329,7 @@ export class ViewAllHiresPageComponent implements OnInit {
         type: typeof scouterId,
         hasForwardSlash: scouterId?.includes('/'),
         expectedFormat: 'scouter/XXXX/DateString',
-        isValid: scouterId?.startsWith('scouter/')
+        isValid: scouterId?.startsWith('scouter/'),
       });
     } else {
       this.userName = 'Scouter';
@@ -256,7 +337,11 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
   }
 
-  loadMarketEngagements(statusParams?: string, pageNo: number = 1, searchText?: string) {
+  loadMarketEngagements(
+    statusParams?: string,
+    pageNo: number = 1,
+    searchText?: string,
+  ) {
     this.isLoading = true;
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
@@ -284,7 +369,10 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
 
     console.log('📊 API Request Params:', params);
-    console.log('🔗 Full URL would be:', `/market/v1/get-all-markets/scouter/${encodeURIComponent(scouterId)}`);
+    console.log(
+      '🔗 Full URL would be:',
+      `/market/v1/get-all-markets/scouter/${encodeURIComponent(scouterId)}`,
+    );
 
     this.scouterService.getAllMarketsByScouter(scouterId, params).subscribe({
       next: (response) => {
@@ -293,7 +381,7 @@ export class ViewAllHiresPageComponent implements OnInit {
           hasData: response.data,
           dataLength: response.data?.length,
           dataType: typeof response.data,
-          rawResponse: response.rawResponse
+          rawResponse: response.rawResponse,
         });
 
         this.MockRecentHires = response.data || [];
@@ -307,14 +395,13 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.updateSlideshowText();
         this.isLoading = false;
         this.loadTalentPerformanceGrading();
-
       },
       error: (error) => {
         console.error('❌ Error loading market engagements:', {
           error: error,
           message: error.message,
           status: error.status,
-          fullError: error
+          fullError: error,
         });
         this.MockRecentHires = [];
         this.allMarketData = [];
@@ -323,19 +410,21 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.isLoading = false;
 
         // this.showError('Failed to load market engagements. Please try again.');
-        this.toast.openSnackBar('Failed to load market engagements. Please try again.', 'error');
+        this.toast.openSnackBar(
+          'Failed to load market engagements. Please try again.',
+          'error',
+        );
       },
     });
   }
-
-
 
   private updateSlideshowText() {
     const totalExpenditure = this.totalMarketExpenditure;
 
     if (this.MockRecentHires.length > 0) {
       this.slideshowTexts = [
-        `Your Total Market Expenditures for the Month of ${this.currentMonth
+        `Your Total Market Expenditures for the Month of ${
+          this.currentMonth
         } is ₦${totalExpenditure.toLocaleString()}`,
         'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
       ];
@@ -347,106 +436,54 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
   }
 
-
-
-  // Single method that handles both string and TotalHires
-  // Single method that handles both string and TotalHires
-  viewMarketPricePreposition(data: string | TotalHires) {
-    let talentIdToUse: string;
-    let hireObject: TotalHires | undefined;
-
-    if (typeof data === 'string') {
-      // Handle string (talentId)
-      console.log('📊 Navigating to market price for talent ID:', data);
-
-      hireObject = this.MockRecentHires.find(h =>
-        h.id === data ||
-        h.talentId === data ||
-        h.marketHireId === data
-      );
-
-      talentIdToUse = hireObject?.talentId || data;
-    } else {
-      // Handle TotalHires object
-      console.log('📊 Navigating with hire object:', data.name);
-      hireObject = data;
-
-      // IMPORTANT: Use the correct ID that the API expects
-      talentIdToUse = data.talentId || data.id || data.marketHireId;
-    }
-
-    console.log('🎯 Talent ID to navigate with:', talentIdToUse);
-
-    // Create a clean hire object to pass
-    const hireDataToPass = hireObject ? {
-      ...hireObject,
-      // Ensure all required properties exist
-      jobDescription: hireObject.jobDescription || '',
-      yourComment: hireObject.yourComment || '',
-      yourRating: hireObject.yourRating || 0,
-      talentComment: hireObject.talentComment || '',
-      talentRating: hireObject.talentRating || 0,
-    } : undefined;
-
-    this.router.navigate([
-      '/scouter/market-engagement-market-price-preparation',
-      talentIdToUse
-    ], {
-      state: {
-        hireData: hireDataToPass || {
-          id: talentIdToUse,
-          talentId: talentIdToUse,
-          name: hireObject?.name || 'Unknown Talent',
-          email: hireObject?.email || '',
-          profilePic: hireObject?.profilePic || 'assets/images/default-avatar.png'
-        },
-        shouldOpenModal: false, // Don't open modal automatically
-        source: 'view-hires-page'
-      }
-    });
-  }
   // Private helper method for navigation
   private navigateWithHire(hire: TotalHires) {
     console.log('🚀 Navigating to talent detail page:', hire.name);
     console.log('📊 Hire data being passed:', {
       id: hire.id,
       talentId: hire.talentId,
-      name: hire.name
+      name: hire.name,
     });
 
     // CRITICAL: Use hire.talentId instead of hire.id if talentId is what the API expects
     const talentIdToUse = hire.talentId || hire.id;
 
-    this.router.navigate([
-      '/scouter/market-engagement-market-price-preparation',
-      talentIdToUse
-    ], {
-      queryParams: {
-        talentId: hire.talentId,
-        name: hire.name,
-        email: hire.email,
-        source: 'view-hires-page' // Add source for debugging
+    this.router.navigate(
+      ['/scouter/market-engagement-market-price-preparation', talentIdToUse],
+      {
+        queryParams: {
+          talentId: hire.talentId,
+          name: hire.name,
+          email: hire.email,
+          source: 'view-hires-page', // Add source for debugging
+        },
+        state: {
+          hireData: hire, // Pass the full object in state
+        },
       },
-      state: {
-        hireData: hire // Pass the full object in state
-      }
-    });
+    );
   }
-
 
   onPerformanceTalentClick(talentData: TalentPerformanceData) {
     console.log('📊 Performance talent clicked:', talentData.talentName);
-    console.log('🎯 Talent ID from performance data:', talentData.concernedTalentId);
+    console.log(
+      '🎯 Talent ID from performance data:',
+      talentData.concernedTalentId,
+    );
 
     // Check if the ID is in the correct format
     if (!talentData.concernedTalentId.startsWith('talent/')) {
-      console.warn('⚠️ Talent ID might not be in correct format:', talentData.concernedTalentId);
+      console.warn(
+        '⚠️ Talent ID might not be in correct format:',
+        talentData.concernedTalentId,
+      );
     }
 
     // Find in current data
-    const hire = this.MockRecentHires.find(h =>
-      h.talentId === talentData.concernedTalentId ||
-      (h as any).talentIdWithDate === talentData.concernedTalentId
+    const hire = this.MockRecentHires.find(
+      (h) =>
+        h.talentId === talentData.concernedTalentId ||
+        (h as any).talentIdWithDate === talentData.concernedTalentId,
     );
 
     if (hire) {
@@ -456,20 +493,22 @@ export class ViewAllHiresPageComponent implements OnInit {
       // Navigate with the concernedTalentId directly
       console.log('📤 Navigating directly with concernedTalentId');
 
-      this.router.navigate([
-        '/scouter/market-engagement-market-price-preparation',
-        talentData.concernedTalentId
-      ], {
-        queryParams: {
-          talentId: talentData.concernedTalentId,
-          name: talentData.talentName,
-          email: talentData.talentEmail,
-          source: 'performance-category'
-        }
-      });
+      this.router.navigate(
+        [
+          '/scouter/market-engagement-market-price-preparation',
+          talentData.concernedTalentId,
+        ],
+        {
+          queryParams: {
+            talentId: talentData.concernedTalentId,
+            name: talentData.talentName,
+            email: talentData.talentEmail,
+            source: 'performance-category',
+          },
+        },
+      );
     }
   }
-
 
   setActiveCategoryTable(categoryKey: string) {
     this.activeCategoryTable = categoryKey;
@@ -569,10 +608,13 @@ export class ViewAllHiresPageComponent implements OnInit {
   }
 
   getOccurrences(): Record<string, number> {
-    return this.MockRecentHires.reduce((acc, hire) => {
-      acc[hire.email] = (acc[hire.email] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    return this.MockRecentHires.reduce(
+      (acc, hire) => {
+        acc[hire.email] = (acc[hire.email] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }
 
   getHireCount(hire: TotalHires): number | string {
@@ -590,19 +632,22 @@ export class ViewAllHiresPageComponent implements OnInit {
 
   getUniqueHires(): TotalHires[] {
     return Object.values(
-      this.MockRecentHires.reduce((acc, hire) => {
-        if (!acc[hire.email]) {
-          acc[hire.email] = {
-            ...hire,
-            jobDescription: hire.jobDescription ?? '',
-            yourComment: hire.yourComment ?? '',
-            yourRating: hire.yourRating ?? 0,
-            talentComment: hire.talentComment ?? '',
-            talentRating: hire.talentRating ?? 0,
-          };
-        }
-        return acc;
-      }, {} as Record<string, TotalHires>)
+      this.MockRecentHires.reduce(
+        (acc, hire) => {
+          if (!acc[hire.email]) {
+            acc[hire.email] = {
+              ...hire,
+              jobDescription: hire.jobDescription ?? '',
+              yourComment: hire.yourComment ?? '',
+              yourRating: hire.yourRating ?? 0,
+              talentComment: hire.talentComment ?? '',
+              talentRating: hire.talentRating ?? 0,
+            };
+          }
+          return acc;
+        },
+        {} as Record<string, TotalHires>,
+      ),
     );
   }
 
@@ -644,11 +689,9 @@ export class ViewAllHiresPageComponent implements OnInit {
       return this.filterByPerformanceCategory(categoryKey);
     }
 
-
     // Fallback to original logic if no performance data
     return this.filterByLocalCategory(categoryKey);
   }
-
 
   private filterByPerformanceCategory(categoryKey: string): TotalHires[] {
     let performanceData: TalentPerformanceData[] = [];
@@ -671,28 +714,30 @@ export class ViewAllHiresPageComponent implements OnInit {
     }
 
     // Convert performance data to TotalHires format with proper type casting
-    return performanceData.map(talent => ({
-      id: talent.concernedTalentId,
-      profilePic: talent.talentPicture || 'assets/images/default-avatar.png',
-      name: talent.talentName,
-      email: talent.talentEmail,
-      date: 'N/A',
-      startDate: 'N/A',
-      amount: 0,
-      offerStatus: 'Offer Accepted' as 'Offer Accepted', // Explicit type assertion
-      status: 'Active' as 'Active', // Explicit type assertion
-      jobDescription: '',
-      yourComment: '',
-      yourRating: 0,
-      talentComment: '',
-      talentRating: 0,
-      marketHireId: '',
-      scouterId: '',
-      talentId: talent.concernedTalentId,
-      scouterPhoneNumber: undefined,
-      talentPhoneNumber: undefined,
-      _originalData: talent
-    })).slice(0, 4); // Limit to 4 items as per your UI
+    return performanceData
+      .map((talent) => ({
+        id: talent.concernedTalentId,
+        profilePic: talent.talentPicture || 'assets/images/default-avatar.png',
+        name: talent.talentName,
+        email: talent.talentEmail,
+        date: 'N/A',
+        startDate: 'N/A',
+        amount: 0,
+        offerStatus: 'Offer Accepted' as 'Offer Accepted', // Explicit type assertion
+        status: 'Active' as 'Active', // Explicit type assertion
+        jobDescription: '',
+        yourComment: '',
+        yourRating: 0,
+        talentComment: '',
+        talentRating: 0,
+        marketHireId: '',
+        scouterId: '',
+        talentId: talent.concernedTalentId,
+        scouterPhoneNumber: undefined,
+        talentPhoneNumber: undefined,
+        _originalData: talent,
+      }))
+      .slice(0, 4); // Limit to 4 items as per your UI
   }
   private filterByLocalCategory(categoryKey: string): TotalHires[] {
     if (!this.MockRecentHires.length) return [];
@@ -726,7 +771,6 @@ export class ViewAllHiresPageComponent implements OnInit {
     return hires.slice(0, 4);
   }
 
-
   private shouldUsePerformanceData(): boolean {
     // Use performance data if we have it and it's not empty
     return (
@@ -737,7 +781,6 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.talentPerformanceData.underperformers.length > 0)
     );
   }
-
 
   private scrollToCategoryDisplay() {
     if (this.categoryDisplaySection) {
@@ -771,7 +814,7 @@ export class ViewAllHiresPageComponent implements OnInit {
         yourRating: hire.yourRating ?? 0,
         talentComment: hire.talentComment ?? '',
         talentRating: hire.talentRating ?? 0,
-      })
+      }),
     );
   }
 
@@ -794,7 +837,7 @@ export class ViewAllHiresPageComponent implements OnInit {
       hires = hires.filter(
         (h) =>
           h.name.toLowerCase().includes(term) ||
-          h.email.toLowerCase().includes(term)
+          h.email.toLowerCase().includes(term),
       );
     }
 
@@ -823,7 +866,11 @@ export class ViewAllHiresPageComponent implements OnInit {
         }
       }
 
-      this.loadMarketEngagements(statusParams, this.currentPage + 1, this.searchTerm);
+      this.loadMarketEngagements(
+        statusParams,
+        this.currentPage + 1,
+        this.searchTerm,
+      );
     }
   }
 
@@ -844,7 +891,11 @@ export class ViewAllHiresPageComponent implements OnInit {
         }
       }
 
-      this.loadMarketEngagements(statusParams, this.currentPage - 1, this.searchTerm);
+      this.loadMarketEngagements(
+        statusParams,
+        this.currentPage - 1,
+        this.searchTerm,
+      );
     }
   }
 
@@ -866,6 +917,4 @@ export class ViewAllHiresPageComponent implements OnInit {
 
     this.loadMarketEngagements(statusParams, this.currentPage, this.searchTerm);
   }
-
-
 }

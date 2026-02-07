@@ -40,7 +40,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
     private router: Router,
-    private menuCtrl: MenuController
+    private menuCtrl: MenuController,
   ) {
     this.profileImage = this.userService.getProfileImage();
   }
@@ -65,7 +65,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
         if (profile) {
           console.log('🔄 Header: Profile data updated', profile);
         }
-      })
+      }),
     );
 
     // ✅ Listen to authentication state changes
@@ -109,7 +109,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
             this.refreshAllData();
           }, 500);
         }
-      }
+      },
     );
 
     // Listen for profile update events
@@ -119,7 +119,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
           console.log('🔄 Header: Profile updated, refreshing data');
           this.refreshAllData();
         }
-      })
+      }),
     );
   }
 
@@ -195,7 +195,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
       this.notificationCount = parseInt(storedCount, 10);
       console.log(
         '📬 Header: Loaded stored notification count:',
-        this.notificationCount
+        this.notificationCount,
       );
     } else {
       // If no stored count, fall back to API call
@@ -226,7 +226,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
 
     console.log(
       '📬 Header: Loaded notification count from storage:',
-      this.notificationCount
+      this.notificationCount,
     );
 
     // If count is 0 or not set, and we're authenticated, try to load from API
@@ -256,13 +256,13 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
       // Try again after a delay in case user data isn't fully loaded yet
       setTimeout(() => {
         const retryUserData = JSON.parse(
-          localStorage.getItem('user_data') || '{}'
+          localStorage.getItem('user_data') || '{}',
         );
         const retryReceiverId = this.extractUniqueId(retryUserData);
         if (retryReceiverId) {
           console.log(
             '🔄 Retrying notification API call with receiverId:',
-            retryReceiverId
+            retryReceiverId,
           );
           this.makeNotificationAPIcall(retryReceiverId);
         } else {
@@ -312,12 +312,12 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
         // Store the count for future use
         localStorage.setItem(
           'notification_count',
-          this.notificationCount.toString()
+          this.notificationCount.toString(),
         );
 
         console.log(
           '✅ Notification count updated from API:',
-          this.notificationCount
+          this.notificationCount,
         );
       },
       error: (err) => {
@@ -333,7 +333,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
         const newCount = parseInt(event.newValue || '0', 10);
         console.log(
           '🔄 Storage event: notification count updated to',
-          newCount
+          newCount,
         );
         this.notificationCount = newCount;
       }
@@ -441,12 +441,12 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
   }
 
   openMenu() {
-    this.menuCtrl.enable(true, 'scouter-menu');
-    this.menuCtrl.open('scouter-menu');
+    this.menuCtrl.enable(true, 'wallet-menu');
+    this.menuCtrl.open('wallet-menu');
   }
 
   async closeMenu() {
-    await this.menuCtrl.close('scouter-menu');
+    await this.menuCtrl.close('wallet-menu');
   }
 
   ngOnDestroy() {

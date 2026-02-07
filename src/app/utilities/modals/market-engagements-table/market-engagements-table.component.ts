@@ -37,8 +37,8 @@ export class MarketEngagementsTableComponent implements OnInit {
     private authService: AuthService,
     private modalCtrl: ModalController,
     private route: ActivatedRoute,
-    private router: Router
-  ) { }
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.loadMarketEngagements();
@@ -50,6 +50,36 @@ export class MarketEngagementsTableComponent implements OnInit {
       this.currentRouteTalentId = params.get('id');
       console.log('Current route talent ID:', this.currentRouteTalentId);
     });
+  }
+
+  private checkIfTalentHasBeenRated(hire: any): boolean {
+    // Check if scouter has already submitted a rating for this talent
+    const hasRating = hire.yourRating && hire.yourRating > 0;
+    const hasComment = hire.yourComment && hire.yourComment.trim() !== '';
+
+    // Also check the satisFactoryCommentByScouter field
+    let hasAPIComment = false;
+    if (hire.satisFactoryCommentByScouter) {
+      try {
+        const comment = JSON.parse(hire.satisFactoryCommentByScouter);
+        hasAPIComment = comment.rating > 0 || comment.remark?.trim() !== '';
+      } catch (e) {
+        // If it's not JSON, check if it's a non-empty string
+        hasAPIComment = hire.satisFactoryCommentByScouter.trim() !== '';
+      }
+    }
+
+    const hasBeenRated = hasRating || hasComment || hasAPIComment;
+
+    console.log('Table: Checking if talent has been rated:', {
+      hireName: hire.name,
+      hasRating,
+      hasComment,
+      hasAPIComment,
+      hasBeenRated,
+    });
+
+    return hasBeenRated;
   }
 
   loadMarketEngagements() {
@@ -98,7 +128,7 @@ export class MarketEngagementsTableComponent implements OnInit {
           this.loadMockData();
           this.toastService.openSnackBar(
             'Using demo data. Please check your connection.',
-            'warning'
+            'warning',
           );
         },
       });
@@ -145,7 +175,7 @@ export class MarketEngagementsTableComponent implements OnInit {
       this.hireSelected.emit(hire);
 
       console.log(
-        `Opening modal for ${hire.name}, Status: ${hire.offerStatus}`
+        `Opening modal for ${hire.name}, Status: ${hire.offerStatus}`,
       );
 
       // ✅ ADD TOAST FOR AWAITING ACCEPTANCE STATUS
@@ -154,21 +184,42 @@ export class MarketEngagementsTableComponent implements OnInit {
           `Offer is awaiting acceptance from ${hire.name}. Check back later for updates.`,
           'warning',
         );
-
         return;
       }
 
-      // Check if we're already on the detail page
-      const isOnDetailPage = this.router.url.includes('market-engagement-market-price-preparation');
-      const currentRouteTalentId = this.route.parent?.snapshot.paramMap.get('id');
+      // ✅ ADD TOAST FOR ALREADY RATED TALENTS
+      if (hire.offerStatus === 'Offer Accepted') {
+        const hasBeenRated = this.checkIfTalentHasBeenRated(hire);
 
-      if (isOnDetailPage && (currentRouteTalentId === hire.id || currentRouteTalentId === hire.talentId)) {
+        if (hasBeenRated) {
+          this.toastService.openSnackBar(
+            `You have already rated ${hire.name}. You cannot evaluate them again.`,
+            'warning',
+          );
+          return;
+        }
+      }
+
+      // Check if we're already on the detail page
+      const isOnDetailPage = this.router.url.includes(
+        'market-engagement-market-price-preparation',
+      );
+      const currentRouteTalentId =
+        this.route.parent?.snapshot.paramMap.get('id');
+
+      if (
+        isOnDetailPage &&
+        (currentRouteTalentId === hire.id ||
+          currentRouteTalentId === hire.talentId)
+      ) {
         // We're on the same talent's detail page
         console.log('✅ Already on same talent page, updating view');
 
         // DON'T open modals here - let the detail page handle it
         // The detail page will open modals based on the hire status
-        console.log(`ℹ️ Not opening modal in table - detail page will handle it`);
+        console.log(
+          `ℹ️ Not opening modal in table - detail page will handle it`,
+        );
       } else {
         // Navigate to talent detail page with state to open modal
         const navigationExtras: NavigationExtras = {
@@ -179,10 +230,12 @@ export class MarketEngagementsTableComponent implements OnInit {
           },
         };
 
-        console.log(`🚀 Navigating to detail page with modal type: ${this.getModalTypeForHire(hire)}`);
+        console.log(
+          `🚀 Navigating to detail page with modal type: ${this.getModalTypeForHire(hire)}`,
+        );
         this.router.navigate(
           ['/scouter/market-engagement-market-price-preparation', hire.id],
-          navigationExtras
+          navigationExtras,
         );
       }
     } finally {
@@ -213,7 +266,7 @@ export class MarketEngagementsTableComponent implements OnInit {
       this.isReconsiderOfferModalOpen = true;
       console.log(
         'Offer form modal should now be open:',
-        this.isReconsiderOfferModalOpen
+        this.isReconsiderOfferModalOpen,
       );
     }, 50);
   }
@@ -265,7 +318,7 @@ export class MarketEngagementsTableComponent implements OnInit {
     // Show success message
     this.toastService.openSnackBar(
       `Revised offer sent to ${offerData.talentName}. Status updated to "Awaiting Acceptance".`,
-      'success'
+      'success',
     );
 
     // ✅ CALL API with updated payload
@@ -299,7 +352,7 @@ export class MarketEngagementsTableComponent implements OnInit {
       });
       this.toastService.openSnackBar(
         'Cannot reconsider offer: Missing required data. Please refresh and try again.',
-        'error'
+        'error',
       );
       return;
     }
@@ -325,14 +378,14 @@ export class MarketEngagementsTableComponent implements OnInit {
           console.log('✅ Offer reconsidered successfully:', response);
           this.toastService.openSnackBar(
             'Offer reconsidered successfully!',
-            'success'
+            'success',
           );
         },
         error: (error) => {
           console.error('❌ Failed to reconsider offer:', error);
           this.toastService.openSnackBar(
             error?.error?.message || 'Failed to reconsider offer',
-            'error'
+            'error',
           );
         },
       });
@@ -360,14 +413,13 @@ export class MarketEngagementsTableComponent implements OnInit {
 
   private checkForRejectedOfferOnDataLoad() {
     const rejectedHires = this.hires.filter(
-      (h) => h.offerStatus === 'Offer Rejected'
+      (h) => h.offerStatus === 'Offer Rejected',
     );
 
     if (rejectedHires.length > 0) {
       console.log('Found rejected offers:', rejectedHires);
     }
   }
-
 
   closeModal() {
     this.selectedHire = null;

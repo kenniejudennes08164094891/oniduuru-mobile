@@ -89,7 +89,7 @@ export interface MockPayment {
   date: string;
   startDate: string;
   amount: number;
-  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected';
+  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' | 'Offers Accepted' | 'Offers Declined'; // Add the new values
   status: 'Active' | 'Pending' | 'Away';
   jobDescription?: string;
   yourComment?: string;

@@ -89,20 +89,48 @@ export class EndpointService {
     paginationParams: PaginationParams = { limit: 10, pageNo: 1 },
     statusParams: string = '',
     scouterId: string = '',
+    searchText: string = '',
   ): Observable<any> {
     const encodedTalentId = encodeURIComponent(talentId);
     const url = `${environment.baseUrl}/${endpoints.getMarketsByTalentId}/${encodedTalentId}`;
 
-    const params = new HttpParams()
-      .set('statusParams', statusParams?.trim() ?? '')
-      .set('scouterId', scouterId?.trim() ?? '')
+    let params = new HttpParams()
       .set('limit', String(paginationParams.limit ?? 10))
       .set('pageNo', String(paginationParams.pageNo ?? 1));
 
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
-      params,
+    // Add optional parameters only if they have values
+    if (statusParams?.trim()) {
+      params = params.set('statusParams', statusParams.trim());
+    }
+
+    if (scouterId?.trim()) {
+      params = params.set('scouterId', scouterId.trim());
+    }
+
+    if (searchText?.trim()) {
+      params = params.set('searchText', searchText.trim());
+    }
+
+    console.log('🔍 Fetching market records:', {
+      url,
+      params: params.toString(),
+      talentId,
     });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📊 Market records response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Error fetching market records:', error);
+          return throwError(() => error);
+        }),
+      );
   }
 
   // ✅ Profile Picture APIs

@@ -1,29 +1,34 @@
 <ion-header>
-  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+  <app-talent-header
+    [class.header-hidden]="headerHidden"
+    [class.header-visible]="!headerHidden"
+  >
   </app-talent-header>
+</ion-header>
 
-  <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
-    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
-    <!-- Dark overlay -->
-    <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+<ion-content class="ion-padding" *ngIf="hire">
+  <div>
+    <!-- Top Section -->
+    <div
+      class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+      style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+      <!-- Dark overlay -->
+      <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
 
-    <!-- Content on top -->
-    <div class="relative z-10 text-white">
-      <div class="flex items-start gap-3">
-        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
-        <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight">Hi {{ userName }}</span>
-          <p class="text-gray-200 text-lg leading-relaxed">
-            View your hires with scouters stated above
-          </p>
+      <!-- Content on top -->
+      <div class="relative z-10 text-white">
+        <div class="flex items-start gap-3">
+          <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" class="w-12 h-12 object-contain" />
+          <div>
+            <span class="font-medium text-[24px] leading-tight">{{ userName }}</span>
+            <p class="text-gray-200 text-lg leading-relaxed">
+              View your hires with {{ getScouterDisplayName() }}
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</ion-header>
-
-
-<ion-content class="ion-padding" *ngIf="hire">
 
   <h3 class="pb-3 text-[#000000] text-[16px] font-semibold">
     Market Price Preposition:
@@ -33,24 +38,39 @@
   <div class="bg-[#CDD5DF] rounded-lg shadow px-3 py-5 space-y-3">
     <p class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <span> <strong>Job Description:</strong> {{ hire.jobDescription }} </span>
-    </p>
-
-    <p class="flex items-center gap-2">
-      <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
       <span>
-        <strong>Amount to Pay:</strong> {{ hire.amount | currency : "₦ " }}
+        <strong>Job Description:</strong>
+        {{ hire.jobDescription || hire.originalData?.jobDescription }}
       </span>
     </p>
 
     <p class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <span> <strong>Date of Hire:</strong> {{ hire.date }} </span>
+      <span>
+        <strong>Amount to Pay:</strong>
+        {{ (hire.amount || hire.amountToPay || 0) | currency : "₦ " }}
+      </span>
     </p>
 
     <p class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <span> <strong>Your own comment:</strong> {{ hire.yourComment }} </span>
+      <span>
+        <strong>Date of Hire:</strong>
+        {{ getFormattedDateTime(hire.date || hire.dateOfHire)?.date || (hire.date || hire.dateOfHire) }}
+      </span>
+    </p>
+
+    <p class="flex items-center gap-2">
+      <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+      <span>
+        <strong>Your Comment:</strong>
+        <span *ngIf="getTalentComment(); else noTalentComment">
+          {{ getTalentComment() }}
+        </span>
+        <ng-template #noTalentComment>
+          <span class="text-gray-500 italic">No comment added yet</span>
+        </ng-template>
+      </span>
     </p>
 
     <!-- Rating -->
@@ -58,8 +78,13 @@
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
       <strong>Your Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon name="star" (click)="setRating(star)" [class.text-yellow-500]="star <= hire.yourRating"
-          [class.text-gray-400]="star > hire.yourRating" class="cursor-pointer text-2xl"></ion-icon>
+        <ion-icon
+          name="star"
+          [class.text-yellow-500]="star <= getTalentRating()"
+          [class.text-gray-400]="star > getTalentRating()"
+          class="text-2xl"
+        >
+        </ion-icon>
       </ng-container>
     </div>
   </div>
@@ -70,61 +95,81 @@
       <span class="flex gap-1">
         <strong>Hire Status:</strong>
         <span class="inline-flex items-center gap-2">
-          <span class="inline-block h-3 w-3 rounded-full"
-            [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus) }"></span>
-          {{ hire.offerStatus }}
+          <span
+            class="inline-block h-3 w-3 rounded-full"
+            [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus || hire.hireStatus || hire.status) }"
+          >
+          </span>
+          {{ formatHireStatus(hire.offerStatus || hire.hireStatus || hire.status) }}
         </span>
       </span>
     </p>
 
     <p class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <span> <strong>Talent’s Email:</strong> {{ hire.email }} </span>
-    </p>
-
-    <p class="flex items-center gap-2">
-      <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <span> <strong>Start Date:</strong> {{ hire.startDate }} </span>
+      <span>
+        <strong>Scouter's Email:</strong>
+        {{ hire.email || hire.scouterEmail }}
+      </span>
     </p>
 
     <p class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
       <span>
-        <strong>Comment by Talent:</strong> {{ hire.talentComment }}
+        <strong>Start Date:</strong>
+        {{ hire.startDate }}
       </span>
     </p>
 
-    <!-- Talent Rating -->
+    <p class="flex items-center gap-2">
+      <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
+      <span>
+        <strong>Scouter's Comment:</strong>
+        <span *ngIf="getScouterComment(); else noScouterComment">
+          {{ getScouterComment() }}
+        </span>
+        <ng-template #noScouterComment>
+          <span class="text-gray-500 italic">No comment from scouter yet</span>
+        </ng-template>
+      </span>
+    </p>
+
+    <!-- Scouter Rating Display -->
     <div class="flex items-center gap-2">
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
-      <strong>Talent Rating:</strong>
+      <strong>Scouter's Rating:</strong>
       <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
-        <ion-icon name="star" [class.text-yellow-500]="star <= hire.talentRating"
-          [class.text-gray-400]="star < hire.talentRating" class="text-2xl"></ion-icon>
+        <ion-icon
+          name="star"
+          [class.text-yellow-500]="star <= getScouterRating()"
+          [class.text-gray-400]="star > getScouterRating()"
+          class="text-2xl"
+        >
+        </ion-icon>
       </ng-container>
     </div>
   </div>
+
   <div class="flex border-b border-gray-300 mb-4 mt-6">
     <!-- Engagements -->
-    <button class="flex-1 py-5 text-center font-medium text-sm transition relative" routerLink="engagements"
+    <button
+      class="flex-1 py-5 text-center font-medium text-sm transition relative"
+      routerLink="engagements"
       routerLinkActive="text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
-      [routerLinkActiveOptions]="{ exact: true }">
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
       All Market Engagements
     </button>
 
     <!-- Stats -->
-    <button class="flex-1 py-5 text-center font-medium text-sm transition relative" routerLink="stats"
-      routerLinkActive="text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black">
+    <button
+      class="flex-1 py-5 text-center font-medium text-sm transition relative"
+      routerLink="stats"
+      routerLinkActive="text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
+    >
       All Market Stats
     </button>
   </div>
 
-
   <router-outlet></router-outlet>
-
-  <!-- <div *ngIf="activeTab === 'stats'">
-  <app-market-stats></app-market-stats>
-</div> -->
-
- 
 </ion-content>

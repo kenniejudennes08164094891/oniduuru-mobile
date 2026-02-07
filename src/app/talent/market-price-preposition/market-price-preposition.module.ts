@@ -11,7 +11,7 @@ import { UtilitiesPageModule } from '../../utilities/utilities.module';
 import { StatsComponent } from './stats/stats.component';
 import { EngagementsComponent } from './engagements/engagements.component';
 import { NgChartsModule } from 'ng2-charts';
-
+// import { TalentHeaderComponent } from '../../talent/talent-header/talent-header.component';
 
 @NgModule({
   imports: [
@@ -19,14 +19,16 @@ import { NgChartsModule } from 'ng2-charts';
     FormsModule,
     IonicModule,
     MarketPricePrepositionPageRoutingModule,
-    SharedModule  ,
+    SharedModule,
     UtilitiesPageModule,
     NgChartsModule,
-    EvaluationPageModule
+    EvaluationPageModule,
   ],
   declarations: [
-    MarketPricePrepositionPage, StatsComponent, EngagementsComponent
-  ]
-
+    MarketPricePrepositionPage,
+    StatsComponent,
+    EngagementsComponent,
+    // TalentHeaderComponent,
+  ],
 })
 export class MarketPricePrepositionPageModule {}

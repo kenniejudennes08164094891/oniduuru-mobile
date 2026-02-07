@@ -13,7 +13,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { UserService } from 'src/app/services/user.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router'; // Add ActivatedRoute
 import { ToastsService } from 'src/app/services/toasts.service';
 import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisibilitySharedState.service';
 
@@ -34,6 +34,9 @@ export class WalletPageComponent implements OnInit, OnDestroy {
   walletBalance: number = 0;
   accountNumber: string = 'Loading...';
   balanceHidden: boolean = false;
+
+  currentRole: string = 'scouter'; // Default to scouter
+  isTalent: boolean = false;
 
   // Wallet stats data from API
   walletStats: any = null;
@@ -91,10 +94,21 @@ export class WalletPageComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private userService: UserService,
     private router: Router,
+    private route: ActivatedRoute, // Add ActivatedRoute
     private toggleVisibilityService: ToggleVisibilitySharedStateService,
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // Get the role from route data
+    this.currentRole = this.route.snapshot.data['role'] || 'scouter';
+    console.log(`🏦 Wallet Profile - Role: ${this.currentRole}`);
+
+    this.isTalent = this.currentRole === 'talent';
+
+    console.log(
+      `💰 Wallet Page - Role: ${this.currentRole}, Is Talent: ${this.isTalent}`,
+    );
+
     // Initialize balance visibility state
     await this.initializeBalanceVisibility();
 
@@ -108,6 +122,11 @@ export class WalletPageComponent implements OnInit, OnDestroy {
 
   async ngAfterViewInit(): Promise<void> {
     // Wallet details are now fetched in fetchAllData()
+  }
+
+  get isWalletPage(): boolean {
+    const currentUrl = this.router.url;
+    return currentUrl.includes('/wallet-page');
   }
 
   async fetchAllData(): Promise<void> {
@@ -574,10 +593,11 @@ export class WalletPageComponent implements OnInit, OnDestroy {
       this.walletError = false;
       this.walletNotFound = false;
 
-      const { walletId, uniqueId } = this.getUserIdentifiers();
+      const { walletId, uniqueId, role } = this.getUserIdentifiers();
 
+      // Remove the role parameter - use only 2 arguments
       const walletSubscription = this.endpointService
-        .fetchMyWallet(walletId, uniqueId)
+        .fetchMyWallet(walletId, uniqueId) // Removed the role parameter
         .subscribe({
           next: (res: any) => {
             this.handleWalletResponse(res);
@@ -603,6 +623,7 @@ export class WalletPageComponent implements OnInit, OnDestroy {
   private getUserIdentifiers(): {
     walletId: string | null;
     uniqueId: string | null;
+    role: string;
   } {
     const currentUser = this.authService.getCurrentUser();
     const userProfile = this.userService.getProfileData();
@@ -619,18 +640,33 @@ export class WalletPageComponent implements OnInit, OnDestroy {
       userData?.walletAccountNumber ||
       userData?.user?.walletId;
 
-    // Extract uniqueId (scouterId or talentId) from various possible locations
-    const uniqueId =
-      userData?.uniqueId ||
-      userData?.id ||
-      userData?.userId ||
-      userData?.scouterId ||
-      userData?.talentId ||
-      userData?.user?.uniqueId ||
-      userData?.user?.id;
+    // Extract uniqueId based on role
+    let uniqueId = '';
+    if (this.isTalent) {
+      uniqueId =
+        userData?.talentId ||
+        userData?.uniqueId ||
+        userData?.id ||
+        userData?.userId ||
+        userData?.user?.uniqueId ||
+        userData?.user?.id;
+    } else {
+      uniqueId =
+        userData?.scouterId ||
+        userData?.uniqueId ||
+        userData?.id ||
+        userData?.userId ||
+        userData?.user?.uniqueId ||
+        userData?.user?.id;
+    }
 
-    console.log('User identifiers:', { walletId, uniqueId, userData });
-    return { walletId, uniqueId };
+    console.log('User identifiers:', {
+      walletId,
+      uniqueId,
+      role: this.currentRole,
+      isTalent: this.isTalent,
+    });
+    return { walletId, uniqueId, role: this.currentRole };
   }
 
   /**
@@ -703,7 +739,11 @@ export class WalletPageComponent implements OnInit, OnDestroy {
    * Navigate to wallet profile creation
    */
   navigateToWalletProfile(): void {
-    this.router.navigate(['/scouter/wallet-page/wallet-profile']);
+    if (this.isTalent) {
+      this.router.navigate(['/talent/wallet-page/wallet-profile']);
+    } else {
+      this.router.navigate(['/scouter/wallet-page/wallet-profile']);
+    }
   }
 
   copyAccountNumber() {

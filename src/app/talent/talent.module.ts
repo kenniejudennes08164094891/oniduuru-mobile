@@ -13,10 +13,15 @@ import { SharedModule } from '../shared/shared.module';
 import { AvatarSettingsPopoverComponent } from '../shared/modals/avatar-settings-popover/avatar-settings-popover.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
-import { LucideAngularModule, Pencil } from 'lucide-angular'
+import { LucideAngularModule, Pencil } from 'lucide-angular';
 
 @NgModule({
-  declarations: [TalentPage,TalentDashboardComponent,ProfilePageComponent,AvatarSettingsPopoverComponent ],
+  declarations: [
+    TalentPage,
+    TalentDashboardComponent,
+    ProfilePageComponent,
+    AvatarSettingsPopoverComponent,
+  ],
   imports: [
     CommonModule,
     FormsModule,
@@ -27,10 +32,10 @@ import { LucideAngularModule, Pencil } from 'lucide-angular'
     SharedModule,
     ReactiveFormsModule,
     ToastrModule,
-    LucideAngularModule.pick({ Pencil })
-  ],exports: [
-    TalentHeaderComponent,
-    AvatarSettingsPopoverComponent  // optional: if you want to reuse elsewhere
-  ]
+    LucideAngularModule.pick({ Pencil }),
+  ],
+  exports: [
+    AvatarSettingsPopoverComponent,
+  ],
 })
 export class TalentPageModule {}

@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 import { MenuController, Platform } from '@ionic/angular';
@@ -18,9 +24,10 @@ import { WalletEventsService } from './services/wallet-events.service';
 export class AppComponent implements OnInit, OnDestroy {
   @ViewChild('appRoot') appRoot!: ElementRef;
 
-
   hasWalletProfile = false;
   private subscriptions = new Subscription();
+
+  currentUserRole: string = '';
 
   constructor(
     private menuCtrl: MenuController,
@@ -30,8 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private appInitService: AppInitService,
     private endpointService: EndpointService, // Inject endpoint service
-    private walletEvents: WalletEventsService
-
+    private walletEvents: WalletEventsService,
   ) {
     document.body.classList.remove('dark');
   }
@@ -51,8 +57,6 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
-
-
     // Watch for route changes to update menu visibility
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
@@ -63,6 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
+    this.getUserRole();
 
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
@@ -83,8 +88,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     (window as any).appComponentRef = this;
 
-
-
     // Listen for wallet profile events
     this.walletEvents.walletProfileCreated$.subscribe(() => {
       console.log('🎯 Received wallet profile created event');
@@ -95,6 +98,28 @@ export class AppComponent implements OnInit, OnDestroy {
     this.checkWalletProfileSimplified();
   }
 
+  ngAfterViewInit() {
+    // Set role attribute on menu for CSS targeting
+    const menu = document.querySelector('ion-menu[menuId="wallet-menu"]');
+    if (menu && this.currentUserRole) {
+      menu.setAttribute('data-role', this.currentUserRole);
+    }
+  }
+
+  // Helper method to get user role
+  private getUserRole(): void {
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        this.currentUserRole = user.role || user.details?.user?.role || '';
+        console.log('👤 Current user role:', this.currentUserRole);
+      } catch (e) {
+        console.warn('Error getting user role:', e);
+        this.currentUserRole = '';
+      }
+    }
+  }
 
   /**
    * SIMPLIFIED: Check if wallet profile exists based on localStorage flag
@@ -103,7 +128,8 @@ export class AppComponent implements OnInit, OnDestroy {
     console.log('🔍 Checking wallet profile...');
 
     // FIRST: Check localStorage flag
-    const walletProfileCreated = localStorage.getItem('walletProfileCreated') === 'true';
+    const walletProfileCreated =
+      localStorage.getItem('walletProfileCreated') === 'true';
 
     if (walletProfileCreated) {
       console.log('✅ Found walletProfileCreated in localStorage');
@@ -112,7 +138,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     // Check if hasWalletProfile is set in localStorage
-    const hasWalletProfileLocal = localStorage.getItem('hasWalletProfile') === 'true';
+    const hasWalletProfileLocal =
+      localStorage.getItem('hasWalletProfile') === 'true';
     if (hasWalletProfileLocal) {
       console.log('✅ Found hasWalletProfile in localStorage');
       this.hasWalletProfile = true;
@@ -140,7 +167,9 @@ export class AppComponent implements OnInit, OnDestroy {
             console.log('🔍 Parsed completeOnboarding:', onboardingData);
 
             if (onboardingData.hasWalletProfile === true) {
-              console.log('✅ Found hasWalletProfile inside completeOnboarding');
+              console.log(
+                '✅ Found hasWalletProfile inside completeOnboarding',
+              );
               this.hasWalletProfile = true;
 
               // Store for future quick access
@@ -170,8 +199,8 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   /**
-    * Enhanced API check with better logging
-    */
+   * Enhanced API check with better logging
+   */
   private checkWalletProfileViaAPI(): void {
     const userData = localStorage.getItem('user_data');
     if (!userData) {
@@ -191,7 +220,8 @@ export class AppComponent implements OnInit, OnDestroy {
             console.log('🔍 Wallet API response:', response);
 
             // Simple check: does response contain wallet data?
-            const hasWallet = response &&
+            const hasWallet =
+              response &&
               !response.walletNotFound &&
               response.data !== undefined;
 
@@ -225,7 +255,7 @@ export class AppComponent implements OnInit, OnDestroy {
           error: (error) => {
             console.error('❌ API check error:', error);
             this.hasWalletProfile = false;
-          }
+          },
         });
       } else {
         console.warn('❌ No uniqueId found for API check');
@@ -241,63 +271,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
 
     (window as any).appComponentRef = null;
-
   }
-
-
-  // public notifyWalletProfileCreated(): void {
-  //   console.log('🔄 notifyWalletProfileCreated called');
-
-  //   const userData = localStorage.getItem('user_data');
-  //   if (userData) {
-  //     try {
-  //       const user = JSON.parse(userData);
-  //       const uniqueId = user.uniqueId || user.id;
-  //       console.log('📝 User uniqueId:', uniqueId);
-
-  //       if (uniqueId) {
-  //         // Clear cache to force re-fetch
-  //         localStorage.removeItem(`wallet_${uniqueId}`);
-  //         console.log('🧹 Cleared wallet cache for:', uniqueId);
-
-  //         // Manually set hasWalletProfile to true
-  //         this.hasWalletProfile = true;
-  //         console.log('✅ Set hasWalletProfile to:', this.hasWalletProfile);
-
-  //         // Also update user data if needed
-  //         user.hasWalletProfile = true;
-  //         localStorage.setItem('user_data', JSON.stringify(user));
-  //         console.log('💾 Updated user_data with hasWalletProfile: true');
-
-  //         // Trigger change detection
-  //         this.forceMenuRerender();
-  //       }
-  //     } catch (e) {
-  //       console.warn('❌ Error notifying wallet profile creation:', e);
-  //     }
-  //   }
-  // }
-
-  // Add this new method to force menu re-render
-  // private forceMenuRerender(): void {
-  //   console.log('🔄 Forcing menu re-render');
-
-  //   // Close and reopen menu to trigger re-render
-  //   setTimeout(async () => {
-  //     const isOpen = await this.menuCtrl.isOpen('scouter-menu');
-  //     if (isOpen) {
-  //       await this.menuCtrl.close('scouter-menu');
-  //       setTimeout(async () => {
-  //         if (this.showWalletMenu()) {
-  //           await this.menuCtrl.open('scouter-menu');
-  //         }
-  //       }, 100);
-  //     }
-  //   }, 500);
-  // }
-
-
-
 
   /**
    * Check if user has a wallet profile
@@ -325,7 +299,8 @@ export class AppComponent implements OnInit, OnDestroy {
           this.endpointService.fetchMyWallet(null, uniqueId).subscribe({
             next: (response) => {
               // Check if wallet exists
-              const hasWallet = !response.walletNotFound &&
+              const hasWallet =
+                !response.walletNotFound &&
                 response.data &&
                 !response.message?.includes('not created');
 
@@ -340,8 +315,8 @@ export class AppComponent implements OnInit, OnDestroy {
             error: (error) => {
               console.error('Error checking wallet profile:', error);
               this.hasWalletProfile = false;
-            }
-          })
+            },
+          }),
         );
       }
     } catch (e) {
@@ -369,10 +344,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-
-
   async navigateAndCloseMenu(route: string) {
-    await this.menuCtrl.close('scouter-menu');
+    await this.menuCtrl.close('wallet-menu');
 
     if (route === '/scouter/dashboard') {
       if (!this.authService.validateStoredToken()) {
@@ -410,34 +383,86 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-
   showWalletMenu(): boolean {
     const currentUrl = this.router.url;
 
-    // Only show wallet menu on these routes
-    const walletRoutes = [
-      '/scouter/wallet-page',
-      '/scouter/wallet-page/wallet-profile',
-      '/scouter/wallet-page/fund-wallet',
-      '/scouter/wallet-page/withdraw-funds',
-      '/scouter/wallet-page/fund-transfer'
-    ];
+    // Check if current URL is a wallet route for any role
+    const walletRoutePatterns = ['/scouter/wallet-page', '/talent/wallet-page'];
 
-    // Also check if user is authenticated and is a scouter
+    const isWalletRoute = walletRoutePatterns.some((pattern) =>
+      currentUrl.startsWith(pattern),
+    );
+
     const isAuthenticated = this.authService.validateStoredToken();
     if (!isAuthenticated) return false;
+
+    // Only show if user has a valid role and is on a wallet route
+    return isWalletRoute && !!this.currentUserRole;
+  }
+
+  // Dynamic navigation method
+  async navigateToWallet(page: string) {
+    await this.menuCtrl.close('wallet-menu');
+
+    // Build route based on user role
+    let baseRoute = '';
+    switch (this.currentUserRole) {
+      case 'scouter':
+        baseRoute = '/scouter/wallet-page';
+        break;
+      case 'talent':
+        baseRoute = '/talent/wallet-page';
+        break;
+      default:
+        console.warn('Unknown role for wallet navigation');
+        return;
+    }
+
+    // Map page to specific route
+    const pageRoutes: { [key: string]: string } = {
+      dashboard: baseRoute,
+      profile: `${baseRoute}/wallet-profile`,
+      fund: `${baseRoute}/fund-wallet`,
+      withdraw: `${baseRoute}/withdraw-funds`,
+      transfer: `${baseRoute}/fund-transfer`,
+    };
+
+    const route = pageRoutes[page] || baseRoute;
+    await this.router.navigate([route]);
+  }
+
+  async navigateToDashboard() {
+    await this.menuCtrl.close('wallet-menu');
+
+    if (!this.authService.validateStoredToken()) {
+      await this.router.navigate(['/auth/login']);
+      return;
+    }
 
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const user = JSON.parse(userData);
         const role = user.role || user.details?.user?.role;
-        if (role !== 'scouter') return false;
-      } catch {
-        return false;
-      }
-    }
 
-    return walletRoutes.some(route => currentUrl.startsWith(route));
+        switch (role) {
+          case 'scouter':
+            await this.router.navigate(['/scouter/dashboard']);
+            break;
+          case 'talent':
+            await this.router.navigate(['/talent/dashboard']);
+            break;
+          case 'admin':
+            await this.router.navigate(['/admin/dashboard']);
+            break;
+          default:
+            await this.router.navigate(['/auth/login']);
+        }
+      } catch {
+        await this.router.navigate(['/auth/login']);
+      }
+    } else {
+      await this.router.navigate(['/auth/login']);
+    }
   }
 }

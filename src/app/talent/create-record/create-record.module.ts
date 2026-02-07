@@ -9,6 +9,11 @@ import { CreateRecordPageRoutingModule } from './create-record-routing.module';
 import { CreateRecordPage } from './create-record.page';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { LucideAngularModule, Pencil } from 'lucide-angular';
+// import { TalentHeaderComponent } from '../../talent/talent-header/talent-header.component';
+
+
+
+
 @NgModule({
   imports: [
     CommonModule,
@@ -16,8 +21,11 @@ import { LucideAngularModule, Pencil } from 'lucide-angular';
     IonicModule,
     CreateRecordPageRoutingModule,
     SharedModule,
-   LucideAngularModule.pick({ Pencil })
+   LucideAngularModule.pick({ Pencil }),
+   
   ],
-  declarations: [CreateRecordPage]
+  declarations: [CreateRecordPage, 
+    // TalentHeaderComponent
+  ]
 })
 export class CreateRecordPageModule {}

@@ -1,10 +1,18 @@
+<!-- talent-header.component.html -->
 <ion-header class="bg-[#EEF0F6] shadow-sm transition-transform duration-300" [class.-translate-y-full]="headerHidden"
   [class.translate-y-0]="!headerHidden">
   <div class="w-full flex justify-between items-center px-4 py-2">
-    <!-- App Logo / Title -->
-    <button class="text-2xl font-semibold text-[#101828]">
-      ∯ Oniduuru
-    </button>
+    <!-- App Logo/Title with conditional menu button -->
+    <div class="flex items-center gap-3">
+      <!-- Hamburger menu button for wallet pages -->
+      <button *ngIf="isWalletPage" (click)="openMenu()" class="mr-2">
+        <ion-icon name="menu-outline" class="text-2xl text-[#101828]"></ion-icon>
+      </button>
+      
+      <button class="text-2xl font-semibold text-[#101828]">
+        ∯ Oniduuru
+      </button>
+    </div>
 
     <div class="flex items-center gap-4 relative">
       <!-- Notification Icon with Badge -->
@@ -19,18 +27,15 @@
       </button>
 
       <!-- Profile Avatar with Status Dot -->
-      <!-- Profile Avatar -->
       <button class="relative hover:cursor-pointer" (click)="openSettingsPopover($event)" aria-label="Profile Settings">
         <div class="border border-black rounded-full p-0.5">
           <div class="border border-white rounded-full">
             <img class="rounded-full w-10 h-10" [src]="images.ProfileIcon" alt="Profile" />
           </div>
         </div>
-
         <!-- Status Dot -->
         <span class="absolute top-1.5 right-1.5 bg-green-500 h-2 w-2 rounded-full border border-white"></span>
       </button>
-
     </div>
   </div>
 </ion-header>

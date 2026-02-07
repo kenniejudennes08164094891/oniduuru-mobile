@@ -80,3 +80,28 @@
   animation: gentlePulse 1.8s ease-in-out infinite;
 }
 
+
+
+/* talent-dashboard.component.scss */
+.balance-toggle-btn {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Hide/show animation for balance */
+.balance-text {
+  transition: opacity 0.3s ease;
+}
+
+.hidden-balance {
+  filter: blur(4px);
+  user-select: none;
+}

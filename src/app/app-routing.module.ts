@@ -1,3 +1,4 @@
+// app-routing.module.ts - Updated version
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { ProfilePageComponent } from './scouter/profile-page/profile-page.component';
@@ -22,7 +23,6 @@ import { LoginGuard } from './guard/login.guard';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { ChatPageComponent } from './pages/chat-page/chat-page.component';
 
-
 const routes: Routes = [
   { path: '', redirectTo: 'welcome-page', pathMatch: 'full' },
 
@@ -43,11 +43,11 @@ const routes: Routes = [
     loadChildren: () =>
       import('./auth/auth.module').then((m) => m.AuthPageModule),
   },
- {
-  path: 'talent/onboarding',
-  loadComponent: () =>
-    import('./talent/onboarding/onboarding.page').then(m => m.OnboardingPage)
-},
+  {
+    path: 'talent/onboarding',
+    loadComponent: () =>
+      import('./talent/onboarding/onboarding.page').then(m => m.OnboardingPage)
+  },
   {
     path: 'scouter',
     loadChildren: () =>
@@ -91,35 +91,79 @@ const routes: Routes = [
   },
   { path: 'scouter/view-hires', component: ViewAllHiresPageComponent },
   { path: 'scouter/hire-talent', component: HireTalentPageComponent },
-  { path: 'scouter/wallet-page', component: WalletPageComponent },
-  {
-    path: 'scouter/market-engagement-market-price-preparation/:id',
-    component: MarketEngagementMarketPricePreparationComponent,
+  
+  // ========== SCOUTER WALLET ROUTES ==========
+  { 
+    path: 'scouter/wallet-page', 
+    component: WalletPageComponent,
+    data: { role: 'scouter' }
   },
-  {
-    path: 'scouter/wallet-page/wallet-profile',
+  { 
+    path: 'scouter/wallet-page/wallet-profile', 
     component: WalletProfileComponent,
+    data: { role: 'scouter' }
   },
-  { path: 'scouter/wallet-page/fund-wallet', component: FundWalletComponent },
+  { 
+    path: 'scouter/wallet-page/fund-wallet', 
+    component: FundWalletComponent,
+    data: { role: 'scouter' }
+  },
+  { 
+    path: 'scouter/wallet-page/withdraw-funds', 
+    component: WithdrawFundComponent,
+    data: { role: 'scouter' }
+  },
+  { 
+    path: 'scouter/wallet-page/fund-transfer', 
+    component: FundTransferComponent,
+    data: { role: 'scouter' }
+  },
+  
+  // ========== TALENT WALLET ROUTES ==========
+  { 
+    path: 'talent/wallet-page', 
+    component: WalletPageComponent,
+    data: { role: 'talent' }
+  },
+  { 
+    path: 'talent/wallet-page/wallet-profile', 
+    component: WalletProfileComponent,
+    data: { role: 'talent' }
+  },
+  { 
+    path: 'talent/wallet-page/fund-wallet', 
+    component: FundWalletComponent,
+    data: { role: 'talent' }
+  },
+  { 
+    path: 'talent/wallet-page/withdraw-funds', 
+    component: WithdrawFundComponent,
+    data: { role: 'talent' }
+  },
+  { 
+    path: 'talent/wallet-page/fund-transfer', 
+    component: FundTransferComponent,
+    data: { role: 'talent' }
+  },
+  
+  // ========== COMMON REQUEST ROUTES (shared between roles) ==========
   {
-    path: 'scouter/wallet-page/fund-wallet/fund-wallet-request/:id',
+    path: ':role/wallet-page/fund-wallet/fund-wallet-request/:id',
     component: FundWalletRequestPageComponent,
   },
   {
-    path: 'scouter/wallet-page/withdraw-funds',
-    component: WithdrawFundComponent,
-  },
-  {
-    path: 'scouter/wallet-page/withdraw-funds/withdraw-funds-request/:id',
+    path: ':role/wallet-page/withdraw-funds/withdraw-funds-request/:id',
     component: WithdrawFundsRequestPageComponent,
   },
   {
-    path: 'scouter/wallet-page/fund-transfer',
-    component: FundTransferComponent,
-  },
-  {
-    path: 'scouter/wallet-page/fund-transfer/fund-transfer-request/:id',
+    path: ':role/wallet-page/fund-transfer/fund-transfer-request/:id',
     component: TransferFundsRequestPageComponent,
+  },
+  
+  // ========== OTHER SCOUTER-SPECIFIC ROUTES ==========
+  {
+    path: 'scouter/market-engagement-market-price-preparation/:id',
+    component: MarketEngagementMarketPricePreparationComponent,
   },
   {
     path: 'scouter/hire-talent/welcome-to-oniduuru',
