@@ -128,7 +128,7 @@
             </div>
           </div>
 
-          <!-- Your existing organization section remains the same -->
+          <!-- Updated Organization Section in STEP 2 -->
           <div class="space-y-2">
             <label class="block text-gray-600 text-sm mb-2">
               Your Organization Type(s):
@@ -136,8 +136,7 @@
 
             <div class="relative">
               <div
-                class="w-full border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 shadow-sm min-h-[56px] flex flex-wrap items-center gap-2 cursor-text"
-                (click)="focusOrgInput()"
+                class="w-full border border-[#D9DCE5] rounded-md px-4 py-3 bg-[#F6F6F6] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 shadow-sm min-h-[56px] flex flex-wrap items-center gap-2"
               >
                 <!-- Selected Tags Inside Input -->
                 <span
@@ -154,21 +153,36 @@
                   </button>
                 </span>
 
-                <input
-                  #orgInput
-                  id="organisation"
-                  type="text"
-                  placeholder="Type and press Enter"
-                  [value]="orgTypeInput"
-                  (input)="onOrgInput($event)"
-                  (keydown.enter)="addOrgTypeFromInput($event)"
-                  class="flex-1 min-w-[120px] bg-transparent border-none outline-none placeholder-gray-400"
-                />
+                <!-- Input and Add Button Container -->
+                <div class="flex items-center gap-2 flex-1 min-w-[150px]">
+                  <input
+                    #orgInput
+                    id="organisation"
+                    type="text"
+                    placeholder="Type organization type"
+                    [value]="orgTypeInput"
+                    (input)="onOrgInput($event)"
+                    (keydown.enter)="addOrgTypeFromInput($event)"
+                    class="flex-1 bg-transparent border-none outline-none placeholder-gray-400 min-w-[120px]"
+                  />
+
+                  <!-- ADD BUTTON for mobile -->
+                  <button
+                    type="button"
+                    (click)="addOrgTypeFromInput($event)"
+                    class="bg-[#101828] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-[#202939] active:bg-[#364152] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    [disabled]="!orgTypeInput?.trim()"
+                    title="Add organization type"
+                  >
+                    <ion-icon name="add-outline" class="text-lg"></ion-icon>
+                    Add
+                  </button>
+                </div>
               </div>
             </div>
 
             <p class="text-xs text-gray-500 mt-1">
-              Type your organization type and press Enter to add
+              Type your organization type and press Enter or tap "Add" button
             </p>
 
             <!-- Enhanced validation message -->

@@ -1,6 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { addIcons } from 'ionicons';
-import { personCircle, star, business } from 'ionicons/icons';
+import { personCircle, star, business, addOutline } from 'ionicons/icons'; // Added addOutline
 import { Location } from '@angular/common';
 import {
   FormArray,
@@ -49,11 +55,12 @@ export class ScouterPage implements OnInit, OnDestroy {
   countdown = 0;
   timer: any;
 
+  @ViewChild('orgInput') orgInput!: ElementRef<HTMLInputElement>;
+
   // --- Organization input handling - UPDATED TO MATCH PROFILE PAGE ---
   orgTypeInput: string = '';
   selectedOrgTypes: string[] = []; // Changed from single string to array
 
-  // Add this method to handle input events
   onOrgInput(event: Event) {
     const inputElement = event.target as HTMLInputElement;
     if (inputElement) {
@@ -61,30 +68,57 @@ export class ScouterPage implements OnInit, OnDestroy {
     }
   }
 
-  // Update the organization handling methods
-  addOrgTypeFromInput(event: Event) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const newType = this.orgTypeInput.trim();
-    if (newType && !this.selectedOrgTypes.includes(newType)) {
-      this.selectedOrgTypes.push(newType);
-      this.updateOrganisationFormControl();
+  addOrgTypeFromInput(event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
 
+    const newType = this.orgTypeInput.trim();
+
+    // Validate input
+    if (!newType) {
+      return;
+    }
+
+    // Check for duplicates
+    if (this.selectedOrgTypes.includes(newType)) {
+      this.toast.openSnackBar(`"${newType}" is already added`, 'warning');
+      return;
+    }
+
+    // Add the new organization type
+    this.selectedOrgTypes.push(newType);
+    this.updateOrganisationFormControl();
+
+    // Clear input and refocus
     this.orgTypeInput = '';
 
-    // Debug after adding
+    // Refocus the input for better mobile UX
+    setTimeout(() => {
+      if (this.orgInput?.nativeElement) {
+        this.orgInput.nativeElement.focus();
+      }
+    }, 50);
+
+    // Debug and validation
     console.log('✅ Added org type:', newType);
     console.log('📋 Current org types:', this.selectedOrgTypes);
     this.checkFormStatus();
+
+    // Show success feedback
+    this.toast.openSnackBar(`Added "${newType}"`, 'success');
   }
 
   removeOrgType(index: number) {
+    const removedType = this.selectedOrgTypes[index];
     this.selectedOrgTypes.splice(index, 1);
     this.updateOrganisationFormControl();
 
     this.checkFormStatus();
+
+    // Show feedback
+    this.toast.openSnackBar(`Removed "${removedType}"`, 'info');
   }
 
   // Update the focus method with null check
@@ -106,7 +140,7 @@ export class ScouterPage implements OnInit, OnDestroy {
     private router: Router,
     private scouterService: ScouterEndpointsService,
     private userService: UserService,
-    private toast: ToastsService
+    private toast: ToastsService,
   ) {
     addIcons({ personCircle, star, business });
   }
@@ -150,7 +184,7 @@ export class ScouterPage implements OnInit, OnDestroy {
         fullname: ['', [Validators.required, Validators.minLength(2)]],
         phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/)]],
         email: ['', [Validators.required, this.strictEmailValidator()]],
-      })
+      }),
     );
 
     // Step 2: Scouter Information - UPDATED with custom validator
@@ -163,7 +197,7 @@ export class ScouterPage implements OnInit, OnDestroy {
         ],
         purpose: ['', Validators.required],
         payRange: ['', [Validators.required]],
-      })
+      }),
     );
 
     // Step 3: Credentials
@@ -176,21 +210,21 @@ export class ScouterPage implements OnInit, OnDestroy {
               Validators.required,
               Validators.minLength(8),
               Validators.pattern(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
               ),
             ],
           ],
           confirmPassword: ['', Validators.required],
         },
-        { validators: this.passwordMatchValidator }
-      )
+        { validators: this.passwordMatchValidator },
+      ),
     );
 
     // Step 4: OTP Verification
     this.forms.push(
       this.fb.group({
         otp: this.fb.array([]),
-      })
+      }),
     );
   }
 
@@ -218,7 +252,7 @@ export class ScouterPage implements OnInit, OnDestroy {
   // Update the organization form control method
   private updateOrganisationFormControl() {
     const orgTypes = this.selectedOrgTypes.filter(
-      (org) => org && org.trim() !== ''
+      (org) => org && org.trim() !== '',
     );
     const orgControl = this.forms[1]?.get('organisation');
 
@@ -282,7 +316,7 @@ export class ScouterPage implements OnInit, OnDestroy {
   // Rest of your existing methods remain the same...
   private initializeOtpControls() {
     this.otpControls = Array.from({ length: this.otpLength }, () =>
-      this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)])
+      this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)]),
     );
 
     const otpArray = this.fb.array(this.otpControls);
@@ -299,7 +333,7 @@ export class ScouterPage implements OnInit, OnDestroy {
             return this.userService.checkEmailExists(email);
           }
           return of({ exists: false });
-        })
+        }),
       )
       .subscribe({
         next: (res: any) => {
@@ -378,7 +412,7 @@ export class ScouterPage implements OnInit, OnDestroy {
 
       const valid =
         /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|co|io)$/i.test(
-          value
+          value,
         );
       return valid ? null : { pattern: true };
     };
@@ -421,7 +455,7 @@ export class ScouterPage implements OnInit, OnDestroy {
       error: (err) => {
         console.error('❌ Failed to send OTP', err);
         this.setError(
-          err?.error?.message || 'Failed to send OTP. Please try again.'
+          err?.error?.message || 'Failed to send OTP. Please try again.',
         );
       },
     });
@@ -480,11 +514,11 @@ export class ScouterPage implements OnInit, OnDestroy {
         // More specific error messages
         if (err.status === 422) {
           this.setError(
-            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.'
+            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.',
           );
         } else {
           this.setError(
-            err?.error?.message || 'Invalid OTP. Please try again.'
+            err?.error?.message || 'Invalid OTP. Please try again.',
           );
         }
         this.clearOtpFields();
