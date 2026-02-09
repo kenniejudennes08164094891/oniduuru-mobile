@@ -59,6 +59,8 @@ export class ViewAllHiresPageComponent implements OnInit {
   MockRecentHires: TotalHires[] = [];
   isLoading: boolean = false;
   allMarketData: TotalHires[] = [];
+  showSpinner: boolean = true;
+  loading: string = 'Fetching Your Hires';
 
   userName: string = '';
 
@@ -383,7 +385,7 @@ export class ViewAllHiresPageComponent implements OnInit {
           dataType: typeof response.data,
           rawResponse: response.rawResponse,
         });
-
+        setTimeout(() => (this.showSpinner = false), 2000);
         this.MockRecentHires = response.data || [];
         this.allMarketData = response.data || [];
 
@@ -397,6 +399,7 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.loadTalentPerformanceGrading();
       },
       error: (error) => {
+        setTimeout(() => (this.showSpinner = false), 2000);
         console.error('❌ Error loading market engagements:', {
           error: error,
           message: error.message,

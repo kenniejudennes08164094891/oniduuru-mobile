@@ -21,12 +21,12 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   userName: string = 'User';
   private intervalId: any;
 
-  // Search subject for debouncing
-  private searchSubject = new Subject<string>();
-
   // Loading states
   isLoading: boolean = false;
   totalRecords: number = 0;
+
+  showSpinner: boolean = true;
+  loading = '';
 
   // Filter options
   statusFilter: string = '';
@@ -38,6 +38,7 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
   // Search term
   searchTerm = '';
+  private searchSubject = new Subject<string>();
 
   // Add this at the top of your component class
   Math = Math;
@@ -73,6 +74,10 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     NoDataImage: 'assets/images/no-data.png',
   };
 
+  // Add missing properties
+  initialPaginatedHires: any[] = [];
+  paginatedHiresData: any[] = [];
+
   constructor(
     private router: Router,
     private endpointService: EndpointService,
@@ -82,6 +87,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.showSpinner = true;
+    this.loading = 'Fetching your Hires...';
     this.loadTalentName();
     this.setupSearchDebounce();
 
@@ -110,6 +117,33 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
     // Load initial data
     this.loadMarketRecords();
+
+    // Final fallback: call API directly
+    if (!this.talentId) {
+      setTimeout(() => (this.showSpinner = false), 2000);
+      return;
+    }
+
+    const paginationParams: PaginationParams = { limit: 10, pageNo: 1 };
+    this.endpointService
+      .fetchMarketsByTalent(this.talentId, paginationParams, '', '')
+      .subscribe({
+        next: (res: any) => {
+          const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
+          console.clear();
+          console.log('decoded>>', decoded); // use this as mock data: marketHires
+          this.initialPaginatedHires = decoded;
+          this.paginatedHiresData = decoded;
+          sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
+          setTimeout(() => (this.showSpinner = false), 2000);
+        },
+        error: (err) => {
+          console.error('Error fetching markets in view-hires:', err);
+          this.initialPaginatedHires = [];
+          this.paginatedHiresData = [];
+          setTimeout(() => (this.showSpinner = false), 2000);
+        },
+      });
   }
 
   private setupSearchDebounce(): void {
@@ -372,25 +406,14 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     }
   }
 
-  // Navigation
-  // Navigation
   goToHireTransaction(hireId: string | number) {
     const selectedHire = this.marketRecords.find(
       (h) => String(h.id) === String(hireId),
     );
 
-    if (!selectedHire) {
-      console.warn('Hire not found for ID:', hireId);
-      return;
-    }
-
-    console.log('Navigating with hire data:', selectedHire);
-
+    // Navigate to the Market Price Preposition page with the hire object
     this.router.navigate(['/talent/market-price-preposition', hireId], {
-      state: {
-        hire: selectedHire,
-        scouterId: selectedHire.originalData?.scouterId || '', // Pass scouterId if available
-      },
+      state: { hire: selectedHire },
     });
   }
 
@@ -593,6 +616,16 @@ export class ViewHiresPage implements OnInit, OnDestroy {
       position: 'bottom',
     });
     await toast.present();
+  }
+
+  // Format live clock
+  getFormattedLiveTime() {
+    return this.currentTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
   }
 
   ngOnDestroy() {

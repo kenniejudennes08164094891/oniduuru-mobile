@@ -1,63 +1,383 @@
-
-
+<!-- stats.component.html -->
 <div class="mb-6">
-  <h3 class="text-lg font-semibold">Performance Rating by Percentage %</h3>
-  <canvas
-    baseChart
-    [data]="pieChartData"
-    [options]="pieChartOptions"
-    [type]="'pie'"
-    style="height: 50vh; max-width: 100%"
-  ></canvas>
-</div>
-
-<div class="text-sm">
-  <h4 class="font-semibold">My Market Ratings with {{ userName }}</h4>
-  <p class="text-yellow-600 mt-2">
-    ⚠️ Note!: A blank bar indicates no ratings have been submitted yet.
-  </p>
-  <div class="flex gap-6 mt-2 items-center">
-    <span class="flex items-center gap-2 text-blue-600">
-      <span class="w-4 h-2 bg-blue-500 inline-block"></span> Your rating
-    </span>
-    <span class="flex items-center gap-2 text-gray-800">
-      <span class="w-4 h-2 bg-gray-500 inline-block"></span> {{ userName }}’s
-      rating
-    </span>
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-lg font-semibold text-gray-800">
+      Performance Rating by Percentage %
+    </h3>
+    <div class="flex items-center gap-2">
+      <span
+        class="text-xs px-3 py-1 rounded-full font-medium"
+        [ngClass]="{
+          'bg-green-100 text-green-800': hasRealData,
+          'bg-yellow-100 text-yellow-800': !hasRealData,
+        }"
+      >
+        {{ dataSourceInfo }}
+      </span>
+      <span
+        *ngIf="isLoading"
+        class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full"
+      >
+        Loading...
+      </span>
+    </div>
   </div>
 
-  <!-- SCROLLABLE BAR CHART -->
-  <div class="overflow-x-auto mt-4">
-    <div class="min-w-[1200px]">
+  <!-- Performance Score Card -->
+  <div
+    class="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 shadow-sm"
+  >
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-sm text-gray-600">Overall Performance Score</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-gray-800"
+            >{{ performanceMetrics.performanceScore.toFixed(0) }}/100</span
+          >
+          <span
+            class="text-sm px-2 py-1 rounded-full font-medium"
+            [ngClass]="performanceScoreClass"
+          >
+            {{ performanceLabel }}
+          </span>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-gray-600">Engagement Success</p>
+        <p class="text-lg font-bold text-purple-600">
+          {{ performanceMetrics.successRate.toFixed(0) }}%
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Metrics Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-gray-600">Your Average Rating</p>
+        <span class="text-blue-600">⭐</span>
+      </div>
+      <p class="text-lg font-bold text-blue-700">
+        {{ performanceMetrics.yourRating.toFixed(1) }}/5
+      </p>
+      <div class="w-full bg-blue-200 rounded-full h-1.5 mt-1">
+        <div
+          class="bg-blue-600 h-1.5 rounded-full"
+          [style.width]="(performanceMetrics.yourRating / 5) * 100 + '%'"
+        ></div>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-gray-600">
+          {{ selectedScouter?.name || "Scouter" }}'s Rating
+        </p>
+        <span class="text-gray-600">⭐</span>
+      </div>
+      <p class="text-lg font-bold text-gray-700">
+        {{ performanceMetrics.scouterRating.toFixed(1) }}/5
+      </p>
+      <div class="w-full bg-gray-300 rounded-full h-1.5 mt-1">
+        <div
+          class="bg-gray-600 h-1.5 rounded-full"
+          [style.width]="(performanceMetrics.scouterRating / 5) * 100 + '%'"
+        ></div>
+      </div>
+    </div>
+
+    <div class="bg-green-50 p-3 rounded-lg border border-green-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-gray-600">Total Engagements</p>
+        <span class="text-green-600">📊</span>
+      </div>
+      <div class="flex items-baseline gap-1">
+        <p class="text-lg font-bold text-green-700">
+          {{ performanceMetrics.totalEngagements }}
+        </p>
+        <p class="text-sm text-gray-500">
+          ({{ performanceMetrics.ratedEngagements }} rated)
+        </p>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Based on market data</p>
+    </div>
+
+    <div class="bg-purple-50 p-3 rounded-lg border border-purple-100 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-xs text-gray-600">Average Rating</p>
+        <span class="text-purple-600">📈</span>
+      </div>
+      <p class="text-lg font-bold text-purple-700">
+        {{ performanceMetrics.averageRating.toFixed(1) }}/5
+      </p>
+      <div class="flex items-center gap-1 mt-1">
+        <div class="text-xs text-yellow-500">
+          {{ getStars(performanceMetrics.averageRating) }}
+        </div>
+        <span class="text-xs text-gray-500">avg</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Container -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-4">
+    <h4 class="text-sm font-semibold text-gray-700 mb-3">
+      Performance Distribution
+    </h4>
+    <div class="relative" style="height: 300px">
       <canvas
         baseChart
-        [data]="barChartData"
-        [options]="barChartOptions"
-        [type]="'bar'"
-        style="height: 60vh"
+        [data]="pieChartData"
+        [options]="pieChartOptions"
+        [type]="'pie'"
       ></canvas>
     </div>
   </div>
 </div>
 
-<!-- Letter list with check + arrow + date -->
-<div class="mt-6 space-y-2">
-  <div *ngFor="let item of ratingList" class="flex items-center gap-3 text-sm">
-    <!-- gray circle check button -->
-    <!-- Checked circle -->
-    <span
-      class="w-4 h-4 flex items-center justify-center rounded-full border border-gray-400 flex-shrink-0 text-xs text-green-600"
+<!-- Rating History Section -->
+<div class="text-sm">
+  <!-- Warning/Info Message -->
+  <div
+    class="mb-4 p-4 rounded-xl"
+    [ngClass]="{
+      'bg-yellow-50 border border-yellow-200': warningMessage.includes('⚠️'),
+      'bg-blue-50 border border-blue-200': !warningMessage.includes('⚠️'),
+    }"
+  >
+    <div class="flex items-start gap-3">
+      <div class="flex-shrink-0">
+        <ion-icon
+          [name]="
+            warningMessage.includes('⚠️')
+              ? 'warning-outline'
+              : 'information-circle-outline'
+          "
+          [class]="
+            warningMessage.includes('⚠️')
+              ? 'text-yellow-600 text-xl'
+              : 'text-blue-600 text-xl'
+          "
+        >
+        </ion-icon>
+      </div>
+      <div>
+        <p
+          class="text-sm font-medium mb-1"
+          [ngClass]="
+            warningMessage.includes('⚠️') ? 'text-yellow-800' : 'text-blue-800'
+          "
+        >
+          {{ warningMessage }}
+        </p>
+        <p
+          class="text-xs"
+          [ngClass]="
+            warningMessage.includes('⚠️') ? 'text-yellow-700' : 'text-blue-700'
+          "
+        >
+          Based on {{ performanceMetrics.totalEngagements }} engagement{{
+            performanceMetrics.totalEngagements !== 1 ? "s" : ""
+          }}
+          with {{ selectedScouter?.name || "scouter" }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Rating Analysis -->
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h4 class="font-semibold text-gray-800">Detailed Rating Analysis</h4>
+      <div class="flex gap-4 text-sm">
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 bg-blue-500 rounded-sm"></span>
+          <span class="text-gray-600">Your rating</span>
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="w-3 h-3 bg-gray-600 rounded-sm"></span>
+          <span class="text-gray-600"
+            >{{ selectedScouter?.name || "Scouter" }}'s rating</span
+          >
+        </span>
+      </div>
+    </div>
+
+    <!-- Bar Chart Container -->
+    <div class="overflow-x-auto">
+      <div class="min-w-[800px]">
+        <div style="height: 400px">
+          <canvas
+            baseChart
+            [data]="barChartData"
+            [options]="barChartOptions"
+            [type]="'bar'"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Engagement History List -->
+
+  <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+    <div class="flex justify-between items-center mb-3">
+      <div>
+        <h5 class="font-semibold text-gray-700">Engagement History</h5>
+        <p class="text-xs text-gray-500 mt-1">
+          Showing {{ paginatedRatingList.length }} of
+          {{ ratingList.length }} engagements
+        </p>
+      </div>
+      <span class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+        {{ performanceMetrics.totalEngagements }} engagements
+      </span>
+    </div>
+
+    <div class="space-y-2">
+      <div
+        *ngFor="let item of paginatedRatingList"
+        class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
+      >
+        <div class="flex items-center gap-3 flex-1">
+          <span
+            class="w-8 h-8 flex items-center justify-center rounded-full border-2 text-sm font-medium"
+            [ngClass]="{
+              'border-green-500 bg-green-50 text-green-700': item.hasRating,
+              'border-gray-300 bg-gray-50 text-gray-500': !item.hasRating,
+            }"
+          >
+            #{{ item.number }}
+          </span>
+
+          <div class="flex-1">
+            <p class="font-medium text-gray-800">
+              Engagement #{{ item.number }}
+            </p>
+            <p class="text-xs text-gray-500">{{ item.date }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6">
+          <div class="text-center">
+            <p class="text-xs text-gray-600">You</p>
+            <div class="flex items-center gap-1">
+              <span class="font-bold text-blue-600">{{ item.yourRating }}</span>
+              <span
+                class="text-xs text-blue-400"
+                *ngIf="item.yourRating !== 'No rating'"
+                >⭐</span
+              >
+            </div>
+          </div>
+
+          <div class="text-center">
+            <p class="text-xs text-gray-600">Scouter</p>
+            <div class="flex items-center gap-1">
+              <span class="font-bold text-gray-700">{{
+                item.scouterRating
+              }}</span>
+              <span
+                class="text-xs text-gray-400"
+                *ngIf="item.scouterRating !== 'No rating'"
+                >⭐</span
+              >
+            </div>
+          </div>
+
+          <span class="text-gray-300">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination Controls - Only show if more than 10 items -->
+    <div
+      *ngIf="ratingList.length > engagementsPerPage"
+      class="flex items-center justify-between pt-4 mt-4 border-t border-gray-200"
     >
-      ✓
-    </span>
+      <div class="text-sm text-gray-600">
+        Page {{ currentEngagementPage }} of {{ totalEngagementPages }}
+      </div>
 
-    <!-- Letter -->
-    <span class="font-semibold">{{ item.letter }}</span>
+      <div class="flex items-center gap-2">
+        <!-- Previous Button -->
+        <button
+          (click)="prevEngagementPage()"
+          [disabled]="currentEngagementPage === 1"
+          class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          <ion-icon name="chevron-back-outline" class="text-sm"></ion-icon>
+          Previous
+        </button>
 
-    <!-- Arrow -->
-    <span>➡️</span>
+        <!-- Page Numbers -->
+        <div class="flex items-center gap-1">
+          <!-- First Page -->
+          <button
+            (click)="goToEngagementPage(1)"
+            [class.bg-blue-600]="currentEngagementPage === 1"
+            [class.text-white]="currentEngagementPage === 1"
+            [class.text-gray-700]="currentEngagementPage !== 1"
+            class="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-100 transition"
+          >
+            1
+          </button>
 
-    <!-- Date -->
-    <span class="text-gray-500">{{ item.date }}</span>
+          <!-- Ellipsis if needed -->
+          <span *ngIf="currentEngagementPage > 3" class="text-gray-400 mx-1">
+            ...
+          </span>
+
+          <!-- Middle Pages -->
+          <ng-container *ngFor="let page of getPageRange()">
+            <button
+              *ngIf="page > 1 && page < totalEngagementPages"
+              (click)="goToEngagementPage(page)"
+              [class.bg-blue-600]="currentEngagementPage === page"
+              [class.text-white]="currentEngagementPage === page"
+              [class.text-gray-700]="currentEngagementPage !== page"
+              class="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-100 transition"
+            >
+              {{ page }}
+            </button>
+          </ng-container>
+
+          <!-- Ellipsis if needed -->
+          <span
+            *ngIf="currentEngagementPage < totalEngagementPages - 2"
+            class="text-gray-400 mx-1"
+          >
+            ...
+          </span>
+
+          <!-- Last Page -->
+          <button
+            *ngIf="totalEngagementPages > 1"
+            (click)="goToEngagementPage(totalEngagementPages)"
+            [class.bg-blue-600]="currentEngagementPage === totalEngagementPages"
+            [class.text-white]="currentEngagementPage === totalEngagementPages"
+            [class.text-gray-700]="
+              currentEngagementPage !== totalEngagementPages
+            "
+            class="w-8 h-8 flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-100 transition"
+          >
+            {{ totalEngagementPages }}
+          </button>
+        </div>
+
+        <!-- Next Button -->
+        <button
+          (click)="nextEngagementPage()"
+          [disabled]="currentEngagementPage === totalEngagementPages"
+          class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          Next
+          <ion-icon name="chevron-forward-outline" class="text-sm"></ion-icon>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

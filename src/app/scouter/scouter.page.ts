@@ -6,8 +6,9 @@ import {
   ElementRef,
 } from '@angular/core';
 import { addIcons } from 'ionicons';
-import { personCircle, star, business, addOutline } from 'ionicons/icons'; // Added addOutline
+import { personCircle, star, business, addOutline } from 'ionicons/icons';
 import { Location } from '@angular/common';
+
 import {
   FormArray,
   FormBuilder,
@@ -60,6 +61,7 @@ export class ScouterPage implements OnInit, OnDestroy {
   // --- Organization input handling - UPDATED TO MATCH PROFILE PAGE ---
   orgTypeInput: string = '';
   selectedOrgTypes: string[] = []; // Changed from single string to array
+
 
   onOrgInput(event: Event) {
     const inputElement = event.target as HTMLInputElement;
@@ -142,7 +144,7 @@ export class ScouterPage implements OnInit, OnDestroy {
     private userService: UserService,
     private toast: ToastsService,
   ) {
-    addIcons({ personCircle, star, business });
+    addIcons({ personCircle, star, business, addOutline });
   }
 
   ngOnInit() {

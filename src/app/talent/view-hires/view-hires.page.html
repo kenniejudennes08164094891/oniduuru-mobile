@@ -264,12 +264,9 @@
             </tr>
           </thead>
 
-          <tbody class="bg-white divide-y divide-gray-100">
-            <tr
-              *ngFor="let hire of paginatedHires"
-              (click)="goToHireTransaction(hire.id.toString())"
-              class="hover:bg-gray-50 cursor-pointer transition-colors"
-            >
+          <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
+            <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id.toString())">
+
               <!-- Profile + Name -->
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
@@ -392,7 +389,7 @@
 
         <div class="flex items-center gap-1">
           <span
-            class="px-3 py-1.5 bg-[#000000] text-white text-sm font-medium rounded-md"
+            class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md"
           >
             {{ currentPage }}
           </span>
@@ -415,4 +412,7 @@
       </div>
     </div>
   </div>
+
+  <!-- <app-hires-table [hires]="paginatedHiresData"></app-hires-table> -->
+
 </ion-content>

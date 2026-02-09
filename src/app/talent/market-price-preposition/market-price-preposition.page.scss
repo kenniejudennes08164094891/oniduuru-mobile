@@ -20,3 +20,26 @@
   color: #039855;
   flex-shrink: 0; /* prevent shrinking when text wraps */
 }
+
+
+
+// market-price-preposition.page.scss
+
+.active-tab {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #000000; // black color
+    border-radius: 2px 2px 0 0;
+  }
+}
+
+.inactive-tab {
+  // Optional: Add any styles for inactive tabs
+}

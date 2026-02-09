@@ -251,6 +251,7 @@ export class UserService {
   getStatus(): 'online' | 'away' | 'offline' {
     return this.statusSubject.value;
   }
+  
   getTalentId(): string | null {
     // Try multiple sources in order
     const profile = this.getProfileData();

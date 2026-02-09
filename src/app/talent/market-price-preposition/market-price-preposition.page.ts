@@ -1,11 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockPayment, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { AuthService } from 'src/app/services/auth.service';
-import { PaginationParams } from 'src/app/models/mocks';
 import { ToastrService } from 'ngx-toastr';
 import { EvaluationPageComponent } from 'src/app/components/evaluation-page/evaluation-page.component';
 import {
@@ -14,6 +13,57 @@ import {
   AlertController,
 } from '@ionic/angular';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { StatsComponent } from './stats/stats.component';
+import { AcceptOrRejectComponent } from './accept-or-reject/accept-or-reject.component';
+
+export interface SatisfactoryComment {
+  talentId?: string;
+  scouterId?: string;
+  dateOfComment: string;
+  remark: string;
+  rating: number;
+}
+
+export interface HireData {
+  id: string;
+  name?: string;
+  scouterName?: string;
+  email?: string;
+  scouterEmail?: string;
+  status?: string;
+  offerStatus?: string;
+  hireStatus?: string;
+  date?: string;
+  dateOfHire?: string;
+  startDate?: string;
+  amount?: number;
+  amountToPay?: string | number;
+  jobDescription?: string;
+  profilePic?: string;
+  isRated?: boolean;
+  rating?: number;
+  talentRating?: number;
+  yourRating?: number;
+  comment?: string;
+  talentComment?: string;
+  yourComment?: string;
+  originalData?: any;
+  scouterId?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  satisFactoryCommentByTalent?: SatisfactoryComment | string | any;
+  satisFactoryCommentByScouter?: SatisfactoryComment | string | any;
+  talentId?: string;
+  talentName?: string;
+  talentEmail?: string;
+  scouterPicture?: string;
+  talentPicture?: string;
+  scouterPhoneNumber?: string;
+  marketHireId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface SatisfactoryComment {
   talentId?: string;
@@ -70,6 +120,8 @@ export interface HireData {
   styleUrls: ['./market-price-preposition.page.scss'],
 })
 export class MarketPricePrepositionPage implements OnInit {
+  @ViewChild(StatsComponent) statsComponent!: StatsComponent;
+
   hire: HireData | null = null;
   images = imageIcons;
   userName: string = 'User';
@@ -77,6 +129,15 @@ export class MarketPricePrepositionPage implements OnInit {
   headerHidden: boolean = false;
   rating: number = 0;
   marketItems: any[] = [];
+
+  talentId: string = '';
+  hiresData: any[] = [];
+  currentView: 'details' | 'engagements' | 'stats' = 'details'; // Track current view
+
+  // Add these new properties
+  selectedScouter: any = null;
+  allHires: any[] = [];
+  scouterHires: any[] = []; // Hires from the selected scouter
 
   constructor(
     private route: ActivatedRoute,
@@ -93,6 +154,29 @@ export class MarketPricePrepositionPage implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     console.log('Route ID:', id);
 
+    // Check current route to determine view
+    const childRoute = this.route.firstChild;
+    if (childRoute) {
+      const childRouteName = childRoute.snapshot.routeConfig?.path;
+      if (childRouteName === 'engagements') {
+        this.currentView = 'engagements';
+      } else if (childRouteName === 'stats') {
+        this.currentView = 'stats';
+        // If we're already on stats tab, ensure scouter selection
+        this.ensureScouterSelection();
+      } else {
+        this.currentView = 'details';
+      }
+    } else {
+      this.currentView = 'details';
+    }
+
+    // Get talent ID from storage
+    this.talentId =
+      localStorage.getItem('talentId') ||
+      sessionStorage.getItem('talentId') ||
+      '';
+
     // Get the hire data from navigation state FIRST
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state;
@@ -106,29 +190,231 @@ export class MarketPricePrepositionPage implements OnInit {
       // Store the scouterId if available
       if (state['scouterId']) {
         sessionStorage.setItem('scouterId', state['scouterId']);
+
+        // Set selected scouter from the hire data
+        this.selectedScouter = {
+          id: state['scouterId'],
+          name: this.hire.scouterName || this.hire.name,
+          email: this.hire.scouterEmail || this.hire.email,
+          profilePic: this.hire.scouterPicture || this.hire.profilePic,
+        };
+
+        // Store for stats component
+        sessionStorage.setItem(
+          'selectedScouter',
+          JSON.stringify(this.selectedScouter),
+        );
       }
 
       // Extract and set scouter name from hire data
       this.extractScouterName();
 
-      // Handle transaction flow if needed
-      this.handleTransactionFlow();
-
-      // Debug: Log the comment data from state
-      console.log('🔍 Comment data from state:', {
-        satisFactoryCommentByTalent: this.hire?.satisFactoryCommentByTalent,
-        satisFactoryCommentByScouter: this.hire?.satisFactoryCommentByScouter,
-        typeTalent: typeof this.hire?.satisFactoryCommentByTalent,
-        typeScouter: typeof this.hire?.satisFactoryCommentByScouter,
-      });
+      // REMOVE OR COMMENT OUT THIS LINE:
+      // this.handleTransactionFlow();
     } else {
       // If no state, try to get from route params only (fallback)
       console.warn('No hire data in navigation state');
       this.fetchHireById(id);
     }
 
-    this.fetchMarketsOnEnter();
+    // Load talent name
     this.loadTalentName();
+
+    // Load initial data - the HiresTableComponent will load all hires
+    this.initializeData();
+  }
+
+  // Initialize data on page load
+  initializeData() {
+    // Try to get selected scouter from sessionStorage
+    const storedScouter = sessionStorage.getItem('selectedScouter');
+    if (storedScouter) {
+      this.selectedScouter = JSON.parse(storedScouter);
+      this.scouterName = this.selectedScouter.name;
+    }
+
+    // Get talent ID
+    this.talentId =
+      localStorage.getItem('talentId') ||
+      sessionStorage.getItem('talentId') ||
+      '';
+  }
+
+  // Helper method to ensure scouter is selected
+  private ensureScouterSelection() {
+    const storedScouter = sessionStorage.getItem('selectedScouter');
+    if (!storedScouter && this.selectedScouter) {
+      // Ensure the selected scouter is in sessionStorage
+      sessionStorage.setItem(
+        'selectedScouter',
+        JSON.stringify(this.selectedScouter),
+      );
+    }
+
+    // Ensure scouterId is in sessionStorage
+    if (this.selectedScouter?.id) {
+      sessionStorage.setItem('scouterId', this.selectedScouter.id);
+    }
+  }
+
+  async onHireSelected(hire: any) {
+    console.log('Hire selected from table:', hire);
+
+    // Update the current hire
+    this.hire = hire;
+
+    // Set the selected scouter
+    this.selectedScouter = {
+      id: hire.scouterId,
+      name: hire.scouterName || hire.name,
+      email: hire.scouterEmail || hire.email,
+      profilePic: hire.scouterPicture || hire.profilePic,
+    };
+
+    // Store scouter info for stats component
+    if (hire.scouterId) {
+      sessionStorage.setItem('scouterId', hire.scouterId);
+      sessionStorage.setItem(
+        'selectedScouter',
+        JSON.stringify(this.selectedScouter),
+      );
+
+      // Update the scouter name
+      this.scouterName = this.selectedScouter.name;
+    }
+
+    // Extract scouter name
+    this.extractScouterName();
+
+    // Check which modal should open based on hire flags
+    // These flags should be set in the HiresTableComponent
+    if (hire.shouldShowAcceptRejectModal) {
+      await this.openAcceptRejectModal(hire);
+    } else if (hire.shouldShowEvaluationModal) {
+      await this.openEvaluation(hire);
+    }
+
+    // If we're on the stats tab, reload stats
+    if (this.currentView === 'stats' && this.statsComponent) {
+      this.statsComponent.loadStatsData();
+    }
+  }
+
+  // Add method to get scouter statistics
+  getScouterStats() {
+    if (!this.selectedScouter) return null;
+
+    // Get all hires from localStorage (loaded by HiresTableComponent)
+    const storedHires = localStorage.getItem('allMarketRecords');
+    if (!storedHires) return null;
+
+    try {
+      const allHires = JSON.parse(storedHires);
+
+      // Filter hires for this scouter
+      const scouterHires = allHires.filter(
+        (hire: any) => hire.scouterId === this.selectedScouter.id,
+      );
+
+      if (scouterHires.length === 0) return null;
+
+      const stats = {
+        totalHires: scouterHires.length,
+        acceptedHires: scouterHires.filter(
+          (h: any) => h.status === 'Offers Accepted',
+        ).length,
+        pendingHires: scouterHires.filter(
+          (h: any) => h.status === 'Awaiting Acceptance',
+        ).length,
+        declinedHires: scouterHires.filter(
+          (h: any) => h.status === 'Offers Declined',
+        ).length,
+        totalAmount: scouterHires.reduce(
+          (sum: number, hire: any) => sum + (hire.amount || 0),
+          0,
+        ),
+        averageRating: this.calculateAverageRating(scouterHires),
+      };
+
+      return stats;
+    } catch (error) {
+      console.error('Error calculating scouter stats:', error);
+      return null;
+    }
+  }
+
+  calculateAverageRating(hires: any[]): number {
+    const ratedHires = hires.filter((h) => h.talentRating > 0);
+    if (ratedHires.length === 0) return 0;
+
+    const totalRating = ratedHires.reduce(
+      (sum, hire) => sum + (hire.talentRating || 0),
+      0,
+    );
+    return Math.round((totalRating / ratedHires.length) * 10) / 10; // Round to 1 decimal
+  }
+
+  // Transform API data for the table (similar to HiresTableComponent)
+  transformApiDataToHireFormat(apiData: any[]): any[] {
+    return apiData.map((item) => {
+      let profilePic = 'assets/images/portrait-man-cartoon-style.jpg';
+      if (item.scouterPicture) {
+        profilePic = item.scouterPicture;
+      } else if (item.talentPicture) {
+        profilePic = item.talentPicture;
+      }
+
+      let name = item.scouterName || item.talentName || 'Unknown';
+      if (item.firstName && item.lastName) {
+        name = `${item.firstName} ${item.lastName}`;
+      } else if (item.fullName) {
+        name = item.fullName;
+      }
+
+      let email =
+        item.scouterEmail || item.talentEmail || item.email || 'No email';
+
+      let status = this.mapApiStatusToDisplayStatus(
+        item.offerStatus || item.hireStatus || item.status,
+      );
+
+      return {
+        id: item.id || item.marketHireId || this.generateRandomId(),
+        name: name,
+        email: email,
+        profilePic: profilePic,
+        status: status,
+        date:
+          item.date ||
+          item.dateOfHire ||
+          item.createdAt ||
+          new Date().toISOString(),
+        startDate: item.startDate || 'Not set',
+        amount: item.amount || item.amountToPay || 0,
+        scouterId: item.scouterId,
+        jobDescription: item.jobDescription,
+      };
+    });
+  }
+
+  mapApiStatusToDisplayStatus(apiStatus: string): string {
+    if (!apiStatus) return 'Unknown';
+
+    const statusMap: { [key: string]: string } = {
+      'offer-accepted': 'Offers Accepted',
+      'awaiting-acceptance': 'Awaiting Acceptance',
+      'offer-rejected': 'Offers Declined',
+      'offer-declined': 'Offers Declined',
+      'Offers Accepted': 'Offers Accepted',
+      'Awaiting Acceptance': 'Awaiting Acceptance',
+      'Offers Declined': 'Offers Declined',
+    };
+
+    return statusMap[apiStatus] || apiStatus;
+  }
+
+  private generateRandomId(): string {
+    return Math.random().toString(36).substring(2, 15);
   }
 
   /**
@@ -559,7 +845,8 @@ export class MarketPricePrepositionPage implements OnInit {
 
       case 'Awaiting Acceptance':
       case 'awaiting-acceptance':
-        await this.showAcceptRejectPopup(this.hire);
+        // Use the new modal instead of the old popup
+        await this.openAcceptRejectModal(this.hire);
         break;
 
       case 'Offer Rejected':
@@ -673,7 +960,7 @@ export class MarketPricePrepositionPage implements OnInit {
     console.log('Fetching specific hire:', { talentId, hireId, scouterId });
 
     // Use a larger limit to ensure we find the hire
-    const paginationParams = { limit: 50, pageNo: 1 };
+    const paginationParams = { limit: 10, pageNo: 1 };
 
     this.endpointService
       .fetchMarketsByTalent(talentId, paginationParams, '', scouterId)
@@ -723,6 +1010,150 @@ export class MarketPricePrepositionPage implements OnInit {
           this.marketItems = [];
         },
       });
+  }
+
+  // In market-price-preposition.page.ts
+  async openAcceptRejectModal(hire: any) {
+    if (!hire) return;
+
+    // Get formatted date and time
+    const formattedDateTime = this.getFormattedDateTime(hire.date);
+
+    const modal = await this.modalCtrl.create({
+      component: AcceptOrRejectComponent,
+      componentProps: {
+        scouterName: this.getScouterDisplayName(),
+        hireDate: formattedDateTime?.date || 'Unknown date',
+        hireTime: formattedDateTime?.time || '',
+      },
+      cssClass: 'fund-wallet-modal',
+      backdropDismiss: false, // Prevent accidental closing
+      keyboardClose: false,
+      showBackdrop: true,
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onDidDismiss();
+
+    if (data) {
+      // Show confirmation before proceeding
+      await this.showConfirmation(data.action, hire);
+    }
+  }
+
+  // Show confirmation dialog
+  private async showConfirmation(action: string, hire: any) {
+    const actionText = action === 'accept' ? 'accept' : 'decline';
+
+    const confirm = await this.alertCtrl.create({
+      header: 'Confirm Your Decision',
+      message: `Are you sure you want to ${actionText} this offer from <b>${this.getScouterDisplayName()}</b>?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          cssClass: 'cancel-btn',
+          handler: () => {
+            console.log('User cancelled the decision');
+            // Optionally reopen the modal
+            setTimeout(() => this.openAcceptRejectModal(hire), 300);
+          },
+        },
+        {
+          text: 'Yes, Confirm',
+          cssClass:
+            action === 'accept' ? 'confirm-accept-btn' : 'confirm-decline-btn',
+          handler: async () => {
+            await this.handleAcceptRejectResponse(action, hire);
+          },
+        },
+      ],
+    });
+
+    await confirm.present();
+  }
+
+  // Handle the confirmed user response
+  private async handleAcceptRejectResponse(action: string, hire: any) {
+    console.log(`User confirmed to ${action} the offer`);
+
+    if (action === 'accept') {
+      await this.acceptOffer(hire);
+    } else if (action === 'decline') {
+      await this.declineOffer(hire);
+    }
+  }
+
+  // Accept the offer with additional logging
+  private async acceptOffer(hire: any) {
+    console.log('Accepting offer for hire:', hire.id);
+
+    // Update the hire status
+    hire.status = 'Offers Accepted';
+    hire.offerStatus = 'Offers Accepted';
+
+    // Show success message
+    this.toast.openSnackBar(
+      `✅ Offer from ${this.getScouterDisplayName()} accepted successfully!`,
+      'success',
+    );
+
+    // Update in localStorage
+    this.updateHireStatusInStorage(hire, 'Offers Accepted');
+
+    // Optional: Open evaluation modal after accepting
+    setTimeout(async () => {
+      await this.openEvaluation(hire);
+    }, 1000);
+  }
+
+  // Decline the offer with additional logging
+  private async declineOffer(hire: any) {
+    console.log('Declining offer for hire:', hire.id);
+
+    // Update the hire status
+    hire.status = 'Offers Declined';
+    hire.offerStatus = 'Offers Declined';
+
+    // Show message
+    this.toast.openSnackBar(
+      `❌ Offer from ${this.getScouterDisplayName()} declined.`,
+      'warning',
+    );
+
+    // Update in localStorage
+    this.updateHireStatusInStorage(hire, 'Offers Declined');
+  }
+
+  // Update hire status in localStorage
+  private updateHireStatusInStorage(hire: any, newStatus: string) {
+    if (!hire || !hire.id) return;
+
+    // Update in allMarketRecords
+    const storedRecords = localStorage.getItem('allMarketRecords');
+    if (storedRecords) {
+      try {
+        const records = JSON.parse(storedRecords);
+        const updatedRecords = records.map((record: any) => {
+          if (record.id === hire.id || record.marketHireId === hire.id) {
+            return {
+              ...record,
+              status: newStatus,
+              offerStatus: newStatus,
+              hireStatus: newStatus,
+            };
+          }
+          return record;
+        });
+        localStorage.setItem(
+          'allMarketRecords',
+          JSON.stringify(updatedRecords),
+        );
+      } catch (error) {
+        console.error('Error updating records:', error);
+      }
+    }
   }
 
   /**
@@ -784,6 +1215,7 @@ export class MarketPricePrepositionPage implements OnInit {
     }
   }
 
+  // In market-price-preposition.page.ts
   async openEvaluation(hire?: HireData) {
     if (hire) {
       this.hire = hire;
@@ -792,21 +1224,30 @@ export class MarketPricePrepositionPage implements OnInit {
 
     if (!this.hire) return;
 
-    if (
-      this.hire.offerStatus !== 'Offer Accepted' &&
-      this.hire.hireStatus !== 'offer-accepted' &&
-      this.hire.hireStatus !== 'Offer Accepted'
-    ) {
+    // Check if already rated (enhanced check)
+    const isRated =
+      this.hire.isRated ||
+      this.hasTalentComment() ||
+      this.getTalentRating() > 0;
+
+    if (isRated) {
       this.toast.openSnackBar(
-        'You can only evaluate accepted offers.',
+        'You have already rated this scouter.',
         'warning',
       );
       return;
     }
 
-    if (this.hire.isRated) {
+    // Check if offer is accepted
+    const isAccepted =
+      this.hire.offerStatus === 'Offers Accepted' ||
+      this.hire.hireStatus === 'Offers Accepted' ||
+      this.hire.offerStatus === 'offer-accepted' ||
+      this.hire.hireStatus === 'offer-accepted';
+
+    if (!isAccepted) {
       this.toast.openSnackBar(
-        'You have already rated this scouter.',
+        'You can only evaluate accepted offers.',
         'warning',
       );
       return;
@@ -817,6 +1258,8 @@ export class MarketPricePrepositionPage implements OnInit {
       componentProps: {
         scouterName: this.getScouterDisplayName(),
       },
+      backdropDismiss: false, // Prevent closing by clicking outside
+      keyboardClose: false, // Prevent closing with keyboard
     });
 
     await modal.present();
@@ -824,23 +1267,62 @@ export class MarketPricePrepositionPage implements OnInit {
     const { data } = await modal.onDidDismiss();
 
     if (data) {
+      // Update the hire with rating data
       this.hire.isRated = true;
       this.hire.talentRating = data.rating;
       this.hire.talentComment = data.comment;
 
-      if (this.hire.id) {
-        const updatedHires = MockRecentHires.map((h) =>
-          h.id === this.hire?.id
-            ? this.convertHireDataToMockPayment(this.hire)
-            : h,
-        );
-        localStorage.setItem('MockRecentHires', JSON.stringify(updatedHires));
-      }
+      // Also update the satisFactoryCommentByTalent
+      const commentData = {
+        talentId: this.talentId,
+        scouterId: this.hire.scouterId,
+        dateOfComment: new Date().toISOString(),
+        remark: data.comment,
+        rating: data.rating,
+      };
+
+      this.hire.satisFactoryCommentByTalent = JSON.stringify(commentData);
 
       this.toast.openSnackBar(
         `Thank you for evaluating ${this.getScouterDisplayName()}!`,
         'success',
       );
+
+      // Update the table data if needed
+      this.updateHireInTable();
+    }
+  }
+
+  // Add this helper method to update the hire in the table
+  private updateHireInTable() {
+    if (!this.hire || !this.hire.id) return;
+
+    // Update in localStorage if using stored data
+    const storedRecords = localStorage.getItem('allMarketRecords');
+    if (storedRecords) {
+      try {
+        const records = JSON.parse(storedRecords);
+        const updatedRecords = records.map((record: any) => {
+          if (
+            record.id === this.hire?.id ||
+            record.marketHireId === this.hire?.id
+          ) {
+            return {
+              ...record,
+              isRated: true,
+              satisFactoryCommentByTalent:
+                this.hire?.satisFactoryCommentByTalent,
+            };
+          }
+          return record;
+        });
+        localStorage.setItem(
+          'allMarketRecords',
+          JSON.stringify(updatedRecords),
+        );
+      } catch (error) {
+        console.error('Error updating records:', error);
+      }
     }
   }
 
@@ -876,66 +1358,66 @@ export class MarketPricePrepositionPage implements OnInit {
     });
   }
 
-  async showAcceptRejectPopup(hire: HireData) {
-    const alert = await this.alertCtrl.create({
-      header: 'Offer Decision',
-      message: `Would you like to accept or decline this offer from <b>${this.getScouterDisplayName()}</b>?`,
-      buttons: [
-        {
-          text: 'Decline',
-          role: 'cancel',
-          cssClass: 'danger',
-          handler: async () => {
-            await this.confirmChoice(hire, 'Offer Rejected');
-          },
-        },
-        {
-          text: 'Accept',
-          handler: async () => {
-            await this.confirmChoice(hire, 'Offer Accepted');
-          },
-        },
-      ],
-    });
+  // async showAcceptRejectPopup(hire: HireData) {
+  //   const alert = await this.alertCtrl.create({
+  //     header: 'Offer Decision',
+  //     message: `Would you like to accept or decline this offer from <b>${this.getScouterDisplayName()}</b>?`,
+  //     buttons: [
+  //       {
+  //         text: 'Decline',
+  //         role: 'cancel',
+  //         cssClass: 'danger',
+  //         handler: async () => {
+  //           await this.confirmChoice(hire, 'Offer Rejected');
+  //         },
+  //       },
+  //       {
+  //         text: 'Accept',
+  //         handler: async () => {
+  //           await this.confirmChoice(hire, 'Offer Accepted');
+  //         },
+  //       },
+  //     ],
+  //   });
 
-    await alert.present();
-  }
+  //   await alert.present();
+  // }
 
-  async confirmChoice(
-    hire: HireData,
-    choice: 'Offer Accepted' | 'Offer Rejected',
-  ) {
-    const confirm = await this.alertCtrl.create({
-      header: 'Confirm Choice',
-      message: `Are you sure you want to ${choice === 'Offer Accepted' ? 'accept' : 'decline'} this offer?`,
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Yes, Confirm',
-          handler: async () => {
-            hire.offerStatus = choice;
+  // async confirmChoice(
+  //   hire: HireData,
+  //   choice: 'Offer Accepted' | 'Offer Rejected',
+  // ) {
+  //   const confirm = await this.alertCtrl.create({
+  //     header: 'Confirm Choice',
+  //     message: `Are you sure you want to ${choice === 'Offer Accepted' ? 'accept' : 'decline'} this offer?`,
+  //     buttons: [
+  //       { text: 'Cancel', role: 'cancel' },
+  //       {
+  //         text: 'Yes, Confirm',
+  //         handler: async () => {
+  //           hire.offerStatus = choice;
 
-            const hires = JSON.parse(
-              localStorage.getItem('MockRecentHires') || '[]',
-            );
-            const updated = hires.map((h: any) =>
-              h.id === hire.id ? this.convertHireDataToMockPayment(hire) : h,
-            );
-            localStorage.setItem('MockRecentHires', JSON.stringify(updated));
+  //           const hires = JSON.parse(
+  //             localStorage.getItem('MockRecentHires') || '[]',
+  //           );
+  //           const updated = hires.map((h: any) =>
+  //             h.id === hire.id ? this.convertHireDataToMockPayment(hire) : h,
+  //           );
+  //           localStorage.setItem('MockRecentHires', JSON.stringify(updated));
 
-            this.toast.openSnackBar(
-              `Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`,
-              `${choice === 'Offer Accepted' ? 'success' : 'error'}`,
-            );
+  //           this.toast.openSnackBar(
+  //             `Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`,
+  //             `${choice === 'Offer Accepted' ? 'success' : 'error'}`,
+  //           );
 
-            if (choice === 'Offer Accepted') {
-              await this.openEvaluation(hire);
-            }
-          },
-        },
-      ],
-    });
+  //           if (choice === 'Offer Accepted') {
+  //             await this.openEvaluation(hire);
+  //           }
+  //         },
+  //       },
+  //     ],
+  //   });
 
-    await confirm.present();
-  }
+  //   await confirm.present();
+  // }
 }

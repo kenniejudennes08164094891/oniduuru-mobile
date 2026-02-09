@@ -3,7 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 
 import { MarketPricePrepositionPage } from './market-price-preposition.page';
 import { StatsComponent } from './stats/stats.component';
-import { EngagementsComponent } from './engagements/engagements.component';
+// import { EngagementsComponent } from './engagements/engagements.component';
 
 const routes: Routes = [
   {
@@ -11,17 +11,11 @@ const routes: Routes = [
     component: MarketPricePrepositionPage,
     children: [
       {
-         path: '', redirectTo: 'engagements', pathMatch: 'full'
+        path: 'stats',
+        component: StatsComponent,
       },
-      {
-        path: 'engagements', component: EngagementsComponent
-      },
-      {
-        path: 'stats', component: StatsComponent
-      }
-     
-    ]
-  }
+    ],
+  },
 ];
 
 @NgModule({

@@ -1,3 +1,89 @@
-<p>
-  accept-or-reject works!
-</p>
+<!-- accept-or-reject.component.html -->
+<ion-content class="modal-wrapper" scrollY="false">
+  <!-- HEADER IMAGE -->
+  <div class="modal-header logcomplainModalBG">
+    <div class="header-content">
+      <h2>Accept / Decline Scouter's Proposal</h2>
+      <!-- Close Icon -->
+      <ion-icon
+        name="close"
+        class="close-icon"
+        (click)="closeModal()"
+        aria-label="Close modal"
+      ></ion-icon>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="modal-body">
+    <!-- Main content (shown when not in confirmation mode) -->
+    <div *ngIf="!showConfirmation" class="main-content">
+      <p>
+        Kindly accept or decline this offer proposed by
+        <b>{{ scouterName || 'the Scouter' }}</b>
+        on <b>{{ hireDate }}, {{ hireTime }}</b>
+      </p>
+
+      <!-- BUTTONS -->
+      <div class="btn-group">
+        <ion-button 
+          class="accept-btn" 
+          (click)="acceptOffer()"
+          expand="block"
+          fill="solid"
+        >
+          Accept
+        </ion-button>
+
+        <ion-button 
+          class="decline-btn" 
+          (click)="declineOffer()"
+          expand="block"
+          fill="solid"
+        >
+          Decline
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Confirmation content (shown when user selects an action) -->
+    <div *ngIf="showConfirmation" class="confirmation-content">
+      <div class="confirmation-icon">
+        <ion-icon 
+          [name]="selectedAction === 'accept' ? 'checkmark-circle' : 'close-circle'" 
+          [color]="selectedAction === 'accept' ? 'success' : 'danger'"
+          class="confirmation-icon-large"
+        ></ion-icon>
+      </div>
+      
+      <h3 class="confirmation-title">
+        {{ selectedAction === 'accept' ? 'Accept Offer?' : 'Decline Offer?' }}
+      </h3>
+      
+      <p class="confirmation-message">
+        {{ getConfirmationMessage() }}
+      </p>
+      
+      <!-- Confirmation buttons -->
+      <div class="confirmation-buttons">
+        <ion-button 
+          class="cancel-btn" 
+          (click)="cancelConfirmation()"
+          expand="block"
+          fill="outline"
+        >
+          Cancel
+        </ion-button>
+        
+        <ion-button 
+          [class]="selectedAction === 'accept' ? 'confirm-accept-btn' : 'confirm-decline-btn'" 
+          (click)="confirmAction()"
+          expand="block"
+          fill="solid"
+        >
+          {{ selectedAction === 'accept' ? 'Yes, Accept' : 'Yes, Decline' }}
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

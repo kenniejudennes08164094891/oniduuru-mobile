@@ -11,13 +11,11 @@ import { TalentHeaderComponent } from '../talent/talent-header/talent-header.com
   declarations: [
     TalentHeaderComponent,
     // HiresTableComponent,
-    // ✅ add it here
   ],
   imports: [CommonModule, IonicModule, RouterModule],
   exports: [
     TalentHeaderComponent,
     // HiresTableComponent,
-    // ✅ now this works
   ],
 })
 export class SharedModule {}

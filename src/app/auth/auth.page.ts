@@ -22,8 +22,8 @@ export class AuthPage implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private toast: ToastsService,
-    private endpointService: EndpointService
-  ) { }
+    private endpointService: EndpointService,
+  ) {}
 
   ngOnInit() {
     this.initializeLoginForm();
@@ -68,7 +68,7 @@ export class AuthPage implements OnInit {
       if (params['message']) {
         this.toast.openSnackBar(params['message'], 'success');
         setTimeout(async () => {
-         await this.router.navigate([], {
+          await this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {},
             replaceUrl: true,
@@ -104,7 +104,7 @@ export class AuthPage implements OnInit {
       this.loginForm.markAllAsTouched();
       this.toast.openSnackBar(
         'Please fill all required fields correctly',
-        'error'
+        'error',
       );
       return;
     }
@@ -124,21 +124,29 @@ export class AuthPage implements OnInit {
           if (talentId) {
             localStorage.setItem('talentId', talentId);
             sessionStorage.setItem('talentId', talentId);
-            console.log(" Talent ID saved:", talentId);
+            console.log(' Talent ID saved:', talentId);
           } else {
-            console.warn(" No talentId found inside login response");
+            console.warn(' No talentId found inside login response');
           }
           const onboardingRaw = res?.details?.user?.completeOnboarding;
           if (onboardingRaw) {
             try {
               const onboardingObj = JSON.parse(onboardingRaw);
-              sessionStorage.setItem("completeOnboarding", JSON.stringify(onboardingObj));
-              console.log(" Saved onboarding from login:", onboardingObj);
+              sessionStorage.setItem(
+                'completeOnboarding',
+                JSON.stringify(onboardingObj),
+              );
+              console.log(' Saved onboarding from login:', onboardingObj);
             } catch (e) {
               console.error("Failed parsing onboarding at login:", e, onboardingRaw);
+              console.error(
+                'Failed parsing onboarding at login:',
+                e,
+                onboardingRaw,
+              );
             }
           } else {
-            console.warn(" No completeOnboarding found inside login response");
+            console.warn(' No completeOnboarding found inside login response');
           }
 
           const email = this.loginForm.get('email')?.value;
@@ -240,16 +248,18 @@ export class AuthPage implements OnInit {
       showRetry = true;
     } else if (err?.status === 401) {
       // Check for the specific payment verification message
-      if (err?.error?.message === 'Account currently undergoing payment verification') {
+      if (
+        err?.error?.message ===
+        'Account currently undergoing payment verification'
+      ) {
         // Use the dedicated method from ToastsService
         this.toast.showPaymentVerificationError();
-        
+
         // Optional: Store the email for future reference
         const email = this.loginForm.get('email')?.value;
         if (email) {
           localStorage.setItem('pending_payment_email', email);
         }
-        
         // Reset form loading state and return early
         this.isLoading = false;
         this.loginText = 'Login';
@@ -289,7 +299,7 @@ export class AuthPage implements OnInit {
       admin: '/admin/dashboard',
     };
     const route = routes[role] || '/auth/login';
-   await this.router.navigateByUrl(route, { replaceUrl: true });
+    await this.router.navigateByUrl(route, { replaceUrl: true });
   }
 
   togglePasswordVisibility() {
@@ -297,8 +307,8 @@ export class AuthPage implements OnInit {
     this.passwordFieldType = this.showEye ? 'text' : 'password';
   }
 
- async signupSelect(): Promise<void> {
-   await this.router.navigate(['/auth/signup-select'], {
+  async signupSelect(): Promise<void> {
+    await this.router.navigate(['/auth/signup-select'], {
       relativeTo: this.route,
     });
   }
@@ -311,6 +321,5 @@ export class AuthPage implements OnInit {
 
   forgotPassword(): void {
     this.router.navigate(['/auth/forgot-password']);
-;
   }
 }

@@ -33,6 +33,8 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   isLoading: boolean = false;
   private previousTalentId: string | null = null;
 
+  showSpinner: boolean = true;
+
   // Modal states
   isTotalDeliveryModalOpen: boolean = false;
   isReconsiderModalOpen: boolean = false;
@@ -216,6 +218,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
               : [],
           });
 
+          setTimeout(() => (this.showSpinner = false), 2000);
           const data = (response.data as TotalHires[]) || [];
 
           if (data.length > 0) {
@@ -241,6 +244,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error: any) => {
+          setTimeout(() => (this.showSpinner = false), 2000);
           console.error('❌ Error loading hire details:', error);
           this.isLoading = false;
         },
@@ -252,7 +256,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     this.scouterService
       .getAllMarketsByScouter(scouterId, {
-        limit: 100,
+        limit: 10,
       })
       .subscribe({
         next: (response: any) => {

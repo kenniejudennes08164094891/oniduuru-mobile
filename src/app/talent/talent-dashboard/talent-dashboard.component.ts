@@ -137,7 +137,7 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
 
     if (!this.talentId) {
       console.warn('No talentId found. Redirecting to login.');
-      this.router.navigate(['/login']);
+      await this.router.navigate(['/login']);
       return;
     }
 
@@ -159,8 +159,8 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
       this.prepareNewUserDashboard();
     }
 
-    // Spinner fade
-    setTimeout(() => (this.showSpinner = false), 900);
+    // Hide Spinner after data is loaded
+    setTimeout(() => (this.showSpinner = false), 2000);
   }
 
   ngOnDestroy(): void {
@@ -665,18 +665,19 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
       this.endpointService
         .fetchMarketsByTalent(talentId, paginationParams, '', '')
         .subscribe({
-          next: (response: any) => {
-            const markets = this.decodeBase64Json(response?.details) || [];
-            this.router.navigate(['/view-hires'], { state: { markets } });
+          next: async (response: any) => {
+            const markets = this.base64JsonDecode(response?.details) || [];
+            await this.router.navigate(['/view-hires'], { state: { markets } });
           },
           error: (error) => {
             console.error('Error fetching markets by talent:', error);
+            // navigate but view-hires should handle empty state
             this.router.navigate(['/view-hires']);
           },
         });
     } catch (err) {
       console.error('Error while requesting markets:', err);
-      this.router.navigate(['/view-hires']);
+      await this.router.navigate(['/view-hires']);
     }
   }
 
@@ -716,6 +717,8 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
   }
 
   private async loadTalentProfile(): Promise<void> {
+    this.showSpinner = true;
+    this.loading = "Fetching Talent's Dashboard...";
     console.log('✔️ loadTalentProfile() started');
 
     this.talentId =
@@ -768,7 +771,6 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
             onboardingObj = onboardingRaw;
           }
         } catch (err) {
-          console.error('❌ Failed to parse onboarding JSON:', err);
           onboardingObj = {};
         }
       }
@@ -787,6 +789,7 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
       );
     } catch (error) {
       console.error('❌ Error loading talent profile:', error);
+      setTimeout(() => (this.showSpinner = true), 2000);
     }
   }
 
@@ -1038,6 +1041,19 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
         return 'text-yellow-600';
       default:
         return 'text-gray-600';
+    }
+  }
+
+  private base64JsonDecode(b64: string): any {
+    try {
+      if (!b64) return null;
+      const binary = atob(b64);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const json = new TextDecoder().decode(bytes);
+      return JSON.parse(json);
+    } catch (e) {
+      console.error('Failed to decode base64 JSON:', e);
+      return null;
     }
   }
 

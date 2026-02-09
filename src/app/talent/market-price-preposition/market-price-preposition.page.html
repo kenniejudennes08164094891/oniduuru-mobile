@@ -11,16 +11,27 @@
     <!-- Top Section -->
     <div
       class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
-      style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+      style="
+        background-image: url(&quot;assets/images/Log-complaint-background.png&quot;);
+        background-size: cover;
+        background-position: center;
+      "
+    >
       <!-- Dark overlay -->
       <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
 
       <!-- Content on top -->
       <div class="relative z-10 text-white">
         <div class="flex items-start gap-3">
-          <img [src]="images.ViewHireFolderIcon" alt="Hire Icon" class="w-12 h-12 object-contain" />
+          <img
+            [src]="images.ViewHireFolderIcon"
+            alt="Hire Icon"
+            class="w-12 h-12 object-contain"
+          />
           <div>
-            <span class="font-medium text-[24px] leading-tight">{{ userName }}</span>
+            <span class="font-medium text-[24px] leading-tight"
+              >{{ userName }}</span
+            >
             <p class="text-gray-200 text-lg leading-relaxed">
               View your hires with {{ getScouterDisplayName() }}
             </p>
@@ -56,7 +67,8 @@
       <img src="assets/icon/Frame 4798.png" alt="icon" class="w-5 h-5" />
       <span>
         <strong>Date of Hire:</strong>
-        {{ getFormattedDateTime(hire.date || hire.dateOfHire)?.date || (hire.date || hire.dateOfHire) }}
+        {{ getFormattedDateTime(hire.date || hire.dateOfHire)?.date ||
+        (hire.date || hire.dateOfHire) }}
       </span>
     </p>
 
@@ -100,7 +112,8 @@
             [ngStyle]="{ 'background-color': getStatusColor(hire.offerStatus || hire.hireStatus || hire.status) }"
           >
           </span>
-          {{ formatHireStatus(hire.offerStatus || hire.hireStatus || hire.status) }}
+          {{ formatHireStatus(hire.offerStatus || hire.hireStatus ||
+          hire.status) }}
         </span>
       </span>
     </p>
@@ -150,26 +163,52 @@
     </div>
   </div>
 
-  <div class="flex border-b border-gray-300 mb-4 mt-6">
-    <!-- Engagements -->
-    <button
-      class="flex-1 py-5 text-center font-medium text-sm transition relative"
-      routerLink="engagements"
-      routerLinkActive="text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
-      [routerLinkActiveOptions]="{ exact: true }"
-    >
-      All Market Engagements
-    </button>
+<!-- Simplified tabs without routing -->
+<div class="flex border-b border-gray-300 mb-4 mt-6">
+  <!-- Details/Table Tab -->
+  <button
+    class="flex-1 py-5 text-center font-medium text-sm transition relative"
+    (click)="currentView = 'details'"
+    [class.text-black]="currentView === 'details'"
+    [class.text-gray-500]="currentView !== 'details'"
+    [ngClass]="{
+      'active-tab': currentView === 'details',
+      'inactive-tab': currentView !== 'details'
+    }"
+  >
+    All Market Engagements
+  </button>
 
-    <!-- Stats -->
-    <button
-      class="flex-1 py-5 text-center font-medium text-sm transition relative"
-      routerLink="stats"
-      routerLinkActive="text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
-    >
-      All Market Stats
-    </button>
+  <!-- Stats Tab -->
+  <button
+    class="flex-1 py-5 text-center font-medium text-sm transition relative"
+    (click)="currentView = 'stats'"
+    [class.text-black]="currentView === 'stats'"
+    [class.text-gray-500]="currentView !== 'stats'"
+    [ngClass]="{
+      'active-tab': currentView === 'stats',
+      'inactive-tab': currentView !== 'stats'
+    }"
+  >
+    All Market Stats
+  </button>
+</div>
+
+  <!-- Content area -->
+  <div *ngIf="currentView === 'details'">
+    <!-- Show table in details view -->
+    <div *ngIf="hire">
+      <app-hires-table
+        [talentId]="talentId"
+        [hires]="hiresData"
+        [selectedScouterId]="selectedScouter?.id"
+        (hireSelected)="onHireSelected($event)"
+      >
+      </app-hires-table>
+    </div>
   </div>
 
-  <router-outlet></router-outlet>
+  <div *ngIf="currentView === 'stats'">
+    <app-stats></app-stats>
+  </div>
 </ion-content>
