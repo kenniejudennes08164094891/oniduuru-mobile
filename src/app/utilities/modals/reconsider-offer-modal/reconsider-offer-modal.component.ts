@@ -1,3 +1,4 @@
+// reconsider-offer-modal.component.ts
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -6,6 +7,7 @@ import {
   AbstractControl,
   ValidationErrors,
 } from '@angular/forms';
+import { ModalController } from '@ionic/angular'; // ✅ ADD THIS
 
 @Component({
   selector: 'app-reconsider-offer-modal',
@@ -18,11 +20,11 @@ export class ReconsiderOfferModalComponent implements OnInit {
   @Input() originalAmount: number = 0;
   @Input() originalJobDescription: string = '';
   @Input() isModalOpen: boolean = false;
-  @Input() status: string = 'Offer Rejected'; // ADD THIS LINE
+  @Input() status: string = 'Offer Rejected';
+  @Input() cssClass: string = '';
 
   @Output() submitted = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter<void>();
-  @Output() close = new EventEmitter<void>();
 
   offerForm!: FormGroup;
   isSubmitting: boolean = false;
@@ -31,16 +33,10 @@ export class ReconsiderOfferModalComponent implements OnInit {
   // For formatted amount display
   formattedAmount: string = '';
 
-  // Rating options for the satisfactory comment
-  ratingOptions = [
-    { value: 1, label: '1 Star - Very Poor' },
-    { value: 2, label: '2 Stars - Poor' },
-    { value: 3, label: '3 Stars - Average' },
-    { value: 4, label: '4 Stars - Good' },
-    { value: 5, label: '5 Stars - Excellent' },
-  ];
-
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private modalCtrl: ModalController, // ✅ ADD THIS
+  ) {
     const today = new Date();
     this.today = today.toISOString().split('T')[0];
   }
@@ -58,7 +54,7 @@ export class ReconsiderOfferModalComponent implements OnInit {
     this.formattedAmount = this.formatNumber(this.originalAmount);
 
     this.offerForm = this.fb.group({
-      // Store raw numeric value but display formatted
+      // AStore raw numeric value but display formatted
       amount: [
         this.originalAmount || 0,
         [
@@ -77,19 +73,6 @@ export class ReconsiderOfferModalComponent implements OnInit {
         ],
       ],
       startDate: [tomorrowStr, [Validators.required]],
-      // NEW: Satisfactory comment by scouter fields
-      satisfactoryComment: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(10),
-          Validators.maxLength(500),
-        ],
-      ],
-      satisfactoryRating: [
-        4,
-        [Validators.required, Validators.min(1), Validators.max(5)],
-      ],
     });
 
     // Set up amount formatting
@@ -100,14 +83,12 @@ export class ReconsiderOfferModalComponent implements OnInit {
       amountValue: this.offerForm.get('amount')?.value,
       jobDescriptionValue: this.offerForm.get('jobDescription')?.value,
       startDateValue: this.offerForm.get('startDate')?.value,
-      satisfactoryComment: this.offerForm.get('satisfactoryComment')?.value,
-      satisfactoryRating: this.offerForm.get('satisfactoryRating')?.value,
     });
   }
 
   // Custom validator: Revised amount must be greater than or equal to original
   private greaterThanOrEqualToOriginal(
-    control: AbstractControl
+    control: AbstractControl,
   ): ValidationErrors | null {
     const value = control.value;
 
@@ -245,106 +226,6 @@ export class ReconsiderOfferModalComponent implements OnInit {
     this.offerForm.get('amount')?.markAsTouched();
   }
 
-  // Helper to format the satisfactory comment for backend
-  private formatSatisfactoryComment(scouterId: string): string {
-    const comment = this.offerForm.get('satisfactoryComment')?.value || '';
-    const rating = this.offerForm.get('satisfactoryRating')?.value || 4;
-    const currentDate = new Date().toLocaleString('en-US', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-
-    const commentData = {
-      scouterId: scouterId,
-      dateOfComment: currentDate,
-      remark: comment,
-      rating: rating,
-    };
-
-    return JSON.stringify(commentData);
-  }
-
-  onSubmit() {
-    console.log('Form submission attempted:', {
-      valid: this.offerForm.valid,
-      invalid: this.offerForm.invalid,
-      errors: this.offerForm.errors,
-      amountErrors: this.offerForm.get('amount')?.errors,
-      jobDescriptionErrors: this.offerForm.get('jobDescription')?.errors,
-      startDateErrors: this.offerForm.get('startDate')?.errors,
-      satisfactoryCommentErrors: this.offerForm.get('satisfactoryComment')
-        ?.errors,
-      satisfactoryRatingErrors:
-        this.offerForm.get('satisfactoryRating')?.errors,
-      amountValue: this.offerForm.get('amount')?.value,
-      jobDescriptionValue: this.offerForm.get('jobDescription')?.value,
-      startDateValue: this.offerForm.get('startDate')?.value,
-      satisfactoryCommentValue: this.offerForm.get('satisfactoryComment')
-        ?.value,
-      satisfactoryRatingValue: this.offerForm.get('satisfactoryRating')?.value,
-    });
-
-    if (this.offerForm.valid) {
-      this.isSubmitting = true;
-
-      // Get the amount value
-      const amount = this.offerForm.get('amount')?.value;
-      const startDate = this.offerForm.get('startDate')?.value;
-      const jobDescription = this.offerForm.get('jobDescription')?.value;
-      const satisfactoryComment = this.offerForm.get(
-        'satisfactoryComment'
-      )?.value;
-      const satisfactoryRating =
-        this.offerForm.get('satisfactoryRating')?.value;
-
-      // Get current date for dateOfHire
-      const currentDate = new Date();
-      const formattedCurrentDate = this.formatDateForPayload(currentDate);
-      const formattedStartDate = this.formatDateForPayload(new Date(startDate));
-
-      const offerData = {
-        // Form data
-        amount: amount,
-        jobDescription: jobDescription,
-        startDate: startDate,
-        satisfactoryComment: satisfactoryComment,
-        satisfactoryRating: satisfactoryRating,
-
-        // Original data
-        talentId: this.talentId,
-        talentName: this.talentName,
-        originalAmount: this.originalAmount,
-        originalJobDescription: this.originalJobDescription,
-        newStatus: 'Awaiting Acceptance',
-
-        // Backend API payload structure
-        backendPayload: {
-          hireStatus: 'awaiting-acceptance',
-          amountToPay: amount.toString(),
-          jobDescription: jobDescription,
-          startDate: formattedStartDate,
-          dateOfHire: formattedCurrentDate,
-          // This will be populated by the parent component with scouterId
-          satisFactoryCommentByScouter: '', // Placeholder, will be filled by parent
-        },
-      };
-
-      console.log('Submitting revised offer:', offerData);
-
-      // Emit the form data to parent component
-      this.submitted.emit(offerData);
-      this.closeModal();
-      this.isSubmitting = false;
-    } else {
-      // Mark all fields as touched to show validation errors
-      this.markFormGroupTouched(this.offerForm);
-    }
-  }
-
   // Helper method for date formatting in backend payload
   private formatDateForPayload(date: Date): string {
     const year = date.getFullYear();
@@ -367,39 +248,84 @@ export class ReconsiderOfferModalComponent implements OnInit {
     });
   }
 
-  // Add this method to the component class
-  getRatingDescription(rating: number): string {
-    const descriptions: { [key: number]: string } = {
-      1: 'Very Poor - Significant issues with the reconsideration',
-      2: 'Poor - Needs substantial improvement',
-      3: 'Average - Acceptable reconsideration terms',
-      4: 'Good - Satisfactory revised offer',
-      5: 'Excellent - Highly satisfactory reconsideration',
-    };
-    return descriptions[rating] || 'No rating selected';
-  }
-
   onCancel() {
     this.cancelled.emit();
-    this.closeModal();
+    this.modalCtrl.dismiss();
   }
 
   closeModal() {
-    this.close.emit();
+    this.cancelled.emit();
+    this.modalCtrl.dismiss();
   }
-
-  // Helper method to generate star display
-  getStars(rating: number): string[] {
-    return Array(5)
-      .fill(0)
-      .map((_, index) => (index < rating ? '★' : '☆'));
-  }
-
 
   getSubmitButtonText(): string {
     if (this.isSubmitting) {
-      return "Sending Offer...";
+      return 'Sending Offer...';
     }
-    return this.status === 'Offer Rejected' ? "Send Revised Offer" : "Update Offer";
+    return this.status === 'Offer Rejected'
+      ? 'Send Revised Offer'
+      : 'Update Offer';
+  }
+
+  onSubmit() {
+    console.log('Form submission attempted:', {
+      valid: this.offerForm.valid,
+      invalid: this.offerForm.invalid,
+      errors: this.offerForm.errors,
+      amountErrors: this.offerForm.get('amount')?.errors,
+      jobDescriptionErrors: this.offerForm.get('jobDescription')?.errors,
+      startDateErrors: this.offerForm.get('startDate')?.errors,
+      amountValue: this.offerForm.get('amount')?.value,
+      jobDescriptionValue: this.offerForm.get('jobDescription')?.value,
+      startDateValue: this.offerForm.get('startDate')?.value,
+    });
+
+    // Get the amount value
+    const amount = this.offerForm.get('amount')?.value;
+    const startDate = this.offerForm.get('startDate')?.value;
+    const jobDescription = this.offerForm.get('jobDescription')?.value;
+
+    // Get current date for dateOfHire
+    const currentDate = new Date();
+    const formattedCurrentDate = this.formatDateForPayload(currentDate);
+    const formattedStartDate = this.formatDateForPayload(new Date(startDate));
+
+    const offerData = {
+      // Form data
+      amount: amount,
+      jobDescription: jobDescription,
+      startDate: startDate,
+
+      // Original data
+      talentId: this.talentId,
+      talentName: this.talentName,
+      originalAmount: this.originalAmount,
+      originalJobDescription: this.originalJobDescription,
+      newStatus: 'Awaiting Acceptance',
+
+      // Backend API payload structure
+      backendPayload: {
+        hireStatus: 'awaiting-acceptance',
+        amountToPay: amount?.toString() || '0',
+        jobDescription: jobDescription || '',
+        startDate: formattedStartDate,
+        dateOfHire: formattedCurrentDate,
+      },
+    };
+
+    if (this.offerForm.valid) {
+      this.isSubmitting = true;
+
+      console.log('Submitting revised offer:', offerData);
+
+      // Emit the form data to parent component
+      this.submitted.emit(offerData);
+    } else {
+      // Mark all fields as touched to show validation errors
+      this.markFormGroupTouched(this.offerForm);
+
+      // Don't emit when invalid
+      console.log('Form is invalid, not submitting');
+    }
   }
 }

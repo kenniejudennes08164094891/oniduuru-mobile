@@ -1,72 +1,253 @@
-<ion-header>
-  <app-talent-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden"></app-talent-header>
+<!-- <ion-content class=""> -->
+  <!-- Modal Container -->
+  <div
+    class="fixed h-full inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+  >
+    <div
+      class="bg-white rounded shadow-lg w-full h-full  flex flex-col overflow-hidden"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- HEADER -->
+      <div
+        class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+      >
+        <h2 class="text-lg font-bold text-white">
+          Evaluation on scouter's integrity
+        </h2>
+        <button (click)="closeModal()" class="text-white hover:text-gray-700">
+          ✕
+        </button>
+      </div>
 
-  <div class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
-    style="background-image: url('assets/images/Log-complaint-background.png'); background-size: cover; background-position: center;">
+      <!-- SCROLLABLE BODY -->
+      <div class="p-6 space-y-6 overflow-y-auto flex-1">
+        <!-- Instruction -->
+        <div>
+          <p class="text-sm text-[#79797B] mb-4">
+            Please evaluate the quality of the scouter's integrity on this role.
+            Remember, comments to the scouter should follow our
+            <strong class="text-[#0033FF]">Community Guidelines</strong>.
+          </p>
 
-    <!-- <ion-toolbar color="primary">
+          <!-- DISPLAY JOB DESCRIPTION -->
+          <p class="font-medium mb-2 text-[#79797B]">
+            Scouter's Job Description:
+            <span class="text-[#363757]">{{
+              jobDescription || "Not specified"
+            }}</span>
+          </p>
 
-    </ion-toolbar> -->
+          <!-- Scouter Information -->
+          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-600">
+              Evaluating:
+              <span class="font-medium text-gray-900">{{
+                scouterName || "Scouter"
+              }}</span>
+            </p>
+            <!-- <p class="text-xs text-gray-500 mt-1">
+              Market Hire ID: {{ marketHireId || "N/A" }}
+            </p> -->
+          </div>
+        </div>
 
-    <div class="relative z-10 text-white">
-      <div class="flex items-start gap-3 mt-4">
-        <img [src]="'assets/images/viewHiresFolder.png'" alt="" class="w-12 h-12 object-contain" />
-        <div class="flex justify-between items-center w-full">
-          <p class="text-white font-medium text-[24px] leading-relaxed">Evaluation on scouter's integrity</p>
-          <ion-buttons slot="end">
-            <ion-button color="light" (click)="close()">X</ion-button>
-          </ion-buttons>
+        <div class="border rounded-xl">
+          <!-- Comment textarea -->
+          <textarea
+            [(ngModel)]="comment"
+            [placeholder]="
+              'Please write a comment on your level of satisfactory integrity observed by ' +
+              (scouterName || 'the scouter') +
+              ' all through the job...'
+            "
+            class="w-full h-[90px] border-none focus:outline-none p-3 mt-2 text-sm text-[#79797B] bg-transparent resize-none"
+          ></textarea>
+
+          <!-- Attachments / Location -->
+          <!-- <div
+            class="flex items-center gap-4 border-t bg-[#CDD5DF33] px-4 py-3 rounded-b-xl w-full"
+          > -->
+            <!-- <div class="flex justify-between items-center gap-2 w-1/2"> -->
+              <!-- Hidden file input -->
+              <!-- <input
+                type="file"
+                id="photoInput"
+                accept="image/*"
+                hidden
+                (change)="onPhotoSelected($event)"
+                #fileInput
+              /> -->
+
+              <!-- Attach button -->
+              <!-- <button
+                type="button"
+                (click)="fileInput.click()"
+                class="flex items-center gap-2 text-gray-700"
+                [disabled]="isLoading"
+              >
+                <ion-icon name="attach-outline"></ion-icon> Attach..
+              </button> -->
+
+              <!-- Location button -->
+              <!-- <button
+                type="button"
+                (click)="addLocation()"
+                class="flex items-center gap-2 text-gray-700"
+                [disabled]="isLoading"
+              >
+                <ion-icon name="location-outline"></ion-icon> Locat..
+              </button> -->
+
+              <!-- Photo upload -->
+              <!-- <button
+                type="button"
+                class="flex items-center gap-2 text-gray-700"
+                [disabled]="isLoading"
+              >
+                <label for="photoInput" class="cursor-pointer">
+                  <ion-icon name="image-outline"></ion-icon> Photo
+                </label>
+              </button>
+            </div>
+          </div> -->
+        </div>
+
+        <!-- Display selected attachments & location -->
+        <!-- <div *ngIf="location || photoAttached" class="mt-2">
+          <div *ngIf="location" class="text-sm text-[#79797B]">
+            <span class="font-medium">Location:</span> {{ location }}
+          </div>
+          <div *ngIf="photoAttached" class="text-sm text-[#79797B]">
+            <span class="font-medium">Photo:</span> Attached
+          </div>
+        </div> -->
+
+        <!-- Rating -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-2">
+            <strong class="text-[#79797B]">Your Rating:</strong>
+            <ng-container *ngFor="let star of [1, 2, 3, 4, 5]">
+              <ion-icon
+                name="star"
+                (click)="setRating(star)"
+                [class.text-yellow-500]="star <= rating"
+                [class.text-gray-400]="star > rating"
+                [class.cursor-pointer]="!isLoading"
+                [class.opacity-50]="isLoading"
+                class="text-2xl"
+              ></ion-icon>
+            </ng-container>
+            <span class="text-sm text-gray-500 ml-2">({{ rating }}/5)</span>
+          </div>
+
+          <!-- Payment options - Updated to match API requirements -->
+          <div>
+            <h3 class="font-medium mb-2 text-[#999999]">
+              Select Payment Option: <span class="text-red-500">*</span>
+            </h3>
+            <div
+              class="flex flex-col text-[#101828] border p-3 space-y-4 rounded-b-lg"
+            >
+              <div class="flex gap-1 items-center">
+                <input
+                  type="radio"
+                  id="wallet"
+                  name="payment"
+                  value="WALLET"
+                  [(ngModel)]="paymentOption"
+                  [disabled]="isLoading"
+                />
+                <label for="wallet">Pay via wallet transfer (WALLET)</label>
+              </div>
+              <div class="border-t"></div>
+              <div class="flex gap-1 items-center">
+                <input
+                  type="radio"
+                  id="bank"
+                  name="payment"
+                  value="BANK_TRANSFER"
+                  [(ngModel)]="paymentOption"
+                  [disabled]="isLoading"
+                />
+                <label for="bank"
+                  >Pay via personal bank transfer (BANK_TRANSFER)</label
+                >
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 italic">
+              Note: This selection will be sent as either "WALLET" or
+              "BANK_TRANSFER"
+            </p>
+          </div>
+        </div>
+
+        <!-- Previous Comments (if any) -->
+        <!-- <div *ngIf="previousComments" class="mt-6">
+          <h3 class="font-medium text-gray-700 mb-2">Previous Comments:</h3>
+          <div *ngIf="previousComments.length > 0; else noComments">
+            <div
+              *ngFor="let comment of previousComments"
+              class="bg-gray-50 p-3 rounded-lg mb-2"
+            >
+              <div class="flex justify-between items-start">
+                <p class="text-sm text-gray-700">
+                  {{ comment.remark || comment.text || comment }}
+                </p>
+                <div *ngIf="comment.rating" class="flex items-center gap-1">
+                  <span
+                    *ngFor="let star of [1, 2, 3, 4, 5]"
+                    [class.text-yellow-500]="star <= comment.rating"
+                    [class.text-gray-300]="star > comment.rating"
+                    class="text-xs"
+                    >★</span
+                  >
+                </div>
+              </div>
+              <div class="flex justify-between items-center mt-1">
+                <p
+                  class="text-xs text-gray-500"
+                  *ngIf="comment.dateOfComment || comment.date"
+                >
+                  {{ comment.dateOfComment || comment.date | date: "medium" }}
+                </p>
+                <span
+                  *ngIf="comment.paymentMethod"
+                  class="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded"
+                >
+                  {{
+                    comment.paymentMethod === "BANK_TRANSFER"
+                      ? "Bank Transfer"
+                      : "Wallet"
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <ng-template #noComments>
+            <p class="text-sm text-gray-500 italic">No previous comments</p>
+          </ng-template>
+        </div> -->
+
+        <!-- Submit button -->
+        <div class="pt-4">
+          <button
+            (click)="submitEvaluation()"
+            [disabled]="isLoading || !isFormValid()"
+            [class.opacity-50]="isLoading || !isFormValid()"
+            [class.cursor-not-allowed]="isLoading || !isFormValid()"
+            class="bg-[#000000] text-white py-3 px-6 rounded-md font-bold hover:bg-blue-700 transition w-full"
+          >
+            <span *ngIf="!isLoading">Post comment</span>
+            <span
+              *ngIf="isLoading"
+              class="flex items-center justify-center gap-2"
+            >
+              <ion-icon name="sync-outline" class="animate-spin"></ion-icon>
+              Submitting...
+            </span>
+          </button>
         </div>
       </div>
     </div>
   </div>
-</ion-header>
-
-<ion-content class="ion-padding">
-  <div class="flex flex-col items-center space-y-6">
-    <p class="text-center text-gray-500 text-base">Please evaluate the quality of the scouter's integrity on this role.
-      Remember, comments to the scouter should follow our <a class="text-blue-700" href="/community-guidelines"
-        target="_blank">Community
-        Guidelines</a></p>
-    <p> Scouter's Job Description: For events and contents </p>
-    <!-- Comment box -->
-    <ion-item lines="none">
-      <ion-label position="floating">Please write a comment on your level of satisfactory integrity observed by the {{
-        scouterName }} all through the job..</ion-label>
-      <ion-textarea [(ngModel)]="comment" auto-grow="true"></ion-textarea>
-      <!-- 📎 Comment action icons -->
-      <div class="comment-actions">
-        <!-- Attach link -->
-        <ion-button fill="clear" size="small" (click)="addLink()">
-          <ion-icon name="attach-outline"></ion-icon>
-        </ion-button>
-
-        <!-- Location -->
-        <ion-button fill="clear" size="small" (click)="addLocation()">
-          <ion-icon name="location-outline"></ion-icon>
-        </ion-button>
-
-        <!-- Photo upload -->
-        <ion-button fill="clear" size="small">
-          <label for="photoInput">
-            <ion-icon name="image-outline"></ion-icon>
-          </label>
-        </ion-button>
-
-        <!-- Hidden file input -->
-        <input type="file" id="photoInput" accept="image/*" hidden (change)="onPhotoSelected($event)" />
-      </div>
-
-    </ion-item>
-    <div class="flex ml-0 mr-auto display-block space-x-2">
-      <P>Your star rating:</P>
-      <ion-icon *ngFor="let star of [1, 2, 3, 4, 5]" [name]="star <= rating ? 'star' : 'star-outline'" color="warning"
-        size="medium" (click)="setRating(star)"></ion-icon>
-    </div>
-    <!--  Submit -->
-    <ion-button class="submit-btn" [disabled]="rating === 0" (click)="submitEvaluation()">
-      Post comment
-    </ion-button>
-  </div>
-
-</ion-content>
+<!-- </ion-content> -->

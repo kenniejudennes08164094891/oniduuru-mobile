@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Output, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Output,
+  OnInit,
+  OnDestroy,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { TotalHires } from 'src/app/models/mocks';
 
@@ -8,7 +17,9 @@ import { TotalHires } from 'src/app/models/mocks';
   styleUrls: ['./market-engagement-tabs.component.scss'],
   standalone: false,
 })
-export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChanges {
+export class MarketEngagementTabsComponent
+  implements OnInit, OnDestroy, OnChanges
+{
   @Output() hireSelected = new EventEmitter<TotalHires>();
   @Output() backPressed = new EventEmitter<void>();
 
@@ -21,7 +32,7 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChang
 
   @Input() initialHire: TotalHires | undefined;
 
-  constructor(private platform: Platform) { }
+  constructor(private platform: Platform) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['initialHire'] && changes['initialHire'].currentValue) {
@@ -37,6 +48,17 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChang
       // If we're on the stats tab, make sure it shows the correct hire
       if (this.activeTab === 'stats') {
         console.log('📊 Stats tab will update with new hire:', newHire.name);
+
+        // Create a copy without modal flags for stats tab ONLY
+        const hireWithoutModal = {
+          ...newHire,
+          shouldOpenModal: false,
+          preventModalOpen: true,
+          isStatsUpdate: true, // Add flag to identify this is just a stats update
+        };
+
+        // Only emit for stats tab, not for engagements tab
+        this.hireSelected.emit(hireWithoutModal);
       }
 
       // Reset flag after a delay
@@ -57,7 +79,7 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChang
       10,
       () => {
         this.onBackPress();
-      }
+      },
     );
   }
 
@@ -68,7 +90,21 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChang
   }
 
   setTab(tab: 'engagements' | 'stats') {
+    // ✅ PREVENT MODAL OPENING WHEN SWITCHING TABS
     this.activeTab = tab;
+
+    // When switching to stats tab, emit the selected hire WITHOUT opening modals
+    if (tab === 'stats' && this.selectedHire) {
+      console.log('📊 Switching to stats tab - NO MODAL OPENING');
+      // Create a copy without modal flags
+      const hireWithoutModal = {
+        ...this.selectedHire,
+        shouldOpenModal: false,
+        preventModalOpen: true,
+        isStatsUpdate: true, // Add this flag
+      };
+      this.hireSelected.emit(hireWithoutModal);
+    }
   }
 
   onHireClick(hire: TotalHires) {
@@ -80,13 +116,27 @@ export class MarketEngagementTabsComponent implements OnInit, OnDestroy, OnChang
       return;
     }
 
+    // ✅ Check if this is a stats tab navigation - DON'T OPEN MODALS
+    const isStatsNavigation =
+      hire.preventModalOpen || this.activeTab === 'stats';
+
+    if (isStatsNavigation) {
+      console.log('📊 Stats navigation - NOT opening modal');
+      // Just update selected hire without modal flags
+      const cleanHire = { ...hire };
+      delete cleanHire.shouldOpenModal;
+      delete cleanHire.modalType;
+      this.selectedHire = cleanHire;
+      this.hireSelected.emit(cleanHire);
+      return;
+    }
+
     // Update the selected hire
     this.selectedHire = hire;
 
-    // Emit to parent (MarketPricePreparationComponent)
+    // Emit to parent - will open modals ONLY for engagements tab
     this.hireSelected.emit(hire);
   }
-
 
   private onBackPress() {
     if (this.activeTab === 'stats') {

@@ -3,6 +3,7 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+  <!-- Hero Section -->
   <div
     class="relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
     style="
@@ -34,385 +35,342 @@
     </div>
   </div>
 
-  <ng-container
-    *ngIf="marketExpenditures && marketExpenditures.length > 0; else noExpenditure"
+  <!-- Slideshow Banner - Show based on current month data -->
+  <div
+    class="bg-white px-10 py-6 shadow-xl rounded-xl overflow-hidden mb-6"
+    *ngIf="currentMonthHires.length > 0"
   >
-    <div class="bg-white px-10 py-6 shadow-xl rounded-xl overflow-hidden">
-      <div class="flex animate-marquee">
+    <div class="flex animate-marquee">
+      <ng-container *ngFor="let text of slideshowTexts; let i = index">
         <p
           class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
         >
-          You have {{ marketExpenditures.length }} expenditures in {{
-          currentMonth }}.
+          {{ text }}
         </p>
+      </ng-container>
+
+      <!-- Duplicate for seamless loop -->
+      <ng-container *ngFor="let text of slideshowTexts; let i = index">
         <p
           class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
         >
-          You have {{ marketExpenditures.length }} expenditures in {{
-          currentMonth }}.
+          {{ text }}
         </p>
-      </div>
+      </ng-container>
     </div>
-  </ng-container>
-
-  <ng-template #noExpenditure>
-    <div class="bg-[#CDD5DF33] px-10 py-6 shadow-xl rounded-xl overflow-hidden">
-      <div class="flex animate-marquee">
-        <p
-          class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
-        >
-          Oops!....It appears there have been no market expenditures in this
-          Month of {{ currentMonth }}.
-        </p>
-        <p
-          class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
-        >
-          Oops!....It appears there have been no market expenditures in this
-          Month of {{ currentMonth }}.
-        </p>
-      </div>
-    </div>
-  </ng-template>
-
-  <!-- Section for Selected Category -->
-  <div #categoryDisplaySection *ngIf="activeCategoryBtn" class="py-4 px-1">
-    <h3 class="font-semibold text-lg mb-4">
-      Showing {{ getActiveCategoryTitle() }}
-    </h3>
-
-    <div *ngIf="filteredHires.length > 0; else noData">
-      <div
-        *ngFor="let hire of filteredHires"
-        class="flex items-center gap-3 mb-3 py-2"
-      >
-        <img
-          [src]="hire.profilePic || 'assets/images/default-avatar.png'"
-          alt="{{ hire.name }}"
-          class="w-10 h-10 rounded-full"
-        />
-        <div>
-          <p class="font-medium">{{ hire.name }}</p>
-          <p class="text-sm text-gray-500 line-clamp-1">{{ hire.email }}</p>
-        </div>
-        <span
-          class="ml-auto bg-[#CDD5DF33] text-gray-700 font-normal text-[16px] px-2 py-2"
-        >
-          {{ getRecordCount(hire) }} occurence
-        </span>
-      </div>
-    </div>
-
-    <ng-template #noData>
-      <p class="text-gray-500 italic">No hires found in this category.</p>
-    </ng-template>
   </div>
 
-  <!-- Table With search filter -->
-  <!-- Filter + Search + Table -->
+  <!-- No Expenditure Slideshow Banner - Show when no current month data -->
   <div
-    class="mt-6 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-100"
+    class="bg-white px-10 py-6 shadow-xl rounded-xl overflow-hidden mb-6"
+    *ngIf="currentMonthHires.length === 0"
   >
-    <!-- Top bar with Filter + Search -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-3 sm:gap-4 border-b border-gray-100 bg-gray-50/50"
-    >
-      <!-- Dropdown Filter -->
-      <div class="flex items-center gap-3">
-        <!-- Icon -->
-        <span
-          class="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500"
+    <div class="flex animate-marquee">
+      <ng-container
+        *ngFor="let text of noExpenditureSlideshowTexts; let i = index"
+      >
+        <p
+          class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-5 h-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 4h18M3 12h12M3 20h6"
-            />
-          </svg>
-        </span>
+          {{ text }}
+        </p>
+      </ng-container>
 
-        <!-- Label + Dropdown -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-gray-600">Filter by:</span>
-          <!-- Custom Professional Filter -->
-          <div class="relative">
-            <button
-              (click)="isFilterOpen = !isFilterOpen"
-              class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+      <!-- Duplicate for seamless loop -->
+      <ng-container
+        *ngFor="let text of noExpenditureSlideshowTexts; let i = index"
+      >
+        <p
+          class="text-gray-800 text-lg leading-relaxed whitespace-nowrap mr-10"
+        >
+          {{ text }}
+        </p>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-8">
+    <div
+      class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"
+    ></div>
+    <p class="mt-2 text-gray-600">Loading hires...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading">
+    <!-- Filter + Search + Table -->
+    <div
+      class="mt-6 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-100"
+    >
+      <!-- Top bar with Filter + Search -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-4 gap-3 sm:gap-4 border-b border-gray-100 bg-gray-50/50"
+      >
+        <!-- Dropdown Filter -->
+        <div class="flex items-center gap-3">
+          <!-- Icon -->
+          <span
+            class="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 text-gray-500"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <span
-                *ngIf="activeCategoryTable; else placeholder"
-                class="flex items-center gap-2"
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 4h18M3 12h12M3 20h6"
+              />
+            </svg>
+          </span>
+
+          <!-- Label + Dropdown -->
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-medium text-gray-600">Filter by:</span>
+            <!-- Custom Professional Filter -->
+            <div class="relative">
+              <button
+                (click)="isFilterOpen = !isFilterOpen"
+                class="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
               >
                 <span
-                  class="h-3 w-3 rounded-full"
-                  [style.backgroundColor]="
-                    getStatusColor(getFilterStatus(activeCategoryTable))
-                  "
-                ></span>
-                {{ getFilterTitle(activeCategoryTable) }}
-              </span>
-              <ng-template #placeholder>
-                <span class="text-gray-400">Select category</span>
-              </ng-template>
-
-              <ion-icon
-                name="chevron-down-outline"
-                class="ml-auto text-gray-400 text-base"
-              ></ion-icon>
-            </button>
-
-            <!-- Dropdown Panel -->
-            <div
-              *ngIf="isFilterOpen"
-              class="absolute z-10 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
-            >
-              <ul class="divide-y divide-gray-100">
-                <li
-                  *ngFor="let f of filters"
-                  (click)="setActiveCategoryTable(f.key); isFilterOpen = false"
-                  class="flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
+                  *ngIf="activeCategoryTable; else placeholder"
+                  class="flex items-center gap-2"
                 >
                   <span
                     class="h-3 w-3 rounded-full"
-                    [style.backgroundColor]="getStatusColor(f.status)"
+                    [style.backgroundColor]="
+                      getStatusColor(getFilterStatus(activeCategoryTable))
+                    "
                   ></span>
-                  {{ f.title }}
-                </li>
-              </ul>
+                  {{ getFilterTitle(activeCategoryTable) }}
+                </span>
+                <ng-template #placeholder>
+                  <span class="text-gray-400">Select category</span>
+                </ng-template>
+
+                <ion-icon
+                  name="chevron-down-outline"
+                  class="ml-auto text-gray-400 text-base"
+                ></ion-icon>
+              </button>
+
+              <!-- Dropdown Panel -->
+              <div
+                *ngIf="isFilterOpen"
+                class="absolute z-10 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
+              >
+                <ul class="divide-y divide-gray-100">
+                  <li
+                    *ngFor="let f of filters"
+                    (click)="setActiveCategoryTable(f.key); isFilterOpen = false"
+                    class="flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
+                  >
+                    <span
+                      class="h-3 w-3 rounded-full"
+                      [style.backgroundColor]="getStatusColor(f.status)"
+                    ></span>
+                    {{ f.title }}
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Search Bar -->
+        <div class="relative flex-1 w-full sm:max-w-md">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+            <svg
+              class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </span>
+          <input
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            type="text"
+            class="w-full py-2.5 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+            placeholder="Search by name or email..."
+          />
+        </div>
       </div>
 
-      <!-- Search Bar -->
-      <div class="relative flex-1 w-full sm:max-w-md">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-          <svg
-            class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
-        </span>
-        <input
-          [(ngModel)]="searchTerm"
-          (input)="onSearchChange()"
-          type="text"
-          class="w-full py-2.5 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-          placeholder="Search by name or email..."
-        />
-      </div>
-    </div>
+      <!-- Table Content -->
+      <div *ngIf="paginatedHires.length > 0; else noDataTable">
+        <div class="overflow-x-auto">
+          <table class="min-w-[700px] sm:min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50 uppercase">
+              <tr>
+                <th
+                  class="w-[220px] px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  Scouter Name
+                </th>
+                <th
+                  class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  Date of Hire
+                </th>
+                <th
+                  class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  Start Date
+                </th>
+                <th
+                  class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  Agreed Amount
+                </th>
+                <th
+                  class="px-4 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  Hire Status
+                </th>
+              </tr>
+            </thead>
 
-    <!-- Loading indicator -->
-    <div
-      *ngIf="isLoading"
-      class="flex flex-col items-center justify-center py-12"
-    >
-      <div
-        class="spinner border-4 border-gray-200 border-t-indigo-600 rounded-full w-12 h-12 animate-spin mb-3"
-      ></div>
-      <span class="text-gray-600 text-sm">Loading market records...</span>
-    </div>
-
-    <!-- Table -->
-    <div *ngIf="paginatedHires.length > 0 && !isLoading; else noDataTable">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+            <tbody class="divide-y divide-gray-100">
+              <tr
+                *ngFor="let hire of paginatedHires"
+                (click)="goToHireTransaction(hire.id)"
+                class="hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                Scouter Name
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]"
-              >
-                Date of Hire
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[120px]"
-              >
-                Start Date
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[140px]"
-              >
-                Agreed Amount
-              </th>
-              <th
-                class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider min-w-[150px]"
-              >
-                Hire Status
-              </th>
-            </tr>
-          </thead>
-
-          <tbody *ngIf="paginatedHires.length > 0; else noDataTable" class="divide-y divide-gray-100">
-            <tr *ngFor="let hire of paginatedHires" (click)="goToHireTransaction(hire.id.toString())">
-
-              <!-- Profile + Name -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
+                <!-- Profile + Name -->
+                <td class="w-[220px] px-4 sm:px-6 py-3 flex items-center gap-3">
                   <img
                     class="w-10 h-10 rounded-full object-cover border border-gray-200"
                     [src]="hire.profilePic"
                     alt="{{ hire.name }}"
                     onerror="this.src = 'assets/images/default-avatar.png'"
                   />
-                  <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-gray-900 truncate">
-                      {{ hire.name }}
+                  <div>
+                    <p
+                      class="text-sm sm:text-base font-medium text-gray-900 truncate max-w-[150px]"
+                    >
+                      {{ hire.name || "Unknown" }}
                     </p>
-                    <p class="text-xs text-gray-500 truncate">
-                      {{ hire.email }}
+                    <p
+                      class="text-xs sm:text-sm text-gray-500 truncate max-w-[150px]"
+                    >
+                      {{ hire.email || "No email" }}
                     </p>
                   </div>
-                </div>
-              </td>
+                </td>
 
-              <!-- Hire Date + Time -->
-              <td class="px-6 py-4">
-                <div class="text-sm text-gray-900">
-                  <p class="font-medium">
+                <!-- Hire Date + Time -->
+                <td class="min-w-[180px] sm:px-6 py-3">
+                  <p class="text-sm sm:text-base font-medium text-gray-900">
                     {{ getFormattedDateTime(hire.date).date }}
                   </p>
-                  <p class="text-xs text-gray-500 mt-0.5">
+                  <p class="text-xs text-gray-400">
                     {{ getFormattedDateTime(hire.date).time }}
                   </p>
-                </div>
-              </td>
+                </td>
 
-              <!-- Start Date -->
-              <td class="px-6 py-4">
-                <span class="text-sm text-gray-700 font-medium">
-                  {{ hire.startDate }}
-                </span>
-              </td>
-
-              <!-- Amount -->
-              <td class="px-6 py-4">
-                <div>
-                  <span class="text-sm font-semibold text-gray-900 block">
-                    {{ getFormattedAmount(hire.amount) }}
-                  </span>
-               
-                </div>
-              </td>
-
-              <!-- Status -->
-              <td class="px-6 py-4">
-                <div
-                  class="flex flex-col sm:flex-row items-start sm:items-center gap-2"
+                <!-- Start Date -->
+                <td
+                  class="min-w-[180px] px-4 sm:px-6 py-3 text-sm sm:text-base text-gray-700"
                 >
+                  {{ hire.startDate || "Not set" }}
+                </td>
+
+                <!-- Amount -->
+                <td
+                  class="px-4 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+                >
+                  {{ getFormattedAmount(hire.amount) }}
+                </td>
+
+                <!-- Status -->
+                <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                   <span
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
                   >
                     <span
                       class="h-2 w-2 rounded-full"
                       [style.backgroundColor]="getStatusColor(hire.status)"
                     ></span>
-                    {{ hire.status }}
+                    {{ hire.status || "Unknown" }}
                   </span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <ng-template #noDataTable>
-      <div
-        *ngIf="!isLoading"
-        class="flex flex-col items-center justify-center py-16 px-4"
-      >
-        <img
-          class="w-40 h-40 opacity-80"
-          [src]="images.NoDataImage"
-          alt="No Data"
-        />
-        <div class="text-center space-y-2 mt-6">
-          <h3 class="text-gray-800 font-semibold text-lg">
-            Oops! No Data Available
-          </h3>
-          <p class="text-gray-500 text-sm max-w-md">
-            {{ searchTerm ? 'No records found for your search.' : 'No market
-            records available at the moment.' }}
-          </p>
-        </div>
-      </div>
-    </ng-template>
-
-    <!-- Pagination -->
-    <div
-      *ngIf="paginatedHires.length > 0 && !isLoading"
-      class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-3 bg-gray-50 border-t border-gray-100"
-    >
-      <div class="text-sm text-gray-500">
-        Showing
-        <span class="font-medium"
-          >{{ (currentPage - 1) * itemsPerPage + 1 }}</span
-        >
-        to
-        <span class="font-medium"
-          >{{ Math.min(currentPage * itemsPerPage, totalRecords) }}</span
-        >
-        of <span class="font-medium">{{ totalRecords }}</span> records
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button
-          (click)="prevPage()"
-          [disabled]="currentPage === 1"
-          class="flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          <ion-icon name="chevron-back-outline" class="text-sm"></ion-icon>
-          Previous
-        </button>
-
-        <div class="flex items-center gap-1">
-          <span
-            class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-md"
-          >
-            {{ currentPage }}
-          </span>
-          <span class="text-gray-500 mx-1">of</span>
-          <span
-            class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-md"
-          >
-            {{ totalPages }}
-          </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <button
-          (click)="nextPage()"
-          [disabled]="currentPage === totalPages"
-          class="flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        <!-- Pagination -->
+        <div
+          *ngIf="paginatedHires.length > 0"
+          class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-100"
         >
-          Next
-          <ion-icon name="chevron-forward-outline" class="text-sm"></ion-icon>
-        </button>
+          <button
+            (click)="prevPage()"
+            [disabled]="currentPage === 1"
+            class="pagination-button flex items-center px-3 py-2 gap-2 border-2 border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <ion-icon name="chevron-back-outline"></ion-icon>
+            Previous
+          </button>
+
+          <span
+            class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center"
+          >
+            <span
+              class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
+            >
+              {{ currentPage }}
+            </span>
+            <span class="text-gray-500">of</span>
+            <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
+              {{ totalPages }}
+            </span>
+            <span class="text-xs text-gray-500">
+              ({{ filteredAndSearchedHires.length }} total)
+            </span>
+          </span>
+
+          <button
+            (click)="nextPage()"
+            [disabled]="currentPage === totalPages"
+            class="pagination-button flex items-center px-3 py-2 gap-1 sm:gap-2 border border-gray-400 rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            Next <ion-icon name="chevron-forward-outline"></ion-icon>
+          </button>
+        </div>
       </div>
+
+      <ng-template #noDataTable>
+        <div
+          class="text-center py-12 text-gray-500 border border-dashed border-gray-300 rounded-lg m-4"
+        >
+          <div class="flex flex-col items-center">
+            <img
+              [src]="images.NoDataImage"
+              alt="No data"
+              class="w-24 h-24 mb-4 opacity-50"
+            />
+            <p class="text-lg font-medium">No hires found</p>
+            <p class="text-sm mt-1">
+              When you have hires, they will appear here.
+            </p>
+          </div>
+        </div>
+      </ng-template>
     </div>
   </div>
-
-  <!-- <app-hires-table [hires]="paginatedHiresData"></app-hires-table> -->
-
 </ion-content>

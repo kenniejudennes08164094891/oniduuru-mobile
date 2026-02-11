@@ -9,6 +9,7 @@ import {
   EventEmitter,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { imageIcons } from 'src/app/models/stores';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 
@@ -28,13 +29,15 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
   currentTime: Date = new Date();
   private intervalId: any;
 
+  images = imageIcons;
+
   // State
   activeCategoryBtn: string | null = null;
   activeCategoryTable: string | null = null;
   isFilterOpen = false;
   searchTerm = '';
 
-//   // Pagination
+  //   // Pagination
   currentPage = 1;
   itemsPerPage = 8;
 
@@ -108,7 +111,33 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
   selectHire(hire: any) {
     console.log('Hire selected from table:', hire);
 
-    // Check if this is an "Awaiting Acceptance" status
+    // Store the CORRECT formatted IDs
+    const scouterId = hire.formattedScouterId || hire.scouterId;
+    const talentId = hire.formattedTalentId || hire.talentId;
+
+    // Update sessionStorage with formatted IDs
+    if (scouterId) {
+      sessionStorage.setItem('scouterId', scouterId);
+      sessionStorage.setItem('scouterIdSimple', hire.scouterId); // Keep simple ID too
+    }
+
+    if (talentId) {
+      sessionStorage.setItem('talentId', talentId);
+      sessionStorage.setItem('talentIdSimple', hire.talentId); // Keep simple ID too
+    }
+
+    // Store selected scouter info
+    const selectedScouter = {
+      id: scouterId,
+      simpleId: hire.scouterId,
+      name: hire.scouterName || hire.name,
+      email: hire.scouterEmail || hire.email,
+      profilePic: hire.scouterPicture || hire.profilePic,
+    };
+
+    sessionStorage.setItem('selectedScouter', JSON.stringify(selectedScouter));
+
+    // Set flags for different modal types
     const isAwaitingAcceptance =
       hire.status === 'Awaiting Acceptance' ||
       hire.offerStatus === 'Awaiting Acceptance' ||
@@ -117,7 +146,6 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
       hire.offerStatus === 'awaiting-acceptance' ||
       hire.hireStatus === 'awaiting-acceptance';
 
-    // Also check for accepted but not rated (from previous code)
     const isAccepted =
       hire.status === 'Offers Accepted' ||
       hire.offerStatus === 'Offers Accepted' ||
@@ -130,30 +158,11 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
         hire.satisFactoryCommentByTalent !== 'null' &&
         hire.satisFactoryCommentByTalent !== 'undefined');
 
-    // Set flags for different modal types
     hire.shouldShowAcceptRejectModal = isAwaitingAcceptance;
     hire.shouldShowEvaluationModal = isAccepted && !isRated;
 
     // Emit the selected hire to parent component
     this.hireSelected.emit(hire);
-
-    // Update sessionStorage for stats component
-    if (hire.scouterId) {
-      sessionStorage.setItem('scouterId', hire.scouterId);
-
-      // Store selected scouter info
-      const selectedScouter = {
-        id: hire.scouterId,
-        name: hire.scouterName || hire.name,
-        email: hire.scouterEmail || hire.email,
-        profilePic: hire.scouterPicture || hire.profilePic,
-      };
-
-      sessionStorage.setItem(
-        'selectedScouter',
-        JSON.stringify(selectedScouter),
-      );
-    }
   }
 
   // Load ALL hires with pagination
@@ -517,7 +526,7 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // Transform API data to match the table structure
+  // Update the transformApiDataToHireFormat method in HiresTableComponent
   transformApiDataToHireFormat(apiData: any[]): any[] {
     return apiData.map((item) => {
       // Determine profile picture
@@ -546,35 +555,53 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       // Determine amount
-      let amount = item.amount || item.amountToPay || 0;
+      let amount = 0;
+      const amountValue = item.amount || item.amountToPay || 0;
 
-      // Determine date
-      let date =
-        item.date ||
-        item.dateOfHire ||
-        item.createdAt ||
-        new Date().toISOString();
+      // Convert to number safely
+      if (typeof amountValue === 'string') {
+        const cleanString = amountValue.replace(/[^\d.-]/g, '');
+        amount = parseFloat(cleanString) || 0;
+      } else if (typeof amountValue === 'number') {
+        amount = amountValue;
+      }
 
-      // Determine start date
-      let startDate = item.startDate || 'Not set';
+      // Get the PROPER formatted IDs from the API response
+      // The API expects IDs like: "talent/5831/29September2025"
+      const talentId = item.talentId || item.talent_id || '';
+      const scouterId = item.scouterId || item.scouter_id || '';
+
+      // Check if IDs need formatting
+      const formattedTalentId = this.formatIdForApi(talentId, 'talent');
+      const formattedScouterId = this.formatIdForApi(scouterId, 'scouter');
 
       return {
         id: item.id || item.marketHireId || this.generateRandomId(),
+        marketHireId: item.marketHireId || item.id,
         name: name,
         email: email,
         status: status,
-        date: date,
-        startDate: startDate,
+        date:
+          item.date ||
+          item.dateOfHire ||
+          item.createdAt ||
+          new Date().toISOString(),
+        startDate: item.startDate || 'Not set',
         amount: amount,
+        amountToPay: String(amount),
 
-        // Additional fields for detail page
+        // Store BOTH simple and formatted IDs
+        talentId: talentId, // Simple ID
+        formattedTalentId: formattedTalentId, // Formatted ID for API
+        scouterId: scouterId, // Simple ID
+        formattedScouterId: formattedScouterId, // Formatted ID for API
+
+        // Additional fields
         scouterName: item.scouterName,
         scouterEmail: item.scouterEmail,
-        scouterId: item.scouterId,
         talentName: item.talentName,
         talentEmail: item.talentEmail,
-        talentId: item.talentId,
-        jobDescription: item.jobDescription,
+        jobDescription: item.jobDescription || '',
         offerStatus: item.offerStatus,
         hireStatus: item.hireStatus,
         satisFactoryCommentByTalent: item.satisFactoryCommentByTalent,
@@ -593,6 +620,49 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
         updatedAt: item.updatedAt,
       };
     });
+  }
+
+  // Add this helper method to format IDs for API
+  private formatIdForApi(id: string, type: 'talent' | 'scouter'): string {
+    if (!id) return '';
+
+    // If ID is already in the correct format, return it
+    if (id.includes('/')) {
+      return id;
+    }
+
+    // TODO: You need to get the date part from your user profile
+    // For now, let's assume a default format
+    // You should replace this with actual logic to get the date part
+    const datePart = this.getDatePartFromProfile();
+
+    return `${type}/${id}/${datePart}`;
+  }
+
+  // Add this method to extract date part from user profile
+  private getDatePartFromProfile(): string {
+    // Try to get from localStorage
+    const profile =
+      localStorage.getItem('talentProfile') ||
+      localStorage.getItem('scouterProfile');
+    if (profile) {
+      try {
+        const parsed = JSON.parse(profile);
+        // Look for date fields in the profile
+        if (parsed.createdAt) {
+          const date = new Date(parsed.createdAt);
+          const day = date.getDate();
+          const month = date.toLocaleString('default', { month: 'long' });
+          const year = date.getFullYear();
+          return `${day}${month}${year}`;
+        }
+      } catch (error) {
+        console.error('Error parsing profile:', error);
+      }
+    }
+
+    // Default fallback
+    return '29September2025'; // Replace with actual logic
   }
 
   // Map API status to display status
@@ -671,10 +741,22 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   // Format amount
-  getFormattedAmount(amount: number | string) {
-    const numAmount =
-      typeof amount === 'string' ? parseFloat(amount) : amount || 0;
-    return `₦${numAmount.toLocaleString('en-NG')}`;
+  getFormattedAmount(amount: number | string): string {
+    let numAmount = 0;
+
+    if (typeof amount === 'string') {
+      // Clean the string
+      const cleanAmount = amount.replace(/[^\d.-]/g, '');
+      numAmount = parseFloat(cleanAmount) || 0;
+    } else if (typeof amount === 'number') {
+      numAmount = amount;
+    }
+
+    // Format with Nigerian Naira formatting
+    return `₦${numAmount.toLocaleString('en-NG', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
   }
 
   // Get status color

@@ -1,91 +1,89 @@
-<!-- reconsider-confirmation-modal.component.html -->
-<div
-  *ngIf="isModalOpen"
-  class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4"
-  (click)="closeModal()"
+<ion-modal
+  [isOpen]="isModalOpen"
+  [cssClass]="'reconsider-confirmation-modal'"
+  [backdropDismiss]="false"
+  [showBackdrop]="true"
+  [animate]="true"
 >
-  <div
-    class="bg-white rounded-lg shadow-lg w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden"
-    (click)="$event.stopPropagation()"
-  >
-    <!-- HEADER - Same banner as Total Delivery Modal -->
+  <ng-template>
     <div
-      class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+      class="bg-white rounded-lg w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden"
     >
-      <h2 class="text-lg font-bold text-white">Reconsideration of Declined Offer</h2>
-      <button (click)="closeModal()" class="text-white hover:text-gray-700">
-        ✕
-      </button>
-    </div>
-
-    <!-- SCROLLABLE BODY -->
-    <div class="p-6 space-y-6 overflow-y-auto flex-1">
-      <!-- Instruction -->
-      <div class="text-center">
-        <div class="mb-4">
-          <ion-icon name="alert-circle-outline" class="text-5xl text-amber-500"></ion-icon>
-        </div>
-        
-        <h3 class="text-lg font-semibold text-gray-800 mb-3">
-          Are you sure you want to re-consider this offer?
-        </h3>
-        
-        <p class="text-sm text-gray-600 mb-6">
-          This offer was declined by 
-          <span class="font-semibold text-blue-600">{{ talentName }}</span>.
-          <br>
-          You can revise the offer terms to make it more appealing.
-        </p>
+      <!-- HEADER - Same banner as Total Delivery Modal -->
+      <div
+        class="logcomplainModalBG flex justify-between items-center px-4 py-3 border-b flex-shrink-0"
+      >
+        <h2 class="text-lg font-bold text-white">
+          Reconsideration of Declined Offer
+        </h2>
+        <button
+          (click)="closeModal()"
+          class="text-white hover:text-gray-200 text-xl"
+        >
+          ✕
+        </button>
       </div>
 
-      <!-- Offer Details Preview -->
-      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <h4 class="font-medium text-gray-700 mb-3">Current Offer Details:</h4>
-        <div class="space-y-2 text-sm">
-          <p class="flex justify-between">
-            <span class="text-gray-600">Talent:</span>
-            <span class="font-medium">{{ talentName }}</span>
-          </p>
-          <p class="flex justify-between">
-            <span class="text-gray-600">Status:</span>
-            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-              Offer Declined
-            </span>
+      <!-- SCROLLABLE BODY -->
+      <div class="p-6 space-y-6 overflow-y-auto flex-1">
+        <!-- Instruction -->
+        <div class="text-center">
+          <div class="mb-4">
+            <ion-icon
+              name="alert-circle-outline"
+              class="text-5xl text-amber-500"
+            ></ion-icon>
+          </div>
+
+          <h3 class="text-lg font-semibold text-gray-800 mb-3">
+            Are you sure you want to re-consider this offer?
+          </h3>
+
+          <p class="text-sm text-gray-600 mb-6">
+            This offer was declined by
+            <span class="font-semibold text-blue-600">{{ talentName }}</span
+            >.
+            <br />
+            You can revise the offer terms to make it more appealing.
           </p>
         </div>
-      </div>
 
-      <!-- Warning Message -->
-      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div class="flex items-start gap-3">
-          <ion-icon name="information-circle-outline" class="text-amber-500 text-xl mt-0.5"></ion-icon>
-          <div>
-            <p class="text-sm text-amber-800 font-medium">Important Note</p>
-            <p class="text-xs text-amber-700 mt-1">
-              Reconsidering this offer will allow you to revise the amount, job description, 
-              and start date. The talent will receive the revised offer for consideration.
-            </p>
+        <!-- Warning Message -->
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <ion-icon
+              name="information-circle-outline"
+              class="text-amber-500 text-xl mt-0.5"
+            ></ion-icon>
+            <div>
+              <p class="text-sm text-amber-800 font-medium">Important Note</p>
+              <p class="text-xs text-amber-700 mt-1">
+                Reconsidering this offer will allow you to revise the amount,
+                job description, and start date. The talent will receive the
+                revised offer for consideration.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="flex gap-3 pt-4">
-        <button
-          (click)="onCancel()"
-          class="flex-1 py-3 px-4 bg-red-50 text-red-600 border border-red-200 rounded-lg font-medium hover:bg-red-100 hover:border-red-300 transition-colors flex items-center justify-center gap-2"
-        >
-          <ion-icon name="close-circle-outline"></ion-icon>
-          No, Cancel
-        </button>
-        <button
-          (click)="onConfirm()"
-          class="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <ion-icon name="checkmark-circle-outline"></ion-icon>
-          Yes, Reconsider
-        </button>
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-4">
+          <button
+            (click)="onCancel()"
+            class="flex-1 py-3 px-4 bg-red-50 text-red-600 border border-red-200 rounded-lg font-medium hover:bg-red-100 hover:border-red-300 transition-colors flex items-center justify-center gap-2"
+          >
+            <ion-icon name="close-circle-outline"></ion-icon>
+            No, Cancel
+          </button>
+          <button
+            (click)="onConfirm()"
+            class="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
+          >
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            Yes, Reconsider
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+  </ng-template>
+</ion-modal>

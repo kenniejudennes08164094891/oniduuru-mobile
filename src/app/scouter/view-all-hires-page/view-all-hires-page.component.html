@@ -1,17 +1,24 @@
-<ion-header>
-  <app-scouter-header [class.header-hidden]="headerHidden" [class.header-visible]="!headerHidden">
+<!-- <ion-header> -->
+  <app-scouter-header
+    [class.header-hidden]="headerHidden"
+    [class.header-visible]="!headerHidden"
+  >
   </app-scouter-header>
-</ion-header>
+<!-- </ion-header> -->
 
 <ion-content class="ion-padding">
-  <div class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden">
+  <div
+    class="paid-dark-card-background relative rounded-lg px-4 py-10 mb-6 overflow-hidden"
+  >
     <div class="absolute inset-0 bg-black bg-opacity-0 z-0"></div>
 
     <div class="relative z-10 text-white">
       <div class="flex items-start gap-3">
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight">Hi {{ userName }}</span>
+          <span class="font-medium text-[24px] leading-tight"
+            >Hi {{ userName }}</span
+          >
           <p class="text-gray-200 text-lg leading-relaxed">
             View your
             {{ MockRecentHires.length }}
@@ -22,34 +29,45 @@
     </div>
   </div>
 
-  <!-- Show slideshow when data exists, show noExpenditure message when no data -->
-  <ng-container *ngIf="MockRecentHires.length > 0; else noExpenditure">
-    <app-slideshow-text-for-view-hires [slideshowTexts]="slideshowTexts" [speed]="5">
+  <!-- Show slideshow when current month data exists, show noExpenditure slideshow when no current month data -->
+  <ng-container *ngIf="currentMonthHires.length > 0; else noExpenditure">
+    <app-slideshow-text-for-view-hires
+      [slideshowTexts]="slideshowTexts"
+      [speed]="5"
+    >
     </app-slideshow-text-for-view-hires>
   </ng-container>
 
   <ng-template #noExpenditure>
-    <div class="bg-[#CDD5DF33] px-10 py-6 shadow-xl rounded-xl mb-6">
-      <p>
-        Oops!....It appears there have been no market expenditures in this Month
-        of {{ currentMonth }}.
-      </p>
-    </div>
+    <app-slideshow-text-for-view-hires
+      [slideshowTexts]="noExpenditureSlideshowTexts"
+      [speed]="5"
+    >
+    </app-slideshow-text-for-view-hires>
   </ng-template>
 
   <!-- Category Buttons -->
   <div class="grid gap-4 mb-6 mt-6">
-    <button *ngFor="let cat of categories" (click)="setActiveCategoryBtn(cat.key)"
+    <button
+      *ngFor="let cat of categories"
+      (click)="setActiveCategoryBtn(cat.key)"
       [disabled]="isPerformanceLoading && !MockRecentHires.length"
       class="w-full flex justify-between items-center px-4 py-8 rounded-lg shadow-md bg-white hover:bg-gray-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      [class.bg-gray-200]="activeCategoryBtn === cat.key">
+      [class.bg-gray-200]="activeCategoryBtn === cat.key"
+    >
       <span class="flex items-center gap-3 bg-[#CDD5DF33] px-6 py-3 rounded-lg">
         <img class="h-5 w-5" [src]="images.FoxCryptoIcon" alt="" />
         <span>{{ cat.title }}</span>
         <span class="bg-gray-300 text-xs px-2 py-0.5 rounded-sm">
           {{ getCategoryCount(cat.key) }}
-          <span *ngIf="isPerformanceLoading && !MockRecentHires.length" class="ml-1">
-            <ion-spinner name="crescent" style="width: 12px; height: 12px;"></ion-spinner>
+          <span
+            *ngIf="isPerformanceLoading && !MockRecentHires.length"
+            class="ml-1"
+          >
+            <ion-spinner
+              name="crescent"
+              style="width: 12px; height: 12px"
+            ></ion-spinner>
           </span>
         </span>
       </span>
@@ -64,15 +82,23 @@
 
     <div *ngIf="filteredHires.length > 0; else noData">
       <!-- In view-all-hires-page.component.html -->
-      <div *ngFor="let hire of filteredHires"
+      <div
+        *ngFor="let hire of filteredHires"
         class="flex items-center gap-3 mb-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg px-2"
-        (click)="onPerformanceTalentClick(hire._originalData || hire)">
-        <img [src]="hire.profilePic" alt="{{ hire.name }}" class="w-10 h-10 rounded-full" />
+        (click)="onPerformanceTalentClick(hire._originalData || hire)"
+      >
+        <img
+          [src]="hire.profilePic"
+          alt="{{ hire.name }}"
+          class="w-10 h-10 rounded-full"
+        />
         <div>
           <p class="font-medium">{{ hire.name }}</p>
           <p class="text-sm text-gray-500 line-clamp-1">{{ hire.email }}</p>
         </div>
-        <span class="ml-auto bg-[#CDD5DF33] text-gray-700 font-normal text-[16px] px-2 py-2">
+        <span
+          class="ml-auto bg-[#CDD5DF33] text-gray-700 font-normal text-[16px] px-2 py-2"
+        >
           {{ getHireCount(hire) }}
         </span>
       </div>
@@ -87,13 +113,27 @@
   <div class="mt-6 overflow-hidden">
     <!-- Top bar with Filter + Search -->
     <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 gap-3 sm:gap-4 border-b border-gray-100">
+      class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3 gap-3 sm:gap-4 border-b border-gray-100"
+    >
       <!-- Dropdown Filter -->
       <div class="flex items-center gap-3">
         <!-- Icon -->
-        <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 text-gray-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M3 12h12M3 20h6" />
+        <span
+          class="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 text-gray-500"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 4h18M3 12h12M3 20h6"
+            />
           </svg>
         </span>
 
@@ -102,28 +142,47 @@
           <span class="text-sm font-medium text-gray-600">Filter by:</span>
           <!-- Custom Professional Filter -->
           <div class="relative">
-            <button (click)="isFilterOpen = !isFilterOpen"
-              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-              <span *ngIf="activeCategoryTable; else placeholder" class="flex items-center gap-2">
-                <span class="h-3 w-3 rounded-full" [style.backgroundColor]="
+            <button
+              (click)="isFilterOpen = !isFilterOpen"
+              class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            >
+              <span
+                *ngIf="activeCategoryTable; else placeholder"
+                class="flex items-center gap-2"
+              >
+                <span
+                  class="h-3 w-3 rounded-full"
+                  [style.backgroundColor]="
                     getStatusColor(getFilterStatus(activeCategoryTable))
-                  "></span>
+                  "
+                ></span>
                 {{ getFilterTitle(activeCategoryTable) }}
               </span>
               <ng-template #placeholder>
                 <span class="text-gray-400">Select category</span>
               </ng-template>
 
-              <ion-icon name="chevron-down-outline" class="ml-auto text-gray-400 text-base"></ion-icon>
+              <ion-icon
+                name="chevron-down-outline"
+                class="ml-auto text-gray-400 text-base"
+              ></ion-icon>
             </button>
 
             <!-- Dropdown Panel -->
-            <div *ngIf="isFilterOpen"
-              class="absolute z-10 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            <div
+              *ngIf="isFilterOpen"
+              class="absolute z-10 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden"
+            >
               <ul class="divide-y divide-gray-100">
-                <li *ngFor="let f of filters" (click)="setActiveCategoryTable(f.key); isFilterOpen = false"
-                  class="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-50 text-sm text-gray-700">
-                  <span class="h-3 w-3 rounded-full" [style.backgroundColor]="getStatusColor(f.status)"></span>
+                <li
+                  *ngFor="let f of filters"
+                  (click)="setActiveCategoryTable(f.key); isFilterOpen = false"
+                  class="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-50 text-sm text-gray-700"
+                >
+                  <span
+                    class="h-3 w-3 rounded-full"
+                    [style.backgroundColor]="getStatusColor(f.status)"
+                  ></span>
                   {{ f.title }}
                 </li>
               </ul>
@@ -135,15 +194,29 @@
       <!-- Search Bar -->
       <div class="relative flex-1 w-full sm:max-w-md">
         <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          <svg
+            class="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
           </svg>
         </span>
         <!-- Update the search input in your template -->
-        <input [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" (blur)="onSearch()" type="text"
+        <input
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+          (blur)="onSearch()"
+          type="text"
           class="w-full py-2 pl-9 sm:pl-10 pr-3 sm:pr-4 text-sm text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-          placeholder="Search talents..." />
+          placeholder="Search talents..."
+        />
       </div>
     </div>
 
@@ -153,32 +226,50 @@
         <table class="min-w-[600px] sm:min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50 uppercase">
             <tr>
-              <th class="w-[220px] px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th
+                class="w-[220px] px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+              >
                 Talent
               </th>
 
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th
+                class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+              >
                 Date
               </th>
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th
+                class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+              >
                 Start Date
               </th>
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th
+                class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+              >
                 Amount
               </th>
-              <th class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700">
+              <th
+                class="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-700"
+              >
                 Status
               </th>
             </tr>
           </thead>
 
           <tbody class="divide-y divide-gray-100">
-            <tr *ngFor="let hire of paginatedHires" (click)="viewMarketPricePreposition(hire)"
-              class="hover:bg-gray-50 transition-colors cursor-pointer">
+            <tr
+              *ngFor="let hire of paginatedHires"
+              (click)="viewMarketPricePreposition(hire)"
+              class="hover:bg-gray-50 transition-colors cursor-pointer"
+            >
               <!-- Profile + Name -->
-              <td class="w-[220px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3">
-                <img class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
-                  [src]="hire.profilePic" alt="{{ hire.name }}" />
+              <td
+                class="w-[220px] px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3"
+              >
+                <img
+                  class="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-1 sm:ring-2 ring-gray-100"
+                  [src]="hire.profilePic"
+                  alt="{{ hire.name }}"
+                />
                 <div>
                   <p class="text-sm sm:text-base font-medium text-gray-900">
                     {{ hire.name }}
@@ -190,24 +281,35 @@
               </td>
 
               <!-- Date -->
-              <td class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap">
+              <td
+                class="px-3 sm:px-6 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap"
+              >
                 {{ hire.date }}
               </td>
 
               <!-- Start Date -->
-              <td class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap">
+              <td
+                class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+              >
                 {{ hire.startDate }}
               </td>
 
               <!-- Amount -->
-              <td class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap">
+              <td
+                class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
+              >
                 {{ getFormattedAmount(hire.amount) }}
               </td>
 
               <!-- Status -->
               <td class="px-3 sm:px-6 py-3 whitespace-nowrap">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold">
-                  <span class="h-2 w-2 rounded-full" [style.backgroundColor]="getStatusColor(hire.offerStatus)"></span>
+                <span
+                  class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+                >
+                  <span
+                    class="h-2 w-2 rounded-full"
+                    [style.backgroundColor]="getStatusColor(hire.offerStatus)"
+                  ></span>
                   {{ hire.offerStatus }}
                 </span>
               </td>
@@ -217,15 +319,22 @@
       </div>
 
       <!-- Pagination -->
-      <div class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-100">
-        <button (click)="prevPage()" [disabled]="currentPage === 1"
-          class="pagination-button flex items-center px-3 py-2 gap-2 border-2 border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+      <div
+        class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-100"
+      >
+        <button
+          (click)="prevPage()"
+          [disabled]="currentPage === 1"
+          class="pagination-button flex items-center px-3 py-2 gap-2 border-2 border-gray-500 rounded-lg text-sm font-medium bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
           <ion-icon name="chevron-back-outline"></ion-icon>
           Previous
         </button>
 
         <span class="flex gap-2 text-xs sm:text-sm text-gray-600 items-center">
-          <span class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md">
+          <span
+            class="bg-indigo-50 text-indigo-600 font-medium px-2 sm:px-3 py-1 rounded-md"
+          >
             {{ currentPage }}
           </span>
           <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-md">
@@ -233,8 +342,11 @@
           </span>
         </span>
 
-        <button (click)="nextPage()" [disabled]="currentPage === totalPages"
-          class="pagination-button flex items-center px-3 py-2 gap-1 sm:gap-2 border border-gray-400 rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition">
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage === totalPages"
+          class="pagination-button flex items-center px-3 py-2 gap-1 sm:gap-2 border border-gray-400 rounded-lg text-xs sm:text-sm bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
           Next <ion-icon name="chevron-forward-outline"></ion-icon>
         </button>
       </div>
@@ -243,7 +355,11 @@
     <ng-template #noDataTable>
       <div class="h-[60vh] w-full flex items-center justify-center">
         <div class="flex flex-col items-center justify-center">
-          <img class="w-[150px] h-[150px]" [src]="images.NoDataImage" alt="No Data" />
+          <img
+            class="w-[150px] h-[150px]"
+            [src]="images.NoDataImage"
+            alt="No Data"
+          />
           <div class="text-center space-y-2 mt-4">
             <h3 class="text-[#000000] font-semibold text-[16px]">
               No Matching Records Found

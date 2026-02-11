@@ -38,6 +38,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   // Modal states
   isTotalDeliveryModalOpen: boolean = false;
   isReconsiderModalOpen: boolean = false;
+  closeReconsiderModalPending: boolean = false;
   isReconsiderOfferModalOpen: boolean = false;
   selectedModalHire: any = null;
   selectedTalentForReconsider: any = null;
@@ -249,6 +250,36 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
           this.isLoading = false;
         },
       });
+  }
+
+  viewAllScouterStats() {
+    console.log('📊 Viewing all scouter stats');
+
+    // Create a special hire object that indicates we want all stats
+    const allStatsHire: TotalHires = {
+      id: 'all-engagements',
+      talentId: 'all-engagements',
+      marketHireId: 'all-engagements',
+      scouterId: 'all-engagements',
+      name: 'All Engagements',
+      email: '',
+      date: '',
+      startDate: '',
+      amount: 0,
+      offerStatus: 'Awaiting Acceptance', // Fix: Use a valid status
+      status: '',
+      jobDescription: '',
+      yourComment: '',
+      yourRating: 0,
+      talentComment: '',
+      talentRating: 0,
+      profilePic: '',
+      // Add custom property
+      showAllEngagements: true,
+    } as TotalHires; // Type assertion
+
+    // Set this as the selected hire to trigger stats component to load all data
+    this.onTableHireClick(allStatsHire);
   }
 
   private loadAllDataAndFindTalent(scouterId: string, talentId: string) {
@@ -491,6 +522,20 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   onTableHireClick(hire: TotalHires) {
     console.log('📋 Table hire clicked in detail page:', hire.name);
 
+    // ✅ CRITICAL: Don't open modals if we're on stats tab
+    if (this.activeTab === 'stats' || hire.preventModalOpen) {
+      console.log('📊 Stats tab - updating data WITHOUT opening modal');
+      this.setHireData(hire);
+      this.extractTalentName();
+      return;
+    }
+
+    // ✅ NEW: If this is just a stats update, don't trigger any modal actions
+    if (hire.isStatsUpdate) {
+      console.log('📊 Stats update only - ignoring');
+      return;
+    }
+
     // Check current route talent ID
     const currentTalentId = this.route.snapshot.paramMap.get('id');
 
@@ -499,31 +544,28 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       this.setHireData(hire);
       this.extractTalentName();
 
-      console.log('✅ Updated current hire to:', hire.name);
-
-      // IMPORTANT: Check if we should open a modal based on status
-      if (hire.offerStatus === 'Offer Rejected') {
-        console.log('✅ Opening Reconsider Modal from table click');
-        this.openReconsiderModal(hire);
-      } else if (hire.offerStatus === 'Offer Accepted') {
-        // Check if talent has been rated before opening modal
-        if (this.checkIfTalentHasBeenRated(hire)) {
-          console.log('❌ Talent already rated, not opening modal');
-          this.toastService.openSnackBar(
-            `You have already rated ${hire.name}. You cannot evaluate them again.`,
-            'warning',
-          );
-        } else {
-          console.log('✅ Opening Total Delivery Modal from table click');
-          this.openTotalDeliveryModal(hire);
+      // IMPORTANT: Only open modals on engagements tab and when not prevented
+      if (this.activeTab === 'engagements' && !hire.preventModalOpen) {
+        if (hire.offerStatus === 'Offer Rejected') {
+          console.log('✅ Opening Reconsider Modal from table click');
+          this.openReconsiderModal(hire);
+        } else if (hire.offerStatus === 'Offer Accepted') {
+          if (!this.checkIfTalentHasBeenRated(hire)) {
+            console.log('✅ Opening Total Delivery Modal from table click');
+            this.openTotalDeliveryModal(hire);
+          }
         }
       }
     } else {
       // Navigate to the talent's detail page
       const navigationExtras: NavigationExtras = {
         state: {
-          shouldOpenModal: true,
-          modalType: this.getModalTypeForHire(hire),
+          shouldOpenModal:
+            this.activeTab === 'engagements' && !hire.preventModalOpen,
+          modalType:
+            this.activeTab === 'engagements'
+              ? this.getModalTypeForHire(hire)
+              : 'none',
           hireData: hire,
         },
       };
@@ -674,8 +716,16 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       return;
     }
 
+    // Store the hire data
     this.selectedTalentForReconsider = hire;
+
+    // Simple approach - just set the boolean flag
     this.isReconsiderModalOpen = true;
+
+    console.log(
+      '✅ Reconsider modal opened, isReconsiderModalOpen:',
+      this.isReconsiderModalOpen,
+    );
   }
 
   // Modal close handlers
@@ -718,7 +768,11 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     console.log('Closing all reconsider modals');
     this.isReconsiderModalOpen = false;
     this.isReconsiderOfferModalOpen = false;
-    this.selectedTalentForReconsider = null;
+
+    // Clear the selected talent after modals are closed
+    setTimeout(() => {
+      this.selectedTalentForReconsider = null;
+    }, 300);
   }
 
   // Reconsider modal handlers
@@ -728,14 +782,15 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     // Close confirmation modal first
     this.isReconsiderModalOpen = false;
 
-    // Then open the offer form modal
-    setTimeout(() => {
-      this.isReconsiderOfferModalOpen = true;
-      console.log(
-        'Offer form modal should now be open:',
-        this.isReconsiderOfferModalOpen,
-      );
-    }, 50); // Small delay to ensure DOM updates
+    // IMPORTANT: Clear any pending close events
+    this.closeReconsiderModalPending = false;
+
+    // Open the offer form modal - NO DELAY
+    this.isReconsiderOfferModalOpen = true;
+    console.log(
+      'Offer form modal should now be open:',
+      this.isReconsiderOfferModalOpen,
+    );
   }
 
   onReconsiderCancelled() {
@@ -766,9 +821,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
 
     // ✅ CALL API FIRST
     this.reconsiderOfferAPI(offerData);
-
-    // ✅ THEN close modal
-    this.closeReconsiderModal();
   }
 
   private reconsiderOfferAPI(offerData: any) {
@@ -987,27 +1039,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       talentComment: '',
       talentRating: 0,
     } as TotalHires;
-  }
-
-  private updateReconsideredOffer(offerData: any) {
-    const currentUser = this.authService.getCurrentUser();
-    const scouterId = currentUser?.scouterId || currentUser?.id;
-
-    if (!scouterId) return;
-
-    // Implement your API call here
-    // this.scouterService.reconsiderOffer({
-    //   scouterId: scouterId,
-    //   talentId: offerData.talentId,
-    //   ...offerData
-    // }).subscribe({
-    //   next: (response) => {
-    //     console.log('Offer reconsidered successfully');
-    //   },
-    //   error: (error) => {
-    //     console.error('Failed to reconsider offer:', error);
-    //   }
-    // });
   }
 
   private parseSatisfactoryComment(raw?: string): {

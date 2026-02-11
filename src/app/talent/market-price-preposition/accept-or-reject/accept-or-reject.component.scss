@@ -55,7 +55,7 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background: rgba(255, 255, 255, 0.3);
   }
@@ -96,122 +96,118 @@
 }
 
 .confirmation-icon {
-  margin-bottom: 20px;
+  text-align: center;
+  margin-bottom: 16px;
 }
 
-.confirmation-icon-large {
-  font-size: 64px;
+/* Disabled state styles */
+button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .confirmation-title {
   font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
+  font-weight: bold;
+  margin: 16px 0 8px;
+  text-align: center;
 }
 
 .confirmation-message {
-  font-size: 15px;
+  text-align: center;
   color: #666;
-  line-height: 1.5;
-  margin-bottom: 30px;
-  max-width: 300px;
+  margin-bottom: 24px;
 }
 
-/* BUTTON GROUPS */
+/* BUTTON GROUPS - FIXED */
 .btn-group {
-  margin-top: 25px;
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .confirmation-buttons {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 15px;
   width: 100%;
   max-width: 400px;
+
+  ion-button {
+    display: flex;
+    flex: 1; /* Make buttons share space equally */
+  }
 }
 
 /* Button styles */
 .accept-btn {
-  --background: #0b5d2a;
-  --background-hover: #084421;
-  --background-activated: #063818;
+  --background: #189537;
+  --background-hover: #147a2e;
   --color: white;
-  --border-radius: 8px;
-  width: 130px;
-  height: 45px;
-  font-weight: bold;
-  font-size: 14px;
 }
 
 .decline-btn {
-  --background: #b32020;
-  --background-hover: #8f1919;
-  --background-activated: #6b1313;
+  --background: #cc0000;
+  --background-hover: #b30000;
   --color: white;
-  --border-radius: 8px;
-  width: 130px;
-  height: 45px;
-  font-weight: bold;
-  font-size: 14px;
 }
 
 .cancel-btn {
-  --background: #f3f4f6;
-  --background-hover: #e5e7eb;
-  --background-activated: #d1d5db;
-  --color: #374151;
-  --border-color: #d1d5db;
-  --border-radius: 8px;
-  --border-width: 1px;
-  --border-style: solid;
-  flex: 1;
+  --color: #666;
+  --border-color: #ddd;
 }
 
 .confirm-accept-btn {
-  --background: #0b5d2a;
-  --background-hover: #084421;
-  --background-activated: #063818;
+  --background: #189537;
+  --background-hover: #147a2e;
   --color: white;
-  --border-radius: 8px;
-  flex: 1;
 }
 
 .confirm-decline-btn {
-  --background: #b32020;
-  --background-hover: #8f1919;
-  --background-activated: #6b1313;
+  --background: #cc0000;
+  --background-hover: #b30000;
   --color: white;
-  --border-radius: 8px;
-  flex: 1;
 }
 
 // Responsive styles
 @media (max-width: 768px) {
   .btn-group {
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-  }
-  
-  .accept-btn,
-  .decline-btn {
-    width: 100%;
-    max-width: 200px;
-  }
-  
-  .confirmation-buttons {
-    flex-direction: column;
+    flex-direction: row; /* Keep side by side */
     gap: 10px;
+
+    ion-button {
+      width: 48%; /* Slightly responsive */
+      max-width: 150px;
+    }
   }
-  
-  .cancel-btn,
-  .confirm-accept-btn,
-  .confirm-decline-btn {
-    width: 100%;
+
+  .confirmation-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-group {
+    flex-direction: row; /* Still side by side */
+    flex-wrap: wrap;
+    justify-content: space-between;
+
+    ion-button {
+      width: 48%;
+      min-width: 120px;
+    }
+  }
+
+  .confirmation-buttons {
+    flex-direction: row;
+
+    ion-button {
+      width: 48%;
+    }
   }
 }

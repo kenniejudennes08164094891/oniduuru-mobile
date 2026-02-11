@@ -85,6 +85,8 @@ export class ViewAllHiresPageComponent implements OnInit {
     'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
   ];
 
+  noExpenditureSlideshowTexts: string[] = [];
+
   // Add talent performance data properties
   talentPerformanceData: {
     mostHiredTalent: TalentPerformanceData[];
@@ -112,7 +114,8 @@ export class ViewAllHiresPageComponent implements OnInit {
   ngOnInit() {
     this.loadUserData();
     this.loadMarketEngagements();
-    this.loadTalentPerformanceGrading(); // Add this line
+    this.loadTalentPerformanceGrading();
+    this.updateNoExpenditureSlideshowText();
   }
 
   private checkIfTalentHasBeenRated(hire: any): boolean {
@@ -144,16 +147,16 @@ export class ViewAllHiresPageComponent implements OnInit {
       console.log('📊 Navigating with hire object:', data.name);
       hireObject = data;
 
-      // Check if talent has already been rated
+      // Check if talent has already been rated - SHOW TOAST BUT STILL NAVIGATE
       if (
         this.checkIfTalentHasBeenRated(data) &&
         data.offerStatus === 'Offer Accepted'
       ) {
         this.toast.openSnackBar(
-          `You have already rated ${data.name}. You cannot evaluate them again.`,
-          'warning',
+          `You have already rated ${data.name}. You are viewing their evaluation in read-only mode.`,
+          'info',
         );
-        return;
+        // DO NOT RETURN - continue navigation
       }
 
       // IMPORTANT: Use the correct ID that the API expects
@@ -162,7 +165,7 @@ export class ViewAllHiresPageComponent implements OnInit {
 
     console.log('🎯 Talent ID to navigate with:', talentIdToUse);
 
-    // Create a clean hire object to pass
+    // Create a clean hire object to pass with read-only flag if already rated
     const hireDataToPass = hireObject
       ? {
           ...hireObject,
@@ -172,6 +175,10 @@ export class ViewAllHiresPageComponent implements OnInit {
           yourRating: hireObject.yourRating || 0,
           talentComment: hireObject.talentComment || '',
           talentRating: hireObject.talentRating || 0,
+          // Add read-only flag if already rated
+          isReadOnly:
+            this.checkIfTalentHasBeenRated(hireObject) &&
+            hireObject.offerStatus === 'Offer Accepted',
         }
       : undefined;
 
@@ -186,9 +193,13 @@ export class ViewAllHiresPageComponent implements OnInit {
             email: hireObject?.email || '',
             profilePic:
               hireObject?.profilePic || 'assets/images/default-avatar.png',
+            isReadOnly: false,
           },
           shouldOpenModal: false, // Don't open modal automatically
           source: 'view-hires-page',
+          isReadOnly:
+            this.checkIfTalentHasBeenRated(hireObject) &&
+            hireObject?.offerStatus === 'Offer Accepted',
         },
       },
     );
@@ -390,11 +401,13 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.allMarketData = response.data || [];
 
         console.log('📊 Transformed Data:', this.MockRecentHires);
+        console.log('📊 Current Month Hires:', this.currentMonthHires.length);
 
         this.currentPage = response.currentPage || 1;
         this.totalPages = response.totalPages || 1;
 
         this.updateSlideshowText();
+        this.updateNoExpenditureSlideshowText(); // Add this line
         this.isLoading = false;
         this.loadTalentPerformanceGrading();
       },
@@ -411,8 +424,9 @@ export class ViewAllHiresPageComponent implements OnInit {
         this.currentPage = 1;
         this.totalPages = 1;
         this.isLoading = false;
+        this.updateSlideshowText();
+        this.updateNoExpenditureSlideshowText(); // Add this line
 
-        // this.showError('Failed to load market engagements. Please try again.');
         this.toast.openSnackBar(
           'Failed to load market engagements. Please try again.',
           'error',
@@ -421,10 +435,47 @@ export class ViewAllHiresPageComponent implements OnInit {
     });
   }
 
-  private updateSlideshowText() {
-    const totalExpenditure = this.totalMarketExpenditure;
+  private filterHiresByCurrentMonth(hires: TotalHires[]): TotalHires[] {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
 
-    if (this.MockRecentHires.length > 0) {
+    return hires.filter((hire) => {
+      const hireDate = new Date(hire.date);
+      return (
+        hireDate.getMonth() === currentMonth &&
+        hireDate.getFullYear() === currentYear
+      );
+    });
+  }
+
+  private updateNoExpenditureSlideshowText() {
+    // Create multiple variations of the "no expenditures" message for the slideshow
+    this.noExpenditureSlideshowTexts = [
+      `Oops!... No market expenditures found for ${this.currentMonth}.`,
+      `Your market activity for ${this.currentMonth} is quiet. Start engaging talents today!`,
+      `No spending recorded in ${this.currentMonth}. Explore the marketplace to find skilled talents.`,
+      `Ready to hire? ${this.currentMonth} has no expenditures yet. Post a job now!`,
+      `Market expenditures for ${this.currentMonth} are at zero. Time to find your next talent!`,
+      `Your ${this.currentMonth} budget is untouched. Connect with top talents on Oniduuru Marketplace.`,
+      `No transactions yet this month. Start building your team today!`,
+    ];
+  }
+
+  // Add this computed property for month-filtered hires
+  get currentMonthHires(): TotalHires[] {
+    return this.filterHiresByCurrentMonth(this.MockRecentHires);
+  }
+
+  // Update the updateSlideshowText method
+  private updateSlideshowText() {
+    const currentMonthHires = this.currentMonthHires;
+    const totalExpenditure = currentMonthHires.reduce(
+      (sum, hire) => sum + hire.amount,
+      0,
+    );
+
+    if (currentMonthHires.length > 0) {
       this.slideshowTexts = [
         `Your Total Market Expenditures for the Month of ${
           this.currentMonth
@@ -432,10 +483,7 @@ export class ViewAllHiresPageComponent implements OnInit {
         'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
       ];
     } else {
-      this.slideshowTexts = [
-        `Your Total Market Expenditures for the Month of ${this.currentMonth} is calculating...`,
-        'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
-      ];
+      this.slideshowTexts = []; // Clear slideshow texts when no data
     }
   }
 

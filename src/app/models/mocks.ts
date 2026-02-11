@@ -89,7 +89,12 @@ export interface MockPayment {
   date: string;
   startDate: string;
   amount: number;
-  offerStatus: 'Offer Accepted' | 'Awaiting Acceptance' | 'Offer Rejected' | 'Offers Accepted' | 'Offers Declined'; // Add the new values
+  offerStatus:
+    | 'Offer Accepted'
+    | 'Awaiting Acceptance'
+    | 'Offer Rejected'
+    | 'Offers Accepted'
+    | 'Offers Declined'; // Add the new values
   status: 'Active' | 'Pending' | 'Away';
   jobDescription?: string;
   yourComment?: string;
@@ -112,9 +117,6 @@ export interface MockPayment {
   recentReview: RecentReview[];
   location: Location;
 }
-
-
-
 
 export interface FilterScouterParam {
   key: string;
@@ -214,6 +216,12 @@ export interface TotalHires {
   talentIdWithDate?: string;
   talentPicture?: string;
   scouterPicture?: string;
+
+  preventModalOpen?: boolean;
+  shouldOpenModal?: boolean;
+  modalType?: string;
+  showAllEngagements?: boolean;
+  isStatsUpdate?: boolean;
 
   // Debug
   _originalData?: any;
@@ -420,7 +428,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: '10 Oyedele Oguniyi Street, Anthony Lagos',
     payRange: '₦750k - ₦950k',
     aboutTalent: 'Backend engineer passionate about scalable systems.',
@@ -501,7 +508,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: '20 Martins Street, Olosha Lagos',
     payRange: '₦50k - ₦100k',
     aboutTalent: 'Creative mobile app designer with fintech experience.',
@@ -566,7 +572,6 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Great team and project',
     talentRating: 5,
 
-
     // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
@@ -576,7 +581,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: '256 Mbadiwe Close, Ikoyi Lagos',
     payRange: '₦500k - ₦1Million',
@@ -652,7 +656,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: '12 Adeola Odeku, Victoria Island Lagos',
     payRange: '₦400k - ₦600k',
     aboutTalent: 'Passionate UI/UX designer.',
@@ -723,7 +726,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: 'Ikorodu Road, Lagos',
     payRange: '₦600k - ₦900k',
     aboutTalent: 'Backend engineer skilled in Node.js.',
@@ -793,7 +795,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: 'Lekki Phase 1, Lagos',
     payRange: 'Above ₦1 Million',
     aboutTalent: 'Frontend specialist with React.',
@@ -854,7 +855,6 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Enjoying the work',
     talentRating: 5,
 
-
     // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
@@ -864,7 +864,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: 'Surulere, Lagos',
     payRange: '₦500k - ₦1Million',
@@ -935,7 +934,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: 'Mushin, Lagos',
     payRange: '₦600k - ₦1 Million',
     aboutTalent: 'Product designer focused on healthcare apps.',
@@ -1005,7 +1003,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: 'Ajah, Lagos',
     payRange: '₦350k - ₦600k',
     aboutTalent: 'QA engineer skilled in automation.',
@@ -1074,7 +1071,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: 'Yaba, Lagos',
     payRange: 'Above ₦1 Million',
@@ -1149,8 +1145,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
-
     proximity: '12 Nnamdi Azikiwe Road, Enugu',
     payRange: '₦550k - ₦800k',
     aboutTalent: 'Backend developer with expertise in financial systems.',
@@ -1221,8 +1215,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
-
     proximity: '23 Ahmadu Bello Way, Kaduna',
     payRange: '₦400k - ₦600k',
     aboutTalent:
@@ -1271,7 +1263,6 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Ready to start immediately',
     talentRating: 5,
 
-
     // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
@@ -1281,7 +1272,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: '15 Okpara Avenue, Enugu',
     payRange: '₦700k - ₦1.2M',
@@ -1353,7 +1343,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: '8 Sultan Road, Kano',
     payRange: '₦500k - ₦700k',
     aboutTalent:
@@ -1410,7 +1399,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: '24 Port Harcourt Road, Aba',
     payRange: '₦600k - ₦900k',
@@ -1483,7 +1471,6 @@ export const MockRecentHires: MockPayment[] = [
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
 
-
     proximity: '17 Ibrahim Taiwo Road, Ilorin',
     payRange: '₦550k - ₦750k',
     aboutTalent:
@@ -1531,7 +1518,6 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Looking forward to the challenge',
     talentRating: 5,
 
-
     // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
@@ -1541,7 +1527,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: '12 Marina Road, Calabar',
     payRange: '₦800k - ₦1.2M',
@@ -1604,7 +1589,6 @@ export const MockRecentHires: MockPayment[] = [
     talentComment: 'Happy to join the team',
     talentRating: 5,
 
-
     // ✅ ADD THESE BACKEND FIELDS
     hireStatus: 'offer-declined', // Backend status
     marketHireId:
@@ -1614,7 +1598,6 @@ export const MockRecentHires: MockPayment[] = [
 
     // ✅ ADD talentIdWithDate (construct from talentId)
     talentIdWithDate: 'talent/1302/8June2024',
-
 
     proximity: '15 Owerri Road, Umuahia',
     payRange: '₦500k - ₦700k',
@@ -1841,7 +1824,6 @@ export interface ForgotPasswordResendOtpPayload {
   phoneNumber?: string;
   email?: string;
 }
-
 
 export interface resendOTP {
   email?: string | null;
@@ -2124,8 +2106,6 @@ export const transfer: Transfer[] = [
     walletId: '0033392845',
   },
 ];
-
-
 
 // MARKET
 export interface MarketEngagement {

@@ -189,7 +189,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
 
 
     async goToWalletPage(): Promise<void> {
-    await this.router.navigate(['/scouter/wallet']);
+    await this.router.navigate(['/scouter/wallet-page']);
   }
 
   private async initializeBalanceVisibility(): Promise<void> {

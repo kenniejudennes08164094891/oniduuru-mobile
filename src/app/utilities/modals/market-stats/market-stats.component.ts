@@ -1,5 +1,3 @@
-// market-stats.component.ts
-
 import {
   Component,
   OnInit,
@@ -8,13 +6,15 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
+  OnDestroy,
 } from '@angular/core';
 import { ChartOptions, ChartData } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
-import { TotalHires, MockRecentHires } from 'src/app/models/mocks';
+import { TotalHires } from 'src/app/models/mocks';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, catchError, of, finalize } from 'rxjs';
+import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
   selector: 'app-market-stats',
@@ -22,146 +22,69 @@ import { Subject, takeUntil } from 'rxjs';
   styleUrls: ['./market-stats.component.scss'],
   standalone: false,
 })
-export class MarketStatsComponent implements OnInit, OnChanges {
+export class MarketStatsComponent implements OnInit, OnChanges, OnDestroy {
   @Output() hireSelected = new EventEmitter<TotalHires>();
   @Input() selectedHire: TotalHires | undefined;
+  @Input() showAllEngagements: boolean = false;
+
   private destroy$ = new Subject<void>();
 
   hire: TotalHires | undefined;
   userName: string = 'Loading...';
   isLoading: boolean = false;
+  error: string | null = null;
 
   // Real API data
   statsData: any = null;
-  performanceData: any = null;
 
-  // Add this property to track if we're already processing
   private isProcessingHireChange: boolean = false;
   private lastProcessedHireId: string | null = null;
 
-  // Chart data - Fixed pieChartOptions
+  // Chart data
   pieChartOptions: ChartOptions<'pie'> = {
     responsive: true,
     plugins: {
       legend: {
         position: 'right',
-        labels: {
-          font: {
-            size: 12,
-          },
-          padding: 20,
-        },
+        labels: { font: { size: 12 }, padding: 20 }
       },
       tooltip: {
         callbacks: {
           label: (context) => {
             const label = context.label || '';
             const value = context.parsed;
-
-            // FIX: Type-safe reduce function
-            const total = (context.dataset.data as number[]).reduce(
-              (acc: number, curr: number) => {
-                // Ensure both are numbers
-                const a = typeof acc === 'number' ? acc : 0;
-                const b = typeof curr === 'number' ? curr : 0;
-                return a + b;
-              },
-              0,
-            );
-
-            const percentage =
-              total > 0 ? Math.round((value / total) * 100) : 0;
+            const total = (context.dataset.data as number[]).reduce((a, b) => a + b, 0);
+            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
             return `${label}: ${value} (${percentage}%)`;
-          },
-        },
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleFont: { size: 12 },
-        bodyFont: { size: 11 },
-        padding: 10,
-      },
-    },
+          }
+        }
+      }
+    }
   };
 
   pieChartData: ChartData<'pie'> = {
     labels: ['Loading data...'],
-    datasets: [
-      {
-        data: [100],
-        backgroundColor: ['#BDBDBD'],
-        borderWidth: 1,
-        borderColor: '#fff',
-      },
-    ],
+    datasets: [{ data: [100], backgroundColor: ['#BDBDBD'] }]
   };
 
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'top',
-        labels: {
-          font: {
-            size: 12,
-          },
-        },
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleFont: { size: 12 },
-        bodyFont: { size: 11 },
-        padding: 10,
-        callbacks: {
-          // Optional: Customize tooltip to show engagement number
-          title: (tooltipItems) => {
-            const label = tooltipItems[0].label;
-            return label; // This will show "Engagement #1", "Engagement #2", etc.
-          },
-          label: (context) => {
-            // ... existing label callback code ...
-          },
-        },
-      },
+      legend: { position: 'top', labels: { font: { size: 12 } } }
     },
     scales: {
       y: {
         beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          callback: function (value) {
-            if (typeof value === 'number') {
-              return value + '⭐';
-            }
-            return value;
-          },
-        },
+        ticks: { stepSize: 1, callback: (value) => value + '⭐' },
         max: 5,
-        title: {
-          display: true,
-          text: 'Rating (1-5 stars)',
-          font: {
-            size: 12,
-            weight: 'bold',
-          },
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)',
-        },
+        title: { display: true, text: 'Rating (1-5 stars)' }
       },
       x: {
-        title: {
-          display: true,
-          text: 'Engagement Number',
-          font: {
-            size: 12,
-            weight: 'bold',
-          },
-        },
-        grid: {
-          display: false,
-        },
-      },
-    },
+        title: { display: true, text: 'Engagement Number' },
+        ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 20 }
+      }
+    }
   };
 
   barChartData: ChartData<'bar'> = {
@@ -174,7 +97,7 @@ export class MarketStatsComponent implements OnInit, OnChanges {
         borderColor: '#1E3A8A',
         borderWidth: 1,
         borderRadius: 4,
-        barPercentage: 0.6,
+        barPercentage: 0.6
       },
       {
         label: 'Talent Rating',
@@ -183,16 +106,15 @@ export class MarketStatsComponent implements OnInit, OnChanges {
         borderColor: '#374151',
         borderWidth: 1,
         borderRadius: 4,
-        barPercentage: 0.6,
-      },
-    ],
+        barPercentage: 0.6
+      }
+    ]
   };
 
   ratingList: any[] = [];
   dataSourceInfo: string = '📊 Loading real data...';
   warningMessage: string = 'Loading performance data...';
 
-  // Performance metrics
   performanceMetrics = {
     scouterRating: 0,
     talentRating: 0,
@@ -200,23 +122,20 @@ export class MarketStatsComponent implements OnInit, OnChanges {
     totalEngagements: 0,
     ratedEngagements: 0,
     ratingRatio: 0,
-    performanceScore: 0,
+    performanceScore: 0
   };
 
   constructor(
     private route: ActivatedRoute,
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
+    private toastService: ToastsService
   ) {}
 
   ngOnInit() {
-    console.log('🔄 MarketStats: ngOnInit - initializing');
-
-    // Only load initial data if we don't already have a selected hire
     if (!this.selectedHire) {
       this.loadInitialData();
     } else {
-      console.log('✅ Already have selected hire, skipping initial load');
       this.setSelectedHire(this.selectedHire);
     }
   }
@@ -226,21 +145,7 @@ export class MarketStatsComponent implements OnInit, OnChanges {
       const newHire = changes['selectedHire'].currentValue;
       const newHireId = newHire.id || newHire.talentId;
 
-      console.log('🔄 MarketStats: Selected hire changed:', {
-        name: newHire.name,
-        id: newHireId,
-        previousId: this.lastProcessedHireId,
-        isProcessing: this.isProcessingHireChange,
-      });
-
-      // Prevent infinite loop: don't process if we're already processing or if it's the same hire
-      if (
-        this.isProcessingHireChange ||
-        this.lastProcessedHireId === newHireId
-      ) {
-        console.log(
-          '⏸️ Skipping hire change - already processing or same hire',
-        );
+      if (this.isProcessingHireChange || this.lastProcessedHireId === newHireId) {
         return;
       }
 
@@ -254,13 +159,9 @@ export class MarketStatsComponent implements OnInit, OnChanges {
   }
 
   private loadInitialData() {
-    console.log('🔄 MarketStats: Loading initial data');
-
-    // First check if we have a selected hire from parent
     if (this.selectedHire) {
       this.setSelectedHire(this.selectedHire);
     } else {
-      // Otherwise load from URL
       const talentId = this.route.snapshot.paramMap.get('id');
       if (talentId) {
         this.loadHireData(talentId);
@@ -269,24 +170,21 @@ export class MarketStatsComponent implements OnInit, OnChanges {
   }
 
   private setSelectedHire(hire: TotalHires) {
-    console.log('🔄 MarketStats: Setting selected hire:', hire.name);
-
-    // Set processing flag
     this.isProcessingHireChange = true;
-
     this.hire = hire;
     this.userName = hire.name || 'Talent';
     this.lastProcessedHireId = hire.id || hire.talentId;
 
-    // Load real stats data for the selected hire
-    this.loadRealStatsData(hire.id);
+    if (hire.id === 'all-engagements' || (hire as any).showAllEngagements) {
+      this.loadAllEngagementsForScouter();
+    } else {
+      this.loadRealStatsData(hire.id);
+    }
 
-    // Emit event to parent (but only if it's a different hire than current)
     if (!this.selectedHire || this.selectedHire.id !== hire.id) {
       this.hireSelected.emit(hire);
     }
 
-    // Reset processing flag after a delay
     setTimeout(() => {
       this.isProcessingHireChange = false;
     }, 100);
@@ -294,110 +192,142 @@ export class MarketStatsComponent implements OnInit, OnChanges {
 
   private loadHireData(talentId: string) {
     this.isLoading = true;
+    this.error = null;
 
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId) {
-      console.error('❌ No scouter ID found');
-      this.loadMockData(talentId);
+      this.error = 'Scouter ID not found';
+      this.showPlaceholderData();
       this.isLoading = false;
       return;
     }
 
     this.scouterService
-      .getAllMarketsByScouter(scouterId, {
-        talentId: talentId,
-        limit: 10,
-      })
-      .subscribe({
-        next: (response) => {
-          if (response?.data && response.data.length > 0) {
-            this.setSelectedHire(response.data[0]);
-          } else {
-            this.loadMockData(talentId);
-          }
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Error loading hire data:', error);
-          this.loadMockData(talentId);
-          this.isLoading = false;
-        },
+      .getAllMarketsByScouter(scouterId, { talentId, limit: 10 })
+      .pipe(
+        catchError((error) => {
+          this.error = 'Failed to load hire data';
+          this.showPlaceholderData();
+          return of({ data: [] });
+        }),
+        finalize(() => { this.isLoading = false; })
+      )
+      .subscribe((response) => {
+        if (response?.data?.length > 0) {
+          this.setSelectedHire(response.data[0]);
+        } else {
+          this.showPlaceholderData();
+        }
       });
   }
 
   private loadRealStatsData(talentId: string) {
-    console.log('📊 Fetching real stats for talent:', talentId);
-
-    if (this.isLoading) {
-      console.log('⏸️ Already loading stats, skipping');
-      return;
-    }
+    if (this.isLoading) return;
 
     const currentUser = this.authService.getCurrentUser();
     const scouterId = currentUser?.scouterId || currentUser?.id;
 
     if (!scouterId) {
-      console.error('❌ No scouter ID found for stats');
       this.showPlaceholderData();
       return;
     }
 
     this.isLoading = true;
+    this.error = null;
 
-    // Fetch scouter-talent stats from API with unsubscribe
     this.scouterService
       .getScouterTalentStats(scouterId, talentId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Real stats loaded:', response);
+      .pipe(
+        catchError((error) => {
+          console.error('Failed to load stats, loading all engagements:', error);
+          this.loadAllEngagementsForScouter();
+          return of(null);
+        }),
+        finalize(() => { this.isLoading = false; })
+      )
+      .subscribe((response) => {
+        if (response) {
           this.statsData = response;
           this.processRealData(response);
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Failed to load real stats:', error);
-          this.warningMessage =
-            '⚠️ Could not load real-time data. Using calculated data from current engagement.';
-          this.initializeWithHireData();
-          this.isLoading = false;
-        },
+        }
+      });
+  }
+
+  private loadAllEngagementsForScouter() {
+    const currentUser = this.authService.getCurrentUser();
+    const scouterId = currentUser?.scouterId || currentUser?.id;
+
+    if (!scouterId) {
+      this.showPlaceholderData();
+      return;
+    }
+
+    this.isLoading = true;
+    this.dataSourceInfo = '📊 Complete Scouter History';
+    this.userName = 'All Engagements';
+
+    this.scouterService
+      .getAllMarketsByScouter(scouterId, { limit: 100, pageNo: 1 })
+      .pipe(
+        catchError((error) => {
+          console.error('Failed to load all engagements:', error);
+          this.warningMessage = 'Could not load complete engagement history.';
+          this.showPlaceholderData();
+          return of({ data: [] });
+        }),
+        finalize(() => { this.isLoading = false; })
+      )
+      .subscribe((response) => {
+        if (response?.data?.length > 0) {
+          const allEngagements = response.data.map((hire: any) => ({
+            marketId: hire.marketId || `${hire.talentId}/${hire.id}`,
+            talentRating: this.mapRatingToString(hire.talentRating || 0),
+            talentScore: hire.talentRating || 0,
+            scouterRating: this.mapRatingToString(hire.yourRating || 0),
+            scouterScore: hire.yourRating || 0,
+            dateOfHire: hire.dateOfHire || hire.date || new Date().toLocaleDateString()
+          }));
+
+          this.statsData = {
+            allScouterMarketWithTalent: allEngagements,
+            thierTotalMarketEngagements: allEngagements.length
+          };
+
+          this.processRealData(this.statsData);
+          this.dataSourceInfo = '📊 Complete Engagement History';
+        } else {
+          this.showPlaceholderData();
+        }
       });
   }
 
   private processRealData(apiData: any) {
-    // Process and transform API data into chart formats
     this.dataSourceInfo = '📊 Real-time API Data';
-
-    // Process performance percentages
     this.processPerformanceData(apiData);
-
-    // Process rating history
     this.processRatingHistory(apiData);
-
-    // Calculate performance metrics
     this.calculatePerformanceMetrics();
-
-    // Update warning message based on data quality
     this.updateWarningMessage();
   }
 
   private processPerformanceData(data: any) {
-    // Extract performance percentages from API response
-    const performance =
-      data.performanceMetrics || data.ratingsDistribution || {};
+    const engagements = data?.allScouterMarketWithTalent || [];
+    
+    let excellent = 0, good = 0, average = 0, fair = 0, poor = 0, noRating = 0;
 
-    // Type-safe array creation
-    const performanceData = [
-      performance.excellent || performance.fiveStar || 0,
-      performance.good || performance.fourStar || 0,
-      performance.average || performance.threeStar || 0,
-      performance.fair || performance.twoStar || 0,
-      performance.poor || performance.oneStar || 0,
-      performance.noRating || 0,
-    ];
+    engagements.forEach((engagement: any) => {
+      const scouterRating = this.mapRatingToNumber(engagement.scouterRating);
+      
+      if (scouterRating === 0) noRating++;
+      else if (scouterRating >= 4.5) excellent++;
+      else if (scouterRating >= 3.5) good++;
+      else if (scouterRating >= 2.5) average++;
+      else if (scouterRating >= 1.5) fair++;
+      else if (scouterRating > 0) poor++;
+    });
+
+    if (engagements.length === 0) noRating = 1;
 
     this.pieChartData = {
       labels: [
@@ -406,382 +336,268 @@ export class MarketStatsComponent implements OnInit, OnChanges {
         'Average (2.5-3.4 stars)',
         'Fair (1.5-2.4 stars)',
         'Poor (1-1.4 stars)',
-        'No Rating',
+        'No Rating'
       ],
-      datasets: [
-        {
-          data: performanceData,
-          backgroundColor: [
-            '#6A1B9A', // Excellent - Purple
-            '#8E24AA', // Good - Light Purple
-            '#BA68C8', // Average - Pink
-            '#FF7043', // Fair - Orange
-            '#D32F2F', // Poor - Red
-            '#BDBDBD', // No Rating - Gray
-          ],
-          borderWidth: 1,
-          borderColor: '#fff',
-        },
-      ],
+      datasets: [{
+        data: [excellent, good, average, fair, poor, noRating],
+        backgroundColor: ['#6A1B9A', '#8E24AA', '#BA68C8', '#FF7043', '#D32F2F', '#BDBDBD']
+      }]
     };
   }
 
   private processRatingHistory(data: any) {
-    // Extract rating history from API
-    const engagements = data.engagementHistory || data.hireHistory || [];
+    const engagements = data?.allScouterMarketWithTalent || [];
 
-    if (engagements.length === 0 && this.hire) {
-      // Fallback to current hire data if no history
-      this.initializeWithHireData();
+    if (engagements.length === 0) {
+      if (this.hire) this.initializeWithHireData();
       return;
     }
 
-    // CHANGED: Sort engagements by date (oldest first)
-    const sortedEngagements = [...engagements].sort((a: any, b: any) => {
-      const dateA = new Date(a.date || a.createdAt || 0);
-      const dateB = new Date(b.date || b.createdAt || 0);
-      return dateA.getTime() - dateB.getTime(); // Ascending order (oldest first)
+    const sortedEngagements = [...engagements].sort((a, b) => {
+      const dateA = this.parseDate(a.dateOfHire);
+      const dateB = this.parseDate(b.dateOfHire);
+      return dateA.getTime() - dateB.getTime();
     });
 
-    // CHANGED: Take up to 15 most recent engagements
-    const recentEngagements = sortedEngagements.slice(-15).reverse(); // Show newest first in chart
-
-    // CHANGED: Use numbers instead of letters for labels
-    const labels = recentEngagements.map(
-      (_: any, i: number) => `Engagement #${i + 1}`,
-    );
-
-    // Extract ratings - ensure numbers
-    const scouterRatings = recentEngagements.map((engagement: any) => {
-      const rating = engagement.scouterRating || engagement.yourRating || 0;
-      return typeof rating === 'number' ? rating : parseFloat(rating) || 0;
-    });
-
-    const talentRatings = recentEngagements.map((engagement: any) => {
-      const rating = engagement.talentRating || 0;
-      return typeof rating === 'number' ? rating : parseFloat(rating) || 0;
-    });
+    const labels = sortedEngagements.map((_, i) => `Engagement #${i + 1}`);
+    const scouterRatings = sortedEngagements.map(e => this.mapRatingToNumber(e.scouterRating));
+    const talentRatings = sortedEngagements.map(e => this.mapRatingToNumber(e.talentRating));
 
     this.barChartData = {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: 'Your Rating',
           data: scouterRatings,
           backgroundColor: '#1E40AF',
           borderColor: '#1E3A8A',
-          borderWidth: 1,
           borderRadius: 4,
-          barPercentage: 0.6,
+          barPercentage: 0.6
         },
         {
           label: `${this.userName}'s Rating`,
           data: talentRatings,
           backgroundColor: '#4B5563',
           borderColor: '#374151',
-          borderWidth: 1,
           borderRadius: 4,
-          barPercentage: 0.6,
-        },
-      ],
+          barPercentage: 0.6
+        }
+      ]
     };
 
-    // CHANGED: Generate rating list with numbers
-    this.ratingList = recentEngagements.map((engagement: any, i: number) => {
-      const scouterRating =
-        engagement.scouterRating || engagement.yourRating || 0;
-      const talentRating = engagement.talentRating || 0;
-      const indexNumber = recentEngagements.length - i; // Reverse order for display (newest first)
+    this.ratingList = sortedEngagements
+      .map((engagement, i) => {
+        const scouterRating = this.mapRatingToNumber(engagement.scouterRating);
+        const talentRating = this.mapRatingToNumber(engagement.talentRating);
+        
+        let formattedDate = 'Date not available';
+        if (engagement.dateOfHire) {
+          const parsedDate = this.parseDate(engagement.dateOfHire);
+          if (!isNaN(parsedDate.getTime())) {
+            formattedDate = parsedDate.toLocaleDateString('en-US', {
+              day: '2-digit', month: 'short', year: 'numeric'
+            });
+          }
+        }
 
-      return {
-        number: indexNumber, // CHANGED: Use number instead of letter
-        date: engagement.date
-          ? new Date(engagement.date).toLocaleDateString('en-US', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            })
-          : 'Date not available',
-        hasRating: !!(scouterRating > 0 || talentRating > 0),
-        scouterRating:
-          scouterRating > 0 ? `${scouterRating.toFixed(1)} stars` : 'No rating',
-        talentRating:
-          talentRating > 0 ? `${talentRating.toFixed(1)} stars` : 'No rating',
-        rawData: engagement,
-      };
-    });
+        return {
+          number: i + 1,
+          date: formattedDate,
+          hasRating: !!(scouterRating > 0 || talentRating > 0),
+          scouterRating: scouterRating > 0 ? `${scouterRating.toFixed(1)} stars` : 'No rating',
+          talentRating: talentRating > 0 ? `${talentRating.toFixed(1)} stars` : 'No rating'
+        };
+      })
+      .reverse();
+  }
+
+  private mapRatingToString(rating: number): string {
+    if (!rating || rating === 0) return 'not available';
+    const map: Record<number, string> = { 5: 'very impressive', 4: 'impressive', 3: 'average', 2: 'manageable', 1: 'poor' };
+    return map[rating] || rating.toString();
+  }
+
+  private mapRatingToNumber(rating: string | number): number {
+    if (typeof rating === 'number') return rating;
+    if (!rating || rating === 'not available') return 0;
+    
+    const map: Record<string, number> = {
+      'very impressive': 5, 'impressive': 4, 'manageable': 2, 'poor': 1,
+      'excellent': 5, 'good': 4, 'average': 3, 'fair': 2, 'needs improvement': 1
+    };
+    return map[rating.toLowerCase()] || 0;
+  }
+
+  private parseDate(dateString: string): Date {
+    if (!dateString) return new Date(0);
+    try {
+      const [datePart, timePart] = dateString.split(':');
+      const [day, month, year] = datePart.split('/');
+      let hours = 0, minutes = 0;
+      
+      if (timePart) {
+        const match = timePart.match(/(\d+):(\d+)(am|pm)/i);
+        if (match) {
+          hours = parseInt(match[1], 10);
+          minutes = parseInt(match[2], 10);
+          if (match[3].toLowerCase() === 'pm' && hours < 12) hours += 12;
+          if (match[3].toLowerCase() === 'am' && hours === 12) hours = 0;
+        }
+      }
+      return new Date(`${month} ${day}, ${year} ${hours}:${minutes}:00`);
+    } catch {
+      return new Date(0);
+    }
   }
 
   private initializeWithHireData() {
     if (!this.hire) return;
 
-    this.dataSourceInfo = '📊 Calculated from Current Engagement';
-
-    // Calculate performance based on current ratings
+    this.dataSourceInfo = '📊 Current Engagement Only';
     const scouterRating = this.hire.yourRating || 0;
     const talentRating = this.hire.talentRating || 0;
 
-    // Performance pie chart based on ratings
     this.pieChartData = {
-      labels: [
-        'Excellent (4.5-5 stars)',
-        'Good (3.5-4.4 stars)',
-        'Average (2.5-3.4 stars)',
-        'Fair (1.5-2.4 stars)',
-        'Poor (1-1.4 stars)',
-        'No Rating',
-      ],
-      datasets: [
-        {
-          data: this.calculatePerformanceFromRatings(
-            scouterRating,
-            talentRating,
-          ),
-          backgroundColor: [
-            '#6A1B9A',
-            '#8E24AA',
-            '#BA68C8',
-            '#FF7043',
-            '#D32F2F',
-            '#BDBDBD',
-          ],
-          borderWidth: 1,
-          borderColor: '#fff',
-        },
-      ],
+      labels: ['Excellent', 'Good', 'Average', 'Fair', 'Poor', 'No Rating'],
+      datasets: [{
+        data: this.calculatePerformanceFromRatings(scouterRating, talentRating),
+        backgroundColor: ['#6A1B9A', '#8E24AA', '#BA68C8', '#FF7043', '#D32F2F', '#BDBDBD']
+      }]
     };
 
-    // Bar chart with current rating
     this.barChartData = {
-      labels: ['Engagement #1'], // CHANGED: Use number instead of text
+      labels: ['Engagement #1'],
       datasets: [
-        {
-          label: 'Your Rating',
-          data: [scouterRating],
-          backgroundColor: '#1E40AF',
-          borderColor: '#1E3A8A',
-          borderWidth: 1,
-          borderRadius: 4,
-          barPercentage: 0.6,
-        },
-        {
-          label: `${this.userName}'s Rating`,
-          data: [talentRating],
-          backgroundColor: '#4B5563',
-          borderColor: '#374151',
-          borderWidth: 1,
-          borderRadius: 4,
-          barPercentage: 0.6,
-        },
-      ],
+        { label: 'Your Rating', data: [scouterRating], backgroundColor: '#1E40AF' },
+        { label: `${this.userName}'s Rating`, data: [talentRating], backgroundColor: '#4B5563' }
+      ]
     };
 
-    // Single rating in the list
-    this.ratingList = [
-      {
-        number: 1, // CHANGED: Use number instead of letter
-        date:
-          this.hire.date ||
-          new Date().toLocaleDateString('en-US', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-          }),
-        hasRating: scouterRating > 0 || talentRating > 0,
-        scouterRating:
-          scouterRating > 0 ? `${scouterRating.toFixed(1)} stars` : 'No rating',
-        talentRating:
-          talentRating > 0 ? `${talentRating.toFixed(1)} stars` : 'No rating',
-      },
-    ];
+    this.ratingList = [{
+      number: 1,
+      date: this.hire.date || new Date().toLocaleDateString(),
+      hasRating: scouterRating > 0 || talentRating > 0,
+      scouterRating: scouterRating > 0 ? `${scouterRating.toFixed(1)} stars` : 'No rating',
+      talentRating: talentRating > 0 ? `${talentRating.toFixed(1)} stars` : 'No rating'
+    }];
 
-    // Calculate performance metrics
     this.calculatePerformanceMetrics();
   }
 
-  private calculatePerformanceFromRatings(
-    scouterRating: number,
-    talentRating: number,
-  ): number[] {
-    // Calculate performance percentages based on ratings
-    const avgRating =
-      scouterRating > 0 && talentRating > 0
-        ? (scouterRating + talentRating) / 2
-        : Math.max(scouterRating, talentRating);
-
-    if (avgRating >= 4.5) return [85, 10, 3, 1, 1, 0];
-    else if (avgRating >= 3.5) return [15, 60, 15, 5, 3, 2];
-    else if (avgRating >= 2.5) return [5, 15, 50, 20, 7, 3];
-    else if (avgRating >= 1.5) return [2, 5, 15, 55, 18, 5];
-    else if (avgRating > 0) return [1, 2, 5, 15, 72, 5];
-    else return [0, 0, 0, 0, 0, 100];
+  private calculatePerformanceFromRatings(scouterRating: number, talentRating: number): number[] {
+    const avg = scouterRating > 0 && talentRating > 0 
+      ? (scouterRating + talentRating) / 2 
+      : Math.max(scouterRating, talentRating);
+    
+    if (avg >= 4.5) return [85, 10, 3, 1, 1, 0];
+    if (avg >= 3.5) return [15, 60, 15, 5, 3, 2];
+    if (avg >= 2.5) return [5, 15, 50, 20, 7, 3];
+    if (avg >= 1.5) return [2, 5, 15, 55, 18, 5];
+    if (avg > 0) return [1, 2, 5, 15, 72, 5];
+    return [0, 0, 0, 0, 0, 100];
   }
 
   private calculatePerformanceMetrics() {
-    // Calculate comprehensive performance metrics
-    if (!this.hire) return;
+    if (!this.statsData?.allScouterMarketWithTalent) {
+      if (this.hire) {
+        const scouterRating = this.mapRatingToNumber(this.hire.yourRating || 0);
+        const talentRating = this.mapRatingToNumber(this.hire.talentRating || 0);
+        const rated = this.ratingList.filter(r => r.hasRating).length;
 
-    const scouterRating = this.hire.yourRating || 0;
-    const talentRating = this.hire.talentRating || 0;
-    const totalEngagements = this.ratingList.length;
-    const ratedEngagements = this.ratingList.filter((r) => r.hasRating).length;
+        this.performanceMetrics = {
+          scouterRating,
+          talentRating,
+          averageRating: scouterRating > 0 && talentRating > 0 
+            ? (scouterRating + talentRating) / 2 
+            : Math.max(scouterRating, talentRating),
+          totalEngagements: this.ratingList.length,
+          ratedEngagements: rated,
+          ratingRatio: this.ratingList.length > 0 ? (rated / this.ratingList.length) * 100 : 0,
+          performanceScore: this.calculatePerformanceScore(scouterRating, talentRating, rated)
+        };
+      }
+      return;
+    }
+
+    const engagements = this.statsData.allScouterMarketWithTalent;
+    
+    let totalScouter = 0, scouterCount = 0, totalTalent = 0, talentCount = 0;
+    
+    engagements.forEach((e: any) => {
+      const sr = this.mapRatingToNumber(e.scouterRating);
+      if (sr > 0) { totalScouter += sr; scouterCount++; }
+      const tr = this.mapRatingToNumber(e.talentRating);
+      if (tr > 0) { totalTalent += tr; talentCount++; }
+    });
+
+    const avgScouter = scouterCount > 0 ? totalScouter / scouterCount : 0;
+    const avgTalent = talentCount > 0 ? totalTalent / talentCount : 0;
+    const rated = this.ratingList.filter(r => r.hasRating).length;
 
     this.performanceMetrics = {
-      scouterRating: scouterRating,
-      talentRating: talentRating,
-      averageRating:
-        scouterRating > 0 && talentRating > 0
-          ? (scouterRating + talentRating) / 2
-          : Math.max(scouterRating, talentRating),
-      totalEngagements: totalEngagements,
-      ratedEngagements: ratedEngagements,
-      ratingRatio:
-        totalEngagements > 0 ? (ratedEngagements / totalEngagements) * 100 : 0,
-      performanceScore: this.calculatePerformanceScore(
-        scouterRating,
-        talentRating,
-        ratedEngagements,
-      ),
+      scouterRating: avgScouter,
+      talentRating: avgTalent,
+      averageRating: (avgScouter + avgTalent) / 2,
+      totalEngagements: engagements.length,
+      ratedEngagements: rated,
+      ratingRatio: engagements.length > 0 ? (rated / engagements.length) * 100 : 0,
+      performanceScore: this.calculatePerformanceScore(avgScouter, avgTalent, rated)
     };
   }
 
-  private calculatePerformanceScore(
-    scouterRating: number,
-    talentRating: number,
-    ratedEngagements: number,
-  ): number {
-    // Calculate a comprehensive performance score (0-100)
-    const ratingScore = ((scouterRating + talentRating) / 10) * 40; // Max 40 points
-    const consistencyScore =
-      (ratedEngagements / Math.max(this.ratingList.length, 1)) * 30; // Max 30 points
-    const balanceScore =
-      (Math.min(scouterRating, talentRating) /
-        Math.max(scouterRating, talentRating, 1)) *
-      30; // Max 30 points
-
+  private calculatePerformanceScore(scouterRating: number, talentRating: number, ratedEngagements: number): number {
+    const ratingScore = ((scouterRating + talentRating) / 10) * 40;
+    const consistencyScore = (ratedEngagements / Math.max(this.ratingList.length, 1)) * 30;
+    const balanceScore = (Math.min(scouterRating, talentRating) / Math.max(scouterRating, talentRating, 1)) * 30;
     return Math.min(100, ratingScore + consistencyScore + balanceScore);
   }
 
   private updateWarningMessage() {
     if (!this.hire) {
-      this.warningMessage = '⚠️ No hire data available';
+      this.warningMessage = 'No hire data available';
       return;
     }
 
-    const scouterRating = this.hire.yourRating || 0;
-    const talentRating = this.hire.talentRating || 0;
+    const sr = this.hire.yourRating || 0;
+    const tr = this.hire.talentRating || 0;
 
-    if (scouterRating === 0 && talentRating === 0) {
-      this.warningMessage =
-        '⚠️ No ratings submitted yet. Submit ratings to see performance data.';
-    } else if (scouterRating === 0) {
-      this.warningMessage =
-        "⚠️ You haven't rated this talent yet. Your rating will provide better insights.";
-    } else if (talentRating === 0) {
-      this.warningMessage =
-        "⚠️ Talent hasn't rated you yet. Ratings from both sides provide complete insights.";
+    if (sr === 0 && tr === 0) {
+      this.warningMessage = 'No ratings submitted yet. Submit ratings to see performance data.';
+    } else if (sr === 0) {
+      this.warningMessage = "You haven't rated this talent yet. Your rating will provide better insights.";
+    } else if (tr === 0) {
+      this.warningMessage = "Talent hasn't rated you yet. Ratings from both sides provide complete insights.";
     } else {
-      this.warningMessage =
-        '📊 Performance analysis based on submitted ratings.';
+      this.warningMessage = 'Performance analysis based on submitted ratings.';
     }
   }
 
   private showPlaceholderData() {
-    this.dataSourceInfo = '⚠️ Unable to load data';
-    this.warningMessage = 'Please check your connection or try again later.';
+    this.dataSourceInfo = '⚠️ No Data Available';
+    this.warningMessage = 'No engagement data found for this talent.';
 
     this.pieChartData = {
-      labels: ['Data unavailable'],
-      datasets: [
-        {
-          data: [100],
-          backgroundColor: ['#BDBDBD'],
-          borderWidth: 1,
-          borderColor: '#fff',
-        },
-      ],
+      labels: ['No Data'],
+      datasets: [{ data: [100], backgroundColor: ['#BDBDBD'] }]
     };
 
     this.barChartData = {
       labels: ['N/A'],
       datasets: [
-        {
-          label: 'Your Rating',
-          data: [0],
-          backgroundColor: '#BDBDBD',
-          borderColor: '#9CA3AF',
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-        {
-          label: 'Talent Rating',
-          data: [0],
-          backgroundColor: '#BDBDBD',
-          borderColor: '#9CA3AF',
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-      ],
+        { label: 'Your Rating', data: [0], backgroundColor: '#BDBDBD' },
+        { label: 'Talent Rating', data: [0], backgroundColor: '#BDBDBD' }
+      ]
     };
 
     this.ratingList = [];
     this.performanceMetrics = {
-      scouterRating: 0,
-      talentRating: 0,
-      averageRating: 0,
-      totalEngagements: 0,
-      ratedEngagements: 0,
-      ratingRatio: 0,
-      performanceScore: 0,
+      scouterRating: 0, talentRating: 0, averageRating: 0,
+      totalEngagements: 0, ratedEngagements: 0, ratingRatio: 0, performanceScore: 0
     };
   }
 
-  private loadMockData(talentId: string) {
-    const mock = MockRecentHires.find((m) => String(m.id) === String(talentId));
-    if (mock) {
-      this.setSelectedHire({
-        ...mock,
-        jobDescription: mock.jobDescription ?? '',
-        yourComment: mock.yourComment ?? '',
-        yourRating: mock.yourRating ?? 0,
-        talentComment: mock.talentComment ?? '',
-        talentRating: mock.talentRating ?? 0,
-      } as TotalHires);
-    } else {
-      this.showPlaceholderData();
-    }
-  }
-
-  // Helper methods for template - FIXED TYPE SAFETY
-  get hasRealData(): boolean {
-    return !!this.statsData;
-  }
-
-  get totalEngagements(): number {
-    return this.ratingList.length;
-  }
-
-  get averageScouterRating(): string {
-    const ratings = this.barChartData.datasets[0].data.filter(
-      (r: any) => typeof r === 'number' && r > 0,
-    ) as number[];
-
-    if (ratings.length === 0) return 'N/A';
-
-    const sum = ratings.reduce((acc: number, curr: number) => acc + curr, 0);
-    return (sum / ratings.length).toFixed(1);
-  }
-
-  get averageTalentRating(): string {
-    const ratings = this.barChartData.datasets[1].data.filter(
-      (r: any) => typeof r === 'number' && r > 0,
-    ) as number[];
-
-    if (ratings.length === 0) return 'N/A';
-
-    const sum = ratings.reduce((acc: number, curr: number) => acc + curr, 0);
-    return (sum / ratings.length).toFixed(1);
-  }
+  get hasRealData(): boolean { return !!this.statsData; }
+  get totalEngagements(): number { return this.ratingList.length; }
 
   get performanceScoreClass(): string {
     const score = this.performanceMetrics.performanceScore;
@@ -800,12 +616,11 @@ export class MarketStatsComponent implements OnInit, OnChanges {
     return 'Poor';
   }
 
-  // Add this method to generate star ratings
   getStars(rating: number): string {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    let stars = '⭐'.repeat(fullStars);
-    if (halfStar) stars += '½';
+    const full = Math.floor(rating);
+    const half = rating % 1 >= 0.5;
+    let stars = '⭐'.repeat(full);
+    if (half) stars += '½';
     return stars;
   }
 }

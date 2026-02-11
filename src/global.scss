@@ -98,6 +98,18 @@ a {
   margin: auto;
 }
 
+.accept-or-reject-offer {
+  --width: 90%;
+  --height: 55%;
+  // --border-radius: 16px;
+  --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+  --backdrop-opacity: 0.5;
+
+  margin: auto;
+}
+
+
+
 .fund-wallet-modal .modal-wrapper {
   background: transparent !important; /* ensure backdrop is transparent */
   box-shadow: none !important;
@@ -174,37 +186,52 @@ app-toast {
   position: relative;
 }
 
-/* In your global styles or component styles */
-.reconsider-modal {
+
+
+.reconsider-confirmation-modal {
+  --width: 90%;
+  --max-width: 500px;
   --height: auto;
   --max-height: 90vh;
   --border-radius: 16px;
-  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  --backdrop-opacity: 0.5;
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+  --backdrop-opacity: 0.7;
+  
+  &::part(content) {
+    margin: auto;
+  }
 }
 
 .reconsider-offer-modal {
+  --width: 90%;
+  --max-width: 500px;
   --height: auto;
   --max-height: 90vh;
   --border-radius: 16px;
-  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  --backdrop-opacity: 0.5;
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+  --backdrop-opacity: 0.7;
+  
+  &::part(content) {
+    margin: auto;
+  }
 }
 
-/* Style the modal backdrop */
-ion-modal.reconsider-modal::part(backdrop) {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-/* Style the modal wrapper */
-ion-modal.reconsider-modal::part(content) {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.total-delivery-modal {
+  --width: 90%;
+  --max-width: 500px;
+  --height: auto;
+  --max-height: 90vh;
+  --border-radius: 16px;
+  --box-shadow: 0 28px 48px rgba(0, 0, 0, 0.4);
+  --backdrop-opacity: 0.7;
+  
+  /* Center the modal */
+  &::part(content) {
+    margin: auto;
+  }
 }
 
 /* Make sure Ionic icons are loaded */
 ion-icon {
   font-size: 24px;
 }
-

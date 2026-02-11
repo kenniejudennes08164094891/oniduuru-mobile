@@ -1,4 +1,3 @@
-// total-delivery-evaluation.component.ts
 import {
   Component,
   Input,
@@ -12,6 +11,7 @@ import { ToastController } from '@ionic/angular';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { ModalController } from '@ionic/angular'; // ✅ ADD THIS
 
 @Component({
   selector: 'app-total-delivery-evaluation',
@@ -44,6 +44,7 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
     private toast: ToastsService,
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
+    private modalCtrl: ModalController, // ✅ ADD THIS
   ) {}
 
   ngOnInit() {
@@ -108,6 +109,8 @@ export class TotalDeliveryEvaluationComponent implements OnInit, OnChanges {
 
   closeModal() {
     this.close.emit();
+    // Also dismiss if using ModalController
+    this.modalCtrl.dismiss();
   }
 
   // Rating logic

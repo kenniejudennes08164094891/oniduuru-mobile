@@ -7,7 +7,7 @@
   --background: transparent;
 }
 
-/* Form field styling */
+// /* Form field styling */
 input:focus, textarea:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
@@ -35,7 +35,7 @@ button:not(:disabled):hover {
   transition: all 0.2s ease;
 }
 
-/* Responsive adjustments */
+// /* Responsive adjustments */
 @media (max-width: 640px) {
   .modal-container {
     margin: 1rem;
@@ -51,7 +51,7 @@ button:not(:disabled):hover {
   }
 }
 
-/* Loading spinner animation */
+// /* Loading spinner animation */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -65,7 +65,7 @@ button:not(:disabled):hover {
   animation: spin 1s linear infinite;
 }
 
-/* Scrollbar styling for modal body */
+// /* Scrollbar styling for modal body */
 .modal-body {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e0 #f7fafc;

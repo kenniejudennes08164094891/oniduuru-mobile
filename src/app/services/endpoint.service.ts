@@ -133,6 +133,120 @@ export class EndpointService {
       );
   }
 
+  // Add these methods to your EndpointService class in endpoint.service.ts
+
+  /**
+   * Toggle market status (accept/decline offer)
+   * PATCH /market/v1/toggle-market-status/{talentId}/{scouterId}/{marketHireId}
+   */
+  // Update the toggleMarketStatus method in endpoint.service.ts
+  public toggleMarketStatus(
+    talentId: string,
+    scouterId: string,
+    marketHireId: string,
+    status: 'offer-accepted' | 'offer-declined',
+    hireData?: any,
+  ): Observable<any> {
+    // Encode the parameters
+    const encodedTalentId = encodeURIComponent(talentId);
+    const encodedScouterId = encodeURIComponent(scouterId);
+    const encodedMarketHireId = encodeURIComponent(marketHireId);
+
+    const url = `${environment.baseUrl}/${endpoints.toggleMarketStatus}/${encodedTalentId}/${encodedScouterId}/${encodedMarketHireId}`;
+
+    // Convert amount to string - FIX: Ensure amountToPay is a string
+    let amountToPay = '';
+    if (hireData?.amount || hireData?.amountToPay) {
+      const amount = hireData.amount || hireData.amountToPay;
+      // Convert to string
+      amountToPay = String(amount);
+    }
+
+    // Format the date properly
+    let dateOfHire = '';
+    if (hireData?.date || hireData?.dateOfHire) {
+      const date = hireData.date || hireData.dateOfHire;
+      // Convert to proper date format if needed
+      if (typeof date === 'string') {
+        dateOfHire = date;
+      } else {
+        // If it's a Date object or timestamp, format it
+        dateOfHire = new Date(date).toISOString();
+      }
+    }
+
+    // Create the request body with real data if available
+    const body = {
+      hireStatus: status,
+      amountToPay: amountToPay, // Now a string
+      dateOfHire: dateOfHire,
+      jobDescription: hireData?.jobDescription || '',
+      startDate: hireData?.startDate || '',
+      satisFactoryCommentByScouter:
+        hireData?.satisFactoryCommentByScouter || '',
+    };
+
+    console.log('🔍 Toggle market status request:', {
+      url,
+      talentId,
+      scouterId,
+      marketHireId,
+      status,
+      body,
+    });
+
+    return this.http
+      .patch<any>(url, body, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Market status toggle response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Error toggling market status:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  /**
+   * Submit talent's comment/rating on market dealings
+   * PATCH /market/v1/market-comment/talent/{marketHireId}
+   */
+  public submitTalentMarketComment(
+    marketHireId: string,
+    payload: {
+      talentId: string;
+      remark: string;
+      rating: number;
+      paymentMethod: 'WALLET' | 'BANK_TRANSFER';
+    },
+  ): Observable<any> {
+    const encodedMarketHireId = encodeURIComponent(marketHireId);
+    const url = `${environment.baseUrl}/${endpoints.talentComment}/${encodedMarketHireId}`;
+
+    console.log('🔍 Submitting talent market comment:', {
+      url,
+      marketHireId,
+      payload,
+    });
+
+    return this.http
+      .patch<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Talent market comment response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Error submitting talent comment:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
   // ✅ Profile Picture APIs
   public uploadTalentPicture(data: any): Observable<any> {
     const body = JSON.stringify(data);

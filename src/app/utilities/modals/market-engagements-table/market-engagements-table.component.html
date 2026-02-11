@@ -160,6 +160,6 @@
   [originalJobDescription]="selectedTalentForReconsider?.jobDescription || ''"
   [isModalOpen]="isReconsiderOfferModalOpen"
   (submitted)="onReconsiderSubmitted($event)"
-  (cancelled)="closeReconsiderModal()"
-  (close)="closeReconsiderModal()"
+  (cancelled)="onReconsiderCancelled()"  
+  (close)="closeReconsiderModal()"      
 ></app-reconsider-offer-modal>

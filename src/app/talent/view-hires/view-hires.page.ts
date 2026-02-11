@@ -5,6 +5,7 @@ import { PaginationParams, marketHires } from 'src/app/models/mocks';
 import { AuthService } from 'src/app/services/auth.service';
 import { ModalController, ToastController } from '@ionic/angular';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { imageIcons } from 'src/app/models/stores';
 
 @Component({
   selector: 'app-view-hires',
@@ -20,6 +21,11 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
   userName: string = 'User';
   private intervalId: any;
+
+  images = imageIcons;
+
+  slideshowTexts: string[] = [];
+  noExpenditureSlideshowTexts: string[] = [];
 
   // Loading states
   isLoading: boolean = false;
@@ -67,13 +73,6 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   activeCategoryTable: string | null = null;
   isFilterOpen = false;
 
-  // Example images
-  images = {
-    ViewHireFolderIcon: 'assets/icons/view-hire-folder.png',
-    FoxCryptoIcon: 'assets/icons/fox-crypto.png',
-    NoDataImage: 'assets/images/no-data.png',
-  };
-
   // Add missing properties
   initialPaginatedHires: any[] = [];
   paginatedHiresData: any[] = [];
@@ -110,6 +109,9 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     const now = new Date();
     this.currentMonth = monthNames[now.getMonth()];
 
+    // Initialize no-expenditure slideshow texts
+    this.updateNoExpenditureSlideshowText();
+
     // Start live clock
     this.intervalId = setInterval(() => {
       this.currentTime = new Date();
@@ -131,10 +133,10 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         next: (res: any) => {
           const decoded = this.base64JsonDecode<any[]>(res?.details) || [];
           console.clear();
-          console.log('decoded>>', decoded); // use this as mock data: marketHires
+          console.log('decoded>>', decoded);
           this.initialPaginatedHires = decoded;
           this.paginatedHiresData = decoded;
-          sessionStorage.setItem('lastMarkets', JSON.stringify(decoded)); // optional
+          sessionStorage.setItem('lastMarkets', JSON.stringify(decoded));
           setTimeout(() => (this.showSpinner = false), 2000);
         },
         error: (err) => {
@@ -182,7 +184,6 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         all: '',
       };
 
-      // Type-safe approach
       if (this.activeCategoryTable in statusMap) {
         apiStatusParam =
           statusMap[this.activeCategoryTable as keyof typeof statusMap] || '';
@@ -204,15 +205,12 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
           // Handle different response structures
           if (Array.isArray(res)) {
-            // Direct array response
             this.marketRecords = this.transformApiData(res);
             this.totalRecords = res.length;
           } else if (res?.data && Array.isArray(res.data)) {
-            // Data in data property
             this.marketRecords = this.transformApiData(res.data);
             this.totalRecords = res.data.length;
           } else if (res?.details) {
-            // Base64 encoded details
             try {
               const decoded = this.base64JsonDecode<any[]>(res.details);
               if (decoded && Array.isArray(decoded)) {
@@ -232,6 +230,10 @@ export class ViewHiresPage implements OnInit, OnDestroy {
 
           // Update market expenditures count
           this.updateMarketExpenditures();
+
+          // Set slideshow texts based on data availability
+          this.setSlideshowText();
+          this.updateNoExpenditureSlideshowText(); // Add this line
         },
         error: (err) => {
           this.isLoading = false;
@@ -239,8 +241,61 @@ export class ViewHiresPage implements OnInit, OnDestroy {
           this.showToast('Failed to load market records', 'danger');
           this.marketRecords = [];
           this.totalRecords = 0;
+          this.setSlideshowText();
+          this.updateNoExpenditureSlideshowText(); // Add this line
         },
       });
+  }
+
+  setSlideshowText(): void {
+    const currentMonthHires = this.currentMonthHires;
+    const totalExpenditure = currentMonthHires.reduce(
+      (sum, hire) => sum + hire.amount,
+      0,
+    );
+
+    if (currentMonthHires.length > 0) {
+      // When there's data for current month
+      this.slideshowTexts = [
+        `Your Total Market Expenditures for the Month of ${this.currentMonth} is ₦${totalExpenditure.toLocaleString()}`,
+        'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
+      ];
+    } else {
+      // Clear slideshow texts when no data - we'll use the noExpenditure slideshow instead
+      this.slideshowTexts = [];
+    }
+  }
+
+  get currentMonthHires(): any[] {
+    return this.filterHiresByCurrentMonth(this.marketExpenditures);
+  }
+
+  // Add this method to filter hires by current month
+  private filterHiresByCurrentMonth(hires: any[]): any[] {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    return hires.filter((hire) => {
+      const hireDate = new Date(hire.date);
+      return (
+        hireDate.getMonth() === currentMonth &&
+        hireDate.getFullYear() === currentYear
+      );
+    });
+  }
+
+  private updateNoExpenditureSlideshowText() {
+    // Create multiple variations of the "no expenditures" message for the slideshow
+    this.noExpenditureSlideshowTexts = [
+      `Oops!... No market expenditures found for ${this.currentMonth}.`,
+      `Your market activity for ${this.currentMonth} is quiet. Start exploring opportunities!`,
+      `No earnings recorded in ${this.currentMonth}. New job offers may be waiting for you.`,
+      `Ready to work? ${this.currentMonth} has no expenditures yet. Check available positions!`,
+      `Market expenditures for ${this.currentMonth} are at zero. New opportunities await!`,
+      `Your ${this.currentMonth} earnings are untouched. Connect with scouters on Oniduuru Marketplace.`,
+      `No transactions yet this month. New job offers could be just around the corner!`,
+    ];
   }
 
   private transformApiData(apiData: any[]): any[] {
@@ -390,6 +445,9 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         recordDate.getFullYear() === currentYear
       );
     });
+
+    this.setSlideshowText();
+    this.updateNoExpenditureSlideshowText(); // Add this line
   }
 
   // Helper methods for base64 decoding

@@ -1,7 +1,3 @@
-@keyframes marquee {
-  0%   { transform: translateX(0%); }
-  100% { transform: translateX(-50%); } /* move half of the combined width */
-}
 
 .animate-marquee {
   display: flex;
@@ -22,4 +18,21 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+  
+  &:hover {
+    animation-play-state: paused;
+  }
 }

@@ -2,7 +2,12 @@
 <div class="mb-6">
   <div class="flex justify-between items-center mb-4">
     <h3 class="text-lg font-semibold text-gray-800">
-      Performance Rating by Percentage %
+      <ng-container *ngIf="userName !== 'All Engagements'; else allStatsTitle">
+        Performance Rating by Percentage % - {{ userName }}
+      </ng-container>
+      <ng-template #allStatsTitle>
+        Complete Scouter Performance Statistics
+      </ng-template>
     </h3>
     <div class="flex items-center gap-2">
       <span

@@ -1,47 +1,47 @@
-/* Modal Styles */
-.auto-height-modal {
-  --height: auto;
-  --max-height: 90vh;
-  --border-radius: 16px;
-  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
+// /* Modal Styles */
+// .auto-height-modal {
+//   --height: auto;
+//   --max-height: 90vh;
+//   --border-radius: 16px;
+//   --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+// }
 
-.reconsider-offer-modal {
-  --height: auto;
-  --max-height: 90vh;
-  --border-radius: 16px;
-  --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
+// .reconsider-offer-modal {
+// --width: 90%;
+//   --height: 90%;
+//   --border-radius: 16px;
+//   --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+// }
 
-/* Banner styling */
-.modal-banner {
-  background-image: url('/assets/images/Log-complaint-background.png');
-  background-size: cover;
-  background-position: center;
-}
+// /* Banner styling */
+// .modal-banner {
+//   background-image: url('/assets/images/Log-complaint-background.png');
+//   background-size: cover;
+//   background-position: center;
+// }
 
-/* Form input styling */
-input:focus, textarea:focus {
-  outline: none;
-  ring: 2;
-}
+// /* Form input styling */
+// input:focus, textarea:focus {
+//   outline: none;
+//   ring: 2;
+// }
 
-/* Button hover effects */
-button {
-  transition: all 0.2s ease-in-out;
-}
+// /* Button hover effects */
+// button {
+//   transition: all 0.2s ease-in-out;
+// }
 
-button:hover {
-  transform: translateY(-1px);
-}
+// button:hover {
+//   transform: translateY(-1px);
+// }
 
-/* Responsive adjustments */
-@media (max-width: 640px) {
-  .modal-banner {
-    height: 24px;
-  }
+// /* Responsive adjustments */
+// @media (max-width: 640px) {
+//   .modal-banner {
+//     height: 24px;
+//   }
   
-  .modal-banner h2 {
-    font-size: 1.25rem;
-  }
-}
+//   .modal-banner h2 {
+//     font-size: 1.25rem;
+//   }
+// }

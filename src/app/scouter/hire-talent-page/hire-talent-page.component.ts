@@ -20,10 +20,6 @@ export class HireTalentPageComponent implements OnInit {
   userEmail: string = '';
   starredEmail: string = '';
 
-  // DEVELOPMENT FLAG - Set to true to bypass OTP
-  private bypassOtp: boolean = true;
-
-
   constructor(
     private router: Router,
     private navCtrl: NavController,
@@ -34,15 +30,6 @@ export class HireTalentPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-  // Check if we should bypass OTP
-    if (this.bypassOtp) {
-      console.log('🚀 DEVELOPMENT MODE: Bypassing OTP verification');
-      this.autoNavigateToDashboard();
-      return;
-    }
-    
-
-
     this.loadUserEmail();
     this.sendInitialOtp(); // Send OTP automatically when page loads
     this.startCountdown();
@@ -51,24 +38,6 @@ export class HireTalentPageComponent implements OnInit {
       const firstInput = document.querySelector('input') as HTMLInputElement;
       if (firstInput) firstInput.focus();
     }, 0);
-  }
-
-
-
-   // Auto-navigate method for development
-  private autoNavigateToDashboard(): void {
-    console.log('🔓 Auto-navigating to dashboard (OTP bypassed)');
-    
-    // Show a success message
-    this.toastService.openSnackBar('OTP bypassed - Development mode', 'success');
-    
-    // Auto-fill OTP for visual feedback
-    this.otp = ['1', '2', '3', '4'];
-    
-    // Navigate after a short delay
-    setTimeout(() => {
-      this.navigateToNextPage();
-    }, 1000);
   }
 
   private loadUserEmail(): void {
@@ -141,7 +110,7 @@ export class HireTalentPageComponent implements OnInit {
   private sendInitialOtp(): void {
     if (!this.userEmail) {
       console.warn('❌ No email found for automatic OTP');
-      this.toastService.openSnackBar('No email found. Please contact support.', 'error');
+      this.toastService.openSnackBar('No email found. Please contact support.', 'danger');
       return;
     }
 
@@ -164,7 +133,7 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = 'OTP service unavailable. Please contact support.';
         }
         
-        this.toastService.openSnackBar(errorMessage, 'error');
+        this.toastService.openSnackBar(errorMessage, 'danger');
       }
     });
   }
@@ -218,7 +187,7 @@ export class HireTalentPageComponent implements OnInit {
   // Resend OTP - IMPROVED
   resendOtp() {
     if (!this.userEmail) {
-      this.toastService.openSnackBar('No email found for OTP', 'error');
+      this.toastService.openSnackBar('No email found for OTP', 'danger');
       return;
     }
 
@@ -238,29 +207,22 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = error.error.message;
         }
         
-        this.toastService.openSnackBar(errorMessage, 'error');
+        this.toastService.openSnackBar(errorMessage, 'danger');
       }
     });
   }
 
-  // Modified verifyOtp method to also accept bypass
+  // Verify OTP - IMPROVED
   async verifyOtp() {
-    // If bypass is enabled, skip verification
-    if (this.bypassOtp) {
-      console.log('🚀 DEVELOPMENT: Bypassing OTP check');
-      this.navigateToNextPage();
-      return;
-    }
-    
     const enteredOtp = this.otp.join('');
     
     if (enteredOtp.length !== 4) {
-      this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'error');
+      this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'danger');
       return;
     }
 
     if (!this.userEmail) {
-      this.toastService.openSnackBar('No email found for verification', 'error');
+      this.toastService.openSnackBar('No email found for verification', 'danger');
       return;
     }
 
@@ -289,7 +251,7 @@ export class HireTalentPageComponent implements OnInit {
           errorMessage = 'Invalid OTP format.';
         }
         
-        this.toastService.openSnackBar(errorMessage, 'error');
+        this.toastService.openSnackBar(errorMessage, 'danger');
         
         // Clear OTP fields on failure
         this.otp = new Array(4).fill('');
@@ -300,6 +262,7 @@ export class HireTalentPageComponent implements OnInit {
       }
     });
   }
+
 
   // Add this method to your component for paste support
 onPaste(event: ClipboardEvent): void {
@@ -348,6 +311,42 @@ onPaste(event: ClipboardEvent): void {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // import { Component, OnInit } from '@angular/core';
 // import { Router } from '@angular/router';
 // import { NavController, AnimationController } from '@ionic/angular';
@@ -370,6 +369,10 @@ onPaste(event: ClipboardEvent): void {
 //   userEmail: string = '';
 //   starredEmail: string = '';
 
+//   // DEVELOPMENT FLAG - Set to true to bypass OTP
+//   private bypassOtp: boolean = true;
+
+
 //   constructor(
 //     private router: Router,
 //     private navCtrl: NavController,
@@ -380,6 +383,15 @@ onPaste(event: ClipboardEvent): void {
 //   ) {}
 
 //   ngOnInit() {
+//   // Check if we should bypass OTP
+//     if (this.bypassOtp) {
+//       console.log('🚀 DEVELOPMENT MODE: Bypassing OTP verification');
+//       this.autoNavigateToDashboard();
+//       return;
+//     }
+    
+
+
 //     this.loadUserEmail();
 //     this.sendInitialOtp(); // Send OTP automatically when page loads
 //     this.startCountdown();
@@ -388,6 +400,24 @@ onPaste(event: ClipboardEvent): void {
 //       const firstInput = document.querySelector('input') as HTMLInputElement;
 //       if (firstInput) firstInput.focus();
 //     }, 0);
+//   }
+
+
+
+//    // Auto-navigate method for development
+//   private autoNavigateToDashboard(): void {
+//     console.log('🔓 Auto-navigating to dashboard (OTP bypassed)');
+    
+//     // Show a success message
+//     this.toastService.openSnackBar('OTP bypassed - Development mode', 'success');
+    
+//     // Auto-fill OTP for visual feedback
+//     this.otp = ['1', '2', '3', '4'];
+    
+//     // Navigate after a short delay
+//     setTimeout(() => {
+//       this.navigateToNextPage();
+//     }, 1000);
 //   }
 
 //   private loadUserEmail(): void {
@@ -460,7 +490,7 @@ onPaste(event: ClipboardEvent): void {
 //   private sendInitialOtp(): void {
 //     if (!this.userEmail) {
 //       console.warn('❌ No email found for automatic OTP');
-//       this.toastService.openSnackBar('No email found. Please contact support.', 'danger');
+//       this.toastService.openSnackBar('No email found. Please contact support.', 'error');
 //       return;
 //     }
 
@@ -483,7 +513,7 @@ onPaste(event: ClipboardEvent): void {
 //           errorMessage = 'OTP service unavailable. Please contact support.';
 //         }
         
-//         this.toastService.openSnackBar(errorMessage, 'danger');
+//         this.toastService.openSnackBar(errorMessage, 'error');
 //       }
 //     });
 //   }
@@ -537,7 +567,7 @@ onPaste(event: ClipboardEvent): void {
 //   // Resend OTP - IMPROVED
 //   resendOtp() {
 //     if (!this.userEmail) {
-//       this.toastService.openSnackBar('No email found for OTP', 'danger');
+//       this.toastService.openSnackBar('No email found for OTP', 'error');
 //       return;
 //     }
 
@@ -557,22 +587,29 @@ onPaste(event: ClipboardEvent): void {
 //           errorMessage = error.error.message;
 //         }
         
-//         this.toastService.openSnackBar(errorMessage, 'danger');
+//         this.toastService.openSnackBar(errorMessage, 'error');
 //       }
 //     });
 //   }
 
-//   // Verify OTP - IMPROVED
+//   // Modified verifyOtp method to also accept bypass
 //   async verifyOtp() {
+//     // If bypass is enabled, skip verification
+//     if (this.bypassOtp) {
+//       console.log('🚀 DEVELOPMENT: Bypassing OTP check');
+//       this.navigateToNextPage();
+//       return;
+//     }
+    
 //     const enteredOtp = this.otp.join('');
     
 //     if (enteredOtp.length !== 4) {
-//       this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'danger');
+//       this.toastService.openSnackBar('Please enter complete 4-digit OTP', 'error');
 //       return;
 //     }
 
 //     if (!this.userEmail) {
-//       this.toastService.openSnackBar('No email found for verification', 'danger');
+//       this.toastService.openSnackBar('No email found for verification', 'error');
 //       return;
 //     }
 
@@ -601,7 +638,7 @@ onPaste(event: ClipboardEvent): void {
 //           errorMessage = 'Invalid OTP format.';
 //         }
         
-//         this.toastService.openSnackBar(errorMessage, 'danger');
+//         this.toastService.openSnackBar(errorMessage, 'error');
         
 //         // Clear OTP fields on failure
 //         this.otp = new Array(4).fill('');
@@ -612,7 +649,6 @@ onPaste(event: ClipboardEvent): void {
 //       }
 //     });
 //   }
-
 
 //   // Add this method to your component for paste support
 // onPaste(event: ClipboardEvent): void {
@@ -653,3 +689,7 @@ onPaste(event: ClipboardEvent): void {
 //     }
 //   }
 // }
+
+
+
+
