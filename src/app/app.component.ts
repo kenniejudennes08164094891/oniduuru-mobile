@@ -210,7 +210,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
     try {
       const user = JSON.parse(userData);
-      const uniqueId = user.uniqueId || user.id;
+      // Extract uniqueId, checking for scouterId, talentId, and other variants
+      const uniqueId =
+        user.uniqueId ||
+        user.id ||
+        user.scouterId ||
+        user.talentId ||
+        user.userId;
 
       console.log('🔍 Checking wallet via API with uniqueId:', uniqueId);
 
@@ -285,7 +291,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
     try {
       const user = JSON.parse(userData);
-      const uniqueId = user.uniqueId || user.id;
+      // Extract uniqueId, checking for scouterId, talentId, and other variants
+      const uniqueId =
+        user.uniqueId ||
+        user.id ||
+        user.scouterId ||
+        user.talentId ||
+        user.userId;
 
       if (uniqueId) {
         // Check if user already has wallet profile flag

@@ -30,7 +30,7 @@ interface OverlayViewMethods {
 
 type OverlayView = OverlayViewMethods & any;
 
-// Pulse Overlay Class using Google Maps OverlayView
+// Pulse Overlay Class using Google Maps OverlayView - 2 RINGS, SMALLER SIZE
 class PulseOverlay {
   private latLng: any;
   private map: any;
@@ -39,16 +39,17 @@ class PulseOverlay {
   private isActive: boolean = false;
   private div: HTMLElement | null = null;
   private overlay: OverlayView;
+  private animationFrame: number | null = null;
 
   constructor(latLng: any, map: any, talent: any, index: number) {
     this.latLng = latLng;
     this.map = map;
     this.talent = talent;
     this.index = index;
-    
+
     // Create the OverlayView
     this.overlay = new google.maps.OverlayView();
-    
+
     // Bind methods
     this.overlay.onAdd = this.onAdd.bind(this);
     this.overlay.draw = this.draw.bind(this);
@@ -59,48 +60,111 @@ class PulseOverlay {
     this.div = document.createElement('div');
     this.div.className = 'pulse-overlay';
     this.div.style.position = 'absolute';
-    this.div.style.width = '70px';
-    this.div.style.height = '70px';
+    this.div.style.width = '50px'; // REDUCED from 70px to 50px
+    this.div.style.height = '50px'; // REDUCED from 70px to 50px
     this.div.style.borderRadius = '50%';
     this.div.style.pointerEvents = 'none';
     this.div.style.zIndex = '999';
     this.div.style.display = 'none';
+    this.div.style.willChange = 'transform, opacity';
 
-    // Create the solid center dot
-    const centerDot = document.createElement('div');
-    centerDot.className = 'center-dot';
-    centerDot.style.position = 'absolute';
-    centerDot.style.top = '50%';
-    centerDot.style.left = '50%';
-    centerDot.style.transform = 'translate(-50%, -50%)';
-    centerDot.style.width = '8px';
-    centerDot.style.height = '8px';
-    centerDot.style.backgroundColor = '#FF2D2D';
-    centerDot.style.borderRadius = '50%';
-    centerDot.style.boxShadow = '0 0 12px #FF2D2D, 0 0 24px rgba(255, 45, 45, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.3)';
-    centerDot.style.zIndex = '1000';
-    this.div.appendChild(centerDot);
+    // NO CENTER DOT - REMOVED COMPLETELY
 
-    // Create pulse ring elements
-    for (let i = 0; i < 3; i++) {
+    // Create pulse ring elements - REDUCED to 2 rings
+    for (let i = 0; i < 2; i++) {
       const ring = document.createElement('div');
       ring.className = `pulse-ring pulse-ring-${i + 1}`;
       ring.style.position = 'absolute';
       ring.style.top = '0';
       ring.style.left = '0';
-      ring.style.right = '0';
-      ring.style.bottom = '0';
+      ring.style.width = '100%';
+      ring.style.height = '100%';
       ring.style.borderRadius = '50%';
-      ring.style.border = '2px solid #FF2D2D';
-      ring.style.animation = `radarScan 2.4s linear infinite`;
-      ring.style.animationDelay = `${i * 0.8}s`;
+      ring.style.border = '2px solid #FF3B3B'; // THINNER border
+      ring.style.opacity = '0';
+      ring.style.animation = `radarPulse 2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite`;
+      ring.style.animationDelay = `${i * 0.6}s`; // Adjusted delay for 2 rings
+      ring.style.willChange = 'transform, opacity';
+      ring.style.boxShadow = '0 0 8px rgba(255, 59, 59, 0.3)'; // REDUCED shadow
+      ring.style.transformOrigin = 'center';
       this.div.appendChild(ring);
     }
+
+    // Add CSS animation to document head if not already present
+    this.addAnimationStyles();
 
     const panes = (this.overlay as any).getPanes();
     if (panes) {
       panes.overlayMouseTarget.appendChild(this.div);
     }
+  }
+
+  private addAnimationStyles(): void {
+    // Check if styles already added
+    if (document.getElementById('pulse-overlay-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'pulse-overlay-styles';
+    style.textContent = `
+      @keyframes radarPulse {
+        0% {
+          transform: scale(0.7);
+          opacity: 0.8;
+        }
+        30% {
+          opacity: 0.5;
+        }
+        70% {
+          opacity: 0.2;
+        }
+        100% {
+          transform: scale(1.6);
+          opacity: 0;
+        }
+      }
+      
+      @keyframes activePulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 1;
+        }
+        40% {
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(1.8);
+          opacity: 0;
+        }
+      }
+      
+      .pulse-overlay {
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+      
+      .pulse-overlay .pulse-ring {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid #FF3B3B;
+        opacity: 0;
+        animation: radarPulse 2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+        will-change: transform, opacity;
+        box-shadow: 0 0 8px rgba(255, 59, 59, 0.3);
+        transform-origin: center;
+      }
+      
+      .pulse-overlay.active .pulse-ring {
+        border-color: #FF0000;
+        border-width: 2.5px;
+        animation: activePulse 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+        box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   draw(): void {
@@ -109,13 +173,19 @@ class PulseOverlay {
 
     const point = projection.fromLatLngToDivPixel(this.latLng);
     if (point) {
-      this.div.style.left = (point.x - 35) + 'px';
-      this.div.style.top = (point.y - 35) + 'px';
+      // Center the overlay on the marker - ADJUSTED for 50px size
+      this.div.style.left = point.x - 25 + 'px';
+      this.div.style.top = point.y - 25 + 'px';
       this.div.style.display = 'block';
     }
   }
 
   onRemove(): void {
+    if (this.animationFrame !== null) {
+      cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
+
     if (this.div) {
       if (this.div.parentNode) {
         this.div.parentNode.removeChild(this.div);
@@ -132,21 +202,6 @@ class PulseOverlay {
     if (this.div) {
       this.div.classList.add('active');
       this.isActive = true;
-      
-      // Update center dot
-      const centerDot = this.div.querySelector('.center-dot') as HTMLElement;
-      if (centerDot) {
-        centerDot.style.backgroundColor = '#FF0000';
-        centerDot.style.boxShadow = '0 0 16px #FF0000, 0 0 32px rgba(255, 0, 0, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.4)';
-      }
-      
-      // Update rings
-      const rings = this.div.querySelectorAll('.pulse-ring');
-      rings.forEach(ring => {
-        (ring as HTMLElement).style.borderColor = '#FF0000';
-        (ring as HTMLElement).style.borderWidth = '3px';
-        (ring as HTMLElement).style.animationDuration = '1.2s';
-      });
     }
   }
 
@@ -154,36 +209,19 @@ class PulseOverlay {
     if (this.div) {
       this.div.classList.remove('active');
       this.isActive = false;
-      
-      // Reset center dot
-      const centerDot = this.div.querySelector('.center-dot') as HTMLElement;
-      if (centerDot) {
-        centerDot.style.backgroundColor = '#FF2D2D';
-        centerDot.style.boxShadow = '0 0 12px #FF2D2D, 0 0 24px rgba(255, 45, 45, 0.4), inset 0 0 4px rgba(255, 255, 255, 0.3)';
-      }
-      
-      // Reset rings
-      const rings = this.div.querySelectorAll('.pulse-ring');
-      rings.forEach((ring, i) => {
-        (ring as HTMLElement).style.borderColor = '#FF2D2D';
-        (ring as HTMLElement).style.borderWidth = '2px';
-        (ring as HTMLElement).style.animationDuration = '2.4s';
-      });
     }
   }
 
-  enhancePulsing(intensity: number = 1.5): void {
+  enhancePulsing(intensity: number = 1.2): void {
     if (!this.div) return;
-    
-    const centerDot = this.div.querySelector('.center-dot') as HTMLElement;
-    if (centerDot) {
-      centerDot.style.backgroundColor = '#FF0000';
-      centerDot.style.boxShadow = `0 0 ${8 * intensity}px #FF0000, 0 0 ${16 * intensity}px rgba(255, 0, 0, 0.6), inset 0 0 ${4 * intensity}px rgba(255, 255, 255, 0.4)`;
-    }
-    
+
     const rings = this.div.querySelectorAll('.pulse-ring');
-    rings.forEach(ring => {
-      (ring as HTMLElement).style.animationDuration = `${2.4 / intensity}s`;
+    rings.forEach((ring) => {
+      (ring as HTMLElement).style.animationDuration = `${2 / intensity}s`;
+      (ring as HTMLElement).style.borderColor =
+        intensity > 1.5 ? '#FF0000' : '#FF3B3B';
+      (ring as HTMLElement).style.boxShadow =
+        `0 0 ${8 * intensity}px rgba(255, ${intensity > 1.5 ? '0' : '59'}, ${intensity > 1.5 ? '0' : '59'}, 0.4)`;
     });
   }
 }
@@ -245,36 +283,97 @@ export class FindProfessionalsByLocationModalComponent
   } = {
     lagos: {
       coordinates: { lat: 6.5244, lng: 3.3792 },
-      cities: ['lekki', 'ikoyi', 'victoria island', 'vi', 'ikeja', 'maryland', 'surulere', 'yaba', 'ajah'],
-      lgAs: ['agege', 'alimosho', 'amuwo-odofin', 'apapa', 'badagry', 'epe', 'eti-osa'],
-      areaNames: ['adeniji', 'adeola', 'aguda', 'ajah', 'ajegunle', 'akoka', 'alausa'],
+      cities: [
+        'lekki',
+        'ikoyi',
+        'victoria island',
+        'vi',
+        'ikeja',
+        'maryland',
+        'surulere',
+        'yaba',
+        'ajah',
+      ],
+      lgAs: [
+        'agege',
+        'alimosho',
+        'amuwo-odofin',
+        'apapa',
+        'badagry',
+        'epe',
+        'eti-osa',
+      ],
+      areaNames: [
+        'adeniji',
+        'adeola',
+        'aguda',
+        'ajah',
+        'ajegunle',
+        'akoka',
+        'alausa',
+      ],
       aliases: ['lag', 'lasgidi', 'eko'],
     },
     abuja: {
       coordinates: { lat: 9.0765, lng: 7.3986 },
-      cities: ['garki', 'wuse', 'maitama', 'asokoro', 'gwarimpa', 'jabi', 'kubwa'],
+      cities: [
+        'garki',
+        'wuse',
+        'maitama',
+        'asokoro',
+        'gwarimpa',
+        'jabi',
+        'kubwa',
+      ],
       lgAs: ['abuja municipal', 'bwari', 'gwagwalada', 'kuje', 'kwali'],
-      areaNames: ['apex', 'asokoro', 'central', 'dutse', 'garki', 'gudu', 'gwarimpa'],
+      areaNames: [
+        'apex',
+        'asokoro',
+        'central',
+        'dutse',
+        'garki',
+        'gudu',
+        'gwarimpa',
+      ],
       aliases: ['fct', 'capital'],
     },
     'port harcourt': {
       coordinates: { lat: 4.8156, lng: 7.0498 },
       cities: ['ph', 'port', 'rivers'],
-      lgAs: ['port harcourt', 'obio-akpor', 'eleme', 'etche', 'ikwerre', 'oyigbo'],
+      lgAs: [
+        'port harcourt',
+        'obio-akpor',
+        'eleme',
+        'etche',
+        'ikwerre',
+        'oyigbo',
+      ],
       areaNames: ['aba road', 'agip', 'airport', 'alakahia', 'alu', 'amadi'],
       aliases: ['phcity', 'rivers state'],
     },
     kano: {
       coordinates: { lat: 12.0022, lng: 8.592 },
       cities: ['kano'],
-      lgAs: ['kano municipal', 'nasarawa', 'fagge', 'dala', 'gwale', 'kumbotso'],
+      lgAs: [
+        'kano municipal',
+        'nasarawa',
+        'fagge',
+        'dala',
+        'gwale',
+        'kumbotso',
+      ],
       areaNames: ['bompai', 'gyadi', 'hotoro', 'jakara', 'kabuga', 'kofar'],
       aliases: ['kano city'],
     },
     ibadan: {
       coordinates: { lat: 7.3775, lng: 3.947 },
       cities: ['ibadan', 'oyo'],
-      lgAs: ['ibadan north', 'ibadan north-east', 'ibadan north-west', 'ibadan south-east'],
+      lgAs: [
+        'ibadan north',
+        'ibadan north-east',
+        'ibadan north-west',
+        'ibadan south-east',
+      ],
       areaNames: ['agodi', 'bodija', 'challenge', 'dugbe', 'gate', 'jericho'],
       aliases: ['ib city'],
     },
@@ -323,12 +422,15 @@ export class FindProfessionalsByLocationModalComponent
 
   private preloadProfileImages(talents: any[]): void {
     talents.forEach((talent) => {
-      const profilePicUrl = talent.profilePic || 'assets/images/default-avatar.png';
+      const profilePicUrl =
+        talent.profilePic || 'assets/images/default-avatar.png';
       if (profilePicUrl !== 'assets/images/default-avatar.png') {
         const img = new Image();
         img.src = profilePicUrl;
-        img.onload = () => console.log(`✅ Preloaded profile image: ${talent.name}`);
-        img.onerror = () => console.warn(`⚠️ Failed to load profile image: ${talent.name}`);
+        img.onload = () =>
+          console.log(`✅ Preloaded profile image: ${talent.name}`);
+        img.onerror = () =>
+          console.warn(`⚠️ Failed to load profile image: ${talent.name}`);
       }
     });
   }
@@ -356,9 +458,11 @@ export class FindProfessionalsByLocationModalComponent
       if (normalizedLocation.includes(state.toLowerCase())) {
         return state;
       }
-      if (this.NIGERIAN_LOCATIONS[state].aliases?.some((alias) =>
-        normalizedLocation.includes(alias.toLowerCase())
-      )) {
+      if (
+        this.NIGERIAN_LOCATIONS[state].aliases?.some((alias) =>
+          normalizedLocation.includes(alias.toLowerCase()),
+        )
+      ) {
         return state;
       }
     }
@@ -372,7 +476,9 @@ export class FindProfessionalsByLocationModalComponent
         return;
       }
 
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      const existingScript = document.querySelector(
+        'script[src*="maps.googleapis.com"]',
+      );
       if (existingScript) {
         existingScript.addEventListener('load', () => resolve());
         existingScript.addEventListener('error', reject);
@@ -519,7 +625,9 @@ export class FindProfessionalsByLocationModalComponent
         if (address && typeof address === 'string') {
           const location = await this.geocodeAddress(address, index);
           if (location) {
-            const existingCoords = this.markers.map((m) => m.location).filter(Boolean);
+            const existingCoords = this.markers
+              .map((m) => m.location)
+              .filter(Boolean);
             const isDuplicate = existingCoords.some(
               (coord) =>
                 Math.abs(coord.lat - location.lat) < 0.0001 &&
@@ -604,7 +712,10 @@ export class FindProfessionalsByLocationModalComponent
       return;
     }
 
-    console.log('📍 Modal: Adding markers for talents:', this.filteredHires.length);
+    console.log(
+      '📍 Modal: Adding markers for talents:',
+      this.filteredHires.length,
+    );
 
     for (let i = 0; i < this.filteredHires.length; i++) {
       const talent = this.filteredHires[i];
@@ -626,9 +737,9 @@ export class FindProfessionalsByLocationModalComponent
 
   private createRoundedImageIcon(
     imageUrl: string,
-    size: number = 50,
-    borderColor: string = '#FF0000',
-    borderWidth: number = 3,
+    size: number = 36, // REDUCED from 44 to 36
+    borderColor: string = '#FF3B3B',
+    borderWidth: number = 2, // THINNER border
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -649,16 +760,25 @@ export class FindProfessionalsByLocationModalComponent
             return;
           }
 
+          // Draw border
           ctx.beginPath();
-          ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
+          ctx.arc(
+            canvasSize / 2,
+            canvasSize / 2,
+            canvasSize / 2,
+            0,
+            Math.PI * 2,
+          );
           ctx.fillStyle = borderColor;
           ctx.fill();
 
+          // Draw white background
           ctx.beginPath();
           ctx.arc(canvasSize / 2, canvasSize / 2, size / 2, 0, Math.PI * 2);
           ctx.fillStyle = '#FFFFFF';
           ctx.fill();
 
+          // Clip and draw image
           ctx.save();
           ctx.beginPath();
           ctx.arc(canvasSize / 2, canvasSize / 2, size / 2, 0, Math.PI * 2);
@@ -696,9 +816,9 @@ export class FindProfessionalsByLocationModalComponent
   }
 
   private createDefaultRoundedIcon(
-    size: number = 50,
-    borderColor: string = '#FF0000',
-    borderWidth: number = 3,
+    size: number = 36, // REDUCED from 44 to 36
+    borderColor: string = '#FF3B3B',
+    borderWidth: number = 2, // THINNER border
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       try {
@@ -714,19 +834,34 @@ export class FindProfessionalsByLocationModalComponent
           return;
         }
 
+        // Draw border
         ctx.beginPath();
         ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2, 0, Math.PI * 2);
         ctx.fillStyle = borderColor;
         ctx.fill();
 
+        // Draw white background
         ctx.beginPath();
         ctx.arc(canvasSize / 2, canvasSize / 2, size / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#FFFFFF';
         ctx.fill();
 
+        // Draw default avatar icon (silhouette) - SCALED for smaller size
         ctx.fillStyle = '#666666';
         ctx.beginPath();
-        ctx.arc(canvasSize / 2, canvasSize / 2, size / 3, 0, Math.PI * 2);
+        ctx.arc(canvasSize / 2, canvasSize / 2 - 3, size / 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(
+          canvasSize / 2,
+          canvasSize / 2 + 6,
+          size / 4.5,
+          size / 6.5,
+          0,
+          0,
+          Math.PI * 2,
+        );
         ctx.fill();
 
         const dataUrl = canvas.toDataURL('image/png');
@@ -759,14 +894,30 @@ export class FindProfessionalsByLocationModalComponent
     console.log(`📍 Creating marker for ${talent.name} at:`, location);
 
     try {
-      const profilePicUrl = talent.profilePic || 'assets/images/default-avatar.png';
+      const profilePicUrl =
+        talent.profilePic || 'assets/images/default-avatar.png';
 
-      // Create icons for different states
-      const baseIcon = await this.createRoundedImageIcon(profilePicUrl, 44, '#FF2D2D', 3);
-      const hoverIcon = await this.createRoundedImageIcon(profilePicUrl, 44, '#FF2D2D', 5);
-      const clickIcon = await this.createRoundedImageIcon(profilePicUrl, 44, '#FF0000', 6);
+      // Create icons for different states - SMALLER size (36px)
+      const baseIcon = await this.createRoundedImageIcon(
+        profilePicUrl,
+        36, // REDUCED from 44 to 36
+        '#FF3B3B',
+        2, // REDUCED from 2.5 to 2
+      );
+      const hoverIcon = await this.createRoundedImageIcon(
+        profilePicUrl,
+        36, // REDUCED from 44 to 36
+        '#FF3B3B',
+        3, // REDUCED from 3.5 to 3
+      );
+      const clickIcon = await this.createRoundedImageIcon(
+        profilePicUrl,
+        36, // REDUCED from 44 to 36
+        '#FF0000',
+        3.5, // REDUCED from 4 to 3.5
+      );
 
-      // Create the marker
+      // Create the marker with DROP animation
       const marker = new google.maps.Marker({
         position: new google.maps.LatLng(location.lat, location.lng),
         map: this.map,
@@ -777,12 +928,12 @@ export class FindProfessionalsByLocationModalComponent
         animation: google.maps.Animation.DROP,
       });
 
-      // Create pulse overlay using OverlayView
+      // Create pulse overlay - 2 RINGS, SMALLER SIZE
       const pulseOverlay = new PulseOverlay(
         new google.maps.LatLng(location.lat, location.lng),
         this.map,
         talent,
-        index
+        index,
       );
       pulseOverlay.setMap(this.map);
 
@@ -790,7 +941,7 @@ export class FindProfessionalsByLocationModalComponent
       marker.addListener('mouseover', async () => {
         marker.setIcon(hoverIcon);
         marker.setZIndex(2000 + index);
-        pulseOverlay.enhancePulsing(1.2);
+        pulseOverlay.enhancePulsing(1.3);
       });
 
       marker.addListener('mouseout', async () => {
@@ -812,7 +963,7 @@ export class FindProfessionalsByLocationModalComponent
         // Show profile card
         this.showProfileCard(talent, marker, index);
 
-        // Center map on marker
+        // Center map on marker with smooth pan
         this.map.panTo(new google.maps.LatLng(location.lat, location.lng));
 
         // Enhance marker and pulse
@@ -847,6 +998,27 @@ export class FindProfessionalsByLocationModalComponent
       console.error('Error creating talent marker:', error);
       this.createSimpleMarker(talent, location, index);
     }
+  }
+
+  // Helper method to find marker DOM element
+  private findMarkerElement(marker: any): HTMLElement | null {
+    try {
+      // Try to find marker element in Google Maps container
+      const mapContainer = this.mapContainer?.nativeElement;
+      if (!mapContainer) return null;
+
+      // This is an approximation - Google Maps doesn't expose marker elements directly
+      const allImages = mapContainer.querySelectorAll('img[src*="data:image"]');
+      for (let img of allImages) {
+        const parent = img.parentElement;
+        if (parent && parent.style.position === 'absolute') {
+          return parent as HTMLElement;
+        }
+      }
+    } catch (e) {
+      console.debug('Could not find marker element');
+    }
+    return null;
   }
 
   private createSimpleMarker(talent: any, location: any, index: number): void {
@@ -893,75 +1065,78 @@ export class FindProfessionalsByLocationModalComponent
     div.style.position = 'fixed';
     div.style.width = '320px';
     div.style.minHeight = '220px';
-    div.style.zIndex = '9999';
+    div.style.zIndex = '10000';
     div.style.pointerEvents = 'auto';
     div.style.opacity = '0';
-    div.style.transition = 'opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)';
+    div.style.transition =
+      'opacity 250ms cubic-bezier(0.4, 0, 0.2, 1), transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1)';
     div.style.top = '50%';
     div.style.left = '50%';
-    div.style.transform = 'translate(-50%, -50%)';
-    div.style.backgroundColor = 'white';
-    div.style.borderRadius = '16px';
-    div.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.3)';
-    div.style.border = '2px solid #FF2D2D';
-    div.style.overflow = 'hidden';
+    div.style.transform = 'translate(-50%, -45%) scale(0.95)';
+    div.style.backgroundColor = 'transparent';
 
     // Get skills as skill tags
-    const skillTags = talent.skillSet
-      ?.slice(0, 3)
-      .map((s: any) => s.jobTitle)
-      .filter(Boolean) || [];
+    const skillTags =
+      talent.skillSet
+        ?.slice(0, 3)
+        .map((s: any) => s.jobTitle)
+        .filter(Boolean) || [];
 
-    // Create card HTML
+    // Create card HTML - REMOVED any extra red dots
     div.innerHTML = `
-      <div class="profile-card" style="position: relative; padding: 20px; height: 100%;">
-        <button class="close-card-btn" 
-                aria-label="Close profile card"
-                style="position: absolute; top: 8px; right: 8px; background: #f5f5f5; border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; z-index: 10;">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M13 1L1 13M1 1L13 13" stroke="#666666" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-        
-        <div class="card-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; margin-top: 15px;">
-          <div class="avatar-container" style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 3px solid #FF2D2D;">
-            <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
-                 class="profile-avatar"
-                 alt="${talent.name}"
-                 style="width: 100%; height: 100%; object-fit: cover;"
-                 onerror="this.src='assets/images/default-avatar.png'">
-          </div>
-          <div class="profile-info" style="flex: 1; min-width: 0;">
-            <h3 class="profile-name" style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-              ${talent.name}
-            </h3>
-            <div class="skill-tags" style="display: flex; flex-wrap: wrap; gap: 4px;">
-              ${skillTags.map((skill: any) => `
-                <span class="skill-tag" style="background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 12px; font-size: 11px; white-space: nowrap;">
-                  ${skill}
-                </span>
-              `).join('')}
-              ${talent.skillSet?.length > 3 ? `<span class="more-skills" style="color: #FF2D2D; font-size: 11px; font-weight: bold; margin-left: 4px;">+${talent.skillSet.length - 3} more</span>` : ''}
-            </div>
+    <div class="profile-card" style="position: relative; padding: 24px; height: 100%; background: white; border-radius: 20px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3); border: 2px solid #FF3B3B; overflow: hidden;">
+      <button class="close-card-btn" 
+              aria-label="Close profile card"
+              style="position: absolute; top: 12px; right: 12px; background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+          <path d="M13 1L1 13M1 1L13 13" stroke="#666666" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      
+      <div class="card-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; margin-top: 8px;">
+        <div class="avatar-container" style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 3px solid #FF3B3B; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3); transition: all 0.2s ease;">
+          <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
+               class="profile-avatar"
+               alt="${talent.name}"
+               style="width: 100%; height: 100%; object-fit: cover;"
+               onerror="this.src='assets/images/default-avatar.png'">
+        </div>
+        <div class="profile-info" style="flex: 1; min-width: 0;">
+          <h3 class="profile-name" style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${talent.name}
+          </h3>
+          <div class="skill-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${skillTags
+              .map(
+                (skill: any) => `
+              <span class="skill-tag" style="background: #f5f5f5; color: #666; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; white-space: nowrap;">
+                ${skill}
+              </span>
+            `,
+              )
+              .join('')}
+            ${talent.skillSet?.length > 3 ? `<span class="more-skills" style="color: #FF3B3B; font-size: 11px; font-weight: bold; margin-left: 4px;">+${talent.skillSet.length - 3}</span>` : ''}
           </div>
         </div>
-        
-        <button class="view-profile-btn" 
-                data-talent-id="${talent.id || index}"
-                style="width: 100%; background: linear-gradient(135deg, #FF2D2D, #FF6B6B); color: white; border: none; border-radius: 12px; padding: 12px; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin-top: auto;">
-          View Profile
-        </button>
       </div>
-    `;
+      
+      <button class="view-profile-btn" 
+              data-talent-id="${talent.id || index}"
+              style="width: 100%; background: linear-gradient(135deg, #FF3B3B, #FF6B6B); color: white; border: none; border-radius: 12px; padding: 14px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin-top: auto; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3);">
+        View Full Profile
+      </button>
+    </div>
+  `;
 
     // Add to body
     document.body.appendChild(div);
     this.currentCardElement = div;
 
-    // Animate in
-    setTimeout(() => {
+    // Animate in with spring effect
+    requestAnimationFrame(() => {
       div.style.opacity = '1';
-    }, 10);
+      div.style.transform = 'translate(-50%, -50%) scale(1)';
+    });
 
     // Add event listeners
     setTimeout(() => {
@@ -1001,9 +1176,13 @@ export class FindProfessionalsByLocationModalComponent
   private closeProfileCardElement(cardElement: HTMLElement): void {
     if (cardElement) {
       cardElement.style.opacity = '0';
+      cardElement.style.transform = 'translate(-50%, -45%) scale(0.95)';
 
       if ((cardElement as any).outsideClickListener) {
-        document.removeEventListener('click', (cardElement as any).outsideClickListener);
+        document.removeEventListener(
+          'click',
+          (cardElement as any).outsideClickListener,
+        );
       }
 
       setTimeout(() => {
@@ -1014,7 +1193,6 @@ export class FindProfessionalsByLocationModalComponent
       }, 250);
     }
   }
-
   private showTalentInfo(talent: any, marker: any, index: number): void {
     if (this.infoWindow) {
       this.infoWindow.close();
@@ -1024,10 +1202,11 @@ export class FindProfessionalsByLocationModalComponent
     this.cdr.detectChanges();
 
     try {
-      const skillsText = talent.skillSet
-        ?.slice(0, 2)
-        .map((s: any) => s.jobTitle)
-        .join(', ') || 'No skills listed';
+      const skillsText =
+        talent.skillSet
+          ?.slice(0, 2)
+          .map((s: any) => s.jobTitle)
+          .join(', ') || 'No skills listed';
 
       const hasMoreSkills = talent.skillSet?.length > 2;
 
@@ -1081,7 +1260,9 @@ export class FindProfessionalsByLocationModalComponent
 
       // Add button click listener
       setTimeout(() => {
-        const button = document.getElementById(`view-profile-${talent.id || index}`);
+        const button = document.getElementById(
+          `view-profile-${talent.id || index}`,
+        );
         if (button) {
           button.addEventListener('click', (e) => {
             e.stopPropagation();
