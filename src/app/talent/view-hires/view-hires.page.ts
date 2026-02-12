@@ -464,15 +464,30 @@ export class ViewHiresPage implements OnInit, OnDestroy {
     }
   }
 
-  goToHireTransaction(hireId: string | number) {
+  goToHireTransaction(hireId: string | number, openStatsTab: boolean = false) {
     const selectedHire = this.marketRecords.find(
       (h) => String(h.id) === String(hireId),
     );
 
-    // Navigate to the Market Price Preposition page with the hire object
-    this.router.navigate(['/talent/market-price-preposition', hireId], {
-      state: { hire: selectedHire },
-    });
+    if (selectedHire) {
+      // ✅ Extract scouter info from the hire
+      const scouterInfo = {
+        id: selectedHire.scouterId,
+        name: selectedHire.name || selectedHire.scouterName,
+        email: selectedHire.email || selectedHire.scouterEmail,
+        profilePic: selectedHire.profilePic,
+      };
+
+      // Navigate to the Market Price Preposition page with the hire object and scouter info
+      this.router.navigate(['/talent/market-price-preposition', hireId], {
+        state: {
+          hire: selectedHire,
+          scouterId: selectedHire.scouterId,
+          scouterInfo: scouterInfo,
+          openStats: openStatsTab, // ✅ Add this flag to open stats tab
+        },
+      });
+    }
   }
 
   // Date formatting

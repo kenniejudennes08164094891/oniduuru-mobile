@@ -252,12 +252,16 @@
               >
                 <!-- Profile + Name -->
                 <td class="w-[220px] px-4 sm:px-6 py-3 flex items-center gap-3">
-                  <img
-                    class="w-10 h-10 rounded-full object-cover border border-gray-200"
-                    [src]="hire.profilePic"
-                    alt="{{ hire.name }}"
-                    onerror="this.src = 'assets/images/default-avatar.png'"
-                  />
+                  <div
+                    class="w-10 h-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200 bg-gray-100"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="hire.profilePic"
+                      alt="{{ hire.name }}"
+                      onerror="this.src = 'assets/images/default-avatar.png'"
+                    />
+                  </div>
                   <div>
                     <p
                       class="text-sm sm:text-base font-medium text-gray-900 truncate max-w-[150px]"

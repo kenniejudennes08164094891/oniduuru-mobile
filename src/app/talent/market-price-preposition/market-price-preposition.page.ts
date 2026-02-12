@@ -65,55 +65,6 @@ export interface HireData {
   updatedAt?: string;
 }
 
-export interface SatisfactoryComment {
-  talentId?: string;
-  scouterId?: string;
-  dateOfComment: string;
-  remark: string;
-  rating: number;
-}
-
-export interface HireData {
-  id: string;
-  name?: string;
-  scouterName?: string;
-  email?: string;
-  scouterEmail?: string;
-  status?: string;
-  offerStatus?: string;
-  hireStatus?: string;
-  date?: string;
-  dateOfHire?: string;
-  startDate?: string;
-  amount?: number;
-  amountToPay?: string | number;
-  jobDescription?: string;
-  profilePic?: string;
-  isRated?: boolean;
-  rating?: number;
-  talentRating?: number;
-  yourRating?: number;
-  comment?: string;
-  talentComment?: string;
-  yourComment?: string;
-  originalData?: any;
-  scouterId?: string;
-  firstName?: string;
-  lastName?: string;
-  fullName?: string;
-  satisFactoryCommentByTalent?: SatisfactoryComment | string | any;
-  satisFactoryCommentByScouter?: SatisfactoryComment | string | any;
-  talentId?: string;
-  talentName?: string;
-  talentEmail?: string;
-  scouterPicture?: string;
-  talentPicture?: string;
-  scouterPhoneNumber?: string;
-  marketHireId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 @Component({
   selector: 'app-market-price-preposition',
   templateUrl: './market-price-preposition.page.html',
@@ -134,7 +85,6 @@ export class MarketPricePrepositionPage implements OnInit {
   hiresData: any[] = [];
   currentView: 'details' | 'engagements' | 'stats' = 'details'; // Track current view
 
-  // Add these new properties
   selectedScouter: any = null;
   allHires: any[] = [];
   scouterHires: any[] = []; // Hires from the selected scouter
@@ -154,73 +104,54 @@ export class MarketPricePrepositionPage implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     console.log('Route ID:', id);
 
-    // Check current route to determine view
-    const childRoute = this.route.firstChild;
-    if (childRoute) {
-      const childRouteName = childRoute.snapshot.routeConfig?.path;
-      if (childRouteName === 'engagements') {
-        this.currentView = 'engagements';
-      } else if (childRouteName === 'stats') {
-        this.currentView = 'stats';
-        // If we're already on stats tab, ensure scouter selection
-        this.ensureScouterSelection();
-      } else {
-        this.currentView = 'details';
-      }
-    } else {
-      this.currentView = 'details';
-    }
-
     // Get talent ID from storage
     this.talentId =
       localStorage.getItem('talentId') ||
       sessionStorage.getItem('talentId') ||
       '';
 
-    // Get the hire data from navigation state FIRST
+    // Get the hire data from navigation state
     const nav = this.router.getCurrentNavigation();
     const state = nav?.extras?.state;
-    console.log('Navigation State:', state);
 
     if (state && state['hire']) {
-      // Use the hire data passed from the table click
       this.hire = state['hire'] as HireData;
-      console.log('Hire data from state:', this.hire);
 
-      // Store the scouterId if available
-      if (state['scouterId']) {
-        sessionStorage.setItem('scouterId', state['scouterId']);
+      // ✅ ALWAYS set selected scouter from hire data
+      if (state['scouterId'] || this.hire.scouterId) {
+        const scouterId = state['scouterId'] || this.hire.scouterId;
+        const scouterName =
+          this.hire.scouterName || this.hire.name || 'Scouter';
 
-        // Set selected scouter from the hire data
         this.selectedScouter = {
-          id: state['scouterId'],
-          name: this.hire.scouterName || this.hire.name,
-          email: this.hire.scouterEmail || this.hire.email,
+          id: scouterId,
+          name: scouterName,
+          email: this.hire.scouterEmail || this.hire.email || '',
           profilePic: this.hire.scouterPicture || this.hire.profilePic,
+          selectedAt: new Date().toISOString(),
         };
 
-        // Store for stats component
-        sessionStorage.setItem(
-          'selectedScouter',
-          JSON.stringify(this.selectedScouter),
+        console.log(
+          '✅ Set scouter from navigation state:',
+          this.selectedScouter,
         );
       }
 
-      // Extract and set scouter name from hire data
       this.extractScouterName();
 
-  
+      // ✅ Check if we should navigate to stats tab
+      if (state['openStats']) {
+        this.currentView = 'stats';
+        console.log('✅ Opening stats tab by request');
+      }
     } else {
-      // If no state, try to get from route params only (fallback)
-      console.warn('No hire data in navigation state');
-      this.fetchHireById(id);
+      // Try to recover from URL or localStorage
+      if (id) {
+        this.fetchHireById(id);
+      }
     }
 
-    // Load talent name
     this.loadTalentName();
-
-    // Load initial data - the HiresTableComponent will load all hires
-    this.initializeData();
   }
 
   // Initialize data on page load
@@ -256,46 +187,118 @@ export class MarketPricePrepositionPage implements OnInit {
     }
   }
 
+  ngAfterViewInit() {
+    // ✅ If we're on stats tab and have a scouter, load stats
+    if (this.currentView === 'stats' && this.selectedScouter) {
+      console.log(
+        '✅ Loading stats in ngAfterViewInit with scouter:',
+        this.selectedScouter,
+      );
+
+      // Small delay to ensure the component is fully initialized
+      setTimeout(() => {
+        if (this.statsComponent) {
+          this.statsComponent.loadStatsData();
+        } else {
+          console.warn('⚠️ Stats component not yet available');
+          // Try again after a bit more time
+          setTimeout(() => {
+            if (this.statsComponent) {
+              this.statsComponent.loadStatsData();
+            }
+          }, 200);
+        }
+      }, 100);
+    }
+  }
+
+  switchToStatsTab() {
+    this.currentView = 'stats';
+    console.log('✅ Switching to stats tab');
+
+    // ✅ If we have a selected scouter, load stats
+    if (this.selectedScouter && this.selectedScouter.id) {
+      console.log('✅ Using selected scouter for stats:', this.selectedScouter);
+
+      setTimeout(() => {
+        if (this.statsComponent) {
+          this.statsComponent.loadStatsData();
+        }
+      }, 50);
+    } else {
+      // Try to extract scouter from the current hire using multiple possible keys
+      const hireAny: any = this.hire as any;
+      const scouterId =
+        hireAny?.scouterId || hireAny?.formattedScouterId || hireAny?.scouter?.id || hireAny?.originalData?.scouterId || hireAny?.simpleId;
+
+      if (this.hire && scouterId) {
+        this.selectedScouter = {
+          id: scouterId,
+          name:
+            this.hire.scouterName || this.hire.name || this.hire.firstName || 'Scouter',
+          email: this.hire.scouterEmail || this.hire.email || '',
+          profilePic: this.hire.scouterPicture || this.hire.profilePic || null,
+          selectedAt: new Date().toISOString(),
+        };
+
+        console.log('✅ Extracted scouter from hire (fallback keys):', this.selectedScouter);
+
+        setTimeout(() => {
+          if (this.statsComponent) {
+            this.statsComponent.loadStatsData();
+          }
+        }, 50);
+      } else {
+        this.toast.openSnackBar('No scouter information available for this hire', 'warning');
+      }
+    }
+  }
+
+  switchToDetailsTab() {
+    this.currentView = 'details';
+    console.log('✅ Switching to details tab');
+  }
+
   async onHireSelected(hire: any) {
     console.log('Hire selected from table:', hire);
 
     // Update the current hire
     this.hire = hire;
 
+    // ✅ Extract scouter information with all fallbacks
+    const scouterId = hire.formattedScouterId || hire.scouterId;
+    const scouterName = hire.scouterName || hire.name || 'Scouter';
+    const scouterEmail = hire.scouterEmail || hire.email || '';
+    const scouterProfilePic =
+      hire.scouterPicture ||
+      hire.profilePic ||
+      'assets/images/default-avatar.png';
+
     // Set the selected scouter
     this.selectedScouter = {
-      id: hire.scouterId,
-      name: hire.scouterName || hire.name,
-      email: hire.scouterEmail || hire.email,
-      profilePic: hire.scouterPicture || hire.profilePic,
+      id: scouterId,
+      simpleId: hire.scouterId,
+      name: scouterName,
+      email: scouterEmail,
+      profilePic: scouterProfilePic,
+      selectedAt: new Date().toISOString(),
     };
 
-    // Store scouter info for stats component
-    if (hire.scouterId) {
-      sessionStorage.setItem('scouterId', hire.scouterId);
-      sessionStorage.setItem(
-        'selectedScouter',
-        JSON.stringify(this.selectedScouter),
-      );
-
-      // Update the scouter name
-      this.scouterName = this.selectedScouter.name;
-    }
-
-    // Extract scouter name
+    console.log('✅ Updated selected scouter:', this.selectedScouter);
     this.extractScouterName();
 
     // Check which modal should open based on hire flags
-    // These flags should be set in the HiresTableComponent
     if (hire.shouldShowAcceptRejectModal) {
       await this.openAcceptRejectModal(hire);
     } else if (hire.shouldShowEvaluationModal) {
       await this.openEvaluation(hire);
     }
 
-    // If we're on the stats tab, reload stats
+    // If we're on the stats tab, refresh stats with the new scouter
     if (this.currentView === 'stats' && this.statsComponent) {
-      this.statsComponent.loadStatsData();
+      setTimeout(() => {
+        this.statsComponent.loadStatsData();
+      }, 100);
     }
   }
 
@@ -1192,135 +1195,6 @@ export class MarketPricePrepositionPage implements OnInit {
     }
   }
 
-  // Accept the offer with additional logging
-  // Replace the existing acceptOffer method in market-price-preposition.page.ts
-  private async acceptOffer(hire: any) {
-    console.log('Accepting offer for hire:', hire.id);
-
-    try {
-      // Show loading
-      const loading = await this.toastCtrl.create({
-        message: 'Accepting offer...',
-        duration: 3000,
-      });
-      await loading.present();
-
-      // Get necessary IDs
-      const talentId =
-        localStorage.getItem('talentId') ||
-        sessionStorage.getItem('talentId') ||
-        '';
-      const scouterId = hire.scouterId || '';
-      const marketHireId = hire.marketHireId || hire.id;
-
-      if (!talentId || !scouterId || !marketHireId) {
-        throw new Error('Missing required IDs for accepting offer');
-      }
-
-      // Call API to accept offer
-      this.endpointService
-        .toggleMarketStatus(talentId, scouterId, marketHireId, 'offer-accepted')
-        .subscribe({
-          next: (response) => {
-            loading.dismiss();
-
-            // Update local hire status
-            hire.status = 'Offers Accepted';
-            hire.offerStatus = 'Offers Accepted';
-            hire.hireStatus = 'offer-accepted';
-
-            // Show success message
-            this.toast.openSnackBar(
-              `✅ Offer from ${this.getScouterDisplayName()} accepted successfully!`,
-              'success',
-            );
-
-            // Update in localStorage
-            this.updateHireStatusInStorage(hire, 'Offers Accepted');
-          },
-          error: (error) => {
-            loading.dismiss();
-            console.error('Error accepting offer:', error);
-
-            this.toast.openSnackBar(
-              `❌ Failed to accept offer: ${error.error?.message || 'Please try again'}`,
-              'error',
-            );
-          },
-        });
-    } catch (error: any) {
-      console.error('Error in acceptOffer:', error);
-      this.toast.openSnackBar(
-        `❌ Error: ${error.message || 'Failed to accept offer'}`,
-        'error',
-      );
-    }
-  }
-  // Decline the offer with additional logging
-  // Replace the existing declineOffer method in market-price-preposition.page.ts
-  private async declineOffer(hire: any) {
-    console.log('Declining offer for hire:', hire.id);
-
-    try {
-      // Show loading
-      const loading = await this.toastCtrl.create({
-        message: 'Declining offer...',
-        duration: 3000,
-      });
-      await loading.present();
-
-      // Get necessary IDs
-      const talentId =
-        localStorage.getItem('talentId') ||
-        sessionStorage.getItem('talentId') ||
-        '';
-      const scouterId = hire.scouterId || '';
-      const marketHireId = hire.marketHireId || hire.id;
-
-      if (!talentId || !scouterId || !marketHireId) {
-        throw new Error('Missing required IDs for declining offer');
-      }
-
-      // Call API to decline offer
-      this.endpointService
-        .toggleMarketStatus(talentId, scouterId, marketHireId, 'offer-declined')
-        .subscribe({
-          next: (response) => {
-            loading.dismiss();
-
-            // Update local hire status
-            hire.status = 'Offers Declined';
-            hire.offerStatus = 'Offers Declined';
-            hire.hireStatus = 'offer-declined';
-
-            // Show message
-            this.toast.openSnackBar(
-              `❌ Offer from ${this.getScouterDisplayName()} declined.`,
-              'warning',
-            );
-
-            // Update in localStorage
-            this.updateHireStatusInStorage(hire, 'Offers Declined');
-          },
-          error: (error) => {
-            loading.dismiss();
-            console.error('Error declining offer:', error);
-
-            this.toast.openSnackBar(
-              `❌ Failed to decline offer: ${error.error?.message || 'Please try again'}`,
-              'error',
-            );
-          },
-        });
-    } catch (error: any) {
-      console.error('Error in declineOffer:', error);
-      this.toast.openSnackBar(
-        `❌ Error: ${error.message || 'Failed to decline offer'}`,
-        'error',
-      );
-    }
-  }
-
   // Update hire status in localStorage
   private updateHireStatusInStorage(hire: any, newStatus: string) {
     if (!hire || (!hire.id && !hire.marketHireId)) return;
@@ -1365,34 +1239,6 @@ export class MarketPricePrepositionPage implements OnInit {
       } catch (error) {
         console.error('Error updating records:', error);
       }
-    }
-  }
-
-  // Add this helper method to market-price-preposition.page.ts
-  private formatDateForAPI(date: any): string {
-    if (!date) return '';
-
-    try {
-      if (typeof date === 'string') {
-        // Check if it's already in ISO format or needs conversion
-        if (date.includes('T') && date.includes('Z')) {
-          return date; // Already in ISO format
-        }
-        // Try to parse and convert
-        const parsedDate = new Date(date);
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate.toISOString();
-        }
-        return date; // Return as-is if parsing fails
-      } else if (date instanceof Date) {
-        return date.toISOString();
-      } else if (typeof date === 'number') {
-        return new Date(date).toISOString();
-      }
-      return String(date);
-    } catch (error) {
-      console.error('Error formatting date for API:', error);
-      return String(date);
     }
   }
 
@@ -1577,28 +1423,6 @@ export class MarketPricePrepositionPage implements OnInit {
     }
   }
 
-  private convertHireDataToMockPayment(hire: HireData): MockPayment {
-    return {
-      id: hire.id,
-      scouterName: hire.scouterName || '',
-      email: hire.scouterEmail || '',
-      offerStatus:
-        (hire.offerStatus as
-          | 'Offer Accepted'
-          | 'Awaiting Acceptance'
-          | 'Offer Rejected') || 'Awaiting Acceptance',
-      date: hire.date || '',
-      startDate: hire.startDate || '',
-      amount: hire.amount || 0,
-      jobDescription: hire.jobDescription || '',
-      talentRating: hire.talentRating || 0,
-      yourRating: hire.yourRating || 0,
-      talentComment: hire.talentComment || '',
-      yourComment: hire.yourComment || '',
-      isRated: hire.isRated || false,
-    } as MockPayment;
-  }
-
   goToHireTransaction(hire: HireData): void {
     if (!hire) return;
     const hireId = hire.id;
@@ -1608,67 +1432,4 @@ export class MarketPricePrepositionPage implements OnInit {
       state: { scouterId, hire },
     });
   }
-
-  // async showAcceptRejectPopup(hire: HireData) {
-  //   const alert = await this.alertCtrl.create({
-  //     header: 'Offer Decision',
-  //     message: `Would you like to accept or decline this offer from <b>${this.getScouterDisplayName()}</b>?`,
-  //     buttons: [
-  //       {
-  //         text: 'Decline',
-  //         role: 'cancel',
-  //         cssClass: 'danger',
-  //         handler: async () => {
-  //           await this.confirmChoice(hire, 'Offer Rejected');
-  //         },
-  //       },
-  //       {
-  //         text: 'Accept',
-  //         handler: async () => {
-  //           await this.confirmChoice(hire, 'Offer Accepted');
-  //         },
-  //       },
-  //     ],
-  //   });
-
-  //   await alert.present();
-  // }
-
-  // async confirmChoice(
-  //   hire: HireData,
-  //   choice: 'Offer Accepted' | 'Offer Rejected',
-  // ) {
-  //   const confirm = await this.alertCtrl.create({
-  //     header: 'Confirm Choice',
-  //     message: `Are you sure you want to ${choice === 'Offer Accepted' ? 'accept' : 'decline'} this offer?`,
-  //     buttons: [
-  //       { text: 'Cancel', role: 'cancel' },
-  //       {
-  //         text: 'Yes, Confirm',
-  //         handler: async () => {
-  //           hire.offerStatus = choice;
-
-  //           const hires = JSON.parse(
-  //             localStorage.getItem('MockRecentHires') || '[]',
-  //           );
-  //           const updated = hires.map((h: any) =>
-  //             h.id === hire.id ? this.convertHireDataToMockPayment(hire) : h,
-  //           );
-  //           localStorage.setItem('MockRecentHires', JSON.stringify(updated));
-
-  //           this.toast.openSnackBar(
-  //             `Offer ${choice === 'Offer Accepted' ? 'accepted' : 'declined'} successfully.`,
-  //             `${choice === 'Offer Accepted' ? 'success' : 'error'}`,
-  //           );
-
-  //           if (choice === 'Offer Accepted') {
-  //             await this.openEvaluation(hire);
-  //           }
-  //         },
-  //       },
-  //     ],
-  //   });
-
-  //   await confirm.present();
-  // }
 }

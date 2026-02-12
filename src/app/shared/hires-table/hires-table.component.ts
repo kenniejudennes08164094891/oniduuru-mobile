@@ -111,31 +111,24 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
   selectHire(hire: any) {
     console.log('Hire selected from table:', hire);
 
-    // Store the CORRECT formatted IDs
+    // CRITICAL: Extract scouter information FIRST
     const scouterId = hire.formattedScouterId || hire.scouterId;
-    const talentId = hire.formattedTalentId || hire.talentId;
+    const scouterName = hire.scouterName || hire.name || 'Scouter';
+    const scouterEmail = hire.scouterEmail || hire.email || '';
+    const scouterProfilePic =
+      hire.scouterPicture ||
+      hire.profilePic ||
+      'assets/images/default-avatar.png';
 
-    // Update sessionStorage with formatted IDs
-    if (scouterId) {
-      sessionStorage.setItem('scouterId', scouterId);
-      sessionStorage.setItem('scouterIdSimple', hire.scouterId); // Keep simple ID too
-    }
-
-    if (talentId) {
-      sessionStorage.setItem('talentId', talentId);
-      sessionStorage.setItem('talentIdSimple', hire.talentId); // Keep simple ID too
-    }
-
-    // Store selected scouter info
-    const selectedScouter = {
+    // ✅ Add the complete scouter info to the hire object
+    hire._selectedScouter = {
       id: scouterId,
       simpleId: hire.scouterId,
-      name: hire.scouterName || hire.name,
-      email: hire.scouterEmail || hire.email,
-      profilePic: hire.scouterPicture || hire.profilePic,
+      name: scouterName,
+      email: scouterEmail,
+      profilePic: scouterProfilePic,
+      selectedAt: new Date().toISOString(),
     };
-
-    sessionStorage.setItem('selectedScouter', JSON.stringify(selectedScouter));
 
     // Set flags for different modal types
     const isAwaitingAcceptance =
@@ -161,7 +154,7 @@ export class HiresTableComponent implements OnInit, OnDestroy, OnChanges {
     hire.shouldShowAcceptRejectModal = isAwaitingAcceptance;
     hire.shouldShowEvaluationModal = isAccepted && !isRated;
 
-    // Emit the selected hire to parent component
+    // ✅ Emit the selected hire with the embedded scouter info
     this.hireSelected.emit(hire);
   }
 

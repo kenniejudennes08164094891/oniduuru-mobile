@@ -1,0 +1,82 @@
+// stats.component.scss
+
+// Responsive chart containers
+canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+// Custom breakpoint for extra small devices
+@media (max-width: 480px) {
+  .xs\:inline {
+    display: inline;
+  }
+}
+
+// Smooth transitions
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+// Better touch targets for mobile
+button {
+  min-height: 32px;
+  
+  @media (max-width: 640px) {
+    min-height: 36px;
+  }
+}
+
+// Card hover effects
+.bg-blue-50, .bg-gray-50, .bg-green-50, .bg-purple-50 {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+}
+
+// Fix for ion-icon alignment
+ion-icon {
+  vertical-align: middle;
+}
+
+// Progress bar animation
+.bg-blue-600.h-1\.5, .bg-gray-600.h-1\.5 {
+  transition: width 0.5s ease;
+}
+
+// Text truncation utilities
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Responsive font sizes
+@media (max-width: 640px) {
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  .text-lg {
+    font-size: 1rem;
+  }
+  .text-base {
+    font-size: 0.875rem;
+  }
+}
+
+// Loading state animation
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

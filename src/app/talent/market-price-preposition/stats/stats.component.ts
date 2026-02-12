@@ -1,6 +1,12 @@
 // stats.component.ts - Fixed with proper types
 
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { ChartOptions, ChartData } from 'chart.js';
 import { ActivatedRoute } from '@angular/router';
 import { EndpointService } from 'src/app/services/endpoint.service';
@@ -12,12 +18,16 @@ import { ToastsService } from 'src/app/services/toasts.service';
   styleUrls: ['./stats.component.scss'],
   standalone: false,
 })
-export class StatsComponent implements OnInit {
+export class StatsComponent implements OnInit, OnChanges {
+  @Input() scouterData: any = null;
+
   // Loading state
   isLoading: boolean = false;
   hasRealData: boolean = false;
   dataSourceInfo: string = '📊 Loading data...';
   warningMessage: string = 'Loading performance data...';
+
+  Math = Math;
 
   // Selected scouter
   selectedScouter: any = null;
@@ -194,6 +204,21 @@ export class StatsComponent implements OnInit {
   // Rating list from API
   ratingList: any[] = [];
 
+  // Cached legend items to prevent change detection loops
+  legendItems: { label: string; value: string; color: string }[] = [];
+
+  // Cached bar chart options to prevent change detection loops
+  cachedBarChartOptions: ChartOptions<'bar'> | null = null;
+
+  // Cached page range to prevent change detection loops
+  cachedPageRange: number[] = [];
+
+  // New Input: accept the selected hire/market from the parent (preferred)
+  @Input() selectedHire: any = null;
+
+  // Guard flag to indicate we loaded due to Input change
+  private loadedFromInput: boolean = false;
+
   constructor(
     private route: ActivatedRoute,
     private endpoint: EndpointService,
@@ -202,8 +227,39 @@ export class StatsComponent implements OnInit {
 
   ngOnInit() {
     console.log('Stats page loaded');
-    // Auto-load stats when component is initialized
-    this.loadStatsData();
+
+    // ✅ Check if we already have scouterData or selectedHire from parent
+    if (this.scouterData || this.selectedHire) {
+      console.log(
+        '📊 Stats received input on init:',
+        this.scouterData || this.selectedHire,
+      );
+      this.loadStatsData();
+    }
+  }
+
+  // ✅ This will be called when Input changes
+  ngOnChanges(changes: SimpleChanges) {
+    // Prefer selectedHire when provided, otherwise accept scouterData
+    if (changes['selectedHire'] && changes['selectedHire'].currentValue) {
+      console.log(
+        '📊 Stats received selectedHire via ngOnChanges:',
+        changes['selectedHire'].currentValue,
+      );
+      this.loadedFromInput = true;
+      this.selectedHire = changes['selectedHire'].currentValue;
+      this.loadStatsData();
+      return;
+    }
+
+    if (changes['scouterData'] && changes['scouterData'].currentValue) {
+      console.log(
+        '📊 Stats received scouterData via ngOnChanges:',
+        changes['scouterData'].currentValue,
+      );
+      this.scouterData = changes['scouterData'].currentValue;
+      this.loadStatsData();
+    }
   }
 
   async loadStatsData() {
@@ -212,29 +268,77 @@ export class StatsComponent implements OnInit {
     this.warningMessage = 'Loading scouter performance data...';
 
     try {
-      // Step 1: Get selected scouter from sessionStorage
-      const storedScouter = sessionStorage.getItem('selectedScouter');
-      if (storedScouter) {
-        this.selectedScouter = JSON.parse(storedScouter);
-        console.log('Loaded scouter for stats:', this.selectedScouter);
-      } else {
-        console.warn('No scouter selected in sessionStorage');
+      // ✅ USE THE INPUT PROPERTY - NO SESSION STORAGE
+      // Determine selected scouter and talent from Inputs first
+      if (this.selectedHire) {
+        // try to extract scouter info from various shapes
+        this.selectedScouter =
+          this.selectedHire.scouter ||
+          this.selectedHire.scouterData ||
+          this.scouterData ||
+          this.selectedScouter;
+
+        // If hire only contains scouterId/name fields (common shape), build selectedScouter
+        if (
+          !this.selectedScouter &&
+          (this.selectedHire.scouterId ||
+            this.selectedHire.scouterName ||
+            this.selectedHire.scouterEmail)
+        ) {
+          this.selectedScouter = {
+            id:
+              this.selectedHire.scouterId ||
+              this.selectedHire.formattedScouterId ||
+              this.selectedHire.scouterIdStr,
+            name:
+              this.selectedHire.scouterName ||
+              this.selectedHire.name ||
+              this.selectedHire.firstName ||
+              'Scouter',
+            email:
+              this.selectedHire.scouterEmail || this.selectedHire.email || '',
+            profilePic:
+              this.selectedHire.scouterPicture ||
+              this.selectedHire.profilePic ||
+              null,
+            selectedAt: new Date().toISOString(),
+          };
+        }
+      } else if (this.scouterData) {
+        this.selectedScouter = this.scouterData;
+      }
+
+      if (!this.selectedScouter) {
+        console.warn('❌ No scouter data provided to Stats component');
         this.showErrorMessage(
           'No scouter selected. Please select a scouter first.',
         );
+        this.isLoading = false;
         return;
       }
 
-      // Step 2: Retrieve IDs from storage
+      // Talent ID: prefer selectedHire, then route params, then localStorage
+      const talentIdFromInput =
+        this.selectedHire?.talentId ||
+        this.selectedHire?.talent?.id ||
+        this.selectedHire?.talentIdStr;
+      const talentIdFromRoute = this.route.snapshot.paramMap.get('talentId');
+      const talentIdFromLocal = localStorage.getItem('talentId');
       const talentId =
-        localStorage.getItem('talentId') || sessionStorage.getItem('talentId');
-      const scouterId =
-        this.selectedScouter?.id || sessionStorage.getItem('scouterId');
+        talentIdFromInput || talentIdFromRoute || talentIdFromLocal;
 
-      console.log('Loading stats for:', { talentId, scouterId });
+      const scouterId = this.selectedScouter.id || this.selectedScouter?.userId;
+
+      console.log('Loading stats for:', {
+        talentId,
+        scouterId,
+        scouterName: this.selectedScouter.name,
+        fromInput: !!this.selectedHire,
+      });
 
       if (!scouterId || !talentId) {
         this.showErrorMessage('Missing scouter or talent information!');
+        this.isLoading = false;
         return;
       }
 
@@ -250,6 +354,7 @@ export class StatsComponent implements OnInit {
       // Step 6: Update UI
       this.hasRealData = true;
       this.dataSourceInfo = '📊 Real-time Data';
+      this.warningMessage = `📊 Performance data for ${this.selectedScouter.name}`;
 
       this.isLoading = false;
     } catch (error) {
@@ -257,6 +362,129 @@ export class StatsComponent implements OnInit {
       this.showErrorMessage('Failed to load market stats.');
       this.isLoading = false;
     }
+  }
+
+  refreshStats(scouterData: any) {
+    this.scouterData = scouterData;
+    this.loadStatsData();
+  }
+
+  // Get legend items for pie chart with full labels
+  getLegendItems(): { label: string; value: string; color: string }[] {
+    const labels = [
+      'Excellent (⭐⭐⭐⭐⭐)',
+      'Good (⭐⭐⭐⭐)',
+      'Average (⭐⭐⭐)',
+      'Fair (⭐⭐)',
+      'Poor (⭐)',
+      'No Rating',
+    ];
+
+    const colors = [
+      '#6A1B9A', // Excellent - Purple
+      '#8E24AA', // Good - Light Purple
+      '#BA68C8', // Average - Pink
+      '#FF7043', // Fair - Orange
+      '#D32F2F', // Poor - Red
+      '#BDBDBD', // No Rating - Gray
+    ];
+
+    const data = this.pieChartData.datasets[0]?.data || [0, 0, 0, 0, 0, 100];
+
+    return labels.map((label, index) => ({
+      label: label,
+      value: typeof data[index] === 'number' ? data[index].toFixed(1) : '0',
+      color: colors[index],
+    }));
+  }
+
+  // Get bar chart options with increased height
+  getBarChartOptions(): ChartOptions<'bar'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            font: {
+              size: 12,
+            },
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleFont: { size: 12 },
+          bodyFont: { size: 11 },
+          padding: 10,
+          callbacks: {
+            label: (context: any) => {
+              const value = context.parsed.y;
+              if (value === null || value === undefined || value === 0) {
+                return `${context.dataset.label}: No rating`;
+              }
+              const numValue =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(value as any) || 0;
+              const fullStars = Math.floor(numValue);
+              const halfStar = numValue % 1 >= 0.5;
+              let stars = '';
+              if (fullStars > 0) stars = '⭐'.repeat(fullStars);
+              if (halfStar) stars += '½';
+              if (stars === '' && numValue > 0 && numValue < 1) stars = '½';
+              return `${context.dataset.label}: ${numValue.toFixed(1)} ${stars}`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            callback: function (value: any) {
+              if (typeof value === 'number') {
+                return value + '⭐';
+              }
+              return value;
+            },
+          },
+          max: 5,
+          title: {
+            display: true,
+            text: 'Rating (1-5 stars)',
+            font: {
+              size: 12,
+              weight: 'bold',
+            },
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)',
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Market Engagements',
+            font: {
+              size: 12,
+              weight: 'bold',
+            },
+          },
+          grid: {
+            display: false,
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            font: {
+              size: 11,
+            },
+          },
+        },
+      },
+    };
   }
 
   private fetchMarketStats(talentId: string, scouterId: string) {
@@ -457,6 +685,9 @@ export class StatsComponent implements OnInit {
 
     // Update paginated list
     this.updatePaginatedRatingList();
+
+    // Update page range cache
+    this.updatePageRangeCache();
   }
 
   // Get total pages for pagination
@@ -468,6 +699,7 @@ export class StatsComponent implements OnInit {
     if (this.currentEngagementPage < this.totalEngagementPages) {
       this.currentEngagementPage++;
       this.updatePaginatedRatingList();
+      this.updatePageRangeCache();
     }
   }
 
@@ -484,13 +716,20 @@ export class StatsComponent implements OnInit {
       range.push(i);
     }
 
+    // Cache the result
+    this.cachedPageRange = range;
     return range;
+  }
+
+  private updatePageRangeCache(): void {
+    this.cachedPageRange = this.getPageRange();
   }
 
   prevEngagementPage() {
     if (this.currentEngagementPage > 1) {
       this.currentEngagementPage--;
       this.updatePaginatedRatingList();
+      this.updatePageRangeCache();
     }
   }
 
@@ -498,6 +737,7 @@ export class StatsComponent implements OnInit {
     if (page >= 1 && page <= this.totalEngagementPages) {
       this.currentEngagementPage = page;
       this.updatePaginatedRatingList();
+      this.updatePageRangeCache();
     }
   }
 
@@ -581,6 +821,9 @@ export class StatsComponent implements OnInit {
       ],
     };
 
+    // Update cached legend items to prevent change detection loops
+    this.updateLegendItemsCache();
+
     // Update bar chart with recent ratings from API
     const recentRatings = this.getRecentRatingsForBarChart();
 
@@ -607,6 +850,37 @@ export class StatsComponent implements OnInit {
         },
       ],
     };
+
+    // Update cached bar chart options
+    this.cachedBarChartOptions = this.getBarChartOptions();
+  }
+
+  private updateLegendItemsCache(): void {
+    const labels = [
+      'Excellent (⭐⭐⭐⭐⭐)',
+      'Good (⭐⭐⭐⭐)',
+      'Average (⭐⭐⭐)',
+      'Fair (⭐⭐)',
+      'Poor (⭐)',
+      'No Rating',
+    ];
+
+    const colors = [
+      '#6A1B9A', // Excellent - Purple
+      '#8E24AA', // Good - Light Purple
+      '#BA68C8', // Average - Pink
+      '#FF7043', // Fair - Orange
+      '#D32F2F', // Poor - Red
+      '#BDBDBD', // No Rating - Gray
+    ];
+
+    const data = this.pieChartData.datasets[0]?.data || [0, 0, 0, 0, 0, 100];
+
+    this.legendItems = labels.map((label, index) => ({
+      label: label,
+      value: typeof data[index] === 'number' ? data[index].toFixed(1) : '0',
+      color: colors[index],
+    }));
   }
 
   private calculatePieDataFromApi(): number[] {
@@ -713,6 +987,31 @@ export class StatsComponent implements OnInit {
       scouterRating:
         i < 6 ? `${(3.8 + Math.random() * 0.4).toFixed(1)} stars` : 'No rating',
     }));
+
+    // Create fake API response for pie chart
+    const fakeEngagements = [
+      { talentScore: 5, scouterScore: 5 },
+      { talentScore: 5, scouterScore: 4 },
+      { talentScore: 4, scouterScore: 4 },
+      { talentScore: 4, scouterScore: 3 },
+      { talentScore: 3, scouterScore: 3 },
+      { talentScore: 0, scouterScore: 0 },
+      { talentScore: 0, scouterScore: 0 },
+      { talentScore: 0, scouterScore: 0 },
+    ];
+
+    this.statsResponse = {
+      data: {
+        allScouterMarketWithTalent: fakeEngagements,
+      },
+    };
+
+    // Update the chart data and caches
+    this.updateChartsWithApiData();
+
+    // Update paginated list and page range cache for fallback data
+    this.updatePaginatedRatingList();
+    this.updatePageRangeCache();
   }
 
   private showErrorMessage(message: string) {
