@@ -7,7 +7,7 @@ import { ScouterPage } from './scouter.page';
 import { ScouterDashboardComponent } from './scouter-dashboard/scouter-dashboard.component';
 import { ScouterHeaderComponent } from './scouter-header/scouter-header.component';
 import { ProfilePopupSettingsModalComponent } from '../utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
-import { NotificationsPopupModalComponent } from '../utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
+import { NotificationsPopoverComponent } from '../utilities/modals/notifications-popover.component/notifications-popover.component';
 import { LogComplaintsPopupModalComponent } from '../utilities/modals/log-complaints-popup-modal/log-complaints-popup-modal.component';
 import { ProfilePageComponent } from './profile-page/profile-page.component';
 import { AccountActivationPageComponent } from './account-activation-page/account-activation-page.component';
@@ -78,7 +78,7 @@ import { ReconsiderOfferModalComponent } from '../utilities/modals/reconsider-of
     ScouterPage,
     ScouterDashboardComponent,
     ProfilePopupSettingsModalComponent,
-    NotificationsPopupModalComponent,
+    NotificationsPopoverComponent,
     LogComplaintsPopupModalComponent,
     ProfilePageComponent,
     AccountActivationPageComponent,

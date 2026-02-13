@@ -55,7 +55,22 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
     private toastService: ToastsService,
   ) {}
 
+  private getCurrentUserName(): string {
+    const currentUser = this.authService.getCurrentUser();
+
+    // Try to get the user's name from various possible properties
+    return (
+      currentUser?.fullName ||
+      currentUser?.name ||
+      currentUser?.email?.split('@')[0] ||
+      'Scouter'
+    ); // Fallback
+  }
+
   ngOnInit() {
+    // Set the current user's name FIRST, before any other operations
+    this.userName = this.getCurrentUserName();
+
     // Subscribe to route param changes
     this.route.paramMap.subscribe((params) => {
       const talentId = params.get('id');
@@ -439,8 +454,6 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
       talentRating: Number(talentParsed.rating) || 0,
     };
 
-    // Keep the userName for other uses but extract talent name separately
-    this.userName = hireData?.name || 'Unknown Talent';
     this.extractTalentName(); // Extract talent name from the hire data
 
     console.log('✅ Final hire object:', {

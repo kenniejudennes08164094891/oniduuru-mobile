@@ -12,7 +12,7 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight">
-            Hi {{ userName }},
+            Hi {{ userName || 'User' }},
           </span>
           <p class="text-gray-200 text-lg leading-relaxed">
             Deposit funds into your account or another individual's account.
@@ -36,8 +36,7 @@
     </button>
   </div>
 
-  <!-- Dropdown -->
-  <!-- Filters -->
+  <!-- Filters Section -->
   <div class="space-y-4 mt-6">
     <!-- Year Dropdown -->
     <div class="relative w-[40%]">
@@ -96,8 +95,22 @@
         </p>
       </div>
     </div>
+
+    <!-- Clear Filters Button -->
+    <div
+      *ngIf="selectedYear || selectedMonth || activeStatusFilter"
+      class="mt-2"
+    >
+      <button
+        (click)="clearFilters()"
+        class="text-indigo-600 text-sm font-medium hover:text-indigo-800"
+      >
+        Clear all filters
+      </button>
+    </div>
   </div>
 
+  <!-- Status Filter Buttons -->
   <div class="overflow-x-auto mt-10">
     <div
       class="flex space-x-4 bg-white py-3 md:space-x-6 md:justify-between md:flex-wrap"
@@ -105,16 +118,25 @@
       <!-- Successful -->
       <button
         (click)="filterByStatus('Successful')"
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        [class]="getStatusButtonClass('Successful')"
       >
         <p class="text-lg font-semibold">{{ successfulCount }}</p>
         <p>Successful</p>
       </button>
 
+      <!-- Pending - NEW -->
+      <button
+        (click)="filterByStatus('Pending')"
+        [class]="getStatusButtonClass('Pending')"
+      >
+        <p class="text-lg font-semibold">{{ pendingCount }}</p>
+        <p>Pending</p>
+      </button>
+
       <!-- Invalid -->
       <button
         (click)="filterByStatus('Invalid')"
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        [class]="getStatusButtonClass('Invalid')"
       >
         <p class="text-lg font-semibold">{{ invalidCount }}</p>
         <p>Invalid</p>
@@ -123,7 +145,7 @@
       <!-- Reversed -->
       <button
         (click)="filterByStatus('Reversed')"
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        [class]="getStatusButtonClass('Reversed')"
       >
         <p class="text-lg font-semibold">{{ reversedCount }}</p>
         <p>Reversed</p>
@@ -132,24 +154,27 @@
       <!-- Failed -->
       <button
         (click)="filterByStatus('Failed')"
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#EB0B00] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        [class]="getStatusButtonClass('Failed')"
       >
         <p class="text-lg font-semibold">{{ failedCount }}</p>
         <p>Failed</p>
       </button>
 
-      <!-- Fetched all -->
+      <!-- Fetched all (Show All) -->
       <button
         (click)="loadDeposits()"
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+        [class]="
+          'min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer ' +
+          (activeStatusFilter === null
+            ? 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100'
+            : '')
+        "
       >
         <p class="text-lg font-semibold">{{ totalCount }}</p>
-        <p>Fetched all</p>
+        <p>All deposits</p>
       </button>
     </div>
   </div>
-
-
 
   <!-- TABLE + Pagination -->
   <div class="mt-[10%]">
@@ -172,7 +197,6 @@
           </tr>
         </thead>
 
-        <!-- ✅ Normal tbody if we have data -->
         <tbody class="divide-y divide-gray-100">
           <tr
             *ngFor="let deposit of paginatedDeposit"
@@ -210,16 +234,15 @@
             <td
               class="px-3 sm:px-6 py-3 font-semibold text-sm sm:text-base whitespace-nowrap"
             >
-              <span
-                [ngClass]="[
-                  'rounded-full h-2 w-2 inline-block',
-                  deposit.status === 'Successful' ? 'bg-[#057A55]' : '',
-                  deposit.status === 'Invalid' ? 'bg-[#EB0B00]' : '',
-                  deposit.status === 'Failed' ? 'bg-[#EB0B00]' : '',
-                  deposit.status === 'Reversed' ? 'bg-[#0033FF]' : '',
-                ]"
-              ></span>
-              {{ deposit.status }}
+              <div class="flex items-center gap-2">
+                <span
+                  class="rounded-full h-2.5 w-2.5 inline-block"
+                  [ngClass]="getStatusColorClass(deposit.status)"
+                ></span>
+                <span>
+                  {{ deposit.status }}
+                </span>
+              </div>
             </td>
             <td
               class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
@@ -231,22 +254,34 @@
       </table>
     </div>
 
-    <!-- ✅ Empty state tbody -->
+    <!-- Empty state -->
     <ng-template #noDataTable>
-      <tbody class="flex justify-center">
-        <tr>
-          <td class="text-center text-gray-500 py-6">
-            <img [src]="images.NoDataImage" alt="No Data" class="" />
-            <p class="text-lg font-medium">No transfers found</p>
-            <p class="text-sm text-gray-400">Try adjusting your filters</p>
-          </td>
-        </tr>
-      </tbody>
+      <div class="flex justify-center items-center py-12 bg-white rounded-lg">
+        <div class="text-center text-gray-500 py-6">
+          <img [src]="images.NoDataImage" alt="No Data" class="mx-auto mb-4" />
+          <p class="text-lg font-medium">No deposits found</p>
+          <p class="text-sm text-gray-400">
+            {{
+              activeStatusFilter
+                ? "No " + activeStatusFilter + " deposits found"
+                : "Try adjusting your filters"
+            }}
+          </p>
+          <button
+            *ngIf="activeStatusFilter || selectedYear || selectedMonth"
+            (click)="clearFilters()"
+            class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
     </ng-template>
 
     <!-- Pagination -->
     <div
       class="flex justify-between items-center px-4 sm:px-6 py-3 gap-3 bg-gray-50 border-t border-gray-200"
+      *ngIf="paginatedDeposit.length > 0"
     >
       <button
         (click)="goToPage(currentPage - 1)"

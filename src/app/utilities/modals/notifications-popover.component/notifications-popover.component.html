@@ -1,0 +1,65 @@
+<div class="notifications-popover">
+  <!-- Header -->
+  <div class="popover-header">
+    <h3>Recent Notifications</h3>
+    <button class="close-button" (click)="dismiss()">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+  </div>
+
+  <!-- Clear All Button -->
+  <div *ngIf="notifications.length > 0" class="clear-all">
+    <button (click)="clearNotifications()" class="clear-all-btn">
+      Clear All
+    </button>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notifications-list">
+    <ng-container *ngIf="notifications.length > 0; else emptyState">
+      <div
+        *ngFor="let notif of notifications"
+        class="notification-item"
+      >
+        <div class="avatar-container">
+          <!-- Avatar with initials -->
+          <div
+            *ngIf="shouldShowInitialsAvatar(notif)"
+            class="avatar-initials"
+            [style.background-color]="getAvatarColor(notif)"
+          >
+            {{ getAvatarText(notif) }}
+          </div>
+          <img
+            *ngIf="getNotificationAvatar(notif)"
+            class="avatar-image"
+            [src]="getNotificationAvatar(notif)"
+            alt="avatar"
+            (error)="onImageError($event)"
+          />
+        </div>
+
+        <div class="content-container">
+          <p class="sender">
+            {{ notif.tagName || "Oniduuru Admin Team" }}
+          </p>
+          <p class="message">
+            {{ notif.message }}
+          </p>
+          <p class="time">
+            {{ formatNotificationDate(notif.createdAt) }}
+          </p>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h4>No notifications found</h4>
+        <p>You're all caught up!</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

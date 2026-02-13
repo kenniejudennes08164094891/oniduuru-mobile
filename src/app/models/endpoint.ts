@@ -89,8 +89,6 @@ export const endpoints = {
   toogleTalentStatus: 'talent/v1/toggle-talent-status',
   filterTalentParam: 'talent/v1/filter-talent-param',
 
-
-
   //admin
   verifyScouterPayment: 'scouters/v1/fetch-all-payment-receipts',
   accountActivatiomAmount: 'admin/v1/admin/account-activation-amount',
@@ -140,6 +138,7 @@ export const endpoints = {
   adminFetchSingleWithdrawal: 'wallets/v1/admin/fetch-single-withdrawal',
   adminToggleFundWithdrawal: 'wallets/v1/toggle-fund-withdrawal',
   adminFetchAllFundsTransfers: 'wallets/v1/admin/fetch-all-transfers',
+
 
   // utils
   getAllCountryFlags: 'api-service/fetch-all-countries',

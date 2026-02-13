@@ -1,18 +1,14 @@
 // talent-header.component.ts - Complete updated version
 import { Component, Input, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
-import { 
-  PopoverController, 
-  MenuController,
-  IonIcon 
-} from '@ionic/angular';
+import { PopoverController, MenuController, IonIcon } from '@ionic/angular';
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
-import { NotificationsPopupModalComponent } from 'src/app/utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
+import { NotificationsPopoverComponent } from 'src/app/utilities/modals/notifications-popover.component/notifications-popover.component';
 import { Router } from '@angular/router';
 import { AvatarSettingsPopoverComponent } from 'src/app/shared/modals/avatar-settings-popover/avatar-settings-popover.component';
-import { EmmittersService } from "../../services/emmitters.service";
-import { firstValueFrom, Observable } from "rxjs";
-import { EndpointService } from "../../services/endpoint.service";
+import { EmmittersService } from '../../services/emmitters.service';
+import { firstValueFrom, Observable } from 'rxjs';
+import { EndpointService } from '../../services/endpoint.service';
 
 @Component({
   selector: 'app-talent-header',
@@ -31,7 +27,7 @@ export class TalentHeaderComponent implements OnInit {
     private router: Router,
     private emmitterService: EmmittersService,
     private endpointService: EndpointService,
-    private menuCtrl: MenuController
+    private menuCtrl: MenuController,
   ) {}
 
   // Check if we're on a wallet page
@@ -62,7 +58,7 @@ export class TalentHeaderComponent implements OnInit {
 
   async openNotificationPopover(ev: any) {
     const popover = await this.popoverCtrl.create({
-      component: NotificationsPopupModalComponent,
+      component: NotificationsPopoverComponent,
       event: ev,
       side: 'bottom',
       translucent: true,
@@ -83,14 +79,19 @@ export class TalentHeaderComponent implements OnInit {
 
   async getUpdatedProfilePicture(): Promise<any> {
     const pictureFromLogin = localStorage.getItem('profilePicture');
-    const updatedPicture = await firstValueFrom(this.emmitterService.getProfilePicture());
-    this.images.ProfileIcon = updatedPicture ?? pictureFromLogin ?? this.images.ProfileIcon;
+    const updatedPicture = await firstValueFrom(
+      this.emmitterService.getProfilePicture(),
+    );
+    this.images.ProfileIcon =
+      updatedPicture ?? pictureFromLogin ?? this.images.ProfileIcon;
   }
 
   fetchProfilePicture(): void {
-    this.images.ProfileIcon = localStorage.getItem('profilePicture') ?? this.images.ProfileIcon;
+    this.images.ProfileIcon =
+      localStorage.getItem('profilePicture') ?? this.images.ProfileIcon;
     const fetchSession =
-      localStorage.getItem('user_data') || localStorage.getItem('user_profile_data');
+      localStorage.getItem('user_data') ||
+      localStorage.getItem('user_profile_data');
     const userData = fetchSession ? JSON.parse(fetchSession) : {};
     const uniqueId =
       userData?.role === 'scouter' ? userData?.scouterId : userData?.talentId;

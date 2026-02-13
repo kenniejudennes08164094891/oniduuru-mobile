@@ -45,7 +45,7 @@ export class StatsComponent implements OnInit, OnChanges {
     responsive: true,
     plugins: {
       legend: {
-        position: 'right',
+        display: false, // ← CHANGE THIS FROM 'position: 'right'' TO 'display: false'
         labels: {
           font: {
             size: 12,
@@ -87,9 +87,18 @@ export class StatsComponent implements OnInit, OnChanges {
     ],
   };
 
+  // Update barChartOptions - REMOVE drawBorder property
   barChartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        left: 10,
+        right: 20,
+        top: 20,
+        bottom: 10,
+      },
+    },
     plugins: {
       legend: {
         position: 'top',
@@ -97,13 +106,17 @@ export class StatsComponent implements OnInit, OnChanges {
           font: {
             size: 12,
           },
+          padding: 20,
+          boxWidth: 15,
+          boxHeight: 15,
         },
       },
       tooltip: {
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         titleFont: { size: 12 },
         bodyFont: { size: 11 },
-        padding: 10,
+        padding: 12,
+        cornerRadius: 6,
         callbacks: {
           label: (context: any) => {
             const value = context.parsed.y;
@@ -134,6 +147,10 @@ export class StatsComponent implements OnInit, OnChanges {
             }
             return value;
           },
+          padding: 10,
+          font: {
+            size: 11,
+          },
         },
         max: 5,
         title: {
@@ -143,9 +160,12 @@ export class StatsComponent implements OnInit, OnChanges {
             size: 12,
             weight: 'bold',
           },
+          padding: { top: 10, bottom: 10 },
         },
         grid: {
           color: 'rgba(0, 0, 0, 0.1)',
+          lineWidth: 1,
+          // drawBorder: true, // REMOVED - not a valid property
         },
       },
       x: {
@@ -156,13 +176,114 @@ export class StatsComponent implements OnInit, OnChanges {
             size: 12,
             weight: 'bold',
           },
+          padding: { top: 10, bottom: 0 },
         },
         grid: {
           display: false,
         },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45,
+          font: {
+            size: 11,
+          },
+          padding: 8,
+          autoSkip: false,
+          maxTicksLimit: 20,
+        },
       },
     },
   };
+
+  // Also fix in getBarChartOptions method
+  getBarChartOptions(): ChartOptions<'bar'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          left: 10,
+          right: 20,
+          top: 20,
+          bottom: 10,
+        },
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            font: { size: 12 },
+            padding: 20,
+            boxWidth: 15,
+            boxHeight: 15,
+          },
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleFont: { size: 12 },
+          bodyFont: { size: 11 },
+          padding: 12,
+          cornerRadius: 6,
+          callbacks: {
+            label: (context: any) => {
+              const value = context.parsed.y;
+              if (!value || value === 0) {
+                return `${context.dataset.label}: No rating`;
+              }
+              const numValue = typeof value === 'number' ? value : 0;
+              const fullStars = Math.floor(numValue);
+              const halfStar = numValue % 1 >= 0.5;
+              let stars = '';
+              if (fullStars > 0) stars = '⭐'.repeat(fullStars);
+              if (halfStar) stars += '½';
+              if (stars === '' && numValue > 0 && numValue < 1) stars = '½';
+              return `${context.dataset.label}: ${numValue.toFixed(1)} ${stars}`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            callback: (value: any) => `${value}⭐`,
+            padding: 10,
+            font: { size: 11 },
+          },
+          max: 5,
+          title: {
+            display: true,
+            text: 'Rating (1-5 stars)',
+            font: { size: 12, weight: 'bold' },
+            padding: { top: 10, bottom: 10 },
+          },
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)',
+            lineWidth: 1,
+            // drawBorder: true, // REMOVED - not a valid property
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Market Engagements',
+            font: { size: 12, weight: 'bold' },
+            padding: { top: 10, bottom: 0 },
+          },
+          grid: { display: false },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45,
+            font: { size: 11 },
+            padding: 8,
+            autoSkip: false,
+            maxTicksLimit: 20,
+          },
+        },
+      },
+    };
+  }
 
   barChartData: ChartData<'bar'> = {
     labels: ['Loading...'],
@@ -396,95 +517,6 @@ export class StatsComponent implements OnInit, OnChanges {
       value: typeof data[index] === 'number' ? data[index].toFixed(1) : '0',
       color: colors[index],
     }));
-  }
-
-  // Get bar chart options with increased height
-  getBarChartOptions(): ChartOptions<'bar'> {
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            font: {
-              size: 12,
-            },
-          },
-        },
-        tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          titleFont: { size: 12 },
-          bodyFont: { size: 11 },
-          padding: 10,
-          callbacks: {
-            label: (context: any) => {
-              const value = context.parsed.y;
-              if (value === null || value === undefined || value === 0) {
-                return `${context.dataset.label}: No rating`;
-              }
-              const numValue =
-                typeof value === 'number'
-                  ? value
-                  : parseFloat(value as any) || 0;
-              const fullStars = Math.floor(numValue);
-              const halfStar = numValue % 1 >= 0.5;
-              let stars = '';
-              if (fullStars > 0) stars = '⭐'.repeat(fullStars);
-              if (halfStar) stars += '½';
-              if (stars === '' && numValue > 0 && numValue < 1) stars = '½';
-              return `${context.dataset.label}: ${numValue.toFixed(1)} ${stars}`;
-            },
-          },
-        },
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            stepSize: 1,
-            callback: function (value: any) {
-              if (typeof value === 'number') {
-                return value + '⭐';
-              }
-              return value;
-            },
-          },
-          max: 5,
-          title: {
-            display: true,
-            text: 'Rating (1-5 stars)',
-            font: {
-              size: 12,
-              weight: 'bold',
-            },
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.1)',
-          },
-        },
-        x: {
-          title: {
-            display: true,
-            text: 'Market Engagements',
-            font: {
-              size: 12,
-              weight: 'bold',
-            },
-          },
-          grid: {
-            display: false,
-          },
-          ticks: {
-            maxRotation: 45,
-            minRotation: 45,
-            font: {
-              size: 11,
-            },
-          },
-        },
-      },
-    };
   }
 
   private fetchMarketStats(talentId: string, scouterId: string) {

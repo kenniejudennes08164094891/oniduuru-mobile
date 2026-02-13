@@ -6,14 +6,15 @@ import {
   Output,
   NgZone,
 } from '@angular/core';
-import { ModalController, Platform, ToastController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
-import { banks, MockRecentHires } from 'src/app/models/mocks';
+import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { TransferFundsReceiptModalComponent } from '../transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { EndpointService } from 'src/app/services/endpoint.service';
 
 @Component({
   selector: 'app-transfer-funds-popup-modal',
@@ -26,150 +27,190 @@ export class TransferFundsPopupModalComponent
   implements OnInit
 {
   @Input() isModalOpen: boolean = false;
+  @Input() currentUser: any = null;
+  @Input() userUniqueId: string | null = null;
+  @Input() originatingWalletId: string = '0033392845'; // Source wallet ID
+  @Input() userRole: string = '';
 
   images = imageIcons;
   hires = MockRecentHires;
 
   formSubmitted = false;
-
-  walletAccNo: string = '';
-  walletName: string = '';
-  agreed: boolean = false;
-
-  // banks = banks;
-
-  // User’s chosen bank (single value)
-  bank: string | null = null;
-
-  selectedBank: string | null = null;
-  isBankDropdownOpen = false;
-
-  // form fields
-  // bank: string | null = null;
-  accountNumber: string = '';
-  amount: number | null = null;
-  walletId: string = '0033392845'; // default (can be replaced)
-  // agreed: boolean = false;
-
-  // file preview
-  selectedFile: File | null = null;
-  previewUrl: string | ArrayBuffer | null = null;
-
   transferForm!: FormGroup;
+
+  // Transaction charge
+  transactionCharge: number = 200;
+  isLoadingCharge: boolean = false;
 
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
     private paymentService: PaymentService,
-    // private toastCtrl: ToastController,
     private toast: ToastsService,
     private ngZone: NgZone,
-    private fb: FormBuilder // ✅ inject FormBuilder
+    private fb: FormBuilder,
+    private endpointService: EndpointService
   ) {
     super(modalCtrl, platform);
   }
 
   override ngOnInit() {
+    this.initForm();
+    console.log('📦 Transfer modal received props:', {
+      currentUser: this.currentUser,
+      userUniqueId: this.userUniqueId,
+      originatingWalletId: this.originatingWalletId,
+      userRole: this.userRole
+    });
+  }
+
+  private initForm() {
     this.transferForm = this.fb.group({
-      // bank: [null, Validators.required],  // uncomment if you want bank dropdown back
       accountNumber: [
         '',
         [
           Validators.required,
-          Validators.pattern(/^\d{10,11}$/), // ✅ only 10–11 digits allowed
+          Validators.pattern(/^\d{10,11}$/), // 10-11 digits for wallet ID
         ],
       ],
       walletName: ['', [Validators.required, Validators.minLength(3)]],
       amount: [
         null,
-        [Validators.required, Validators.min(100)], // must be ≥ 100
+        [Validators.required, Validators.min(100)], // Must be ≥ 100
       ],
-      agreeTerms: [false, Validators.requiredTrue], // ✅ must tick checkbox
+      marketHireId: [''], // Optional
+      agreeTerms: [false, Validators.requiredTrue], // Must tick checkbox
+    });
+
+    // Calculate transaction charge when amount changes
+    this.transferForm.get('amount')?.valueChanges.subscribe((amount) => {
+      if (amount && amount > 0) {
+        this.calculateCharge(amount);
+      }
+    });
+  }
+
+  /**
+   * Calculate transaction charge
+   */
+  private calculateCharge(amount: number) {
+    this.isLoadingCharge = true;
+    this.endpointService.calculateTransactionCharge(amount.toString()).subscribe({
+      next: (response) => {
+        this.isLoadingCharge = false;
+        // Adjust based on actual API response structure
+        this.transactionCharge = response?.data?.charge || response?.charge || 200;
+        console.log('💰 Transaction charge:', this.transactionCharge);
+      },
+      error: (error) => {
+        this.isLoadingCharge = false;
+        console.error('❌ Error calculating charge:', error);
+        // Use default charge
+        this.transactionCharge = 200;
+      }
     });
   }
 
   async createFundTransfer() {
     if (this.transferForm.invalid) {
-  
+      this.markFormGroupTouched(this.transferForm);
       this.toast.openSnackBar('Please fill all fields correctly.', 'error');
+      return;
+    }
+
+    if (!this.originatingWalletId) {
+      this.toast.openSnackBar('Source wallet ID is missing', 'error');
       return;
     }
 
     const formData = this.transferForm.value;
 
-    const newTransfer = {
+    // Format payload according to API specification
+    const payload = {
       amount: formData.amount,
-      transactionId: 'TX-' + Date.now(),
-      status: 'Successful',
-      date: new Date().toISOString(),
-      bank: formData.bank,
-      nubamAccNo: formData.accountNumber,
-      walletId: '0033392845',
-      fromName: 'Omosehin Kehinde Jude',
-      toName: formData.walletName,
-      fromWalletId: '0325062797',
-      toWalletId: formData.accountNumber,
+      designatedWalletAcct: formData.accountNumber, // The wallet ID you're sending funds to
+      originatingWalletAcct: this.originatingWalletId, // Your wallet ID you're removing money from
+      marketHireId: formData.marketHireId || undefined // Optional
     };
 
-    // Pass data back to parent
-    this.modalCtrl.dismiss(newTransfer, 'submitted');
+    console.log('💰 Submitting transfer with payload:', payload);
 
-    const receiptModal = await this.modalCtrl.create({
-      component: TransferFundsReceiptModalComponent,
-      componentProps: {
-        ...newTransfer,
-        date: new Date().toISOString(),
-        fromName: 'Omosehin Kehinde Jude',
-        toName: 'Olorunda Victory Chidi',
-        fromWalletId: 'OniduuruAdmin Wallet',
-        toWalletId: newTransfer.nubamAccNo,
+    this.endpointService.transferFunds(payload).subscribe({
+      next: async (res: any) => {
+        console.log('✅ Transfer successful:', res);
+
+        const transferData = res.data || res;
+        const transactionId = transferData.transferReferenceId || 'TRF-' + Date.now();
+
+        const newTransfer = {
+          amount: formData.amount,
+          transactionId: transactionId,
+          transferReferenceId: transactionId,
+          status: 'Pending',
+          date: new Date().toISOString(),
+          walletId: formData.accountNumber,
+          walletName: formData.walletName,
+          originatingWalletId: this.originatingWalletId,
+          fromName: this.currentUser?.fullName || 'My Wallet',
+          toName: formData.walletName,
+          fromWalletId: this.originatingWalletId,
+          toWalletId: formData.accountNumber,
+          charge: this.transactionCharge
+        };
+
+        // Pass data back to parent
+        this.modalCtrl.dismiss(newTransfer, 'submitted');
+
+        // Show receipt modal
+        const receiptModal = await this.modalCtrl.create({
+          component: TransferFundsReceiptModalComponent,
+          componentProps: {
+            ...newTransfer,
+            date: new Date().toISOString(),
+            fromName: this.currentUser?.fullName || 'My Wallet',
+            toName: formData.walletName,
+            fromWalletId: this.originatingWalletId,
+            toWalletId: formData.accountNumber,
+          },
+          cssClass: 'transfer-receipt-modal',
+          backdropDismiss: false,
+        });
+        await receiptModal.present();
       },
-      cssClass: 'transfer-receipt-modal',
-      backdropDismiss: false,
+      error: async (err: any) => {
+        console.error('❌ Transfer error:', err);
+        
+        const errorMessage = err.error?.message || err.message || 'Transfer failed. Please try again.';
+        this.toast.openSnackBar(errorMessage, 'error');
+        
+        this.modalCtrl.dismiss(null, 'error');
+      },
     });
-    await receiptModal.present();
   }
 
-  toggleBankDropdown() {
-    this.isBankDropdownOpen = !this.isBankDropdownOpen;
+  /**
+   * Mark all form controls as touched
+   */
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
-
-  // selectBank(bank: string) {
-  //   this.selectedBank = bank;
-  //   this.isBankDropdownOpen = false;
-  //   this.bank = bank; // ✅ keep it as string
-  // }
-  // ngOnInit() {}
 
   closeModal() {
     this.modalCtrl.dismiss();
   }
 
-  //   images = imageIcons;
-  // selectedFile: File | null = null;
-  // previewUrl: string | ArrayBuffer | null = null;
-
   override dismiss() {
     super.dismiss();
   }
 
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.selectedFile = file;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.ngZone.run(() => {
-          this.previewUrl = reader.result as string;
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-  removeScreenshot() {
-    this.selectedFile = null;
-    this.previewUrl = null;
-  }
+  // Getters for form controls
+  get accountNumberControl() { return this.transferForm.get('accountNumber'); }
+  get walletNameControl() { return this.transferForm.get('walletName'); }
+  get amountControl() { return this.transferForm.get('amount'); }
+  get agreeTermsControl() { return this.transferForm.get('agreeTerms'); }
 }

@@ -56,11 +56,102 @@ ion-input input {
 }
 
 // NOTIFICATIONS
-.notification-fullscreen-modal {
-  --height: 100%;
-  --width: 85%;
-  --border-radius: 0;
-  --box-shadow: none;
+/* NOTIFICATIONS MODAL - FIXED */
+// .notification-fullscreen-modal {
+//   --height: 100%;
+//   --width: 85%;
+//   --border-radius: 0;
+//   --box-shadow: none;
+
+//   /* ✅ CRITICAL: Disable all scroll-based gestures on the modal wrapper */
+//   --overflow: hidden;
+//   overscroll-behavior: contain;
+// }
+
+// /* ✅ Target the modal wrapper to prevent pull-to-dismiss */
+// .notification-fullscreen-modal .modal-wrapper {
+//   overscroll-behavior: contain !important;
+//   overflow-y: hidden !important;
+//   -webkit-overflow-scrolling: auto !important;
+// }
+
+// /* ✅ Style the content area for proper scrolling */
+// .notification-fullscreen-modal ion-content {
+//   --overflow: auto;
+//   --background: white;
+// }
+
+// /* ✅ Prevent any touch actions that could cause dismissal */
+// .notification-fullscreen-modal {
+//   pointer-events: auto;
+// }
+
+// .notification-fullscreen-modal .modal-shadow {
+//   display: none;
+// }
+
+// NOTIFICATION POPOVER - FIXED POSITION
+ion-popover.notification-popover {
+  --width: 80vw;
+  --max-width: 650px;
+  --min-width: 370px;
+  --height: 80vh;
+  --max-height: 800px;
+  --min-height: 550px;
+  --background: white;
+  --box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  --backdrop-opacity: 0.3;
+  --border-radius: 24px;
+
+  // Position - align right edge with trigger
+  --offset-x: 0px; // Reset offset
+  --offset-y: 12px; // Space below trigger
+
+  // Transform origin to right side
+  --transform-origin: right top;
+
+  &::part(content) {
+    border-radius: 24px;
+    overflow: hidden;
+    transform-origin: right top; // Ensure animation from right
+  }
+
+  &::part(backdrop) {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+// Remove default popover arrow
+.popover-arrow {
+  display: none !important;
+}
+
+// Desktop - fixed width
+@media (min-width: 1024px) {
+  ion-popover.notification-popover {
+    --width: 480px;
+    --height: 600px;
+    --max-width: 480px;
+    --min-width: 480px;
+  }
+}
+
+// Mobile landscape
+@media (max-width: 768px) and (orientation: landscape) {
+  ion-popover.notification-popover {
+    --width: 70vw;
+    --height: 80vh;
+  }
+}
+
+// Small mobile
+@media (max-width: 480px) {
+  ion-popover.notification-popover {
+    --width: 95vw;
+    --height: 80vh;
+    --min-height: 400px;
+    --border-radius: 20px;
+  }
 }
 
 // All Talents modal

@@ -7,7 +7,7 @@ import {
 } from '@ionic/angular';
 import { UserService } from 'src/app/services/user.service';
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
-import { NotificationsPopupModalComponent } from 'src/app/utilities/modals/notifications-popup-modal/notifications-popup-modal.component';
+import { NotificationsPopoverComponent } from 'src/app/utilities/modals/notifications-popover.component/notifications-popover.component';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
@@ -51,15 +51,10 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log('🔄 ScouterHeaderComponent initializing...');
-
-    // ✅ Load notification count immediately
     this.loadNotificationCount();
-
-    // ✅ Set up listeners for real-time updates
     this.setupNotificationListener();
     this.setupAppRefreshListener();
 
-    // Subscribe to full profile data updates
     this.subscriptions.add(
       this.userService.profileData$.subscribe((profile) => {
         if (profile) {
@@ -68,24 +63,18 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
       }),
     );
 
-    // ✅ Listen to authentication state changes
     this.setupAuthListeners();
-
-    // ✅ Force immediate profile image load
     this.initializeProfileImage();
 
-    // ✅ Subscribes to real-time profile image updates
     this.sub = this.userService.profileImage$.subscribe((image) => {
       this.profileImage = image || 'assets/default-avatar.png';
       console.log('📷 Header: Profile image updated:', this.profileImage);
     });
 
-    // Subscribe to status updates
     this.userService.status$.subscribe((status) => {
       this.userStatus = status;
     });
 
-    // Set to online when component mounts
     this.userService.setStatus('online');
   }
 
@@ -355,48 +344,6 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     });
   }
 
-  // private initializeProfileImage(): void {
-  //   console.log('🔄 Initializing profile image for dashboard...');
-
-  //   // Try multiple sources in order of priority
-  //   const imageSources = [
-  //     // 1. Check UserService first (might have cached image)
-  //     () => this.userService.getProfileImage(),
-
-  //     // 2. Check localStorage for cached image
-  //     () => {
-  //       const stored = localStorage.getItem('profile_image');
-  //       return stored && this.isValidImage(stored) ? stored : null;
-  //     },
-
-  //     // 3. Check user data in localStorage
-  //     () => {
-  //       try {
-  //         const userData = localStorage.getItem('user_data');
-  //         if (userData) {
-  //           const parsed = JSON.parse(userData);
-  //           return parsed.profileImage || parsed.profilePicture || null;
-  //         }
-  //       } catch (e) {
-  //         console.warn('Error parsing user_data for profile image:', e);
-  //       }
-  //       return null;
-  //     },
-  //   ];
-
-  //   // Try each source until we find a valid image
-  //   for (const source of imageSources) {
-  //     const image = source();
-  //     if (image && this.isValidImage(image)) {
-  //       this.profileImage = image;
-  //       return;
-  //     }
-  //   }
-
-  //   // Fallback to default
-  //   this.profileImage = 'assets/default-avatar.png';
-  // }
-
   private isValidImage(imageData: string | null): boolean {
     if (!imageData) return false;
 
@@ -412,6 +359,30 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  async openNotificationPopover(event: any) {
+    console.log('📬 Opening notification popover');
+
+    const popover = await this.popoverCtrl.create({
+      component: NotificationsPopoverComponent,
+      event: event,
+      translucent: false,
+      showBackdrop: true,
+      backdropDismiss: true,
+      alignment: 'end', // Changed from 'center' to 'end' - this aligns right edge with trigger
+      side: 'bottom',
+      cssClass: 'notification-popover',
+      arrow: false,
+      size: 'auto', // Changed from 'cover' to 'auto'
+    });
+
+    popover.onDidDismiss().then(() => {
+      console.log('📬 Notification popover dismissed, checking count...');
+      this.loadStoredNotificationCount();
+    });
+
+    await popover.present();
+  }
+
   async openProfilePopover(ev: any) {
     const popover = await this.popoverCtrl.create({
       component: ProfilePopupSettingsModalComponent,
@@ -424,14 +395,15 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
 
   async openNotificationModal() {
     const modal = await this.modalCtrl.create({
-      component: NotificationsPopupModalComponent,
+      component: NotificationsPopoverComponent,
       cssClass: 'notification-fullscreen-modal',
       breakpoints: [0, 1],
       initialBreakpoint: 1,
       backdropDismiss: true,
+      // ✅ This only handles backdrop click, not scroll
+      canDismiss: true,
     });
 
-    // Update count when modal is dismissed (in case it was cleared)
     modal.onDidDismiss().then(() => {
       console.log('📬 Notification modal dismissed, checking count...');
       this.loadStoredNotificationCount();

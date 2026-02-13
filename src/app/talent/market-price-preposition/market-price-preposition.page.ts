@@ -100,6 +100,8 @@ export class MarketPricePrepositionPage implements OnInit {
     private alertCtrl: AlertController,
   ) {}
 
+  
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     console.log('Route ID:', id);

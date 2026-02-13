@@ -12,9 +12,9 @@
       <div class="flex items-start gap-3">
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
-          <span class="font-medium text-[24px] leading-tight"
-            >Hi Viki West,</span
-          >
+          <span class="font-medium text-[24px] leading-tight">
+            Hi {{ userName || 'User' }},
+          </span>
           <p class="text-gray-200 text-lg leading-relaxed">
             Seamlessly transfer funds between wallets.
           </p>
@@ -103,45 +103,65 @@
       class="flex space-x-4 bg-white py-3 md:space-x-6 md:justify-between md:flex-wrap"
     >
       <!-- Successful -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#057A55] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Successful')"
+        [class]="getStatusButtonClass('Successful')"
       >
         <p class="text-lg font-semibold">{{ successfulCount }}</p>
         <p>Successful</p>
-      </div>
+      </button>
 
       <!-- Pending -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#FFA086] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Pending')"
+        [class]="getStatusButtonClass('Pending')"
       >
         <p class="text-lg font-semibold">{{ pendingCount }}</p>
         <p>Pending</p>
-      </div>
+      </button>
 
       <!-- Reversed -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-[#0033FF] text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Reversed')"
+        [class]="getStatusButtonClass('Reversed')"
       >
         <p class="text-lg font-semibold">{{ reversedCount }}</p>
         <p>Reversed</p>
-      </div>
+      </button>
 
       <!-- Declined -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-red-600 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <button
+        (click)="filterByStatus('Declined')"
+        [class]="getStatusButtonClass('Declined')"
       >
         <p class="text-lg font-semibold">{{ declinedCount }}</p>
         <p>Declined</p>
-      </div>
+      </button>
 
-      <!-- Fetched all -->
-      <div
-        class="min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md"
+      <!-- All transfers -->
+      <button
+        (click)="loadTransfers()"
+        [class]="
+          'min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer ' +
+          (activeStatusFilter === null
+            ? 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100'
+            : '')
+        "
       >
         <p class="text-lg font-semibold">{{ totalCount }}</p>
-        <p>Fetched all</p>
-      </div>
+        <p>All transfers</p>
+      </button>
     </div>
+  </div>
+
+  <!-- Clear Filters Button -->
+  <div *ngIf="selectedYear || selectedMonth || activeStatusFilter" class="mt-4">
+    <button
+      (click)="clearFilters()"
+      class="text-indigo-600 text-sm font-medium hover:text-indigo-800"
+    >
+      Clear all filters
+    </button>
   </div>
 
   <!-- TABLE + Pagination -->
@@ -202,7 +222,7 @@
                   transfer.status === 'Successful' ? 'bg-[#057A55]' : '',
                   transfer.status === 'Pending' ? 'bg-[#FFA086]' : '',
                   transfer.status === 'Declined' ? 'bg-red-600' : '',
-                  transfer.status === 'Reversed' ? 'bg-[#0033FF]' : ''
+                  transfer.status === 'Reversed' ? 'bg-[#0033FF]' : '',
                 ]"
               ></span>
               {{ transfer.status }}
@@ -210,7 +230,7 @@
             <td
               class="px-3 sm:px-6 py-3 font-semibold text-gray-600 text-sm sm:text-base whitespace-nowrap"
             >
-              {{ transfer.date | date : "MMM d, y h:mma" }}
+              {{ transfer.date | date: "MMM d, y h:mma" }}
             </td>
           </tr>
         </tbody>

@@ -1,26 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController, Platform } from '@ionic/angular';
+import { PopoverController, Platform } from '@ionic/angular'; // Change to PopoverController
 import { imageIcons } from 'src/app/models/stores';
-import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { Router, NavigationStart } from '@angular/router';
 
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
-import { ToastController } from '@ionic/angular';
 import { ToastsService } from 'src/app/services/toasts.service';
 
 @Component({
-  selector: 'app-notifications-popup-modal',
-  templateUrl: './notifications-popup-modal.component.html',
-  styleUrls: ['./notifications-popup-modal.component.scss'],
+  selector: 'app-notifications-popover',
+  templateUrl: './notifications-popover.component.html',
+  styleUrls: ['./notifications-popover.component.scss'],
   standalone: false,
 })
-export class NotificationsPopupModalComponent extends BaseModal {
+export class NotificationsPopoverComponent implements OnInit {
   images = imageIcons;
-
   notifications: any[] = [];
-  receiverId!: string; // current user
+  receiverId!: string;
 
-  // Color palette for avatar backgrounds
   private avatarColors = [
     '#FF6B6B',
     '#4ECDC4',
@@ -32,43 +28,40 @@ export class NotificationsPopupModalComponent extends BaseModal {
     '#F7DC6F',
     '#BB8FCE',
     '#85C1E9',
-    '#F8C471',
-    '#82E0AA',
-    '#F1948A',
-    '#85C1E9',
-    '#D7BDE2',
-    '#F9E79F',
-    '#A9DFBF',
-    '#D2B4DE',
-    '#AED6F1',
-    '#FAD7A0',
   ];
 
   constructor(
-    modalCtrl: ModalController,
-    protected override platform: Platform,
+    private popoverCtrl: PopoverController, // Change to PopoverController
+    private platform: Platform,
     private router: Router,
     private scouterService: ScouterEndpointsService,
-    private toastService: ToastsService
-  ) {
-    super(modalCtrl, platform);
-  }
+    private toastService: ToastsService,
+  ) {}
 
-  override ngOnInit(): void {
-    super.ngOnInit?.();
+  ngOnInit(): void {
     this.receiverId = this.getLoggedInUserId();
     this.loadNotifications();
 
-    // Dismiss modal if navigating away
+    // Dismiss popover if navigating away
     this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart) this.dismiss();
+      if (event instanceof NavigationStart) {
+        this.dismiss();
+      }
     });
   }
 
+  /**
+   * Dismiss the popover
+   */
+  dismiss() {
+    this.popoverCtrl.dismiss();
+  }
+
+  /**
+   * Get logged in user ID
+   */
   getLoggedInUserId(): string {
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-
-    // Try multiple possible ID fields in order of priority
     const userId =
       userData?.uniqueId ||
       userData?.id ||
@@ -76,20 +69,18 @@ export class NotificationsPopupModalComponent extends BaseModal {
       userData?.scouterId ||
       userData?.talentId ||
       '';
-
     return userId;
   }
 
-  // Enhanced method to get the actual logged-in user ID for API calls
+  /**
+   * Get actual logged in user ID for API calls
+   */
   getActualLoggedInUserId(): string {
-    // Try multiple sources for the actual user ID
     const sources = [
-      // 1. Check localStorage user_data
       () => {
         const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
         return userData?.uniqueId || userData?.id || userData?.userId;
       },
-      // 2. Check eniyan encoded data
       () => {
         const eniyan = localStorage.getItem('eniyan');
         if (eniyan) {
@@ -102,7 +93,6 @@ export class NotificationsPopupModalComponent extends BaseModal {
         }
         return null;
       },
-      // 3. Check for specific format like "scouter/2323/4October2025"
       () => {
         const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
         if (userData?.uniqueId && userData.uniqueId.includes('/')) {
@@ -118,135 +108,116 @@ export class NotificationsPopupModalComponent extends BaseModal {
         return id;
       }
     }
-
     return this.receiverId;
   }
 
+  /**
+   * Load notifications from API
+   */
   loadNotifications() {
+    if (!this.receiverId) {
+      console.warn('⚠️ No receiverId found, cannot load notifications');
+      return;
+    }
+
     this.scouterService.fetchAllNotifications(this.receiverId).subscribe({
       next: (res) => {
-        // ✅ FIX: Use 'notifications' property instead of 'data'
         this.notifications = Array.isArray(res?.notifications)
           ? res.notifications
           : [];
-
-        // Store the count for header to use
         this.storeNotificationCount(this.notifications.length);
       },
       error: async (err) => {
         console.error('❌ Error fetching notifications:', err);
-        this.toastService.openSnackBar(
-          'Failed to load notifications',
-          'error'
-        );
-        // Store 0 count on error
+        this.toastService.openSnackBar('Failed to load notifications', 'error');
         this.storeNotificationCount(0);
       },
     });
   }
 
+  /**
+   * Clear all notifications
+   */
   async clearNotifications() {
     const loggedInUniqueId = this.getActualLoggedInUserId();
 
-    // Validate that we have a valid ID
     if (!loggedInUniqueId || loggedInUniqueId === '') {
       console.error('❌ No valid loggedInUniqueId found');
       this.toastService.openSnackBar(
         'Unable to identify user. Please log in again.',
-        'error'
+        'error',
       );
-
-      // After clearing, update the global count
       this.storeNotificationCount(0);
       this.emitNotificationsCleared();
-
-      console.log('✅ Notifications cleared, count updated globally');
       return;
     }
 
     const payload = {
       receiverId: this.receiverId,
-      loggedInUniqueId: loggedInUniqueId, // Use the actual logged-in user ID
+      loggedInUniqueId: loggedInUniqueId,
     };
 
     this.scouterService.clearMyNotifications(payload).subscribe({
       next: async (res) => {
         this.notifications = [];
-
+        this.storeNotificationCount(0);
+        this.emitNotificationsCleared();
         this.toastService.openSnackBar(
           res?.message || 'Notifications cleared successfully!',
-          'success'
+          'success',
         );
-
-        // Store 0 count after clearing
-        this.storeNotificationCount(0);
-        // Emit event to update header count
-        this.emitNotificationsCleared();
       },
       error: async (err) => {
         console.error('❌ Error clearing notifications:', err);
-
         let errorMessage = 'Failed to clear notifications';
         if (err.status === 400) {
           errorMessage = 'Invalid user identification. Please try again.';
         } else if (err.status === 401) {
           errorMessage = 'Please log in again.';
         }
-
         this.toastService.openSnackBar(errorMessage, 'error');
       },
     });
   }
 
-  // Store notification count for header to use
   private storeNotificationCount(count: number) {
     localStorage.setItem('notification_count', count.toString());
     console.log('💾 Stored notification count:', count);
   }
 
-  // Emit event to update header notification count
   private emitNotificationsCleared() {
     localStorage.setItem('notifications_cleared', Date.now().toString());
   }
 
-  // Generate avatar text from sender or title
+  // Avatar helper methods
   getAvatarText(notification: any): string {
     const textSource = notification.tagName || notification.senderId || 'ON';
-
-    // Extract first letters from words
     const words = textSource.split(/[\s@._-]+/);
     let initials = '';
 
     if (words.length === 1) {
-      // Single word - take first 2 characters
       initials = words[0].substring(0, 2).toUpperCase();
     } else {
-      // Multiple words - take first letter of first two words
       initials = words
         .slice(0, 2)
         .map((word: string) => word.charAt(0))
         .join('')
         .toUpperCase();
     }
-
     return initials || 'ON';
   }
 
-  // Generate consistent color based on sender/tag name
   getAvatarColor(notification: any): string {
     const textSource =
       notification.tagName || notification.senderId || 'Oniduuru';
     let hash = 0;
-
     for (let i = 0; i < textSource.length; i++) {
       hash = textSource.charCodeAt(i) + ((hash << 5) - hash);
     }
-
     const index = Math.abs(hash) % this.avatarColors.length;
     return this.avatarColors[index];
   }
 
-  // Check if we should show avatar with initials (for security emails, etc.)
   shouldShowInitialsAvatar(notification: any): boolean {
     return (
       !notification.avatar &&
@@ -256,27 +227,21 @@ export class NotificationsPopupModalComponent extends BaseModal {
     );
   }
 
-  // Main method to get avatar display
   getNotificationAvatar(notification: any): any {
-    // If there's a proper avatar image, use it
     if (
       notification.avatar &&
       notification.avatar !== 'assets/default-avatar.png'
     ) {
       return notification.avatar;
     }
-
-    // Otherwise, return null to indicate we should use initials
     return null;
   }
 
   onImageError(event: any) {
     event.target.style.display = 'none';
-    // The parent div will show the initials avatar instead
   }
 
   formatNotificationDate(dateString: string): string {
-    // Convert "Oct 14, 2025, 4:01 PM" to a more readable format
     try {
       const date = new Date(dateString);
       return (
@@ -288,7 +253,7 @@ export class NotificationsPopupModalComponent extends BaseModal {
         })
       );
     } catch {
-      return dateString; // Return original if parsing fails
+      return dateString;
     }
   }
 }

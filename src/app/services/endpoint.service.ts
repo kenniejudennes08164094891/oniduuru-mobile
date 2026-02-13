@@ -621,35 +621,244 @@ export class EndpointService {
     });
   }
 
-  public withdrawFunds(payload: any): Observable<any> {
+  // Add these methods to your EndpointService class
+
+  /**
+   * Withdraw funds from wallet
+   * POST /wallets/v1/withdraw-funds
+   */
+  public withdrawFunds(payload: {
+    amount: number;
+    designatedNubanBank: string;
+    designatedNubanAcctNo: string;
+    wallet_id: string;
+    isTermsAgreed: string; // Must be "true" as string
+    bankAccountName: string;
+  }): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.withdrawFunds}`;
-    return this.http.post<any>(url, body, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+
+    console.log('💰 Withdraw funds request:', {
+      url,
+      payload: { ...payload, isTermsAgreed: payload.isTermsAgreed },
     });
+
+    return this.http
+      .post<any>(url, body, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Withdraw funds response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Withdraw funds error:', error);
+          return throwError(() => error);
+        }),
+      );
   }
 
-  public fetchMyWithdrawals(): Observable<any> {
+  /**
+   * Fetch my withdrawals with filtering
+   * GET /wallets/v1/fetch-my-withdrawals
+   */
+  public fetchMyWithdrawals(
+    uniqueId: string,
+    statusParams?: string,
+    limit: number = 10,
+    pageNo: number = 1,
+  ): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.fetchMyWithdrawals}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+
+    let params = new HttpParams()
+      .set('uniqueId', uniqueId)
+      .set('limit', limit.toString())
+      .set('pageNo', pageNo.toString());
+
+    if (statusParams && statusParams.trim()) {
+      params = params.set('statusParams', statusParams.trim());
+    }
+
+    console.log('🔍 [DEBUG] Fetch withdrawals request:', {
+      url: url,
+      params: params.toString(),
+      fullUrl: `${url}?${params.toString()}`,
+      uniqueId,
+      statusParams: statusParams || 'all',
     });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📡 Withdrawals API Response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Withdrawals fetch error:', error);
+          return throwError(() => error);
+        }),
+      );
   }
 
-  public transferFunds(payload: any): Observable<any> {
+  /**
+   * Fetch single withdrawal
+   * GET /wallets/v1/fetch-single-withdrawal
+   */
+  public fetchSingleWithdrawal(
+    withdrawalReferenceNumber: string,
+    uniqueId: string,
+  ): Observable<any> {
+    const url = `${environment.baseUrl}/${endpoints.fetchSingleWithdrawal}`;
+
+    const params = new HttpParams()
+      .set('withdrawalReferenceNumber', withdrawalReferenceNumber)
+      .set('uniqueId', uniqueId);
+
+    console.log('🔍 Fetch single withdrawal:', {
+      url,
+      withdrawalReferenceNumber,
+      uniqueId,
+    });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params: params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Single withdrawal response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Single withdrawal fetch error:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  // --------------------------
+  // Transfer Funds APIs
+  // --------------------------
+
+  /**
+   * Transfer funds from your wallet to other wallets
+   * POST /wallets/v1/transfer-funds
+   */
+  public transferFunds(payload: {
+    amount: number;
+    designatedWalletAcct: string; // The wallet ID you're sending funds to
+    originatingWalletAcct: string; // Your wallet ID you're removing money from
+    marketHireId?: string; // Optional: if this is a market hire payment
+  }): Observable<any> {
     const body = JSON.stringify(payload);
     const url = `${environment.baseUrl}/${endpoints.transferFunds}`;
-    return this.http.post<any>(url, body, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+
+    console.log('💰 Transfer funds request:', {
+      url,
+      payload,
     });
+
+    return this.http
+      .post<any>(url, body, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Transfer funds response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Transfer funds error:', error);
+          return throwError(() => error);
+        }),
+      );
   }
 
-  public fetchMyTransfers(): Observable<any> {
+  /**
+   * Fetch my transfers with filtering
+   * GET /wallets/v1/fetch-my-transfers
+   */
+  public fetchMyTransfers(
+    uniqueId: string,
+    statusParams?: string,
+    limit: number = 10,
+    pageNo: number = 1,
+  ): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.fetchMyTransfers}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+
+    let params = new HttpParams()
+      .set('uniqueId', uniqueId)
+      .set('limit', limit.toString())
+      .set('pageNo', pageNo.toString());
+
+    if (statusParams && statusParams.trim()) {
+      params = params.set('statusParams', statusParams);
+    }
+
+    console.log('🔍 [DEBUG] Fetch transfers request:', {
+      url,
+      params: params.toString(),
+      fullUrl: `${url}?${params.toString()}`,
+      uniqueId,
+      statusParams,
     });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('📡 Transfers API Response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Transfers fetch error:', error);
+          return throwError(() => error);
+        }),
+      );
   }
+
+  /**
+   * Fetch single transfer
+   * GET /wallets/v1/fetch-single-transfer
+   */
+  public fetchSingleTransfer(transferReferenceId: string): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/fetch-single-transfer`;
+
+    const params = new HttpParams().set(
+      'transferReferenceId',
+      transferReferenceId,
+    );
+
+    console.log('🔍 Fetch single transfer:', {
+      url,
+      transferReferenceId,
+    });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+        params,
+      })
+      .pipe(
+        tap((response) => {
+          console.log('✅ Single transfer response:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Single transfer fetch error:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  /**
+   * Calculate transaction charge (reuse existing method)
+   * GET /wallets/v1/calculate-transaction-charge
+   */
+  // Already have calculateTransactionCharge(amount: string)
 
   public walletStats(): Observable<any> {
     const url = `${environment.baseUrl}/${endpoints.walletStats}`;

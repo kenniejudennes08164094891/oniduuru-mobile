@@ -21,16 +21,21 @@ canvas {
 // Better touch targets for mobile
 button {
   min-height: 32px;
-  
+
   @media (max-width: 640px) {
     min-height: 36px;
   }
 }
 
 // Card hover effects
-.bg-blue-50, .bg-gray-50, .bg-green-50, .bg-purple-50 {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+.bg-blue-50,
+.bg-gray-50,
+.bg-green-50,
+.bg-purple-50 {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -43,7 +48,8 @@ ion-icon {
 }
 
 // Progress bar animation
-.bg-blue-600.h-1\.5, .bg-gray-600.h-1\.5 {
+.bg-blue-600.h-1\.5,
+.bg-gray-600.h-1\.5 {
   transition: width 0.5s ease;
 }
 
@@ -69,7 +75,8 @@ ion-icon {
 
 // Loading state animation
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -79,4 +86,77 @@ ion-icon {
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+// stats.component.scss
+
+// ... existing styles ...
+
+/* Custom scrollbar styles */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f1f5f9;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 20px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 20px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+/* Scrollbar utility classes */
+.scrollbar-thin {
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+}
+
+.scrollbar-thumb-gray-300 {
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 20px;
+
+    &:hover {
+      background: #9ca3af;
+    }
+  }
+}
+
+.scrollbar-track-gray-100 {
+  &::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 20px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Ensure canvas maintains aspect ratio */
+canvas {
+  max-width: 100%;
+  height: auto !important;
 }

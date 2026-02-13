@@ -248,14 +248,13 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   }
 
   setSlideshowText(): void {
-    const currentMonthHires = this.currentMonthHires;
-    const totalExpenditure = currentMonthHires.reduce(
-      (sum, hire) => sum + hire.amount,
-      0,
-    );
+    const currentMonthHires = this.currentMonthHires; // Now checks ALL records
+    const totalExpenditure = currentMonthHires
+      .filter((hire) => hire.status === 'Offers Accepted') // Only sum accepted offers
+      .reduce((sum, hire) => sum + hire.amount, 0);
 
     if (currentMonthHires.length > 0) {
-      // When there's data for current month
+      // When there's ANY data for current month (any status)
       this.slideshowTexts = [
         `Your Total Market Expenditures for the Month of ${this.currentMonth} is ₦${totalExpenditure.toLocaleString()}`,
         'Keep engaging more skilled talents for a rewarding experience on Oniduuru Marketplace... Well done!',
@@ -267,7 +266,8 @@ export class ViewHiresPage implements OnInit, OnDestroy {
   }
 
   get currentMonthHires(): any[] {
-    return this.filterHiresByCurrentMonth(this.marketExpenditures);
+    // Check ALL market records for current month, not just expenditures
+    return this.filterHiresByCurrentMonth(this.marketRecords);
   }
 
   // Add this method to filter hires by current month
@@ -445,9 +445,6 @@ export class ViewHiresPage implements OnInit, OnDestroy {
         recordDate.getFullYear() === currentYear
       );
     });
-
-    this.setSlideshowText();
-    this.updateNoExpenditureSlideshowText(); // Add this line
   }
 
   // Helper methods for base64 decoding
