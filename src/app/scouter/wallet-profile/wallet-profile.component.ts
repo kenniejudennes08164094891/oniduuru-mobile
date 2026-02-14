@@ -45,6 +45,7 @@ export class WalletProfileComponent implements OnInit {
   otpVerified: boolean = false;
   bvnSessionId: string = '';
   maskedPhoneNumber: string = '';
+  bvnVerifiedPhoneNumber: string = ''; // Store the actual phone number from BVN verification
   otpError: string = '';
 
   // API loaded data
@@ -170,9 +171,9 @@ export class WalletProfileComponent implements OnInit {
     private toastService: ToastsService,
     private authService: AuthService,
     private userService: UserService,
-    private router: Router, private walletEvents: WalletEventsService
-
-  ) { }
+    private router: Router,
+    private walletEvents: WalletEventsService,
+  ) {}
 
   // ==================== INITIALIZATION ====================
   async ngOnInit() {
@@ -264,11 +265,11 @@ export class WalletProfileComponent implements OnInit {
           console.log(
             '✅ Loaded countries:',
             this.countries.length,
-            'countries'
+            'countries',
           );
           console.log(
             '🌍 Sample countries with flags:',
-            this.allCountries.slice(0, 3)
+            this.allCountries.slice(0, 3),
           );
           console.log('🌍 Country names:', this.countries.slice(0, 5));
           countriesLoaded = true;
@@ -281,7 +282,7 @@ export class WalletProfileComponent implements OnInit {
         // Use fallback that includes flags
         this.allCountries = this.getFallbackCountries();
         this.countries = this.allCountries.map(
-          (country) => country.countryName
+          (country) => country.countryName,
         );
         this.filteredCountries = [...this.countries];
         countriesLoaded = true;
@@ -290,17 +291,17 @@ export class WalletProfileComponent implements OnInit {
       if (!banksLoaded && !countriesLoaded) {
         this.toastService.openSnackBar(
           'Failed to load banks and countries. Using fallback data.',
-          'warning'
+          'warning',
         );
       } else if (!banksLoaded) {
         this.toastService.openSnackBar(
           'Failed to load banks. Using fallback data.',
-          'warning'
+          'warning',
         );
       } else if (!countriesLoaded) {
         this.toastService.openSnackBar(
           'Failed to load countries. Using fallback data.',
-          'warning'
+          'warning',
         );
       } else {
         console.log('✅ Successfully loaded all data');
@@ -311,7 +312,7 @@ export class WalletProfileComponent implements OnInit {
       console.error('❌ Unexpected error in loadBanksAndCountries:', error);
       this.toastService.openSnackBar(
         'Unexpected error loading data. Using fallback options.',
-        'warning'
+        'warning',
       );
     } finally {
       // await loading.dismiss();
@@ -323,7 +324,7 @@ export class WalletProfileComponent implements OnInit {
     if (!countryName || !this.allCountries.length) return '';
 
     const country = this.allCountries.find(
-      (c) => c.countryName === countryName || c.name === countryName
+      (c) => c.countryName === countryName || c.name === countryName,
     );
 
     return country?.countryFlag || country?.flag || '';
@@ -334,7 +335,7 @@ export class WalletProfileComponent implements OnInit {
     if (!countryName || !this.allCountries.length) return null;
 
     return this.allCountries.find(
-      (c) => c.countryName === countryName || c.name === countryName
+      (c) => c.countryName === countryName || c.name === countryName,
     );
   }
 
@@ -402,7 +403,7 @@ export class WalletProfileComponent implements OnInit {
     if (!phoneNumber || phoneNumber.length !== 11) {
       this.toastService.openSnackBar(
         'Phone number is required for BVN verification. Please ensure your profile has a valid phone number.',
-        'error'
+        'error',
       );
       return;
     }
@@ -432,18 +433,24 @@ export class WalletProfileComponent implements OnInit {
           const phoneInMessage = this.extractPhoneFromMessage(res.message);
           if (phoneInMessage) {
             this.maskedPhoneNumber = this.maskPhoneNumber(phoneInMessage);
+            // Store the actual phone number from BVN verification for use in wallet profile creation
+            this.bvnVerifiedPhoneNumber = phoneInMessage;
+            console.log(
+              '✅ Captured BVN verified phone number:',
+              this.bvnVerifiedPhoneNumber,
+            );
           }
 
           this.toastService.openSnackBar(
             res.message ||
-            `OTP sent to the phone number registered with your BVN: ${this.maskedPhoneNumber}`,
-            'success'
+              `OTP sent to the phone number registered with your BVN: ${this.maskedPhoneNumber}`,
+            'success',
           );
 
           // Focus on OTP input
           setTimeout(() => {
             const otpInput = document.querySelector(
-              'input[name="otp"]'
+              'input[name="otp"]',
             ) as HTMLInputElement;
             if (otpInput) {
               otpInput.focus();
@@ -454,7 +461,7 @@ export class WalletProfileComponent implements OnInit {
           this.bvnVerified = false;
           this.toastService.openSnackBar(
             res.message || 'Failed to send OTP. Please try again.',
-            'error'
+            'error',
           );
         }
       },
@@ -557,7 +564,7 @@ export class WalletProfileComponent implements OnInit {
             this.formatDob();
             console.log(
               '✅ Date of birth auto-populated from NIN (fallback):',
-              this.dob
+              this.dob,
             );
           }
 
@@ -664,16 +671,16 @@ export class WalletProfileComponent implements OnInit {
               this.formatDob();
               console.log(
                 '✅ Date of birth auto-populated from NIN:',
-                this.dob
+                this.dob,
               );
             } else {
               console.warn(
                 '⚠️ Invalid date format from NIN:',
-                this.ninDateOfBirth
+                this.ninDateOfBirth,
               );
               this.toastService.openSnackBar(
                 'Date of birth from NIN is in an unexpected format. Please enter it manually.',
-                'warning'
+                'warning',
               );
             }
           }
@@ -856,7 +863,7 @@ export class WalletProfileComponent implements OnInit {
       this.acctVerified = false;
       this.toastService.openSnackBar(
         'Please select a bank first to verify account',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -869,7 +876,7 @@ export class WalletProfileComponent implements OnInit {
       this.acctVerified = false;
       this.toastService.openSnackBar(
         '❌ Could not find bank code for selected bank',
-        'error'
+        'error',
       );
       return;
     }
@@ -903,7 +910,7 @@ export class WalletProfileComponent implements OnInit {
           this.accountName = '';
           this.toastService.openSnackBar(
             '❌ Account verification failed',
-            'error'
+            'error',
           );
         }
       },
@@ -927,7 +934,7 @@ export class WalletProfileComponent implements OnInit {
       this.businessAcctError = 'Please select a bank first to verify account';
       this.toastService.openSnackBar(
         'Please select a bank first to verify account',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -945,7 +952,7 @@ export class WalletProfileComponent implements OnInit {
       this.businessAcctError = 'Could not find bank code for selected bank';
       this.toastService.openSnackBar(
         '❌ Could not find bank code for selected bank',
-        'error'
+        'error',
       );
       return;
     }
@@ -982,7 +989,7 @@ export class WalletProfileComponent implements OnInit {
           this.businessAcctError = 'Account verification failed';
           this.toastService.openSnackBar(
             '❌ Business account verification failed',
-            'error'
+            'error',
           );
         }
       },
@@ -1039,7 +1046,7 @@ export class WalletProfileComponent implements OnInit {
 
     console.log(
       '🔍 Calling business verification with payload:',
-      verifyPayload
+      verifyPayload,
     );
 
     this.endpointService.verifyBusiness(verifyPayload).subscribe({
@@ -1061,7 +1068,7 @@ export class WalletProfileComponent implements OnInit {
             this.businessData.companyName = res.data.approvedName;
             console.log(
               '✅ Business name extracted and bound:',
-              this.businessData.companyName
+              this.businessData.companyName,
             );
           }
 
@@ -1072,7 +1079,7 @@ export class WalletProfileComponent implements OnInit {
               this.formatDateForInput(rawDate);
             console.log(
               '✅ Incorporation date extracted and bound:',
-              this.businessData.incorporationDate
+              this.businessData.incorporationDate,
             );
           }
 
@@ -1085,20 +1092,20 @@ export class WalletProfileComponent implements OnInit {
             this.businessData.natureOfBusiness = res.data.natureOfBusiness;
             console.log(
               '✅ Nature of business extracted:',
-              this.businessData.natureOfBusiness
+              this.businessData.natureOfBusiness,
             );
           }
 
           this.toastService.openSnackBar(
             '✅ RC number verified successfully',
-            'success'
+            'success',
           );
         } else {
           this.rcVerified = false;
           console.warn('Unexpected response structure:', res);
           this.toastService.openSnackBar(
             '❌ Invalid RC number or unexpected response',
-            'error'
+            'error',
           );
         }
       },
@@ -1113,7 +1120,7 @@ export class WalletProfileComponent implements OnInit {
           // Try alternative endpoint or show specific message
           this.toastService.openSnackBar(
             '⚠️ Business verification service is currently unavailable. Please try again later.',
-            'warning'
+            'warning',
           );
         } else {
           const errorMsg =
@@ -1152,7 +1159,7 @@ export class WalletProfileComponent implements OnInit {
 
     const cleanBankName = bankName.toLowerCase().trim();
     console.log(
-      `🔍 Looking up bank code for: "${bankName}" (cleaned: "${cleanBankName}")`
+      `🔍 Looking up bank code for: "${bankName}" (cleaned: "${cleanBankName}")`,
     );
 
     // First try exact match
@@ -1174,7 +1181,7 @@ export class WalletProfileComponent implements OnInit {
       if (matchedBank) {
         bankCode = matchedBank.cbnCode || matchedBank.bankCode || '';
         console.log(
-          `✅ Found bank "${matchedBank.bankName}" with code: ${bankCode}`
+          `✅ Found bank "${matchedBank.bankName}" with code: ${bankCode}`,
         );
 
         // Cache this mapping for future use
@@ -1191,7 +1198,7 @@ export class WalletProfileComponent implements OnInit {
       console.log('Available banks:', this.banks.slice(0, 5));
       console.log(
         'Bank code map keys:',
-        Object.keys(this.bankCodeMap).slice(0, 5)
+        Object.keys(this.bankCodeMap).slice(0, 5),
       );
     }
 
@@ -1273,13 +1280,13 @@ export class WalletProfileComponent implements OnInit {
       if (this.otpSent) {
         this.toastService.openSnackBar(
           'Please enter and verify the OTP sent to your phone.',
-          'warning'
+          'warning',
         );
         return;
       } else {
         this.toastService.openSnackBar(
           'Please complete BVN verification first.',
-          'warning'
+          'warning',
         );
         return;
       }
@@ -1314,7 +1321,7 @@ export class WalletProfileComponent implements OnInit {
     } else {
       this.toastService.openSnackBar(
         'Please fill in all required fields correctly',
-        'error'
+        'error',
       );
     }
   }
@@ -1345,7 +1352,7 @@ export class WalletProfileComponent implements OnInit {
         if (!this.rcVerified) {
           this.toastService.openSnackBar(
             'RC number verification failed. Please check your RC number and try again.',
-            'error'
+            'error',
           );
           return;
         }
@@ -1353,7 +1360,7 @@ export class WalletProfileComponent implements OnInit {
         await loading.dismiss();
         this.toastService.openSnackBar(
           'RC number verification failed. Please try again.',
-          'error'
+          'error',
         );
         return;
       }
@@ -1364,7 +1371,7 @@ export class WalletProfileComponent implements OnInit {
     } else {
       this.toastService.openSnackBar(
         'Please fill in all required fields correctly',
-        'error'
+        'error',
       );
     }
   }
@@ -1428,7 +1435,7 @@ export class WalletProfileComponent implements OnInit {
 
       if (!uniqueId) {
         throw new Error(
-          'Unable to retrieve user information. Please login again.'
+          'Unable to retrieve user information. Please login again.',
         );
       }
 
@@ -1436,8 +1443,6 @@ export class WalletProfileComponent implements OnInit {
       if (!bankCode) {
         throw new Error('Invalid bank selected. Please choose a valid bank.');
       }
-
-
 
       //   Check verification status instead
       const verificationErrors = this.checkVerificationStatus();
@@ -1464,7 +1469,7 @@ export class WalletProfileComponent implements OnInit {
       } catch (verifyErr: any) {
         throw new Error(
           verifyErr?.userMessage ||
-          'Verification failed. Please check your inputs.'
+            'Verification failed. Please check your inputs.',
         );
       }
 
@@ -1487,7 +1492,8 @@ export class WalletProfileComponent implements OnInit {
         (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '');
 
       // ✅ FIXED: Ensure phone number is properly formatted
-      let phoneNumber = this.number || '';
+      // Use BVN-verified phone number if available, otherwise use profile phone number
+      let phoneNumber = this.bvnVerifiedPhoneNumber || this.number || '';
       if (phoneNumber) {
         // Convert to Nigerian format if needed (starts with 0 or 234)
         if (phoneNumber.startsWith('0') && phoneNumber.length === 11) {
@@ -1520,7 +1526,7 @@ export class WalletProfileComponent implements OnInit {
         role: this.role.toLowerCase(),
         selectedOption: 'isIndividual',
         title: this.selectedTitle,
-        phoneNumber: this.formatPhoneNumber(this.number), // For individual
+        phoneNumber: phoneNumber, // For individual - use pre-formatted phone number
         uniqueId: uniqueId,
       };
 
@@ -1529,13 +1535,15 @@ export class WalletProfileComponent implements OnInit {
         '📱 Phone number being sent:',
         phoneNumber,
         'Length:',
-        phoneNumber.length
+        phoneNumber.length,
+        '| Using BVN-verified number:',
+        !!this.bvnVerifiedPhoneNumber,
       );
 
       // Add validation before sending
       if (!phoneNumber || phoneNumber.length < 11) {
         throw new Error(
-          'Valid phone number is required (11 digits starting with 0)'
+          'Valid phone number is required (11 digits starting with 0)',
         );
       }
 
@@ -1579,7 +1587,6 @@ export class WalletProfileComponent implements OnInit {
       // Emit event
       this.walletEvents.emitWalletProfileCreated();
 
-
       // Mark the logged-in user as having a wallet profile and notify services
       try {
         this.authService.updateCurrentUser({ hasWalletProfile: true });
@@ -1589,13 +1596,11 @@ export class WalletProfileComponent implements OnInit {
 
       this.toastService.openSnackBar(
         '✅ Individual wallet profile created successfully!',
-        'success'
+        'success',
       );
       this.isFormLocked = true;
 
       this.walletEvents.emitWalletProfileCreated();
-
-
 
       // Notify AppComponent that wallet profile was created
       const appComponent = (window as any).appComponentRef;
@@ -1648,7 +1653,7 @@ export class WalletProfileComponent implements OnInit {
 
       if (!uniqueId) {
         throw new Error(
-          'Unable to retrieve user information. Please login again.'
+          'Unable to retrieve user information. Please login again.',
         );
       }
 
@@ -1672,7 +1677,7 @@ export class WalletProfileComponent implements OnInit {
         await this.endpointService.verifyAccountNumber(acctPayload).toPromise();
       } catch (verifyErr: any) {
         throw new Error(
-          verifyErr?.userMessage || 'Account verification failed'
+          verifyErr?.userMessage || 'Account verification failed',
         );
       }
 
@@ -1712,7 +1717,7 @@ export class WalletProfileComponent implements OnInit {
         cacRegCertificate: this.businessData.cacRegCertificate,
         rcNumber: this.businessData.rcNumber,
         companyName: this.businessData.companyName,
-        phoneNumber: this.formatPhoneNumber(this.businessData.companyPhone), // For business
+        phoneNumber: businessPhoneNumber, // For business - use pre-formatted phone number
       };
 
       console.log('📤 Sending business wallet profile:', {
@@ -1724,7 +1729,7 @@ export class WalletProfileComponent implements OnInit {
       // Add validation before sending
       if (!businessPhoneNumber || businessPhoneNumber.length < 11) {
         throw new Error(
-          'Valid company phone number is required (11 digits starting with 0)'
+          'Valid company phone number is required (11 digits starting with 0)',
         );
       }
 
@@ -1777,13 +1782,11 @@ export class WalletProfileComponent implements OnInit {
       // In createBusinessProfile method, after success:
       this.toastService.openSnackBar(
         '✅ Business wallet profile created successfully!',
-        'success'
+        'success',
       );
       this.isFormLocked = true;
 
       this.walletEvents.emitWalletProfileCreated();
-
-
 
       // Notify AppComponent that wallet profile was created
       const appComponent = (window as any).appComponentRef;
@@ -1895,32 +1898,32 @@ export class WalletProfileComponent implements OnInit {
     // Verification status checks
     if (this.bvnVerified === false) {
       errors.push(
-        'BVN verification failed. Please check your BVN and try again.'
+        'BVN verification failed. Please check your BVN and try again.',
       );
     }
     if (this.ninVerified === false) {
       errors.push(
-        'NIN verification failed. Please check your NIN and try again.'
+        'NIN verification failed. Please check your NIN and try again.',
       );
     }
     if (this.acctVerified === false) {
       errors.push(
-        'Account verification failed. Please check your account number and bank details.'
+        'Account verification failed. Please check your account number and bank details.',
       );
     }
     if (this.bvnVerified === null && this.bvn) {
       errors.push(
-        'BVN verification is pending. Please wait for verification to complete.'
+        'BVN verification is pending. Please wait for verification to complete.',
       );
     }
     if (this.ninVerified === null && this.nin) {
       errors.push(
-        'NIN verification is pending. Please wait for verification to complete.'
+        'NIN verification is pending. Please wait for verification to complete.',
       );
     }
     if (this.acctVerified === null && this.savingsAcc && this.selectedBank) {
       errors.push(
-        'Account verification is pending. Please wait for verification to complete.'
+        'Account verification is pending. Please wait for verification to complete.',
       );
     }
 
@@ -1970,19 +1973,19 @@ export class WalletProfileComponent implements OnInit {
     // Verification status checks
     if (this.rcVerified === false) {
       errors.push(
-        'RC Number verification failed. Please check your RC number and try again.'
+        'RC Number verification failed. Please check your RC number and try again.',
       );
     }
     if (this.rcVerified === null && this.businessData.rcNumber) {
       errors.push(
-        'RC Number verification is pending. Please wait for verification to complete.'
+        'RC Number verification is pending. Please wait for verification to complete.',
       );
     }
 
     // Add business account verification checks
     if (this.businessAcctVerified === false) {
       errors.push(
-        'Business account verification failed. Please check your account number and bank details.'
+        'Business account verification failed. Please check your account number and bank details.',
       );
     }
     if (
@@ -1991,7 +1994,7 @@ export class WalletProfileComponent implements OnInit {
       this.businessData.bankName
     ) {
       errors.push(
-        'Business account verification is pending. Please wait for verification to complete.'
+        'Business account verification is pending. Please wait for verification to complete.',
       );
     }
 
@@ -2086,7 +2089,7 @@ export class WalletProfileComponent implements OnInit {
     }
 
     throw new Error(
-      'Unable to retrieve user unique ID. Please ensure you are logged in.'
+      'Unable to retrieve user unique ID. Please ensure you are logged in.',
     );
   }
 
@@ -2262,7 +2265,7 @@ export class WalletProfileComponent implements OnInit {
     ) {
       this.businessAcctTimer = setTimeout(
         () => this.verifyBusinessAccount(),
-        700
+        700,
       );
     }
   }
@@ -2276,7 +2279,7 @@ export class WalletProfileComponent implements OnInit {
           this.businessData.cacRegCertificate = base64;
           this.toastService.openSnackBar(
             '✅ CAC certificate uploaded successfully',
-            'success'
+            'success',
           );
         })
         .catch((error) => {
@@ -2339,7 +2342,7 @@ export class WalletProfileComponent implements OnInit {
       } else {
         this.rcVerified = false;
         throw new Error(
-          businessVerification.message || 'Business verification failed'
+          businessVerification.message || 'Business verification failed',
         );
       }
     } catch (verifyErr: any) {
@@ -2357,35 +2360,35 @@ export class WalletProfileComponent implements OnInit {
   filterTitle(event: any) {
     const query = event.target.value.toLowerCase();
     this.filteredTitle = this.title.filter((t) =>
-      t.toLowerCase().includes(query)
+      t.toLowerCase().includes(query),
     );
   }
 
   filterGender(event: any) {
     const query = event.target.value.toLowerCase();
     this.filteredGender = this.gender.filter((g) =>
-      g.toLowerCase().includes(query)
+      g.toLowerCase().includes(query),
     );
   }
 
   filterMaritalStatus(event: any) {
     const query = event.target.value.toLowerCase();
     this.filteredMaritalStatus = this.maritalStatus.filter((m) =>
-      m.toLowerCase().includes(query)
+      m.toLowerCase().includes(query),
     );
   }
 
   filterCountries(event: any) {
     const query = event.target.value.toLowerCase();
     this.filteredCountries = this.countries.filter((c) =>
-      c.toLowerCase().includes(query)
+      c.toLowerCase().includes(query),
     );
   }
 
   filterBanks(event: any) {
     const query = event.target.value.toLowerCase();
     this.filteredBanks = this.banks.filter((b) =>
-      b.toLowerCase().includes(query)
+      b.toLowerCase().includes(query),
     );
   }
 
@@ -2627,7 +2630,7 @@ export class WalletProfileComponent implements OnInit {
     if (maritalValue)
       this.selectedMaritalStatus = this.findClosestMatch(
         maritalValue,
-        this.maritalStatus
+        this.maritalStatus,
       );
 
     const countryValue = this.extractValue(user, [
@@ -2638,7 +2641,7 @@ export class WalletProfileComponent implements OnInit {
     if (countryValue) {
       this.selectedCountry = this.findClosestMatch(
         countryValue,
-        this.countries
+        this.countries,
       );
       this.businessData.country = this.selectedCountry;
     }
@@ -2664,7 +2667,7 @@ export class WalletProfileComponent implements OnInit {
     const containsMatch = options.find(
       (opt) =>
         opt.toLowerCase().includes(cleanValue) ||
-        cleanValue.includes(opt.toLowerCase())
+        cleanValue.includes(opt.toLowerCase()),
     );
     if (containsMatch) return containsMatch;
 
@@ -2672,7 +2675,7 @@ export class WalletProfileComponent implements OnInit {
     const partialMatch = options.find(
       (opt) =>
         opt.toLowerCase().startsWith(firstWord) ||
-        firstWord.startsWith(opt.toLowerCase())
+        firstWord.startsWith(opt.toLowerCase()),
     );
     if (partialMatch) return partialMatch;
 

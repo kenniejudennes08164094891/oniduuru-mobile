@@ -11,7 +11,10 @@ import { ToastController } from '@ionic/angular';
 import { UserService } from './user.service';
 import { AppInitService } from './app-init.service';
 import { ToastsService } from './toasts.service';
-import { ForgotPasswordResendOtpPayload, ForgotPasswordVerifyOtpPayload } from '../models/mocks';
+import {
+  ForgotPasswordResendOtpPayload,
+  ForgotPasswordVerifyOtpPayload,
+} from '../models/mocks';
 export interface verifyOTP {
   otp: string;
   phoneNumber: string;
@@ -51,7 +54,7 @@ export class AuthService {
     private jwtInterceptor: JwtInterceptorService,
     private toast: ToastController,
     private injector: Injector,
-    private toastr: ToastsService
+    private toastr: ToastsService,
   ) {
     this.loadStoredUser();
     this.checkInitialAuthState();
@@ -65,18 +68,18 @@ export class AuthService {
     return this.http.post<any>(
       url,
       {},
-      { headers: this.jwtInterceptor.customNoAuthHttpHeaders }
+      { headers: this.jwtInterceptor.customNoAuthHttpHeaders },
     );
   }
 
   public verifyForgotPasswordOTP(
-    payload: ForgotPasswordVerifyOtpPayload
+    payload: ForgotPasswordVerifyOtpPayload,
   ): Observable<any> {
     return this.http.post('/login/v1/auth/verifyOTP', payload);
   }
 
   public resendForgotPasswordOTP(
-    payload: ForgotPasswordResendOtpPayload
+    payload: ForgotPasswordResendOtpPayload,
   ): Observable<any> {
     return this.http.post('/login/v1/auth/resendOTP', payload);
   }
@@ -90,7 +93,6 @@ export class AuthService {
       headers: this.jwtInterceptor.customNoAuthHttpHeaders,
     });
   }
-
 
   private checkInitialAuthState(): void {
     const token = this.getToken();
@@ -147,7 +149,7 @@ export class AuthService {
             error: error.error,
           });
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -180,7 +182,7 @@ export class AuthService {
           },
           complete: () => this.router.navigate(['/auth/login']),
         }),
-        catchError((error) => throwError(() => error))
+        catchError((error) => throwError(() => error)),
       );
   }
   // ============ TOKEN MANAGEMENT ============
@@ -309,13 +311,12 @@ export class AuthService {
 
   getMySecurityQuestions(uniqueId: string): Observable<any> {
     const encodedId = encodeURIComponent(uniqueId);
-
     const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
 
-    console.log('GET Security Questions URL:', url);
+    console.log('📝 Fetching security questions URL:', url);
 
     return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
+      headers: this.jwtInterceptor.customHttpHeaders, // Use authenticated headers
     });
   }
 
@@ -324,64 +325,63 @@ export class AuthService {
    * Get security questions - Use the correct endpoint
    */
 
-  public validateTalentSecurityQuestion(payload: {
-    talentId: string;
-    answerSecurityQuestion: {
-      question: string;
-      answer: string;
-    };
-  } | any): Observable<any> {
+  public validateTalentSecurityQuestion(
+    payload:
+      | {
+          talentId: string;
+          answerSecurityQuestion: {
+            question: string;
+            answer: string;
+          };
+        }
+      | any,
+  ): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
 
-    return this.http.post<any>(url, payload, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-    }).pipe(
-      catchError((error) => {
-        console.error('❌ Error validating security question:', error);
-        return throwError(() => error);
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Error validating security question:', error);
+          return throwError(() => error);
+        }),
+      );
   }
-  public validateScouterSecurityQuestion(payload: {
-    scouterId: string;
-    answerSecurityQuestion: {
-      question: string;
-      answer: string;
-    };
-  } | any): Observable<any> {
+  public validateScouterSecurityQuestion(
+    payload:
+      | {
+          scouterId: string;
+          answerSecurityQuestion: {
+            question: string;
+            answer: string;
+          };
+        }
+      | any,
+  ): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.validateScouterSecurityQuestions}`;
 
-    return this.http.post<any>(url, payload, {
-      headers: this.jwtInterceptor.customNoAuthHttpHeaders,
-    }).pipe(
-      catchError((error) => {
-        console.error('❌ Error validating security question:', error);
-        return throwError(() => error);
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customNoAuthHttpHeaders,
       })
-    );
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Error validating security question:', error);
+          return throwError(() => error);
+        }),
+      );
   }
 
   /**
    * Get security questions with answers (if available)
+   * Falls back to regular questions if the endpoint fails
    */
   getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
-    const encodedId = encodeURIComponent(uniqueId);
-    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
-
-    console.log('🔗 GET Security Questions With Answers URL:', url);
-
-    return this.http
-      .get<any>(url, {
-        headers: this.jwtInterceptor.customHttpHeaders, // Ensure authenticated headers
-      })
-      .pipe(
-        timeout(30000), // Increase timeout
-        catchError((error) => {
-          console.warn('Could not fetch questions with answers:', error);
-          // Fall back to regular endpoint
-          return this.getMySecurityQuestions(uniqueId);
-        })
-      );
+    // Use the regular endpoint - the "with answers" endpoint has issues
+    console.log('📝 Fetching security questions for:', uniqueId);
+    return this.getMySecurityQuestions(uniqueId);
   }
 
   testApiConnection(): Observable<any> {
@@ -391,7 +391,7 @@ export class AuthService {
       catchError((error) => {
         console.error('🔌 API Connection Test Failed:', error);
         return throwError(() => new Error('API server is unreachable'));
-      })
+      }),
     );
   }
 
@@ -433,18 +433,18 @@ export class AuthService {
       })
       .pipe(
         tap((res) =>
-          console.log('✅ Created scouter security questions:', res)
+          console.log('✅ Created scouter security questions:', res),
         ),
         catchError((error) => {
           console.error('❌ Error creating scouter security questions:', error);
           return throwError(() => error);
-        })
+        }),
       );
   }
 
   public updateTalentSecurityQuestions(
     payload: any,
-    talentId: string
+    talentId: string,
   ): Observable<any> {
     const body = JSON.stringify(payload);
     const encodedTalentId = encodeURIComponent(talentId);
@@ -459,7 +459,7 @@ export class AuthService {
    */
   public updateScouterSecurityQuestions(
     scouterId: string,
-    securityQuestions: any[]
+    securityQuestions: any[],
   ): Observable<any> {
     // Use the FULL scouter ID
     const fullScouterId = scouterId; // e.g., "scouter/5042/28September2025"
@@ -480,7 +480,7 @@ export class AuthService {
         { securityQuestions },
         {
           headers: this.jwtInterceptor.customHttpHeaders,
-        }
+        },
       )
       .pipe(
         timeout(15000),
@@ -496,7 +496,7 @@ export class AuthService {
             error: error.error,
           });
           return throwError(() => error);
-        })
+        }),
       );
   }
 
@@ -515,7 +515,7 @@ export class AuthService {
         catchError((error) => {
           console.error('❌ Failed to delete security question:', error);
           return throwError(() => error);
-        })
+        }),
       );
   }
 

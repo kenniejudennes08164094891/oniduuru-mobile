@@ -19,7 +19,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { Subject, Subscription } from 'rxjs';
 import * as bcrypt from 'bcryptjs';
-import { map, takeUntil } from 'rxjs/operators';
+import { map, takeUntil, timeout } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { switchMap } from 'rxjs/operators';
 import { endpoints } from 'src/app/models/endpoint';
@@ -110,7 +110,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
-    private ngZone: NgZone
+    private ngZone: NgZone,
   ) {}
 
   ngOnInit() {
@@ -250,7 +250,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     })
       .then(async (response) => {
         console.log(
-          ` Backend response: ${response.status} ${response.statusText}`
+          ` Backend response: ${response.status} ${response.statusText}`,
         );
         const text = await response.text();
         console.log(' Response:', text.substring(0, 200));
@@ -338,12 +338,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
       this.toastService.openSnackBar(
         'Using cached profile data. Some features may be limited.',
-        'warning'
+        'warning',
       );
     } else {
       this.toastService.openSnackBar(
         'Unable to load profile. Please check your internet connection.',
-        'error'
+        'error',
       );
     }
 
@@ -389,7 +389,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     if (err.status === 401) {
       this.toastService.openSnackBar(
         'Session expired. Please login again.',
-        'error'
+        'error',
       );
       this.redirectToLogin();
     } else {
@@ -555,7 +555,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           const parsed = JSON.parse(cleanString);
           if (Array.isArray(parsed)) {
             return parsed.filter(
-              (item) => item && typeof item === 'string' && item.trim() !== ''
+              (item) => item && typeof item === 'string' && item.trim() !== '',
             );
           }
         }
@@ -572,7 +572,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
       if (Array.isArray(orgType)) {
         return orgType.filter(
-          (item) => item && typeof item === 'string' && item.trim() !== ''
+          (item) => item && typeof item === 'string' && item.trim() !== '',
         );
       }
     } catch (error) {
@@ -649,7 +649,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           this.handleSuccessfulSave(payload, res);
           this.toastService.openSnackBar(
             'Profile updated successfully!',
-            'success'
+            'success',
           );
           this.cdr.detectChanges();
         },
@@ -672,12 +672,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           ) {
             this.toastService.openSnackBar(
               'Request timed out. Please try again.',
-              'warning'
+              'warning',
             );
           } else {
             this.toastService.openSnackBar(
               err.message || 'Failed to save profile',
-              'error'
+              'error',
             );
           }
 
@@ -710,7 +710,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       const responseData =
         apiResponse.data || apiResponse.details || apiResponse;
       const responseOrgTypes = this.parseOrganizationTypes(
-        responseData.organizationType
+        responseData.organizationType,
       );
       const finalOrgTypes =
         responseOrgTypes.length > 0
@@ -866,7 +866,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     if (!['jpeg', 'png'].includes(fileType)) {
       this.toastService.openSnackBar(
         'Only jpeg or png file format is acceptable',
-        'error'
+        'error',
       );
       return;
     }
@@ -874,7 +874,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     if (file.size > 5 * 1024 * 1024) {
       this.toastService.openSnackBar(
         'Image size should be less than 5MB',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -933,7 +933,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
             console.error(' Upload failed:', err);
             this.toastService.openSnackBar(
               'Failed to upload profile picture',
-              'error'
+              'error',
             );
           },
         });
@@ -949,7 +949,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.storeProfileImage(fullImageData);
     this.toastService.openSnackBar(
       'Profile picture updated successfully!',
-      'success'
+      'success',
     );
     this.cdr.detectChanges();
   }
@@ -958,7 +958,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     if (!this.hasExistingProfilePicture) return;
 
     const confirmDelete = confirm(
-      'Are you sure you want to remove your profile picture?'
+      'Are you sure you want to remove your profile picture?',
     );
     if (!confirmDelete) return;
 
@@ -975,7 +975,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
           console.error(' Failed to remove profile picture:', err);
           this.toastService.openSnackBar(
             'Failed to remove profile picture',
-            'warning'
+            'warning',
           );
         },
       });
@@ -1020,137 +1020,89 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
    * Load security questions with answers
    */
   private loadSecurityQuestionsWithAnswers(): void {
-
-    this.debugSecurityQuestionsRequest();
-
     if (!this.scouterId) {
-      console.error('No scouterId for security questions');
+      console.error('❌ No scouterId for security questions');
+      this.isLoadingSecurityQuestions = false;
+      this.handleSecurityQuestionsError({ status: 400, message: 'No user ID' });
       return;
     }
 
     this.isLoadingSecurityQuestions = true;
     this.securityQuestionErrorMessage = '';
+    this.securityQuestions = [];
     this.cdr.detectChanges();
 
-    console.log('Loading security questions for:', this.scouterId);
+    console.log('📝 Loading security questions for:', this.scouterId);
 
-    // First try with answers endpoint
+    // Try with answers endpoint with 30 second timeout
     const sub = this.authService
       .getMySecurityQuestionsWithAnswers(this.scouterId)
+      .pipe(
+        timeout(30000), // 30 second timeout for slow networks
+        takeUntil(this.destroy$),
+      )
       .subscribe({
         next: (res: any) => {
-          console.log('Security questions response:', res);
+          console.log('✅ Security questions response received:', res);
           this.handleSecurityQuestionsResponse(res);
-          this.isLoadingSecurityQuestions = false;
-          this.cdr.detectChanges();
         },
         error: (err: any) => {
-          console.error('Error loading security questions:', err);
+          console.error('❌ Primary endpoint failed:', err);
 
-          // Try fallback
-          this.loadBasicSecurityQuestions();
+          // Check if timeout - if so, show empty state instead of retrying
+          if (err.name === 'TimeoutError') {
+            console.error('⏰ Primary endpoint timed out after 30 seconds');
+            // Don't retry - just show empty state
+            this.isLoadingSecurityQuestions = false;
+            this.securityQuestions = [];
+            this.securityQuestionErrorMessage =
+              'Loading took too long. Try again or create new questions.';
+            this.updateSecurityQuestionsState();
+            this.cdr.detectChanges();
+          } else {
+            // Try fallback endpoint on other errors (404, 500, etc)
+            this.loadBasicSecurityQuestions();
+          }
         },
       });
 
     this.subscriptions.push(sub);
   }
 
-
-
-// profile-page.component.ts
-private debugSecurityQuestionsRequest(): void {
-  const token = localStorage.getItem('access_token');
-  const uniqueId = this.scouterId;
-  const encodedId = encodeURIComponent(uniqueId);
-  const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestions}?uniqueId=${encodedId}`;
-
-  console.log('🔍 DEBUG Security Questions Request:', {
-    scouterId: uniqueId,
-    encodedScouterId: encodedId,
-    url: url,
-    tokenExists: !!token,
-    tokenLength: token?.length,
-    endpointPath: endpoints.getMySecurityQuestions
-  });
-
-  // Test with fetch to see what happens
-  fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    }
-  })
-  .then(async response => {
-    console.log('🔍 Direct fetch response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
-    });
-    const text = await response.text();
-    console.log('🔍 Response text:', text.substring(0, 200));
-  })
-  .catch(error => {
-    console.error('🔍 Direct fetch error:', error);
-  });
-}
-
-  /**
-   * Try to extract base64 from text
-   */
-  private tryExtractBase64FromText(text: string): void {
-    console.log(' Trying to extract base64 from text...');
-
-    // Look for base64 patterns in the text
-    const base64Pattern = /"data"\s*:\s*"([^"]+)"/;
-    const match = text.match(base64Pattern);
-
-    if (match && match[1]) {
-      console.log(' Found base64 in data field');
-      const base64Data = match[1];
-      const decoded = this.decodeBase64(base64Data);
-      if (decoded) {
-        this.processSecurityQuestionsResponse({ data: decoded });
-        return;
-      }
-    }
-
-    // Try another pattern
-    const anyBase64Pattern = /([A-Za-z0-9+/]{40,}={0,2})/;
-    const anyMatch = text.match(anyBase64Pattern);
-
-    if (anyMatch && anyMatch[1]) {
-      console.log('⚠️ Found potential base64 string');
-      try {
-        const decoded = atob(anyMatch[1]);
-        const parsed = JSON.parse(decoded);
-        this.processSecurityQuestionsResponse({ data: parsed });
-        return;
-      } catch (e) {
-        console.error(' Failed to decode potential base64:', e);
-      }
-    }
-
-    throw new Error('Could not extract security questions from response');
-  }
-
   /**
    * Fallback to basic security questions endpoint
    */
   private loadBasicSecurityQuestions(): void {
+    console.log('🔄 Retrying with fallback endpoint (30 second timeout)...');
+
     const fallbackSub = this.authService
       .getMySecurityQuestions(this.scouterId)
+      .pipe(
+        timeout(30000), // 30 second timeout for fallback too
+        takeUntil(this.destroy$),
+      )
       .subscribe({
         next: (res: any) => {
-          this.processSecurityQuestionsResponse(res);
-          this.isLoadingSecurityQuestions = false;
-          this.cdr.detectChanges();
+          console.log('✅ Fallback endpoint successful:', res);
+          this.handleSecurityQuestionsResponse(res);
         },
         error: (err: any) => {
-          console.error('Both endpoints failed:', err);
-          this.securityQuestions = [];
+          console.error('❌ Fallback endpoint failed:', err);
           this.isLoadingSecurityQuestions = false;
-          this.securityQuestionErrorMessage =
-            'Unable to load security questions. Please try again later.';
+          this.securityQuestions = [];
+
+          if (err.name === 'TimeoutError') {
+            this.securityQuestionErrorMessage =
+              'Request timed out. Try again or create new questions.';
+          } else if (err.status === 404) {
+            this.securityQuestionErrorMessage =
+              'No security questions found. Create some to get started.';
+          } else {
+            this.securityQuestionErrorMessage =
+              'Unable to load security questions. Please try again later.';
+          }
+
+          this.updateSecurityQuestionsState();
           this.cdr.detectChanges();
         },
       });
@@ -1158,62 +1110,12 @@ private debugSecurityQuestionsRequest(): void {
     this.subscriptions.push(fallbackSub);
   }
 
-
-
-
   /**
    * Check if text looks like pure base64
    */
   private looksLikePureBase64(str: string): boolean {
     const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
     return base64Regex.test(str.trim()) && str.trim().length % 4 === 0;
-  }
-
-  /**
-   * Process security questions response
-   */
-  private processSecurityQuestionsResponse(response: any): void {
-    // Processing security questions response
-
-    this.securityQuestions = [];
-
-    // Check if data is a base64-encoded string
-    if (response?.data && typeof response.data === 'string') {
-      // Data appears to be base64 encoded - decoding attempt
-
-      const decodedData = this.decodeBase64(response.data);
-
-      if (decodedData && Array.isArray(decodedData)) {
-        // Successfully decoded questions
-        this.processDecodedQuestionsArray(decodedData);
-      } else {
-        console.error('Decoded data is not an array or is empty');
-        this.securityQuestions = [];
-      }
-    }
-    // Handle direct array format
-    else if (Array.isArray(response?.data)) {
-      this.processDecodedQuestionsArray(response.data);
-    }
-    // Handle direct response array
-    else if (Array.isArray(response)) {
-      this.processDecodedQuestionsArray(response);
-    }
-    // Handle other response formats
-    else if (response?.questions && Array.isArray(response.questions)) {
-      this.processDecodedQuestionsArray(response.questions);
-    }
-    // Try to extract from message format
-    else if (response?.message && response.data) {
-      // Trying to extract from message format
-      this.processSecurityQuestionsResponse({ data: response.data });
-    }
-
-    this.isLoadingSecurityQuestions = false;
-    this.updateSecurityQuestionsState();
-    this.cdr.detectChanges();
-
-    // Security questions loaded: count = ${this.securityQuestions.length}
   }
 
   /**
@@ -1232,8 +1134,6 @@ private debugSecurityQuestionsRequest(): void {
    */
   private decodeBase64(base64String: string): any {
     try {
-      // Decoding base64 string
-
       // Clean the string (remove whitespace, etc.)
       const cleanString = base64String.trim();
 
@@ -1260,56 +1160,10 @@ private debugSecurityQuestionsRequest(): void {
   }
 
   /**
-   * Debug method to test base64 decoding
-   */
-  debugBase64Decoding(): void {
-    // removed: debug helper for base64 decoding
-  }
-
-  /**
-   * Process decoded questions array
-   */
-  private processDecodedQuestionsArray(questionsArray: any[]): void {
-    if (!questionsArray || !Array.isArray(questionsArray)) {
-      // No valid questions array found
-      this.securityQuestions = [];
-      return;
-    }
-
-    // Processing questions array
-
-    this.securityQuestions = questionsArray.map((item: any, index: number) => {
-      // Extract question and answer
-      const questionText = item.question || item.text || '';
-      const answerText = item.answer || '';
-
-      // Determine if answer is hashed (BCrypt format)
-      const isHashed = this.isHashedAnswer(answerText);
-
-      // Create question object
-      const questionObj: SecurityQuestion = {
-        id: item.id || `q-${Date.now()}-${index}`,
-        question: questionText,
-        answer: isHashed ? this.ANSWER_MASK : answerText,
-        isHashed: isHashed,
-        showAnswer: false,
-        originalAnswer: answerText, // Store original for reference
-        createdAt: item.createdAt || new Date().toISOString(),
-      };
-
-      // question processed
-
-      return questionObj;
-    });
-
-    console.log(` Loaded ${this.securityQuestions.length} security questions`);
-  }
-
-  /**
    * Improved processing of security questions array
    */
   private processSecurityQuestionsWithAnswersArray(
-    questionsArray: any[]
+    questionsArray: any[],
   ): void {
     if (!questionsArray || !Array.isArray(questionsArray)) {
       console.log('⚠️ No valid questions array found');
@@ -1465,7 +1319,7 @@ private debugSecurityQuestionsRequest(): void {
     console.log(
       ' Initialized editing with:',
       this.tempSecurityQuestions.length,
-      'questions'
+      'questions',
     );
   }
 
@@ -1479,7 +1333,7 @@ private debugSecurityQuestionsRequest(): void {
     if (!this.canSaveSecurityQuestions()) {
       this.toastService.openSnackBar(
         'Please fill in all questions and answers (minimum 5 chars for question, 3 for answer)',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1488,7 +1342,7 @@ private debugSecurityQuestionsRequest(): void {
     if (this.hasDuplicateQuestions()) {
       this.toastService.openSnackBar(
         'Duplicate questions found. Please use unique questions.',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1500,7 +1354,7 @@ private debugSecurityQuestionsRequest(): void {
     try {
       // Filter only filled questions
       const filledQuestions = this.tempSecurityQuestions.filter(
-        (q) => q.question.trim() && q.answer.trim()
+        (q) => q.question.trim() && q.answer.trim(),
       );
 
       if (filledQuestions.length === 0) {
@@ -1526,13 +1380,13 @@ private debugSecurityQuestionsRequest(): void {
           // Hash new answer
           const hashedAnswer = await bcrypt.hash(
             qa.answer.trim().toLowerCase(),
-            10
+            10,
           );
           return {
             question: qa.question.trim(),
             answer: hashedAnswer,
           };
-        })
+        }),
       );
 
       const payload = {
@@ -1567,7 +1421,8 @@ private debugSecurityQuestionsRequest(): void {
    */
   private handleSecurityQuestionsResponse(res: any): void {
     this.isLoadingSecurityQuestions = false;
-    console.log(' Processing security questions response:', res);
+    this.securityQuestionErrorMessage = ''; // Clear any previous error
+    console.log('✅ Processing security questions response:', res);
 
     // Clear any existing questions
     this.securityQuestions = [];
@@ -1609,10 +1464,10 @@ private debugSecurityQuestionsRequest(): void {
       Array.isArray(res?.data) &&
       res.data.length === 0
     ) {
-      console.log(' No security questions found (empty array)');
+      console.log('ℹ️  No security questions found (empty array)');
     }
     this.updateSecurityQuestionsState();
-    console.log(' Security questions processed:', {
+    console.log('✅ Security questions processed:', {
       count: this.securityQuestions.length,
       questions: this.securityQuestions,
     });
@@ -1768,7 +1623,7 @@ private debugSecurityQuestionsRequest(): void {
           this.authService
             .updateScouterSecurityQuestions(
               this.scouterId, // FULL scouter ID
-              payload.securityQuestions
+              payload.securityQuestions,
             )
             .subscribe({
               next: (retryRes) => {
@@ -1817,7 +1672,7 @@ private debugSecurityQuestionsRequest(): void {
     // Check if data is a base64-encoded string
     if (res?.data && typeof res.data === 'string') {
       console.log(
-        ' Data appears to be base64 encoded, attempting to decode...'
+        ' Data appears to be base64 encoded, attempting to decode...',
       );
 
       const decodedData = this.decodeBase64(res.data);
@@ -1882,7 +1737,7 @@ private debugSecurityQuestionsRequest(): void {
     if (!attempt) {
       this.toastService.openSnackBar(
         'Enter your existing answer to verify',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -1902,13 +1757,13 @@ private debugSecurityQuestionsRequest(): void {
         qa.revealAttempt = '';
         this.toastService.openSnackBar(
           'Answer verified — revealed for editing',
-          'success'
+          'success',
         );
       } else {
         qa.revealed = false;
         this.toastService.openSnackBar(
           'Answer did not match our records',
-          'error'
+          'error',
         );
       }
     } catch (err) {
@@ -1946,7 +1801,7 @@ private debugSecurityQuestionsRequest(): void {
 
     this.toastService.openSnackBar(
       'Security questions saved successfully!',
-      'success'
+      'success',
     );
 
     // Reload from server to ensure sync
@@ -1994,7 +1849,7 @@ private debugSecurityQuestionsRequest(): void {
     if (!question) return;
 
     const confirmed = confirm(
-      `Delete question: "${question.question.substring(0, 50)}..."?`
+      `Delete question: "${question.question.substring(0, 50)}..."?`,
     );
     if (!confirmed) return;
 
@@ -2021,7 +1876,7 @@ private debugSecurityQuestionsRequest(): void {
     // Scroll to the edited question
     setTimeout(() => {
       const element = document.querySelector(
-        `[data-question-index="${index}"]`
+        `[data-question-index="${index}"]`,
       );
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2038,7 +1893,7 @@ private debugSecurityQuestionsRequest(): void {
     if (this.tempSecurityQuestions.length >= this.maxSecurityQuestions) {
       this.toastService.openSnackBar(
         `Maximum of ${this.maxSecurityQuestions} security questions allowed`,
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2062,7 +1917,7 @@ private debugSecurityQuestionsRequest(): void {
     setTimeout(() => {
       const lastIndex = this.tempSecurityQuestions.length - 1;
       const element = document.querySelector(
-        `[data-question-index="${lastIndex}"]`
+        `[data-question-index="${lastIndex}"]`,
       );
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2079,7 +1934,7 @@ private debugSecurityQuestionsRequest(): void {
     if (this.tempSecurityQuestions.length <= 1) {
       this.toastService.openSnackBar(
         'Must have at least one question',
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2102,7 +1957,7 @@ private debugSecurityQuestionsRequest(): void {
 
     // Check all questions have at least 5 chars
     const allQuestionsValid = this.tempSecurityQuestions.every(
-      (q) => q.question.trim().length >= 5
+      (q) => q.question.trim().length >= 5,
     );
 
     // Check answers: if editing existing hashed answer, blank is OK
@@ -2200,7 +2055,7 @@ private debugSecurityQuestionsRequest(): void {
     if (!this.canAddMoreQuestions()) {
       this.toastService.openSnackBar(
         `Maximum of ${this.maxSecurityQuestions} questions reached`,
-        'warning'
+        'warning',
       );
       return;
     }
@@ -2261,7 +2116,8 @@ private debugSecurityQuestionsRequest(): void {
    */
   hasInvalidQuestions(): boolean {
     return this.tempSecurityQuestions.some(
-      (qa) => qa.question?.trim()?.length > 0 && qa.question?.trim()?.length < 5
+      (qa) =>
+        qa.question?.trim()?.length > 0 && qa.question?.trim()?.length < 5,
     );
   }
 
@@ -2270,7 +2126,7 @@ private debugSecurityQuestionsRequest(): void {
    */
   hasInvalidAnswers(): boolean {
     return this.tempSecurityQuestions.some(
-      (qa) => qa.answer?.trim()?.length > 0 && qa.answer?.trim()?.length < 3
+      (qa) => qa.answer?.trim()?.length > 0 && qa.answer?.trim()?.length < 3,
     );
   }
 
@@ -2279,7 +2135,7 @@ private debugSecurityQuestionsRequest(): void {
    */
   hasAnyQuestionsOrAnswers(): boolean {
     return this.tempSecurityQuestions.some(
-      (qa) => qa.question?.trim() || qa.answer?.trim()
+      (qa) => qa.question?.trim() || qa.answer?.trim(),
     );
   }
 
@@ -2377,7 +2233,7 @@ private debugSecurityQuestionsRequest(): void {
   private async showDeleteConfirmation(question: string): Promise<boolean> {
     return new Promise((resolve) => {
       const confirmed = confirm(
-        `Are you sure you want to delete this question?\n\n"${question}"`
+        `Are you sure you want to delete this question?\n\n"${question}"`,
       );
       resolve(confirmed);
     });
