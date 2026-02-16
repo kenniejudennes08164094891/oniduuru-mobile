@@ -29,7 +29,7 @@ export class MarketEngagementMarketPricePreparationComponent implements OnInit {
   hire: TotalHires | undefined;
   images = imageIcons;
   userName: string = '';
-  talentName: string = 'Talent'; // New property for talent name
+  talentName: string = 'Talent'; // New property for talent name.
   isLoading: boolean = false;
   private previousTalentId: string | null = null;
 
