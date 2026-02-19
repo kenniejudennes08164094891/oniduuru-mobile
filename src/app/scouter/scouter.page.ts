@@ -17,10 +17,11 @@ import {
   Validators,
   AbstractControl,
   ValidatorFn,
+  ValidationErrors,
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { debounceTime, map, switchMap } from 'rxjs/operators';
+import { debounceTime, map, switchMap, catchError } from 'rxjs/operators';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { UserService } from 'src/app/services/user.service';
 import { ToastsService } from '../services/toasts.service';
@@ -32,6 +33,10 @@ import { ToastsService } from '../services/toasts.service';
   standalone: false,
 })
 export class ScouterPage implements OnInit, OnDestroy {
+  // Password visibility toggles
+  showPassword: boolean = false;
+  showConfirmPassword: boolean = false;
+
   currentStep = 0;
   activeTab: string = 'scouter';
 
@@ -42,12 +47,16 @@ export class ScouterPage implements OnInit, OnDestroy {
     'Verify Scouter',
   ];
 
+  orgTypeInputTouched: boolean = false;
+  orgTypeInputError: string = '';
+
   isProcessing = false;
   tempUserData: any = null;
   tempUserId: string | null = null;
   lastOtpChannel: 'email' | 'phone' | null = null;
   accountExistsError: string | null = null;
   errorMessage: string = '';
+  otpError: string = '';
   showSuccessModal = false;
 
   forms: FormGroup[] = [];
@@ -58,83 +67,12 @@ export class ScouterPage implements OnInit, OnDestroy {
 
   @ViewChild('orgInput') orgInput!: ElementRef<HTMLInputElement>;
 
-  // --- Organization input handling - UPDATED TO MATCH PROFILE PAGE ---
+  // Organization input handling
   orgTypeInput: string = '';
-  selectedOrgTypes: string[] = []; // Changed from single string to array
+  selectedOrgTypes: string[] = [];
 
-
-  onOrgInput(event: Event) {
-    const inputElement = event.target as HTMLInputElement;
-    if (inputElement) {
-      this.orgTypeInput = inputElement.value;
-    }
-  }
-
-  addOrgTypeFromInput(event?: Event) {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    const newType = this.orgTypeInput.trim();
-
-    // Validate input
-    if (!newType) {
-      return;
-    }
-
-    // Check for duplicates
-    if (this.selectedOrgTypes.includes(newType)) {
-      this.toast.openSnackBar(`"${newType}" is already added`, 'warning');
-      return;
-    }
-
-    // Add the new organization type
-    this.selectedOrgTypes.push(newType);
-    this.updateOrganisationFormControl();
-
-    // Clear input and refocus
-    this.orgTypeInput = '';
-
-    // Refocus the input for better mobile UX
-    setTimeout(() => {
-      if (this.orgInput?.nativeElement) {
-        this.orgInput.nativeElement.focus();
-      }
-    }, 50);
-
-    // Debug and validation
-    console.log('✅ Added org type:', newType);
-    console.log('📋 Current org types:', this.selectedOrgTypes);
-    this.checkFormStatus();
-
-    // Show success feedback
-    this.toast.openSnackBar(`Added "${newType}"`, 'success');
-  }
-
-  removeOrgType(index: number) {
-    const removedType = this.selectedOrgTypes[index];
-    this.selectedOrgTypes.splice(index, 1);
-    this.updateOrganisationFormControl();
-
-    this.checkFormStatus();
-
-    // Show feedback
-    this.toast.openSnackBar(`Removed "${removedType}"`, 'info');
-  }
-
-  // Update the focus method with null check
-  focusOrgInput() {
-    const input = document.getElementById('organisation') as HTMLInputElement;
-    if (input) {
-      input.focus();
-    }
-  }
-
-  // Handle enter key (you can remove the old handleEnterKey method)
-  handleEnterKey(event: any) {
-    this.addOrgTypeFromInput(event);
-  }
+  // Password strength tracking
+  passwordStrength: number = 0;
 
   constructor(
     private location: Location,
@@ -147,19 +85,370 @@ export class ScouterPage implements OnInit, OnDestroy {
     addIcons({ personCircle, star, business, addOutline });
   }
 
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility() {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
   ngOnInit() {
     this.initializeForms();
     this.initializeOtpControls();
     this.setupEmailValidation();
+    this.setupPasswordStrengthListener();
   }
 
   ngOnDestroy() {
     clearInterval(this.timer);
   }
 
-  // Add this custom validator
-  arrayMinLengthValidator(min: number) {
-    return (control: AbstractControl) => {
+  // Custom validators
+  private nigerianPhoneValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+      // Accepts +234xxxxxxxxxx or 0xxxxxxxxxx (Nigerian numbers)
+      const plus234Pattern = /^\+234[789][01][0-9]{8}$/;
+      const zeroPattern = /^0[789][01][0-9]{8}$/;
+      const valid = plus234Pattern.test(value) || zeroPattern.test(value);
+      return valid ? null : { pattern: true };
+    };
+  }
+
+  private strictEmailValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      // Acceptable domains
+      const allowedDomains = [
+        'com',
+        'org',
+        'net',
+        'edu',
+        'gov',
+        'co',
+        'io',
+        'ng',
+        'us',
+        'uk',
+        'ca',
+        'de',
+        'fr',
+        'au',
+        'za',
+        'info',
+        'me',
+        'tv',
+        'biz',
+        'app',
+        'dev',
+        'ai',
+        'ac',
+        'in',
+        'eu',
+        'asia',
+        'africa',
+        'int',
+        'mil',
+        'museum',
+        'name',
+        'pro',
+        'tech',
+        'xyz',
+        'id',
+        'ph',
+        'sg',
+        'my',
+        'jp',
+        'kr',
+        'cn',
+        'es',
+        'it',
+        'ru',
+        'br',
+        'mx',
+        'ar',
+        'cl',
+        'pe',
+        'tr',
+        'pl',
+        'se',
+        'no',
+        'fi',
+        'dk',
+        'be',
+        'ch',
+        'nl',
+        'at',
+        'cz',
+        'gr',
+        'pt',
+        'ro',
+        'sk',
+        'si',
+        'hr',
+        'bg',
+        'lt',
+        'lv',
+        'ee',
+        'hu',
+        'rs',
+        'ua',
+        'by',
+        'kz',
+        'ge',
+        'il',
+        'sa',
+        'ae',
+        'qa',
+        'kw',
+        'om',
+        'bh',
+        'eg',
+        'ma',
+        'tn',
+        'dz',
+        'ng',
+        'gh',
+        'ke',
+        'tz',
+        'ug',
+        'zm',
+        'zw',
+        'mw',
+        'na',
+        'bw',
+        'ls',
+        'sz',
+        'cm',
+        'sn',
+        'ci',
+        'ml',
+        'bf',
+        'ne',
+        'td',
+        'sd',
+        'ss',
+        'et',
+        'so',
+        'dj',
+        'er',
+        'mg',
+        'mu',
+        'sc',
+        'cv',
+        'st',
+        'gq',
+        'ga',
+        'cg',
+        'cd',
+        'ao',
+        'mz',
+        'gw',
+        'gm',
+        'sl',
+        'lr',
+        'mr',
+        'gn',
+        'tg',
+        'bj',
+        'cf',
+        'cg',
+        'cm',
+        'bi',
+        'rw',
+        'km',
+        'yt',
+        're',
+        'pm',
+        'wf',
+        'tf',
+        'pf',
+        'nc',
+        'vu',
+        'sb',
+        'fm',
+        'mh',
+        'pw',
+        'nr',
+        'tv',
+        'ki',
+        'to',
+        'ws',
+        'as',
+        'ck',
+        'nu',
+        'tk',
+        'wf',
+        'tf',
+        'pn',
+        'sh',
+        'gs',
+        'io',
+        'aq',
+        'bv',
+        'hm',
+        'sj',
+        'um',
+        'va',
+        'su',
+        'tp',
+        'yu',
+        'zr',
+        'dd',
+        'tp',
+        'an',
+        'bu',
+        'cs',
+        'nt',
+        'pc',
+        'vd',
+        'wk',
+        'yu',
+        'zr',
+        'co',
+        'uk',
+        'us',
+        'ca',
+        'au',
+        'nz',
+        'za',
+        'ng',
+        'ke',
+        'gh',
+        'tz',
+        'ug',
+        'zm',
+        'zw',
+        'mw',
+        'na',
+        'bw',
+        'ls',
+        'sz',
+        'cm',
+        'sn',
+        'ci',
+        'ml',
+        'bf',
+        'ne',
+        'td',
+        'sd',
+        'ss',
+        'et',
+        'so',
+        'dj',
+        'er',
+        'mg',
+        'mu',
+        'sc',
+        'cv',
+        'st',
+        'gq',
+        'ga',
+        'cg',
+        'cd',
+        'ao',
+        'mz',
+        'gw',
+        'gm',
+        'sl',
+        'lr',
+        'mr',
+        'gn',
+        'tg',
+        'bj',
+        'cf',
+        'cg',
+        'cm',
+        'bi',
+        'rw',
+        'km',
+        'yt',
+        're',
+        'pm',
+        'wf',
+        'tf',
+        'pf',
+        'nc',
+        'vu',
+        'sb',
+        'fm',
+        'mh',
+        'pw',
+        'nr',
+        'tv',
+        'ki',
+        'to',
+        'ws',
+        'as',
+        'ck',
+        'nu',
+        'tk',
+        'wf',
+        'tf',
+        'pn',
+        'sh',
+        'gs',
+        'io',
+        'aq',
+        'bv',
+        'hm',
+        'sj',
+        'um',
+        'va',
+        'su',
+        'tp',
+        'yu',
+        'zr',
+        'dd',
+        'tp',
+        'an',
+        'bu',
+        'cs',
+        'nt',
+        'pc',
+        'vd',
+        'wk',
+        'yu',
+        'zr',
+      ];
+      // Extract domain
+      const match = value.match(
+        /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,})$/,
+      );
+      let unusualDomain = false;
+      if (match) {
+        const tld = match[2].toLowerCase();
+        if (!allowedDomains.includes(tld)) {
+          unusualDomain = true;
+        }
+      }
+      // Standard email pattern
+      const valid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
+        value,
+      );
+      if (!valid) return { pattern: true };
+      if (unusualDomain) return { unusualDomain: true };
+      return null;
+    };
+  }
+
+  private fullNameValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (!value) return null;
+
+      // Allow letters, spaces, hyphens, and apostrophes
+      const valid = /^[a-zA-Z\s\-']+$/.test(value);
+      return valid ? null : { pattern: true };
+    };
+  }
+
+  private arrayMinLengthValidator(min: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
       if (
         !control.value ||
         !Array.isArray(control.value) ||
@@ -176,29 +465,75 @@ export class ScouterPage implements OnInit, OnDestroy {
     };
   }
 
-  // Update your form initialization for step 2
+  private passwordMatchValidator(
+    group: AbstractControl,
+  ): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+
+    if (password && confirmPassword && password !== confirmPassword) {
+      group.get('confirmPassword')?.setErrors({ mismatch: true });
+      return { mismatch: true };
+    }
+
+    if (confirmPassword && !password) {
+      group.get('confirmPassword')?.setErrors({ required: true });
+    }
+
+    return null;
+  }
+
   private initializeForms() {
     this.forms = [];
 
-    // Step 1: Personal Details (unchanged)
+    // Step 1: Personal Details
     this.forms.push(
       this.fb.group({
-        fullname: ['', [Validators.required, Validators.minLength(2)]],
-        phone: ['', [Validators.required, Validators.pattern(/^[0-9]{11}$/)]],
+        fullname: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(2),
+            Validators.maxLength(50),
+            this.fullNameValidator(),
+          ],
+        ],
+        phone: ['', [Validators.required, this.nigerianPhoneValidator()]],
         email: ['', [Validators.required, this.strictEmailValidator()]],
       }),
     );
 
-    // Step 2: Scouter Information - UPDATED with custom validator
+    // Step 2: Scouter Information
     this.forms.push(
       this.fb.group({
-        location: ['', Validators.required],
+        location: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(3),
+            Validators.maxLength(100),
+          ],
+        ],
         organisation: [
           [],
           [Validators.required, this.arrayMinLengthValidator(1)],
         ],
-        purpose: ['', Validators.required],
-        payRange: ['', [Validators.required]],
+        purpose: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(3),
+            Validators.maxLength(200),
+          ],
+        ],
+        payRange: [
+          '',
+          [
+            Validators.required,
+            Validators.min(1000),
+            Validators.pattern(/^[0-9]+$/),
+          ],
+        ],
       }),
     );
 
@@ -211,6 +546,7 @@ export class ScouterPage implements OnInit, OnDestroy {
             [
               Validators.required,
               Validators.minLength(8),
+              Validators.maxLength(50),
               Validators.pattern(
                 /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
               ),
@@ -230,28 +566,157 @@ export class ScouterPage implements OnInit, OnDestroy {
     );
   }
 
-  private buildPayload() {
-    const orgTypes = this.selectedOrgTypes.length ? this.selectedOrgTypes : [];
-
-    return {
-      fullName: this.forms[0].get('fullname')?.value,
-      phoneNumber: this.forms[0].get('phone')?.value,
-      email: this.forms[0].get('email')?.value,
-      location: this.forms[1].get('location')?.value,
-      scoutingPurpose: this.forms[1].get('purpose')?.value,
-      organizationType: orgTypes,
-      payRange: String(this.forms[1].get('payRange')?.value),
-      password: this.forms[2].get('password')?.value,
-    };
+  private setupPasswordStrengthListener() {
+    this.forms[2].get('password')?.valueChanges.subscribe((password) => {
+      this.calculatePasswordStrength(password);
+    });
   }
 
-  // Add this temporary method to manually check what's missing
-  manualCheckStep2() {
-    const form = this.forms[1];
-    if (!form) return;
+  private calculatePasswordStrength(password: string) {
+    let strength = 0;
+
+    if (!password) {
+      this.passwordStrength = 0;
+      return;
+    }
+
+    // Length check
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+
+    // Character variety checks
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[@$!%*?&]/.test(password)) strength++;
+
+    // Cap at 3 for the progress bar
+    this.passwordStrength = Math.min(3, Math.floor(strength / 2));
   }
 
-  // Update the organization form control method
+  getPasswordStrengthClass(level: number): string {
+    const colors = ['bg-red-500', 'bg-yellow-500', 'bg-green-500'];
+
+    if (level < this.passwordStrength) {
+      return colors[level];
+    }
+    return 'bg-gray-200';
+  }
+
+  private setupEmailValidation() {
+    this.forms[0]
+      .get('email')
+      ?.valueChanges.pipe(
+        debounceTime(800),
+        switchMap((email: string) => {
+          if (email && this.forms[0].get('email')?.valid) {
+            return this.userService
+              .checkEmailExists(email)
+              .pipe(catchError(() => of({ exists: false })));
+          }
+          return of({ exists: false });
+        }),
+      )
+      .subscribe({
+        next: (res: any) => {
+          if (res?.exists) {
+            this.accountExistsError =
+              'Account already exists. Please log in instead.';
+            this.toast.openSnackBar(this.accountExistsError, 'error');
+          } else {
+            this.accountExistsError = null;
+          }
+        },
+        error: () => {
+          this.accountExistsError = null;
+        },
+      });
+  }
+
+ 
+  addOrgTypeFromInput(event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    // Mark as touched for validation
+    this.orgTypeInputTouched = true;
+
+    const newType = this.orgTypeInput.trim();
+
+    // Validate input
+    if (!newType) {
+      this.orgTypeInputError = 'Please enter an organization type';
+      this.toast.openSnackBar(this.orgTypeInputError, 'warning');
+      return;
+    }
+
+    if (newType.length < 2) {
+      this.orgTypeInputError =
+        'Organization type must be at least 2 characters';
+      this.toast.openSnackBar(this.orgTypeInputError, 'warning');
+      return;
+    }
+
+    if (newType.length > 50) {
+      this.orgTypeInputError = 'Organization type cannot exceed 50 characters';
+      this.toast.openSnackBar(this.orgTypeInputError, 'warning');
+      return;
+    }
+
+    // Check for duplicates (case insensitive)
+    if (
+      this.selectedOrgTypes.some(
+        (org) => org.toLowerCase() === newType.toLowerCase(),
+      )
+    ) {
+      this.orgTypeInputError = `"${newType}" is already added`;
+      this.toast.openSnackBar(this.orgTypeInputError, 'warning');
+      return;
+    }
+
+    // Clear error on successful validation
+    this.orgTypeInputError = '';
+
+    // Add the new organization type
+    this.selectedOrgTypes.push(newType);
+    this.updateOrganisationFormControl();
+
+    // Clear input and refocus
+    this.orgTypeInput = '';
+    this.orgTypeInputTouched = false; // Reset touched state for new input
+
+    setTimeout(() => {
+      if (this.orgInput?.nativeElement) {
+        this.orgInput.nativeElement.focus();
+      }
+    }, 50);
+
+    this.toast.openSnackBar(`Added "${newType}"`, 'success');
+  }
+
+  // Add this method to reset validation when typing
+  onOrgInput(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    if (inputElement) {
+      this.orgTypeInput = inputElement.value;
+      // Clear error when user starts typing
+      if (this.orgTypeInputError) {
+        this.orgTypeInputError = '';
+      }
+    }
+  }
+
+  removeOrgType(index: number) {
+    if (index >= 0 && index < this.selectedOrgTypes.length) {
+      const removedType = this.selectedOrgTypes[index];
+      this.selectedOrgTypes.splice(index, 1);
+      this.updateOrganisationFormControl();
+      this.toast.openSnackBar(`Removed "${removedType}"`, 'info');
+    }
+  }
+
   private updateOrganisationFormControl() {
     const orgTypes = this.selectedOrgTypes.filter(
       (org) => org && org.trim() !== '',
@@ -262,45 +727,54 @@ export class ScouterPage implements OnInit, OnDestroy {
       orgControl.setValue(orgTypes);
       orgControl.markAsTouched();
       orgControl.updateValueAndValidity();
-
-      console.log('🔄 Organization control updated:', {
-        value: orgControl.value,
-        valid: orgControl.valid,
-        errors: orgControl.errors,
-      });
     }
   }
 
-  // Update the account creation payload
+  private buildPayload() {
+    return {
+      fullName: this.forms[0].get('fullname')?.value?.trim(),
+      phoneNumber: this.forms[0].get('phone')?.value?.trim(),
+      email: this.forms[0].get('email')?.value?.trim().toLowerCase(),
+      location: this.forms[1].get('location')?.value?.trim(),
+      scoutingPurpose: this.forms[1].get('purpose')?.value?.trim(),
+      organizationType: this.selectedOrgTypes,
+      payRange: String(this.forms[1].get('payRange')?.value),
+      password: this.forms[2].get('password')?.value,
+    };
+  }
+
   submitScouterAccount() {
     if (this.forms[2].invalid) {
-      console.log('Step 3 form invalid');
       this.forms[2].markAllAsTouched();
+      this.toast.openSnackBar(
+        'Please fill in all required fields correctly',
+        'error',
+      );
       return;
     }
 
     this.isProcessing = true;
+    this.errorMessage = '';
 
-    const organizationType = Array.isArray(this.selectedOrgTypes)
-      ? this.selectedOrgTypes.filter((org) => org && org.trim() !== '')
-      : [];
+    const payload = this.buildPayload();
 
-    const payload = {
-      fullName: this.forms[0].get('fullname')?.value,
-      phoneNumber: this.forms[0].get('phone')?.value,
-      email: this.forms[0].get('email')?.value,
-      location: this.forms[1].get('location')?.value,
-      scoutingPurpose: this.forms[1].get('purpose')?.value,
-      organizationType: organizationType,
-      payRange: String(this.forms[1].get('payRange')?.value),
-      password: this.forms[2].get('password')?.value,
-    };
-
-    console.log('📤 Final payload:', payload);
+    // Validate payload
+    if (
+      !payload.fullName ||
+      !payload.phoneNumber ||
+      !payload.email ||
+      !payload.location ||
+      !payload.scoutingPurpose ||
+      !payload.payRange ||
+      !payload.password
+    ) {
+      this.isProcessing = false;
+      this.toast.openSnackBar('All fields are required', 'error');
+      return;
+    }
 
     this.scouterService.createScouterProfile(payload).subscribe({
       next: (res) => {
-        console.log('✅ Account creation response:', res);
         this.isProcessing = false;
         this.tempUserData = { ...res };
         this.tempUserId = res?.id || null;
@@ -308,14 +782,16 @@ export class ScouterPage implements OnInit, OnDestroy {
         this.sendOtpAutomatically();
       },
       error: (err) => {
-        console.error('❌ Account creation error:', err);
         this.isProcessing = false;
-        this.setError(err?.error?.message || 'Failed to create account.');
+        const errorMsg =
+          err?.error?.message ||
+          err?.message ||
+          'Failed to create account. Please try again.';
+        this.setError(errorMsg);
       },
     });
   }
 
-  // Rest of your existing methods remain the same...
   private initializeOtpControls() {
     this.otpControls = Array.from({ length: this.otpLength }, () =>
       this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)]),
@@ -325,118 +801,68 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.forms[3].setControl('otp', otpArray);
   }
 
-  private setupEmailValidation() {
-    this.forms[0]
-      .get('email')
-      ?.valueChanges.pipe(
-        debounceTime(800),
-        switchMap((email: string) => {
-          if (email && this.forms[0].get('email')?.valid) {
-            return this.userService.checkEmailExists(email);
-          }
-          return of({ exists: false });
-        }),
-      )
-      .subscribe({
-        next: (res: any) => {
-          if (res.exists) {
-            this.accountExistsError =
-              'Account already exists. Please log in instead.';
-            this.toast.openSnackBar(this.accountExistsError, 'error');
-          } else {
-            this.accountExistsError = null;
-          }
-        },
-        error: (err) => {
-          console.error('Email check error', err);
-          this.accountExistsError = null;
-        },
-      });
+  isOtpComplete(): boolean {
+    return this.otpControls.every((control) => control.value && control.valid);
   }
 
   goPrevious() {
     if (this.currentStep > 0) {
       this.currentStep--;
+      this.otpError = '';
     }
   }
 
-  // Form Validation
   isCurrentFormValid(): boolean {
     const currentForm = this.forms[this.currentStep];
-    return currentForm ? currentForm.valid : false;
-  }
 
-  // Add this method to check form status
-  checkFormStatus() {
-    const currentForm = this.forms[this.currentStep];
-    if (currentForm) {
-      console.log('🔍 FORM STATUS:', {
-        valid: currentForm.valid,
-        invalid: currentForm.invalid,
-        errors: currentForm.errors,
-        controls: Object.keys(currentForm.controls).map((key) => ({
-          control: key,
-          valid: currentForm.get(key)?.valid,
-          errors: currentForm.get(key)?.errors,
-          value: currentForm.get(key)?.value,
-        })),
-      });
+    if (!currentForm) return false;
+
+    // Special handling for step 2 with organization array
+    if (this.currentStep === 1) {
+      return currentForm.valid && this.selectedOrgTypes.length > 0;
     }
+
+    return currentForm.valid;
   }
 
-  // Update your goNext method to call this
   goNext() {
-    this.checkFormStatus(); // Add this line
-
     const currentForm = this.forms[this.currentStep];
+
     if (!currentForm || !this.isCurrentFormValid()) {
       currentForm?.markAllAsTouched();
+
+      // Show specific error messages
+      if (this.currentStep === 1 && this.selectedOrgTypes.length === 0) {
+        this.toast.openSnackBar(
+          'Please add at least one organization type',
+          'error',
+        );
+      } else {
+        this.toast.openSnackBar(
+          'Please fill in all required fields correctly',
+          'error',
+        );
+      }
       return;
     }
 
-    // Special handling for step 2 (before OTP)
+    this.errorMessage = '';
+    this.otpError = '';
+
     if (this.currentStep === 2) {
       this.submitScouterAccount();
     } else {
       this.currentStep++;
 
-      // If moving to OTP step and we have temp user, send OTP
       if (this.currentStep === 3 && this.tempUserId) {
         this.sendOtpAutomatically();
       }
     }
   }
 
-  strictEmailValidator(): ValidatorFn {
-    return (control: AbstractControl) => {
-      const value = control.value;
-      if (!value) return null;
-
-      const valid =
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org|edu|gov|co|io)$/i.test(
-          value,
-        );
-      return valid ? null : { pattern: true };
-    };
-  }
-
-  passwordMatchValidator(control: AbstractControl) {
-    const password = control.get('password')?.value;
-    const confirmPassword = control.get('confirmPassword')?.value;
-
-    if (password !== confirmPassword) {
-      control.get('confirmPassword')?.setErrors({ mismatch: true });
-      return { mismatch: true };
-    }
-    return null;
-  }
-
-  // OTP Methods - UPDATED WITH DEBUG INFO
   sendOtpAutomatically() {
     const email = this.forms[0].get('email')?.value;
     const phone = this.forms[0].get('phone')?.value;
-
-    console.log('🔍 Sending OTP to:', { email, phone }); // DEBUG
 
     if (!email && !phone) {
       this.setError('Email or phone number is required to send OTP');
@@ -446,19 +872,22 @@ export class ScouterPage implements OnInit, OnDestroy {
     const payload: any = email ? { email } : { phoneNumber: phone };
     this.lastOtpChannel = email ? 'email' : 'phone';
 
-    console.log('🔍 OTP Payload:', payload); // DEBUG
+    this.isProcessing = true;
+    this.otpError = '';
 
     this.scouterService.resendOtp(payload).subscribe({
-      next: (res) => {
-        console.log('✅ OTP sent successfully', res);
+      next: () => {
+        this.isProcessing = false;
         this.startCountdown();
         this.clearOtpFields();
+        this.toast.openSnackBar('OTP sent successfully', 'success');
       },
       error: (err) => {
-        console.error('❌ Failed to send OTP', err);
-        this.setError(
-          err?.error?.message || 'Failed to send OTP. Please try again.',
-        );
+        this.isProcessing = false;
+        const errorMsg =
+          err?.error?.message || 'Failed to send OTP. Please try again.';
+        this.otpError = errorMsg;
+        this.setError(errorMsg);
       },
     });
   }
@@ -466,71 +895,58 @@ export class ScouterPage implements OnInit, OnDestroy {
   verifyOtpAndProceed() {
     const otpValue = this.getOtpValue();
 
-    console.log('🔍 Verifying OTP:', otpValue); // DEBUG
-
     if (!otpValue || otpValue.length !== this.otpLength) {
-      this.setError('Please enter complete 4-digit OTP.');
+      this.otpError = 'Please enter the complete 4-digit OTP.';
       return;
     }
 
-    const payload: any = {
-      otp: otpValue,
-    };
+    const payload: any = { otp: otpValue };
 
-    // Add identifier based on what was used to send OTP
     if (this.lastOtpChannel === 'phone') {
       payload.phoneNumber = this.forms[0].get('phone')?.value;
     } else {
       payload.email = this.forms[0].get('email')?.value;
     }
 
-    console.log('🔍 OTP Verification Payload:', payload); // DEBUG
+    this.isProcessing = true;
+    this.otpError = '';
 
     this.scouterService.verifyOtp(payload).subscribe({
-      next: (res) => {
-        console.log('✅ OTP verified successfully', res);
+      next: () => {
+        this.isProcessing = false;
 
-        // ✅ STORE EMAIL IN LOCALSTORAGE HERE
+        // Store email in localStorage
         const email = this.forms[0].get('email')?.value;
         if (email) {
           localStorage.setItem('registration_email', email);
-          console.log('✅ Email stored in localStorage:', email);
         }
 
-        // In your scouter registration component, after successful registration:
         this.showSuccessModal = true;
-
-        // Clear temporary data
         this.tempUserId = null;
         this.tempUserData = null;
+
+        // Clear forms
+        this.clearForms();
       },
       error: (err) => {
-        console.error('❌ OTP verification failed', err);
-        console.error('🔍 Full error details:', {
-          status: err.status,
-          message: err.message,
-          error: err.error,
-          url: err.url,
-        });
+        this.isProcessing = false;
 
-        // More specific error messages
-        if (err.status === 422) {
-          this.setError(
-            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.',
-          );
+        if (err.status === 422 || err.status === 400) {
+          this.otpError =
+            'Invalid or expired OTP. Please try again or request a new one.';
         } else {
-          this.setError(
-            err?.error?.message || 'Invalid OTP. Please try again.',
-          );
+          this.otpError =
+            err?.error?.message || 'OTP verification failed. Please try again.';
         }
+
         this.clearOtpFields();
+        this.setError(this.otpError);
       },
     });
   }
 
   resendOtp() {
-    if (this.countdown > 0) return;
-
+    if (this.countdown > 0 || this.isProcessing) return;
     this.sendOtpAutomatically();
   }
 
@@ -539,19 +955,56 @@ export class ScouterPage implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const value = input.value;
 
+    // Clear error when user starts typing
+    if (this.otpError) {
+      this.otpError = '';
+    }
+
+    // Only allow numbers
+    if (value && !/^\d+$/.test(value)) {
+      input.value = '';
+      this.otpControls[index].setValue('');
+      return;
+    }
+
+    this.otpControls[index].setValue(value);
+
     // Auto-advance to next input
     if (value && index < this.otpControls.length - 1) {
-      const inputs = input.parentElement?.querySelectorAll('input');
+      const inputs = document.querySelectorAll('.otp-input');
       if (inputs && inputs[index + 1]) {
-        const nextInput = inputs[index + 1] as HTMLInputElement;
-        nextInput.focus();
+        (inputs[index + 1] as HTMLInputElement).focus();
       }
     }
 
     // Auto-submit when last digit is entered
-    if (value && index === this.otpControls.length - 1) {
-      if (this.getOtpValue().length === this.otpLength) {
-        this.verifyOtpAndProceed();
+    if (
+      value &&
+      index === this.otpControls.length - 1 &&
+      this.isOtpComplete()
+    ) {
+      setTimeout(() => this.verifyOtpAndProceed(), 100);
+    }
+  }
+
+  onOtpPaste(event: ClipboardEvent) {
+    event.preventDefault();
+    const pastedData = event.clipboardData?.getData('text');
+
+    if (pastedData && /^\d+$/.test(pastedData)) {
+      const digits = pastedData.slice(0, this.otpLength).split('');
+
+      digits.forEach((digit, index) => {
+        if (index < this.otpControls.length) {
+          this.otpControls[index].setValue(digit);
+        }
+      });
+
+      // Focus the next empty input or last input
+      const nextEmptyIndex = digits.length;
+      if (nextEmptyIndex < this.otpControls.length) {
+        const inputs = document.querySelectorAll('.otp-input');
+        (inputs[nextEmptyIndex] as HTMLInputElement)?.focus();
       }
     }
   }
@@ -562,16 +1015,10 @@ export class ScouterPage implements OnInit, OnDestroy {
 
       if (!input.value && index > 0) {
         // Move to previous input if current is empty
-        const inputs = input.parentElement?.querySelectorAll('input');
+        const inputs = document.querySelectorAll('.otp-input');
         if (inputs && inputs[index - 1]) {
-          const prevInput = inputs[index - 1] as HTMLInputElement;
-          prevInput.focus();
-          prevInput.select();
+          (inputs[index - 1] as HTMLInputElement).focus();
         }
-      } else if (input.value) {
-        // Clear current input
-        input.value = '';
-        this.otpControls[index].setValue('');
       }
     }
   }
@@ -580,10 +1027,16 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.otpControls.forEach((control) => {
       control.setValue('');
       control.markAsUntouched();
+      control.markAsPristine();
     });
   }
 
-  // UI Helpers
+  clearForms() {
+    this.forms.forEach((form) => form.reset());
+    this.selectedOrgTypes = [];
+    this.orgTypeInput = '';
+  }
+
   private startCountdown() {
     clearInterval(this.timer);
     this.countdown = 120;
@@ -600,16 +1053,17 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   getOtpValue(): string {
-    return this.otpControls
-      .map((control) => control?.value || '')
-      .join('')
-      .replace(/\s/g, '');
+    return this.otpControls.map((control) => control?.value || '').join('');
   }
 
   private setError(message: string) {
     this.errorMessage = message;
     this.toast.openSnackBar(message, 'error');
-    setTimeout(() => (this.errorMessage = ''), 5000);
+    setTimeout(() => {
+      if (this.errorMessage === message) {
+        this.errorMessage = '';
+      }
+    }, 5000);
   }
 
   getEmailForOtp(): string {
@@ -619,8 +1073,8 @@ export class ScouterPage implements OnInit, OnDestroy {
   maskEmail(email: string): string {
     if (!email) return '';
     const [user, domain] = email.split('@');
-    if (!user || !domain) return '***@***';
 
+    if (!user || !domain) return '***@***';
     if (user.length <= 2) return `***@${domain}`;
 
     const maskedUser =
@@ -629,16 +1083,6 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   // Navigation
-  closeSuccessModal() {
-    this.showSuccessModal = false;
-    this.router.navigate(['/auth/login'], {
-      queryParams: {
-        email: this.forms[0].get('email')?.value,
-        message: 'Account verified successfully. Please login.',
-      },
-    });
-  }
-
   goBack() {
     if (this.currentStep === 0) {
       this.router.navigate(['/auth/login']);
@@ -648,7 +1092,13 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   goToLogin() {
-    this.router.navigate(['/auth/login']);
+    this.showSuccessModal = false;
+    this.router.navigate(['/auth/login'], {
+      queryParams: {
+        email: this.forms[0].get('email')?.value,
+        message: 'Account created successfully. Please login.',
+      },
+    });
   }
 
   goToDashboard() {

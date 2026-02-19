@@ -16,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
         error: isErrorMessage,
         success: isSuccessMessage,
         warn: isWarningMessage,
-        info: isInfoMessage
+        info: isInfoMessage,
       }"
     >
       <div class="flex items-center ">
@@ -37,7 +37,6 @@ import { MatIconModule } from '@angular/material/icon';
     `
       @import url('https://fonts.cdnfonts.com/css/euclid-circular-a');
       div {
-        font-family: 'Euclid Circular A';
         color: white;
       }
       .snack-content {
@@ -86,7 +85,7 @@ export class ToastComponent {
 
   constructor(
     public snackBarRef: MatSnackBarRef<ToastComponent>,
-    @Inject(MAT_SNACK_BAR_DATA) public data: any
+    @Inject(MAT_SNACK_BAR_DATA) public data: any,
   ) {
     this.isSuccessMessage = data.panelClass.includes('success');
     this.isErrorMessage = data.panelClass.includes('error');

@@ -374,14 +374,45 @@ export class AuthService {
       );
   }
 
+  // In auth.service.ts - Update the getMySecurityQuestionsWithAnswers method
+
   /**
    * Get security questions with answers (if available)
-   * Falls back to regular questions if the endpoint fails
+   * This endpoint returns questions WITH their hashed answers
    */
   getMySecurityQuestionsWithAnswers(uniqueId: string): Observable<any> {
-    // Use the regular endpoint - the "with answers" endpoint has issues
-    console.log('📝 Fetching security questions for:', uniqueId);
-    return this.getMySecurityQuestions(uniqueId);
+    const encodedId = encodeURIComponent(uniqueId);
+    const url = `${environment.baseUrl}/${endpoints.getMySecurityQuestionsWithAnswers}?uniqueId=${encodedId}`;
+
+    console.log('🔗 GET Security Questions With Answers URL:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000), // 15 second timeout (reduced from 30)
+        retry(1), // Retry once if it fails
+        tap((response: any) => {
+          console.log('✅ Security Questions With Answers Response:', response);
+        }),
+        catchError((error: any) => {
+          console.error(
+            '❌ Error fetching security questions with answers:',
+            error,
+          );
+
+          // If it's a timeout, return a specific error
+          if (error.name === 'TimeoutError') {
+            return throwError(
+              () => new Error('Security questions endpoint timed out'),
+            );
+          }
+
+          // Return empty array for other errors
+          return of({ data: [] });
+        }),
+      );
   }
 
   testApiConnection(): Observable<any> {
