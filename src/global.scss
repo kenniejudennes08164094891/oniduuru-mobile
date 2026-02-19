@@ -175,8 +175,10 @@ h4,
 h5,
 h6,
 span,
+b,
+strong,
 a {
-  font-family: "Euclid Circular A";
+  font-family: "Euclid Circular A", sans-serif !important;
 }
 
 .fund-wallet-modal {

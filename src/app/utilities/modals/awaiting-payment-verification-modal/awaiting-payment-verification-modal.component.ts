@@ -16,7 +16,7 @@ export class AwaitingPaymentVerificationModalComponent extends BaseModal {
     super(modalCtrl, platform); // ✅ gives you back-button + dismiss
   }
   // Optional: override dismiss to add role support
-  override dismiss(role: 'cancel' | 'confirm' = 'cancel') {
-    super.dismiss(null, role);
+  override async dismiss(role: 'cancel' | 'confirm' = 'cancel') {
+    await super.dismiss(null, role);
   }
 }

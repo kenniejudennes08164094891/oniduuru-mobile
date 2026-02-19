@@ -48,8 +48,8 @@ export class UploadScreenshotPopupModalComponent
     this.navSub?.unsubscribe();
   }
 
-  override dismiss() {
-    super.dismiss();
+  override async dismiss() {
+   await super.dismiss();
   }
 
   onFileSelected(event: Event) {
@@ -79,7 +79,7 @@ export class UploadScreenshotPopupModalComponent
         transactionId: 'INV-2025-0615-013',
       });
 
-    
+
 
                this.toast.openSnackBar('Receipt uploaded successfully ✅', 'success');
 
