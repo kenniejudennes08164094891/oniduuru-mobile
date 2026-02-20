@@ -3,13 +3,16 @@ import { BehaviorSubject } from 'rxjs';
 
 interface PaymentStatus {
   isPaid: boolean;
-  receiptUrl?: string;  // uploaded receipt image path
+  receiptUrl?: string; // uploaded receipt image path
   transactionId?: string;
+  timeOfUpload?: string; // time when receipt was uploaded to backend
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
+
+
 export class PaymentService {
   // private BehaviorSubject to hold the state
   private paymentStatusSubject = new BehaviorSubject<PaymentStatus>({
