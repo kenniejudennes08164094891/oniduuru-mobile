@@ -23,7 +23,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   timer: any;
   isProcessing = false;
   errorMessage = '';
-  email = '';
+  email: string | null = null;
   userData: any = null;
   requiresVerification = false;
 
@@ -45,7 +45,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.timer);
-    
+
   }
 
   private initializeOtpForm() {
@@ -151,6 +151,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   sendOtpAutomatically() {
+    this.email = this.email ?? localStorage.getItem('registration_email');
     if (!this.email) {
       this.setError('Email is required to send OTP');
       return;
@@ -273,6 +274,9 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   resendOtp() {
+    this.email = this.email ?? localStorage.getItem('registration_email');
+    console.clear();
+    console.log("email>>", this.email);
     if (this.countdown > 0) return;
     this.sendOtpAutomatically();
   }
@@ -288,9 +292,10 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  maskEmail(email: string): string {
+  maskEmail(email: string | null): string {
+    email = email ?? localStorage.getItem('registration_email');
     if (!email) return '';
-    const [user, domain] = email.split('@');
+    const [user, domain] = email?.split('@');
     if (!user || !domain) return '***@***';
 
     if (user.length <= 2) return `***@${domain}`;
@@ -323,8 +328,11 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:beforeunload', ['$event'])
-  preventBrowserRefresh(event: BeforeUnloadEvent) {
+ async preventBrowserRefresh(event: BeforeUnloadEvent) {
     event.preventDefault();
     event.returnValue = ''; // Required for Chrome
+  await this.router.navigateByUrl("/auth/login").then(() => {
+    this.authService.clearAllStorage();
+  });
   }
 }

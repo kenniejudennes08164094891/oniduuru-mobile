@@ -403,6 +403,7 @@
           type="text"
           maxlength="1"
           [(ngModel)]="otp[i]"
+          (ngModelChange)="isOtpHandled($event)"
           (input)="moveNext($event, i)"
           class="w-14 h-14 md:w-16 md:h-16 text-[30px] md:text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
         />

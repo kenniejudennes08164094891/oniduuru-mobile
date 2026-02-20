@@ -16,6 +16,7 @@ import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.serv
 import { ToastsService } from 'src/app/services/toasts.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisibilitySharedState.service';
+import {firstValueFrom} from "rxjs";
 
 export interface RecentHire {
   id: string;
@@ -136,6 +137,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     { title: 'Offer Accepted', value: 0, status: 'active' },
     { title: 'Offer Rejected', value: 0, status: 'inactive' },
   ];
+  hasWalletProfile: boolean | null = null;
 
   constructor(
     private modalCtrl: ModalController,
@@ -149,11 +151,36 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     private toggleVisibilityService: ToggleVisibilitySharedStateService,
   ) {}
 
+  async getWalletProfile():Promise<void>{
+    try{
+      const userData:any = localStorage.getItem('user_data');
+      const scouterId = JSON.parse(userData)?.scouterId;
+      const response = await firstValueFrom(this.endpointService.fetchWalletProfile(scouterId));
+      if(response){
+        this.hasWalletProfile = true;
+      }
+    }catch (e:any) {
+      console.clear();
+      console.log("error status>>",e?.status);
+      console.error("error>>",e?.error?.message ?? e?.message);
+      if(e?.status === 404){
+        this.hasWalletProfile = false;
+      }
+    }
+  }
+
+  async routeToWalletOnboarding(){
+    console.clear();
+    await this.router.navigateByUrl("/scouter/wallet-page/wallet-profile");
+  }
+
+
   // Add this method to check what's being passed to the child component
   async ngOnInit(): Promise<void> {
     this.getScouterDetails();
     this.setTimeOfDay();
     this.fetchWalletBalance();
+    await this.getWalletProfile();
 
     // Initialize balance visibility state
     await this.initializeBalanceVisibility();

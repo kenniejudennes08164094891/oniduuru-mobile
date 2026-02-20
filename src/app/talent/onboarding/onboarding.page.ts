@@ -19,7 +19,7 @@ export class OnboardingPage {
   skillSetInputTouched: boolean = false;
   skillSetInputError: string = '';
 
-  canResendOtp: boolean = false;
+  canResendOtp: boolean | null = null;
   private timerInterval: any;
 
   // --- Enhanced validation helpers ---
@@ -271,6 +271,12 @@ export class OnboardingPage {
     if (value.length === 0 && index > 0) {
       const prev = event.target.previousElementSibling;
       if (prev) prev.focus();
+    }
+  }
+
+  isOtpHandled(event:any){
+    if(this.otp.length === 4){
+      this.canResendOtp = true;
     }
   }
 
