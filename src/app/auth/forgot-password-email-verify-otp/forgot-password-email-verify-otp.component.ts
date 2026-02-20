@@ -14,7 +14,7 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
 
   form!: FormGroup;
   talentId!: string;
-  email!: string;
+  email: string | null = null;
   maskedEmail!: string;
   error = '';
   loading = false;
@@ -111,7 +111,11 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
     this.error = '';
 
     // Call verification API
-    this.authService.verifyOTP({ otp, phoneNumber: '', email: this.email }).subscribe({
+    this.authService.verifyOTP({
+      otp,
+      phoneNumber: '',
+      email: this.email ?? localStorage.getItem('registration_email'),
+    }).subscribe({
       next: async () => {
         this.loading = false;
         // navigate to reset password page
@@ -142,7 +146,9 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
     }, 1000);
 
     // Call resend OTP API
-    this.authService.resendOTP({ email: this.email, phoneNumber: '' }).subscribe({
+    this.authService.resendOTP({
+      email: this.email ?? localStorage.getItem('registration_email'),
+      phoneNumber: '' }).subscribe({
       next: () => {
         // OTP resent successfully
       },
@@ -154,8 +160,8 @@ export class ForgotPasswordEmailVerifyOtpComponent implements OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/auth/forgot-password/verify-otp/email'], {
+ async goBack(): Promise<void> {
+  await this.router.navigate(['/auth/forgot-password/verify-otp/email'], {
       state: history.state,
     });
   }

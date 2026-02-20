@@ -18,12 +18,12 @@ import {
 export interface verifyOTP {
   otp: string;
   phoneNumber: string;
-  email: string;
+  email: string | null;
 }
 
 export interface resendOTP {
   phoneNumber: string;
-  email: string;
+  email: string | null;
 }
 export interface SecurityQuestionResponse {
   message: string;
@@ -560,5 +560,11 @@ export class AuthService {
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  clearAllStorage(){
+    localStorage.clear();
+    sessionStorage.clear();
+    console.clear();
   }
 }

@@ -77,7 +77,7 @@ export class ScouterEndpointsService {
 
   verifyOtp(payload: {
     otp: string;
-    email?: string;
+    email?: string | null;
     phoneNumber?: string;
   }): Observable<any> {
     // Convert payload to query parameters
@@ -357,13 +357,13 @@ export class ScouterEndpointsService {
       // All formats failed - provide detailed error
       const error = new Error(`
       All endpoint formats failed for profile update.
-      
+
       Possible issues:
       1. Backend endpoint might be different
       2. Scouter ID format might be incorrect
       3. PATCH method might not be supported
       4. Endpoint might require different parameters
-      
+
       Please check:
       - Backend API documentation
       - Scouter ID format in user data
@@ -397,7 +397,7 @@ export class ScouterEndpointsService {
           const finalError = new Error(`
           All update endpoints failed. Attempted URLs:
           ${urls.map((url) => `- ${url}`).join('\n')}
-          
+
           Last error: ${error.message}
           Status: ${error.status}
         `);

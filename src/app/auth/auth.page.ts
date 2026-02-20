@@ -100,6 +100,7 @@ export class AuthPage implements OnInit {
   }
 
   submitForm(): void {
+    this.authService.clearAllStorage();
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.toast.openSnackBar(
@@ -313,13 +314,13 @@ export class AuthPage implements OnInit {
     });
   }
 
-  routeToLoginScreen(): void {
-    this.router.navigate(['/auth/login'], {
+  async routeToLoginScreen(): Promise<void> {
+   await this.router.navigate(['/auth/login'], {
       relativeTo: this.route,
     });
   }
 
-  forgotPassword(): void {
-    this.router.navigate(['/auth/forgot-password']);
+ async forgotPassword(): Promise<void> {
+   await this.router.navigate(['/auth/forgot-password']);
   }
 }

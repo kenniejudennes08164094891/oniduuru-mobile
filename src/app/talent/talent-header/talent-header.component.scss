@@ -1,14 +1,8 @@
-// :host {
-//   ion-header {
-//     background-color: #eef0f6;
-//     @apply shadow-sm transition-transform duration-300;
-//   }
+ion-header {
+  padding-top: env(safe-area-inset-top);
+}
 
-//   .-translate-y-full {
-//     transform: translateY(-100%);
-//   }
-
-//   .translate-y-0 {
-//     transform: translateY(0);
-//   }
-// }
+ion-toolbar {
+  --padding-top: 0;
+  --min-height: 64px;
+}

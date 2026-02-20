@@ -179,10 +179,10 @@ export class TransferFundsPopupModalComponent
       },
       error: async (err: any) => {
         console.error('❌ Transfer error:', err);
-        
+
         const errorMessage = err.error?.message || err.message || 'Transfer failed. Please try again.';
         this.toast.openSnackBar(errorMessage, 'error');
-        
+
         this.modalCtrl.dismiss(null, 'error');
       },
     });
@@ -204,8 +204,8 @@ export class TransferFundsPopupModalComponent
     this.modalCtrl.dismiss();
   }
 
-  override dismiss() {
-    super.dismiss();
+  override async dismiss() {
+   await super.dismiss();
   }
 
   // Getters for form controls

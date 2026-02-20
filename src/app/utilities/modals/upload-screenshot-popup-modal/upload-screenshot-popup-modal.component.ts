@@ -50,8 +50,8 @@ export class UploadScreenshotPopupModalComponent
     this.navSub?.unsubscribe();
   }
 
-  override dismiss() {
-    super.dismiss();
+  override async dismiss() {
+   await super.dismiss();
   }
 
   onFileSelected(event: Event) {
@@ -130,9 +130,9 @@ export class UploadScreenshotPopupModalComponent
 
             console.log('📅 Extracted timeOfUpload:', timeOfUpload);
 
-            // Update payment service with verified status
-            this.paymentService.setPaymentStatus({
-              isPaid: true,
+            // FIXED: Use setFullPaymentStatus with the correct structure
+            this.paymentService.setFullPaymentStatus({
+              status: 'pendingPaymentVerification', // Set to pending since it needs verification
               receiptUrl: this.previewUrl as string,
               transactionId:
                 response.transactionId ||
@@ -142,7 +142,7 @@ export class UploadScreenshotPopupModalComponent
             });
 
             this.toast.openSnackBar(
-              'Receipt uploaded and verified successfully ✅',
+              'Receipt uploaded successfully! Awaiting verification ✅',
               'success',
             );
 
