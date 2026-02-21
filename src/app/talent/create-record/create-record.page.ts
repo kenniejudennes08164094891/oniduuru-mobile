@@ -49,12 +49,12 @@ export class CreateRecordPage implements OnInit {
       pictorialDocumentations: []
     };
 
-  // profile basics used for UI header (you can populate from talent profile if available)
+  // profile basics used for UI header (populated from talent profile)
   profile = {
-    name: 'Adediji Oluwaseyi',
-    address: '12 Henry Uzoma Street, Awoyaya Lagos',
-    bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
-    phone: '09031251953',
+    name: '',
+    address: '',
+    bio: '',
+    phone: '',
     photo: ''
   };
   //   talentData = {
