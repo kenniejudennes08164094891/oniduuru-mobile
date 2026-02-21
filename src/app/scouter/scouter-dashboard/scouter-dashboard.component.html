@@ -12,12 +12,12 @@
     <!-- 🚨 Check payment status -->
     <ng-container *ngIf="paymentStatus === 'true'; else unpaidOrPendingDashboard">
       <!-- Paid Dashboard -->
-      <div class="container mx-auto px-4 py-6 flex-1">
+      <div class="container mx-auto px-4 py-4 flex-1">
         <!-- Greeting section -->
-        <div class="flex items-center gap-3 mb-6">
+        <div class="flex items-center gap-3 mb-4">
           <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
-            class="w-10 h-10 inline-block align-middle" />
-          <span class="text-xl font-semibold text-gray-800">
+            class="w-6 h-6 inline-block align-middle" />
+          <span class="text-lg font-semibold text-gray-800">
             {{ timeOfDay }}, {{ userName }}</span>
         </div>
         
