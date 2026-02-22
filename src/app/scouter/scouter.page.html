@@ -73,17 +73,34 @@
             <label for="phone" class="block text-sm font-medium text-gray-700"
               >Banking Mobile Number <span class="text-red-500">*</span></label
             >
-            <input
-              id="phone"
-              type="tel"
-              formControlName="phone"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
-              placeholder="e.g 09012345678"
-              maxlength="11"
-              [ngClass]="{
-                'border-red-500': forms[0].get('phone')?.touched && forms[0].get('phone')?.invalid
-              }"
-            />
+
+            <!-- Phone input with country code support -->
+            <div class="relative">
+              <input
+                id="phone"
+                type="tel"
+                formControlName="phone"
+                class="border border-[#D0D5DD] pl-16 pr-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+                placeholder="808 382 6576"
+                (input)="formatPhoneNumber($event)"
+                [ngClass]="{
+    'border-red-500': forms[0].get('phone')?.touched && forms[0].get('phone')?.invalid
+  }"
+              />
+              <!-- Country code prefix display -->
+              <div
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 bg-gray-100 px-2 py-1 rounded-l-lg border-r border-[#D0D5DD]"
+              >
+                +234
+              </div>
+            </div>
+
+            <!-- Helper text -->
+            <p class="text-xs text-gray-500 mt-1">
+              Nigerian number with country code (+234) will be added
+              automatically
+            </p>
+
             <!-- Validation messages -->
             <div
               *ngIf="forms[0].get('phone')?.touched && forms[0].get('phone')?.errors"
@@ -93,7 +110,7 @@
                 >Phone number is required.</span
               >
               <span *ngIf="forms[0].get('phone')?.errors?.['pattern']"
-                >Enter a valid 11-digit Nigerian phone number.</span
+                >Enter a valid Nigerian phone number (e.g., 8083826576).</span
               >
             </div>
           </div>
@@ -166,84 +183,84 @@
             </div>
           </div>
 
-        <!-- Organization Section in STEP 2 -->
-<div class="space-y-2">
-  <label class="block text-sm font-medium text-gray-700">
-    Your Organization Type(s) <span class="text-red-500">*</span>
-  </label>
+          <!-- Organization Section in STEP 2 -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              Your Organization Type(s) <span class="text-red-500">*</span>
+            </label>
 
-  <div class="relative">
-    <div
-      class="w-full border rounded-md px-4 py-3 bg-[#F6F6F6] min-h-[56px] flex flex-wrap items-center gap-2"
-      [ngClass]="{
+            <div class="relative">
+              <div
+                class="w-full border rounded-md px-4 py-3 bg-[#F6F6F6] min-h-[56px] flex flex-wrap items-center gap-2"
+                [ngClass]="{
         'border-red-500': (forms[1].get('organisation')?.touched && forms[1].get('organisation')?.invalid) || orgTypeInputError,
         'border-[#D9DCE5]': !((forms[1].get('organisation')?.touched && forms[1].get('organisation')?.invalid) || orgTypeInputError)
       }"
-    >
-      <!-- Selected Tags Inside Input -->
-      <span
-        *ngFor="let org of selectedOrgTypes; let i = index"
-        class="bg-gray-200 rounded-lg px-3 py-1 flex items-center gap-1 text-sm"
-      >
-        {{ org }}
-        <button
-          type="button"
-          (click)="removeOrgType(i); $event.stopPropagation()"
-          class="text-gray-500 hover:text-red-500 text-lg leading-none ml-1"
-        >
-          ×
-        </button>
-      </span>
+              >
+                <!-- Selected Tags Inside Input -->
+                <span
+                  *ngFor="let org of selectedOrgTypes; let i = index"
+                  class="bg-gray-200 rounded-lg px-3 py-1 flex items-center gap-1 text-sm"
+                >
+                  {{ org }}
+                  <button
+                    type="button"
+                    (click)="removeOrgType(i); $event.stopPropagation()"
+                    class="text-gray-500 hover:text-red-500 text-lg leading-none ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
 
-      <!-- Input and Add Button Container -->
-      <div class="flex items-center gap-2 flex-1 min-w-[150px]">
-        <input
-          #orgInput
-          id="organisation"
-          type="text"
-          placeholder="Type organization type"
-          [value]="orgTypeInput"
-          (input)="onOrgInput($event)"
-          (keydown.enter)="addOrgTypeFromInput($event)"
-          class="flex-1 bg-transparent border-none outline-none placeholder-gray-400 min-w-[120px]"
-        />
+                <!-- Input and Add Button Container -->
+                <div class="flex items-center gap-2 flex-1 min-w-[150px]">
+                  <input
+                    #orgInput
+                    id="organisation"
+                    type="text"
+                    placeholder="Type organization type"
+                    [value]="orgTypeInput"
+                    (input)="onOrgInput($event)"
+                    (keydown.enter)="addOrgTypeFromInput($event)"
+                    class="flex-1 bg-transparent border-none outline-none placeholder-gray-400 min-w-[120px]"
+                  />
 
-        <!-- ADD BUTTON -->
-        <button
-          type="button"
-          (click)="addOrgTypeFromInput($event)"
-          class="bg-[#101828] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-[#202939] active:bg-[#364152] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-          title="Add organization type"
-        >
-          <ion-icon name="add-outline" class="text-lg"></ion-icon>
-          Add
-        </button>
-      </div>
-    </div>
-    
-    <!-- Input-specific validation error -->
-    <div *ngIf="orgTypeInputError" class="text-red-500 text-sm mt-1">
-      {{ orgTypeInputError }}
-    </div>
-  </div>
+                  <!-- ADD BUTTON -->
+                  <button
+                    type="button"
+                    (click)="addOrgTypeFromInput($event)"
+                    class="bg-[#101828] text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-[#202939] active:bg-[#364152] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    title="Add organization type"
+                  >
+                    <ion-icon name="add-outline" class="text-lg"></ion-icon>
+                    Add
+                  </button>
+                </div>
+              </div>
 
-  <p class="text-xs text-gray-500 mt-1">
-    Type your organization type and press Enter or tap "Add" button
-  </p>
+              <!-- Input-specific validation error -->
+              <div *ngIf="orgTypeInputError" class="text-red-500 text-sm mt-1">
+                {{ orgTypeInputError }}
+              </div>
+            </div>
 
-  <!-- Enhanced validation message for overall field -->
-  <div
-    *ngIf="forms[1].get('organisation')?.touched && forms[1].get('organisation')?.invalid"
-    class="text-red-500 text-sm mt-1"
-  >
-    <span *ngIf="forms[1].get('organisation')?.errors?.['required']">
-      At least one organization type is required.
-    </span>
-    <span *ngIf="forms[1].get('organisation')?.errors?.['minLength']">
-      Please add at least one organization type.
-    </span>
-  </div>
-</div>
+            <p class="text-xs text-gray-500 mt-1">
+              Type your organization type and press Enter or tap "Add" button
+            </p>
+
+            <!-- Enhanced validation message for overall field -->
+            <div
+              *ngIf="forms[1].get('organisation')?.touched && forms[1].get('organisation')?.invalid"
+              class="text-red-500 text-sm mt-1"
+            >
+              <span *ngIf="forms[1].get('organisation')?.errors?.['required']">
+                At least one organization type is required.
+              </span>
+              <span *ngIf="forms[1].get('organisation')?.errors?.['minLength']">
+                Please add at least one organization type.
+              </span>
+            </div>
+          </div>
 
           <div class="space-y-2">
             <label for="purpose" class="block text-sm font-medium text-gray-700"

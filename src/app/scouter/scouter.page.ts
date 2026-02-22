@@ -104,16 +104,56 @@ export class ScouterPage implements OnInit, OnDestroy {
     clearInterval(this.timer);
   }
 
-  // Custom validators
   private nigerianPhoneValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
       if (!value) return null;
-      // Accepts +234xxxxxxxxxx or 0xxxxxxxxxx (Nigerian numbers)
-      const plus234Pattern = /^\+234[789][01][0-9]{8}$/;
-      const zeroPattern = /^0[789][01][0-9]{8}$/;
-      const valid = plus234Pattern.test(value) || zeroPattern.test(value);
-      return valid ? null : { pattern: true };
+
+      // Remove any spaces, dashes, or parentheses
+      const cleaned = value.replace(/[\s\-\(\)]/g, '');
+
+      // Accept formats:
+      // 1. 10-digit Nigerian number starting with 7, 8, or 9 (MTN, Glo, Airtel, 9mobile)
+      // 2. 11-digit Nigerian number starting with 0 followed by 7,8,9
+      // 3. Full format with +234
+      const patterns = [
+        /^[789][01][0-9]{8}$/, // 10 digits starting with 7,8,9
+        /^0[789][01][0-9]{8}$/, // 11 digits starting with 0
+        /^\+234[789][01][0-9]{8}$/, // With +234 prefix
+        /^234[789][01][0-9]{8}$/, // With 234 prefix (no +)
+        /^\+234[\s\-]?[789][01][\s\-]?[0-9]{4}[\s\-]?[0-9]{4}$/, // With spaces/dashes
+      ];
+
+      // Check if any pattern matches
+      const isValid = patterns.some(
+        (pattern) => pattern.test(cleaned) || pattern.test(value),
+      );
+
+      if (isValid) {
+        // Format the number consistently (store with +234 prefix)
+        let formattedNumber = value;
+        if (/^[789]/.test(cleaned)) {
+          // If 10 digits starting with network code
+          formattedNumber = '+234' + cleaned;
+        } else if (/^0[789]/.test(cleaned)) {
+          // If 11 digits starting with 0
+          formattedNumber = '+234' + cleaned.substring(1);
+        } else if (/^234[789]/.test(cleaned) && !cleaned.startsWith('+')) {
+          // If starts with 234 without +
+          formattedNumber = '+' + cleaned;
+        }
+
+        // Update control value if it changed
+        if (formattedNumber !== value && control.value === value) {
+          setTimeout(() =>
+            control.setValue(formattedNumber, { emitEvent: false }),
+          );
+        }
+
+        return null;
+      }
+
+      return { pattern: true };
     };
   }
 
@@ -633,7 +673,6 @@ export class ScouterPage implements OnInit, OnDestroy {
       });
   }
 
- 
   addOrgTypeFromInput(event?: Event) {
     if (event) {
       event.preventDefault();
@@ -731,9 +770,24 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   private buildPayload() {
+    const phoneValue = this.forms[0].get('phone')?.value?.trim();
+
+    // Ensure phone number is in the correct format for API
+    let formattedPhone = phoneValue;
+    if (phoneValue && !phoneValue.startsWith('+')) {
+      // If it doesn't start with +, ensure it has the country code
+      if (phoneValue.startsWith('234')) {
+        formattedPhone = '+' + phoneValue;
+      } else if (phoneValue.startsWith('0')) {
+        formattedPhone = '+234' + phoneValue.substring(1);
+      } else if (/^[789]/.test(phoneValue)) {
+        formattedPhone = '+234' + phoneValue;
+      }
+    }
+
     return {
       fullName: this.forms[0].get('fullname')?.value?.trim(),
-      phoneNumber: this.forms[0].get('phone')?.value?.trim(),
+      phoneNumber: formattedPhone,
       email: this.forms[0].get('email')?.value?.trim().toLowerCase(),
       location: this.forms[1].get('location')?.value?.trim(),
       scoutingPurpose: this.forms[1].get('purpose')?.value?.trim(),
@@ -741,6 +795,48 @@ export class ScouterPage implements OnInit, OnDestroy {
       payRange: String(this.forms[1].get('payRange')?.value),
       password: this.forms[2].get('password')?.value,
     };
+  }
+
+  formatPhoneNumber(event: any) {
+    let input = event.target.value;
+
+    // Remove all non-digits
+    let numbers = input.replace(/\D/g, '');
+
+    // If it starts with 234, remove it (we'll add our own formatting)
+    if (numbers.startsWith('234')) {
+      numbers = numbers.substring(3);
+    }
+
+    // If it starts with 0, remove it
+    if (numbers.startsWith('0')) {
+      numbers = numbers.substring(1);
+    }
+
+    // Limit to 10 digits (Nigerian mobile number length without country code)
+    if (numbers.length > 10) {
+      numbers = numbers.substring(0, 10);
+    }
+
+    // Format with spaces for better readability
+    let formatted = '';
+    if (numbers.length > 0) {
+      if (numbers.length <= 3) {
+        formatted = numbers;
+      } else if (numbers.length <= 6) {
+        formatted = numbers.substring(0, 3) + ' ' + numbers.substring(3);
+      } else {
+        formatted =
+          numbers.substring(0, 3) +
+          ' ' +
+          numbers.substring(3, 6) +
+          ' ' +
+          numbers.substring(6, 10);
+      }
+    }
+
+    // Update the form control
+    this.forms[0].get('phone')?.setValue(formatted, { emitEvent: false });
   }
 
   submitScouterAccount() {
