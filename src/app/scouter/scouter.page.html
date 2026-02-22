@@ -46,7 +46,7 @@
               id="fullname"
               type="text"
               formControlName="fullname"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
               placeholder="Enter your first and last name"
               [ngClass]="{
                 'border-red-500': forms[0].get('fullname')?.touched && forms[0].get('fullname')?.invalid
@@ -74,32 +74,23 @@
               >Banking Mobile Number <span class="text-red-500">*</span></label
             >
 
-            <!-- Phone input with country code support -->
-            <div class="relative">
-              <input
-                id="phone"
-                type="tel"
-                formControlName="phone"
-                class="border border-[#D0D5DD] pl-16 pr-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
-                placeholder="808 382 6576"
-                (input)="formatPhoneNumber($event)"
-                [ngClass]="{
+            <!-- Simple phone input -->
+            <input
+              id="phone"
+              type="tel"
+              formControlName="phone"
+              class=" placeholder:text-gray-400 border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              placeholder="+2348083826576 or 08083826576"
+              (input)="formatPhoneNumber($event)"
+              [ngClass]="{
     'border-red-500': forms[0].get('phone')?.touched && forms[0].get('phone')?.invalid
   }"
-              />
-              <!-- Country code prefix display -->
-              <div
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 bg-gray-100 px-2 py-1 rounded-l-lg border-r border-[#D0D5DD]"
-              >
-                +234
-              </div>
-            </div>
+            />
 
             <!-- Helper text -->
-            <p class="text-xs text-gray-500 mt-1">
-              Nigerian number with country code (+234) will be added
-              automatically
-            </p>
+            <!-- <p class="text-xs text-gray-500 mt-1">
+              Format: +2348083826576 or 08083826576
+            </p> -->
 
             <!-- Validation messages -->
             <div
@@ -110,7 +101,8 @@
                 >Phone number is required.</span
               >
               <span *ngIf="forms[0].get('phone')?.errors?.['pattern']"
-                >Enter a valid Nigerian phone number (e.g., 8083826576).</span
+                >Enter a valid Nigerian phone number (+2348083826576 or
+                08083826576).</span
               >
             </div>
           </div>
@@ -123,7 +115,7 @@
               id="email"
               type="email"
               formControlName="email"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              class="placeholder:text-gray-400 border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
               placeholder="aka.saka@gmail.com"
               [ngClass]="{ 
                 'border-red-500': (forms[0].get('email')?.touched && forms[0].get('email')?.invalid) || accountExistsError 
@@ -168,7 +160,7 @@
               id="location"
               type="text"
               formControlName="location"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
               placeholder="e.g Ikeja, Lagos"
               [ngClass]="{
                 'border-red-500': forms[1].get('location')?.touched && forms[1].get('location')?.invalid
@@ -271,7 +263,7 @@
               id="purpose"
               type="text"
               formControlName="purpose"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2  w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
               placeholder="e.g For a concert"
               [ngClass]="{
                 'border-red-500': forms[1].get('purpose')?.touched && forms[1].get('purpose')?.invalid
@@ -301,7 +293,7 @@
               id="payRange"
               type="number"
               formControlName="payRange"
-              class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+              class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent"
               placeholder="e.g 50000"
               min="1000"
               step="1000"
@@ -354,7 +346,7 @@
                 id="password"
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
-                class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent pr-10"
+                class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent pr-10"
                 placeholder="Enter password"
                 [ngClass]="{
                   'border-red-500': forms[2].get('password')?.touched && forms[2].get('password')?.invalid
@@ -418,7 +410,7 @@
                 id="confirmPassword"
                 [type]="showConfirmPassword ? 'text' : 'password'"
                 formControlName="confirmPassword"
-                class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent pr-10"
+                class="border border-[#D0D5DD] placeholder-gray-400 px-3 py-2 w-full rounded-lg focus:ring-2 focus:ring-[#101828] focus:border-transparent pr-10"
                 placeholder="Re-enter your password"
                 [ngClass]="{
                   'border-red-500': forms[2].get('confirmPassword')?.touched && 
