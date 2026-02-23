@@ -40,11 +40,17 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+
 body,
 ion-content,
 ion-app {
   font-family: "Euclid Circular A", sans-serif !important;
 }
+
+
+
+
+
 
 ion-button {
   text-transform: none !important;

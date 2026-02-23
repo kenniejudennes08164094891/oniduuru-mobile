@@ -104,16 +104,23 @@ export class ScouterPage implements OnInit, OnDestroy {
     clearInterval(this.timer);
   }
 
-  // Custom validators
   private nigerianPhoneValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const value = control.value;
       if (!value) return null;
-      // Accepts +234xxxxxxxxxx or 0xxxxxxxxxx (Nigerian numbers)
-      const plus234Pattern = /^\+234[789][01][0-9]{8}$/;
-      const zeroPattern = /^0[789][01][0-9]{8}$/;
-      const valid = plus234Pattern.test(value) || zeroPattern.test(value);
-      return valid ? null : { pattern: true };
+
+      // Remove any spaces, dashes, or parentheses for validation
+      const cleaned = value.replace(/[\s\-\(\)]/g, '');
+
+      // Accept two formats:
+      // 1. +234 followed by 10 digits (network code + 8 digits) - total 14 chars
+      // 2. 0 followed by 10 digits (network code + 8 digits) - total 11 chars
+      const plus234Pattern = /^\+234[789][01][0-9]{8}$/; // +2348083826576
+      const zeroPattern = /^0[789][01][0-9]{8}$/; // 08083826576
+
+      const isValid = plus234Pattern.test(cleaned) || zeroPattern.test(cleaned);
+
+      return isValid ? null : { pattern: true };
     };
   }
 
@@ -633,7 +640,6 @@ export class ScouterPage implements OnInit, OnDestroy {
       });
   }
 
- 
   addOrgTypeFromInput(event?: Event) {
     if (event) {
       event.preventDefault();
@@ -731,9 +737,24 @@ export class ScouterPage implements OnInit, OnDestroy {
   }
 
   private buildPayload() {
+    let phoneNumber = this.forms[0].get('phone')?.value?.trim() || '';
+
+    // Remove any spaces or special characters
+    phoneNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
+
+    // If it starts with 0, convert to +234 format
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = '+234' + phoneNumber.substring(1);
+    }
+
+    // Ensure it starts with +234
+    if (phoneNumber.startsWith('234') && !phoneNumber.startsWith('+234')) {
+      phoneNumber = '+' + phoneNumber;
+    }
+
     return {
       fullName: this.forms[0].get('fullname')?.value?.trim(),
-      phoneNumber: this.forms[0].get('phone')?.value?.trim(),
+      phoneNumber: phoneNumber, // Will always be in +234 format for API
       email: this.forms[0].get('email')?.value?.trim().toLowerCase(),
       location: this.forms[1].get('location')?.value?.trim(),
       scoutingPurpose: this.forms[1].get('purpose')?.value?.trim(),
@@ -741,6 +762,43 @@ export class ScouterPage implements OnInit, OnDestroy {
       payRange: String(this.forms[1].get('payRange')?.value),
       password: this.forms[2].get('password')?.value,
     };
+  }
+
+  formatPhoneNumber(event: any) {
+    let input = event.target.value;
+
+    // Remove any non-digit and non-+ characters
+    let cleaned = input.replace(/[^\d+]/g, '');
+
+    // Ensure only one + at the beginning
+    if (cleaned.indexOf('+') > 0) {
+      cleaned = '+' + cleaned.replace(/\+/g, '');
+    }
+
+    // If starts with +, limit to 14 characters (+234 + 10 digits)
+    if (cleaned.startsWith('+')) {
+      if (cleaned.length > 14) {
+        cleaned = cleaned.substring(0, 14);
+      }
+    }
+    // If starts with 0, limit to 11 characters
+    else if (cleaned.startsWith('0')) {
+      if (cleaned.length > 11) {
+        cleaned = cleaned.substring(0, 11);
+      }
+    }
+    // If starts with anything else, force either 0 or +234
+    else if (cleaned.length > 0) {
+      // Default to 0 format if first digit is valid network code
+      if (cleaned.length === 1 && ['7', '8', '9'].includes(cleaned[0])) {
+        cleaned = '0' + cleaned;
+      }
+    }
+
+    // Update the form control only if value changed
+    if (cleaned !== input) {
+      this.forms[0].get('phone')?.setValue(cleaned, { emitEvent: false });
+    }
   }
 
   submitScouterAccount() {
