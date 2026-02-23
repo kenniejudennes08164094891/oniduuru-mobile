@@ -35,7 +35,7 @@
         <span>Fund Others</span>
       </label>
     </div>
-    
+
     <!-- Fund Type Error -->
     <p *ngIf="validationErrors.fundType" class="text-red-500 text-sm mt-1 ml-4">
       {{ validationErrors.fundType }}
@@ -75,7 +75,7 @@
     </div>
 
     <!-- Wallet Acc -->
-    <div class="space-y-2 mt-8">
+    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Designated Wallet Account *</label>
       <input
         type="text"
@@ -99,7 +99,7 @@
     </div>
 
     <!-- Wallet Name -->
-    <div class="space-y-2 mt-8">
+    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Designated Wallet Name *</label>
       <input
         type="text"
@@ -121,7 +121,7 @@
     </div>
 
     <!-- Reason OPTIONAL -->
-    <div class="space-y-2 mt-8">
+    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Reason (Optional)</label>
       <textarea
         [ngModel]="reason"
@@ -143,11 +143,11 @@
 
     <!-- Terms -->
     <div class="flex items-center gap-4 text-[#101828] mt-8">
-      <input 
-        type="checkbox" 
-        [ngModel]="agreed" 
+      <input
+        type="checkbox"
+        [ngModel]="agreed"
         (ngModelChange)="onAgreedChange()"
-        name="agreed" 
+        name="agreed"
         id="termsCheckbox"
       />
       <label for="termsCheckbox" class="cursor-pointer">
@@ -164,9 +164,10 @@
     <button
       class="px-4 py-3 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       (click)="submitDeposit()"
-      [disabled]="isProcessing"
+      [disabled]="isProcessing && agreed"
+      [ngStyle]="{ 'background-color': (isProcessing && agreed) ? '#CDD5DF' : '#101323' }"
     >
-      <span *ngIf="!isProcessing">Create Fund Deposit</span>
+      <span *ngIf="!isProcessing">{{submitText}}</span>
       <span *ngIf="isProcessing" class="flex items-center justify-center gap-2">
         <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -175,7 +176,7 @@
         Processing...
       </span>
     </button>
-    
+
     <!-- Transaction charge info for Fund Others -->
     <div *ngIf="fundType === 'Fund Others' && amount && amount > 0" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <p class="text-sm text-blue-800">

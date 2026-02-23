@@ -37,22 +37,24 @@
   </div>
 
   <!-- Filters Section -->
-  <div class="space-y-4 mt-6">
+  <div class="mt-6 flex flex-col gap-4 md:flex-row md:items-start">
+
     <!-- Year Dropdown -->
-    <div class="relative w-[40%]">
+    <div class="relative w-full md:w-1/2">
       <div
         class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
         (click)="toggleYearDropdown()"
       >
-        <span class="text-[#101828] text-[14px]">
-          {{ selectedYear || "Select a Year" }}
-        </span>
+      <span class="text-[#101828] text-[14px]">
+        {{ selectedYear || "Select a Year" }}
+      </span>
         <ion-icon
           [name]="
-            isYearDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
-          "
+          isYearDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+        "
         ></ion-icon>
       </div>
+
       <div
         *ngIf="isYearDropdownOpen"
         class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 max-h-60 overflow-y-auto"
@@ -68,20 +70,21 @@
     </div>
 
     <!-- Month Dropdown -->
-    <div class="relative w-[40%]">
+    <div class="relative w-full md:w-1/2">
       <div
         class="border border-[#D9DCE5] rounded-md px-4 py-4 bg-[#F6F6F6] flex justify-between items-center cursor-pointer"
         (click)="toggleMonthDropdown()"
       >
-        <span class="text-[#101828] text-[14px]">
-          {{ selectedMonth || "Select a Month" }}
-        </span>
+      <span class="text-[#101828] text-[14px]">
+        {{ selectedMonth || "Select a Month" }}
+      </span>
         <ion-icon
           [name]="
-            isMonthDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
-          "
+          isMonthDropdownOpen ? 'chevron-up-outline' : 'chevron-down-outline'
+        "
         ></ion-icon>
       </div>
+
       <div
         *ngIf="isMonthDropdownOpen"
         class="absolute mt-2 bg-white border rounded-md shadow-md w-full z-10 max-h-60 overflow-y-auto"
@@ -96,18 +99,19 @@
       </div>
     </div>
 
-    <!-- Clear Filters Button -->
-    <div
-      *ngIf="selectedYear || selectedMonth || activeStatusFilter"
-      class="mt-2"
+  </div>
+
+  <!-- Clear Filters -->
+  <div
+    *ngIf="selectedYear || selectedMonth || activeStatusFilter"
+    class="mt-4"
+  >
+    <button
+      (click)="clearFilters()"
+      class="text-indigo-600 text-sm font-medium hover:text-indigo-800"
     >
-      <button
-        (click)="clearFilters()"
-        class="text-indigo-600 text-sm font-medium hover:text-indigo-800"
-      >
-        Clear all filters
-      </button>
-    </div>
+      Clear all filters
+    </button>
   </div>
 
   <!-- Status Filter Buttons -->
@@ -160,19 +164,6 @@
         <p>Failed</p>
       </button>
 
-      <!-- Fetched all (Show All) -->
-      <button
-        (click)="loadDeposits()"
-        [class]="
-          'min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer ' +
-          (activeStatusFilter === null
-            ? 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100'
-            : '')
-        "
-      >
-        <p class="text-lg font-semibold">{{ totalCount }}</p>
-        <p>All deposits</p>
-      </button>
     </div>
   </div>
 

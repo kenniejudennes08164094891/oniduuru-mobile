@@ -29,6 +29,40 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentUserRole: string = '';
 
+  walletMenuItems:any[] = [
+    {
+      label: 'Wallet Dashboard',
+      action: () => this.navigateToWallet('dashboard'),
+      show: () => true
+    },
+    {
+      label: 'Wallet Profile',
+      action: () => this.navigateToWallet('profile'),
+      show: () => !this.hasWalletProfile
+    },
+    {
+      label: 'Fund Wallet',
+      action: () => this.navigateToWallet('fund'),
+      show: () => true
+    },
+    {
+      label: 'Withdraw to Bank',
+      action: () => this.navigateToWallet('withdraw'),
+      show: () => true
+    },
+    {
+      label: 'Funds Transfer',
+      action: () => this.navigateToWallet('transfer'),
+      show: () => true
+    },
+    {
+      label: 'Dashboard',
+      action: () => this.navigateToDashboard(),
+      show: () => true
+    }
+  ];
+
+
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
@@ -107,13 +141,14 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   // Helper method to get user role
-  private getUserRole(): void {
+  private getUserRole(): any {
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const user = JSON.parse(userData);
         this.currentUserRole = user.role || user.details?.user?.role || '';
         console.log('👤 Current user role:', this.currentUserRole);
+        return this.currentUserRole
       } catch (e) {
         console.warn('Error getting user role:', e);
         this.currentUserRole = '';
@@ -409,8 +444,20 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!isAuthenticated) return false;
 
     // Only show if user has a valid role and is on a wallet route
-    return isWalletRoute && !!this.currentUserRole;
+    // console.clear();
+    // console.log("checkers>>",{
+    //   isWalletRoute,
+    //   isCurrentUserRole: (this.getUserRole() === 'scouter' || this.getUserRole() === 'talent')
+    // })
+    return isWalletRoute && (this.getUserRole() === 'scouter' || this.getUserRole() === 'talent');
   }
+
+
+  get filteredWalletMenuItems() {
+    return this.walletMenuItems.filter(item => item.show());
+  }
+
+
 
   // Dynamic navigation method
   async navigateToWallet(page: string) {
