@@ -65,7 +65,8 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
   /** 🔙 Go back to dashboard */
   async goBack(): Promise<void> {
     await this.popoverCtrl.dismiss();
-    await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
+    window.history.go(-1)
+    //await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
   }
 
   async openComplaintModal() {

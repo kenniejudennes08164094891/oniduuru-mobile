@@ -1,12 +1,19 @@
 <div class="px-3 sm:px-4 lg:px-6 ">
   <div class="flex justify-between items-center px-1.5 mb-4 sm:mb-6">
     <h3 class="text-lg sm:text-xl md:text-xl font-semibold">My Recent Hires</h3>
-    <button *ngIf="hasRecentHires" (click)="goToViewHires()"
-      class="bg-[#101828] px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-white hover:bg-[#1e293b] transition-colors text-sm sm:text-base">
+    <button 
+      *ngIf="hasRecentHires" 
+      (click)="goToViewHires()"
+      [disabled]="isPaymentPendingOrUnpaid"
+      [class.opacity-50]="isPaymentPendingOrUnpaid"
+      [class.cursor-not-allowed]="isPaymentPendingOrUnpaid"
+      [class.hover:bg-[#1e293b]]="!isPaymentPendingOrUnpaid"
+      class="bg-[#101828] px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-white transition-colors text-sm sm:text-base">
       View All Hires
     </button>
   </div>
 
+  <!-- Rest of the template remains the same -->
   <!-- Empty State -->
   <div *ngIf="!hasRecentHires" class="flex flex-col items-center justify-center h-[40vh] sm:h-[50vh]">
     <div class="w-32 h-32 sm:w-48 sm:h-48 mb-4 sm:mb-6">
@@ -23,7 +30,11 @@
   <!-- Recent Hires List -->
   <div *ngIf="hasRecentHires">
     <div *ngFor="let hire of limitedRecentHires; let i = index; trackBy: trackByHire"
-      class="flex items-center justify-between py-3 sm:py-4 px-1 border-b border-gray-200 rounded-lg last:border-0 cursor-pointer hover:bg-gray-50 transition-colors">
+      class="flex items-center justify-between py-3 sm:py-4 px-1 border-b border-gray-200 rounded-lg last:border-0 transition-colors"
+      [class.cursor-pointer]="!isPaymentPendingOrUnpaid"
+      [class.hover:bg-gray-50]="!isPaymentPendingOrUnpaid"
+      [class.cursor-not-allowed]="isPaymentPendingOrUnpaid"
+      (click)="!isPaymentPendingOrUnpaid && goToHireDetails(hire.marketHireId)">
 
       <!-- Left: Avatar + Info -->
       <div class="flex items-center gap-2 sm:gap-3 px-1 py-1 flex-1 min-w-0">
@@ -92,8 +103,14 @@
 
     <!-- Show All Button (if more than 4) -->
     <div *ngIf="hasRecentHires && RecentHires.length > 4" class="mt-4 sm:mt-6 text-center">
-      <button (click)="goToViewHires()"
-        class="text-[#101828] border border-[#101828] px-4 sm:px-6 py-2 rounded-lg hover:bg-[#101828] hover:text-white transition-colors text-sm sm:text-base">
+      <button 
+        (click)="goToViewHires()"
+        [disabled]="isPaymentPendingOrUnpaid"
+        [class.opacity-50]="isPaymentPendingOrUnpaid"
+        [class.cursor-not-allowed]="isPaymentPendingOrUnpaid"
+        class="text-[#101828] border border-[#101828] px-4 sm:px-6 py-2 rounded-lg transition-colors text-sm sm:text-base"
+        [class.hover:bg-[#101828]]="!isPaymentPendingOrUnpaid"
+        [class.hover:text-white]="!isPaymentPendingOrUnpaid">
         View All {{ RecentHires.length }} Hires
       </button>
     </div>

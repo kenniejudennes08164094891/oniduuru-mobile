@@ -1,77 +1,158 @@
 <ion-header class="bg-white">
-  <div class="w-full flex justify-between items-center px-4 py-2">
-    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+  <div
+    class="w-full flex flex-wrap justify-between items-center px-4 py-2 gap-2"
+  >
+    <button class="text-xl md:text-2xl font-semibold text-[#101828]">
+      ∯ Oniduuru
+    </button>
     <div class="flex items-center gap-4">
-      <button (click)="handleWelcomeBack()"
-        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
+      <button
+        (click)="handleWelcomeBack()"
+        class="shadow-2xl px-4 md:px-5 py-1.5 md:py-2 rounded-xl border-2 border-white bg-[#101828] text-white text-sm md:text-base hover:bg-opacity-90 transition-all"
+      >
         Back
       </button>
     </div>
   </div>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="flex flex-col h-full justify-between mt-4">
+<ion-content
+  [fullscreen]="true"
+  class="flex flex-col h-full justify-between mt-4"
+>
   <!-- Title Section -->
-  <div class="py-4 px-4 bg-[#F1F1F1] text-[#101828] text-[24px]">
+  <div
+    class="py-3 md:py-4 px-4 bg-[#F1F1F1] text-[#101828] text-[20px] md:text-[24px]"
+  >
     <span>Create an account</span>
   </div>
 
   <!-- Dynamic Form Steps -->
   <div class="flex-1 flex flex-col mt-4 space-y-6">
-
-
-
     <!-- STEP 1: Talent Details -->
-    <form *ngIf="currentStep === 0" class=" mt-4 px-4 space-y-6">
+    <form *ngIf="currentStep === 0" class="mt-4 px-4 space-y-6">
       <div class="mb-24">
-        <h2 class="text-[18px] font-semibold mb-4">Talent Details</h2>
+        <h2 class="text-[16px] md:text-[18px] font-semibold mb-4">
+          Talent Details
+        </h2>
         <div class="flex flex-col space-y-2">
-          <label class=" font-medium text-[#000000] mb-1">Full Name</label>
-          <input type="text" name="fullName" [(ngModel)]="fullName" (blur)="fullNameTouched = true"
-            [ngClass]="{'border-grey-500': fullNameTouched && !fullName}"
-            class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="Enter your first and last name" />
-        </div>
-
-        <div class="flex flex-col space-y-1">
-          <label class="font-medium text-[#000000] mt-4 mb-1">Phone</label>
-          <input type="tel" name="phone" [(ngModel)]="phone" (blur)="phoneTouched = true"
-            [ngClass]="{'border-red-500': phoneTouched && !isPhoneValid}"
-            class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="e.g 0818152325" maxlength="15"
-            pattern="\d*" />
-          <p *ngIf="phoneTouched && !phone" class="text-red-600 text-sm">Phone is required</p>
-          <p *ngIf="phoneTouched && phone && !isPhoneValid" class="text-red-600 text-sm">
-            Enter a valid phone number (7-15 digits)
+          <label class="font-medium text-[#000000] mb-1 text-sm md:text-base"
+            >Full Name</label
+          >
+          <input
+            type="text"
+            name="fullName"
+            [(ngModel)]="fullName"
+            (blur)="fullNameTouched = true"
+            [ngClass]="{'border-red-500': fullNameTouched && !isFullNameValid}"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="Enter your first and last name"
+          />
+          <p
+            *ngIf="fullNameTouched && !isFullNameValid"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Full name must be at least 3 letters and only contain letters,
+            spaces, hyphens, or apostrophes.
           </p>
         </div>
 
         <div class="flex flex-col space-y-1">
-          <label class="font-medium text-[#000000] mt-4 mb-1">Email</label>
-          <input type="email" name="email" [(ngModel)]="email" (blur)="emailTouched = true"
+          <label
+            class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+            >Phone</label
+          >
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            (blur)="phoneTouched = true"
+            [ngClass]="{'border-red-500': phoneTouched && !isPhoneValid}"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="e.g 0818152325"
+            maxlength="15"
+            pattern="\d*"
+          />
+          <p
+            *ngIf="phoneTouched && !phone"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Phone is required
+          </p>
+          <p
+            *ngIf="phoneTouched && phone && !isPhoneValid"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Enter a valid phone number (7-15 digits, numbers only)
+          </p>
+        </div>
+
+        <div class="flex flex-col space-y-1">
+          <label
+            class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+            >Email</label
+          >
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            (blur)="emailTouched = true"
             [ngClass]="{'border-red-500': emailTouched && !isEmailValid}"
-            class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="muse@email.com" />
-          <p *ngIf="emailTouched && !email" class="text-red-600 text-sm">Email is required</p>
-          <p *ngIf="emailTouched && email && !isEmailValid" class="text-red-600 text-sm">
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="muse@email.com"
+          />
+          <p
+            *ngIf="emailTouched && !email"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Email is required
+          </p>
+          <p
+            *ngIf="emailTouched && email && !isEmailValid"
+            class="text-red-600 text-xs md:text-sm"
+          >
             Enter a valid email address
           </p>
         </div>
 
-
         <div class="flex flex-col space-y-2">
-          <label class=" font-medium text-[#000000] mt-4 mb-1">Location</label>
-          <input type="text" name="location" [(ngModel)]="location" (blur)="locationTouched = true"
-            [ngClass]="{'border-grey-500': locationTouched && !location}"
-            class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="Enter your location" />
+          <label
+            class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+            >Location</label
+          >
+          <input
+            type="text"
+            name="location"
+            [(ngModel)]="location"
+            (blur)="locationTouched = true"
+            [ngClass]="{'border-red-500': locationTouched && !isLocationValid}"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="Enter your location"
+          />
+          <p
+            *ngIf="locationTouched && !isLocationValid"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Location must be at least 2 characters.
+          </p>
         </div>
 
         <div class="flex flex-col space-y-3 mt-32">
-          <button type="button" (click)="handleNextStep()" [disabled]="!isTalentDetailsValid"
-            [ngClass]="!isTalentDetailsValid ? 'opacity-40 cursor-not-allowed' : ''"
-            class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium">
+          <button
+            type="button"
+            (click)="handleNextStep()"
+            [disabled]="!isTalentDetailsValid"
+            [ngClass]="!isTalentDetailsValid ? 'opacity-40 cursor-not-allowed' : 'hover:bg-opacity-90 active:scale-95 transition-all'"
+            class="bg-[#101828] text-white w-full py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base"
+          >
             Next
           </button>
 
-          <button type="button" (click)="handleCancel()"
-            class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium">
+          <button
+            type="button"
+            (click)="handleCancel()"
+            class="bg-[#F3F4F6] border border-[#D1D5DB] shadow w-full py-2.5 md:py-2 rounded-lg text-[#4B5563] font-medium text-sm md:text-base hover:bg-[#E5E7EB] active:scale-95 transition-all"
+          >
             Cancel
           </button>
         </div>
@@ -80,35 +161,71 @@
 
     <!-- STEP 2: Other Details -->
     <form *ngIf="currentStep === 1" class="mt-4 px-4 space-y-6">
-      <h2 class="text-[18px] font-semibold mb-4">Enter Other Details</h2>
+      <h2 class="text-[16px] md:text-[18px] font-semibold mb-4">
+        Enter Other Details
+      </h2>
 
+      <!-- Add this after the skill sets section -->
       <div class="flex flex-col space-y-2">
-        <label class=" font-medium text-[#000000] mt-4 mb-1">Skill Level</label>
-        <select name="skillLevel" [(ngModel)]="skillLevel" (blur)="skillLevelTouched = true"
-          [ngClass]="{'border-grey-500': skillLevelTouched && !skillLevel}"
-          class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg">
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Skill Level</label
+        >
+        <select
+          name="skillLevel"
+          [(ngModel)]="skillLevel"
+          (blur)="skillLevelTouched = true"
+          [ngClass]="{'border-red-500': skillLevelTouched && !skillLevel}"
+          class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+        >
           <option value="">Select Skill Level</option>
-          <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
+          <option *ngFor="let level of skillLevels" [value]="level">
+            {{ level }}
+          </option>
         </select>
       </div>
 
       <div class="flex flex-col space-y-2">
-        <label class=" font-medium text-[#000000] mt-2 mb-1">Skill Set</label>
-        <div class="flex space-x-2">
-          <input type="text" name="skillSetInput" [(ngModel)]="skillSetInput" (keyup.enter)="addSkill()"
-            class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="Type a skill and press Enter" />
+        <label class="font-medium text-[#000000] mt-2 mb-1 text-sm md:text-base"
+          >Skill Set</label
+        >
+        <div
+          class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2"
+        >
+          <input
+            type="text"
+            name="skillSetInput"
+            [(ngModel)]="skillSetInput"
+            (keyup.enter)="addSkill()"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="Type a skill and press Enter"
+          />
+          <p
+            *ngIf="skillSetTouched && !isSkillSetValid"
+            class="text-red-600 text-xs md:text-sm"
+          >
+            Please add at least one skill.
+          </p>
 
-          <button type="button" (click)="addSkill()" class="px-4 bg-[#101828] text-white rounded-lg">
+          <button
+            type="button"
+            (click)="addSkill()"
+            class="px-4 py-2.5 md:py-2 bg-[#101828] text-white rounded-lg text-sm md:text-base hover:bg-opacity-90 active:scale-95 transition-all"
+          >
             Add
           </button>
         </div>
 
         <!-- Display Added Skill Tags -->
         <div class="flex flex-wrap gap-2 mt-2">
-          <div *ngFor="let skill of skillSets"
-            class="flex items-center bg-[#F2F4F7] text-[#101828] px-3 py-1 rounded-full border">
+          <div
+            *ngFor="let skill of skillSets"
+            class="flex items-center bg-[#F2F4F7] text-[#101828] px-3 py-1.5 rounded-full border text-sm"
+          >
             {{ skill }}
-            <span class="ml-2 text-red-600 font-bold cursor-pointer" (click)="removeSkill(skill)">
+            <span
+              class="ml-2 text-red-600 font-bold cursor-pointer hover:text-red-800 text-lg"
+              (click)="removeSkill(skill)"
+            >
               ×
             </span>
           </div>
@@ -116,173 +233,294 @@
       </div>
 
       <div class="flex flex-col space-y-2">
-        <label class=" font-medium text-[#000000] mt-4 mb-1">Education</label>
-        <select name="education" [(ngModel)]="education" (blur)="educationTouched = true"
-          [ngClass]="{'border-grey-500': educationTouched && !education}"
-          class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg">
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Education</label
+        >
+        <select
+          name="education"
+          [(ngModel)]="education"
+          (blur)="educationTouched = true"
+          [ngClass]="{'border-red-500': educationTouched && !education}"
+          class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+        >
           <option value="">Select Education</option>
-          <option *ngFor="let edu of educationLevels" [value]="edu">{{ edu }}</option>
+          <option *ngFor="let edu of educationLevels" [value]="edu">
+            {{ edu }}
+          </option>
         </select>
       </div>
 
       <div class="flex flex-col space-y-2 mb-32">
-        <label class=" font-medium text-[#000000] mt-4 mb-1">Pay Range</label>
-        <select name="payRange" [(ngModel)]="payRange" (blur)="payRangeTouched = true"
-          [ngClass]="{'border-grey-500': payRangeTouched && !payRange}"
-          class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg">
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Pay Range</label
+        >
+        <select
+          name="payRange"
+          [(ngModel)]="payRange"
+          (blur)="payRangeTouched = true"
+          [ngClass]="{'border-red-500': payRangeTouched && !payRange}"
+          class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+        >
           <option value="">Select Pay Range</option>
           <option *ngFor="let pay of payRanges" [value]="pay">{{ pay }}</option>
         </select>
       </div>
 
-      <div class="flex flex-col space-y-3 mt-32 ">
-        <button type="button" (click)="handleNextStep()" [disabled]="!isOtherDetailsValid"
-          [ngClass]="!isOtherDetailsValid ? 'opacity-40 cursor-not-allowed' : ''"
-          class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
+      <div class="flex flex-col space-y-3 mt-32">
+        <button
+          type="button"
+          (click)="handleNextStep()"
+          [disabled]="!isOtherDetailsValid"
+          [ngClass]="!isOtherDetailsValid ? 'opacity-40 cursor-not-allowed' : 'hover:bg-opacity-90 active:scale-95 transition-all'"
+          class="bg-[#101828] text-white w-full py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base"
+        >
           Next
         </button>
-        <button type="button" (click)="handlePreviousStep()"
-          class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
-          Previous
+        <button
+          type="button"
+          (click)="handlePreviousStep()"
+          class="bg-[#F3F4F6] border border-[#D1D5DB] shadow w-full py-2.5 md:py-2 rounded-lg text-[#4B5563] font-medium text-sm md:text-base hover:bg-[#E5E7EB] active:scale-95 transition-all"
+        >
+          ← Previous
         </button>
-
       </div>
     </form>
 
     <!-- STEP 3: Login Credentials -->
     <form *ngIf="currentStep === 2" class="mt-4 px-4 space-y-6">
-      <h2 class="text-[18px] font-semibold mb-4">Create your Login Credentials</h2>
+      <h2 class="text-[16px] md:text-[18px] font-semibold mb-4">
+        Create your Login Credentials
+      </h2>
       <div class="flex flex-col space-y-2">
-        <label class="font-medium text-[#000000] mt-4 mb-1">Email</label>
-        <input type="email" name="emailLogin" [(ngModel)]="emailLogin" (blur)="emailLoginTouched = true"
-          [ngClass]="{'border-red-500': emailLoginTouched && !isEmailLoginValid}"
-          class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg" placeholder="muse@email.com" />
-        <p *ngIf="emailLoginTouched && !emailLogin" class="text-red-600 text-sm">Email is required</p>
-        <p *ngIf="emailLoginTouched && emailLogin && !isEmailLoginValid" class="text-red-600 text-sm">
-          Enter a valid email address
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Email</label
+        >
+        <input
+          type="email"
+          name="emailLogin"
+          [value]="email"
+          readonly
+          tabindex="-1"
+          class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed text-sm md:text-base"
+        />
+        <p class="text-xs text-gray-500 mt-1">
+          This is the email you entered in the Talent Details step.
         </p>
       </div>
 
       <div class="flex flex-col space-y-2 relative">
-        <label class=" font-medium text-[#000000] mt-4 mb-1">Password</label>
-        <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password"
-          (blur)="passwordTouched = true" class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
-          placeholder="Enter password" />
-        <ion-icon [name]="showPassword ? 'eye-off' : 'eye'" (click)="togglePassword()"
-          class="absolute top-11 right-3 text-gray-500 text-xl cursor-pointer"></ion-icon>
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Password</label
+        >
+        <div class="relative">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            (blur)="passwordTouched = true"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg pr-10 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="Enter password"
+            [ngClass]="{'border-red-500': passwordTouched && !isPasswordValid}"
+          />
+          <ion-icon
+            [name]="showPassword ? 'eye-off' : 'eye'"
+            (click)="togglePassword()"
+            class="absolute top-3 right-3 text-gray-500 text-xl cursor-pointer hover:text-gray-700"
+          ></ion-icon>
+        </div>
+        <p
+          *ngIf="passwordTouched && !isPasswordValid"
+          class="text-red-600 text-xs md:text-sm"
+        >
+          Password must be at least 8 characters, include uppercase, lowercase,
+          number, and special character.
+        </p>
       </div>
 
       <div class="flex flex-col space-y-2 relative">
-        <label class=" font-medium text-[#000000] mt-4 mb-1">Confirm Password</label>
-        <input [type]="showPassword ? 'text' : 'password'" name="confirmPassword" [(ngModel)]="confirmPassword"
-          (blur)="confirmPasswordTouched = true" class="border border-[#D0D5DD] px-3 py-2 w-full rounded-lg"
-          placeholder="Re-enter password" />
-        <ion-icon [name]="showPassword ? 'eye-off' : 'eye'" (click)="togglePassword()"
-          class="absolute top-11 right-3 text-gray-500 text-xl cursor-pointer"></ion-icon>
+        <label class="font-medium text-[#000000] mt-4 mb-1 text-sm md:text-base"
+          >Confirm Password</label
+        >
+        <div class="relative">
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword"
+            (blur)="confirmPasswordTouched = true"
+            class="border border-[#D0D5DD] px-3 py-2.5 md:py-2 w-full rounded-lg pr-10 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+            placeholder="Re-enter password"
+            [ngClass]="{'border-red-500': confirmPasswordTouched && !isConfirmPasswordValid}"
+          />
+          <ion-icon
+            [name]="showConfirmPassword ? 'eye-off' : 'eye'"
+            (click)="toggleConfirmPassword()"
+            class="absolute top-3 right-3 text-gray-500 text-xl cursor-pointer hover:text-gray-700"
+          ></ion-icon>
+        </div>
+        <p
+          *ngIf="confirmPasswordTouched && !isConfirmPasswordValid"
+          class="text-red-600 text-xs md:text-sm"
+        >
+          Passwords must match.
+        </p>
       </div>
-      <p class="text-sm text-gray-500">Password must contain 8+ characters, including uppercase, lowercase, and special
-        characters.</p>
+      <p class="text-xs md:text-sm text-gray-500">
+        Password must contain 8+ characters, including uppercase, lowercase, and
+        special characters.
+      </p>
 
-      <div class="flex flex-col space-y-3 mt-32  ">
-        <button type="button" (click)="handleNextStep()" [disabled]="isSubmitting || !isLoginCredentialsValid"
-          [ngClass]="!isLoginCredentialsValid ? 'opacity-40 cursor-not-allowed' : ''"
-          class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
+      <div class="flex flex-col space-y-3 mt-32">
+        <button
+          type="button"
+          (click)="handleNextStep()"
+          [disabled]="isSubmitting || !isLoginCredentialsValid"
+          [ngClass]="!isLoginCredentialsValid ? 'opacity-40 cursor-not-allowed' : 'hover:bg-opacity-90 active:scale-95 transition-all'"
+          class="bg-[#101828] text-white w-full py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base"
+        >
           Next
         </button>
-        <button type="button" (click)="handlePreviousStep()"
-          class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
-          Previous
+        <button
+          type="button"
+          (click)="handlePreviousStep()"
+          class="bg-[#F3F4F6] border border-[#D1D5DB] shadow w-full py-2.5 md:py-2 rounded-lg text-[#4B5563] font-medium text-sm md:text-base hover:bg-[#E5E7EB] active:scale-95 transition-all"
+        >
+          ← Previous
         </button>
       </div>
     </form>
 
     <!-- STEP 4: Verify OTP -->
-    <form *ngIf="currentStep === 3" class="space-y-6 text-center">
-      <h2 class="text-[18px] font-semibold mb-4"> OTP Verification</h2>
-      <p class="text-gray-700">
-        We have sent an OTP to {{ maskedEmail() }} and {{ maskedPhone() }}
+    <form *ngIf="currentStep === 3" class="space-y-6 text-center px-4">
+      <h2 class="text-[16px] md:text-[18px] font-semibold mb-4">
+        OTP Verification
+      </h2>
+      <p class="text-sm md:text-base text-gray-700">
+        We have sent an OTP to {{ maskedEmail() }}
       </p>
-      <div class="flex justify-center gap-3">
-        <input *ngFor="let field of otpFields; let i = index" type="text" maxlength="1" [(ngModel)]="otp[i]"
-          (input)="moveNext($event, i)" class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg" />
+      <div class="flex flex-wrap justify-center gap-2 md:gap-3">
+        <input
+          *ngFor="let field of otpFields; let i = index"
+          type="text"
+          maxlength="1"
+          [(ngModel)]="otp[i]"
+          (ngModelChange)="isOtpHandled($event)"
+          (input)="moveNext($event, i)"
+          class="w-14 h-14 md:w-16 md:h-16 text-[30px] md:text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
+        />
       </div>
-      <p class="text-sm text-gray-500 mt-2">
+      <p class="text-xs md:text-sm text-gray-500 mt-2">
         Enter the 4-digit OTP sent to your email and phone number.
       </p>
 
-      <p class="text-sm text-gray-500">
-        Didn’t get the code?
-        <button type="button" (click)="resendOtp()" class="text-blue-600 underline">
-          Resend OTP
+      <p class="text-xs md:text-sm text-gray-500">
+        Didn't get the code?
+        <button
+          type="button"
+          (click)="resendOtp()"
+          [disabled]="!canResendOtp"
+          [ngClass]="{
+      'text-blue-600 underline hover:text-blue-800': canResendOtp,
+      'text-gray-400 cursor-not-allowed': !canResendOtp
+    }"
+          class="transition-colors duration-200"
+        >
+          Resend OTP {{ !canResendOtp ? '(' + timer + 's)' : '' }}
         </button>
       </p>
 
-      <div class="flex flex-col mt-32 space-y-3 justify-between ">
-        <button type="button" (click)="verifyOtp()" [disabled]="!isOtpValid"
-          [ngClass]="!isOtpValid ? 'opacity-40 cursor-not-allowed' : ''"
-          class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium ml-2">
+      <div class="flex flex-col mt-32 space-y-3 justify-between">
+        <button
+          type="button"
+          (click)="verifyOtp()"
+          [disabled]="!isOtpValid"
+          [ngClass]="!isOtpValid ? 'opacity-40 cursor-not-allowed' : 'hover:bg-opacity-90 active:scale-95 transition-all'"
+          class="bg-[#101828] text-white w-full py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base"
+        >
           Verify OTP
         </button>
-        <button type="button" (click)="handlePreviousStep()"
-          class="bg-white border-2 border-[#D0D5DD] shadow-lg w-full py-2 rounded-lg text-gray-800 font-medium mr-2">
-          Previous
+        <button
+          type="button"
+          (click)="handlePreviousStep()"
+          class="bg-[#F3F4F6] border border-[#D1D5DB] shadow w-full py-2.5 md:py-2 rounded-lg text-[#4B5563] font-medium text-sm md:text-base hover:bg-[#E5E7EB] active:scale-95 transition-all"
+        >
+          ← Previous
         </button>
       </div>
 
-      <p *ngIf="error" class="text-red-600 mt-2">{{ error }}</p>
+      <p *ngIf="error" class="text-red-600 text-sm mt-2">{{ error }}</p>
       <p class="text-sm mt-2">Time remaining: {{ timer }}s</p>
     </form>
 
     <!-- SUCCESS POPUP -->
-    <div *ngIf="showSuccessPopup" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-
-      <div class="bg-white rounded-2xl w-[90%] max-w-md p-6 text-center shadow-xl">
-
+    <div
+      *ngIf="showSuccessPopup"
+      class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 px-4"
+    >
+      <div
+        class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 text-center shadow-xl mx-4"
+      >
         <!-- Success icon container -->
         <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-            <ion-icon name="checkmark-circle" class="text-green-600 text-5xl"></ion-icon>
+          <div
+            class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-green-100 flex items-center justify-center"
+          >
+            <ion-icon
+              name="checkmark-circle"
+              class="text-green-600 text-4xl md:text-5xl"
+            ></ion-icon>
           </div>
         </div>
 
         <!-- Title -->
-        <h2 class="text-xl font-semibold text-[#1D2939] mb-2">
+        <h2 class="text-lg md:text-xl font-semibold text-[#1D2939] mb-2">
           You have been verified successfully
         </h2>
 
         <!-- Subtitle -->
-        <p class="text-sm text-gray-500 mb-6">
+        <p class="text-xs md:text-sm text-gray-500 mb-6">
           You have successfully been onboarded<br />
           Kindly proceed to login.
         </p>
 
         <!-- Login button -->
-        <button (click)="goToLogin()" class="w-full bg-green-700 text-white py-2 rounded-lg font-medium mb-3">
+        <button
+          (click)="goToLogin()"
+          class="w-full bg-green-700 text-white py-2.5 md:py-2 rounded-lg font-medium mb-3 text-sm md:text-base hover:bg-green-800 active:scale-95 transition-all"
+        >
           Login
         </button>
 
         <!-- Cancel button -->
-        <button (click)="closePopup()" class="w-full border border-gray-400 text-gray-700 py-2 rounded-lg font-medium">
+        <button
+          (click)="closePopup()"
+          class="w-full border border-gray-400 text-gray-700 py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base hover:bg-gray-50 active:scale-95 transition-all"
+        >
           Cancel
         </button>
-
       </div>
-
     </div>
-
   </div>
 </ion-content>
+
 <!-- Progress Bar & Step Labels -->
 <ion-footer class="bg-white shadow-inner border-t border-gray-200 px-4 py-3">
   <div class="w-full h-2 bg-[#E4E7EC] rounded-full mb-3">
-    <div class="h-2 bg-[#364152] transition-all duration-500 rounded-full" [style.width]="getProgressWidth()"></div>
+    <div
+      class="h-2 bg-[#364152] transition-all duration-500 rounded-full"
+      [style.width]="getProgressWidth()"
+    ></div>
   </div>
 
-  <div class="flex justify-between items-center text-sm">
+  <div
+    class="flex flex-wrap justify-between items-center text-xs md:text-sm gap-2"
+  >
     <ng-container *ngFor="let step of steps; let i = index">
-      <p [ngClass]="
+      <p
+        [ngClass]="
           i === currentStep ? 'text-[#CC0000] font-semibold' : 'text-[#667085]'
-        " class="transition-colors duration-300">
+        "
+        class="transition-colors duration-300"
+      >
         {{ step }}
       </p>
     </ng-container>

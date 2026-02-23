@@ -73,11 +73,15 @@
 
     <!-- Upload Button -->
     <button
-      [disabled]="!previewUrl"
+      [disabled]="!previewUrl || isUploading"
       (click)="uploadReceipt()"
-      class="mt-4 w-full bg-[#111827] text-white py-2 sm:py-3 rounded-md shadow-md text-sm sm:text-base font-medium hover:bg-[#000000] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+      class="mt-4 w-full bg-[#111827] text-white py-2 sm:py-3 rounded-md shadow-md text-sm sm:text-base font-medium hover:bg-[#000000] disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
     >
-      Upload Receipt
+      <span *ngIf="!isUploading">Upload Receipt</span>
+      <span *ngIf="isUploading" class="flex items-center gap-2">
+        <ion-spinner name="crescent"></ion-spinner>
+        Uploading...
+      </span>
     </button>
   </div>
 </ion-content>

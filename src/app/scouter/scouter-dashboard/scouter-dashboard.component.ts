@@ -9,6 +9,7 @@ import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { MakePaymentPopupModalComponent } from 'src/app/utilities/modals/make-payment-popup-modal/make-payment-popup-modal.component';
 import { PaymentService } from 'src/app/services/payment.service';
+import { PaymentStatusValue } from 'src/app/services/payment.service';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -16,6 +17,7 @@ import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.serv
 import { ToastsService } from 'src/app/services/toasts.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { ToggleVisibilitySharedStateService } from 'src/app/services/toggleVisibilitySharedState.service';
+import { firstValueFrom } from 'rxjs';
 
 export interface RecentHire {
   id: string;
@@ -69,7 +71,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     percentage: number;
     title: string;
   }[] = [];
-  paymentStatus: any;
+  paymentStatus: PaymentStatusValue = 'false';
   scouterDetails: any; // Add this to store scouter details
 
   // New properties for header scroll behavior
@@ -136,6 +138,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     { title: 'Offer Accepted', value: 0, status: 'active' },
     { title: 'Offer Rejected', value: 0, status: 'inactive' },
   ];
+  hasWalletProfile: boolean | null = null;
 
   constructor(
     private modalCtrl: ModalController,
@@ -149,28 +152,77 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     private toggleVisibilityService: ToggleVisibilitySharedStateService,
   ) {}
 
-  // Add this method to check what's being passed to the child component
-  async ngOnInit(): Promise<void> {
+  async getWalletProfile(): Promise<void> {
+    try {
+      const userData: any = localStorage.getItem('user_data');
+      const scouterId = JSON.parse(userData)?.scouterId;
+      const response = await firstValueFrom(
+        this.endpointService.fetchWalletProfile(scouterId),
+      );
+      if (response) {
+        this.hasWalletProfile = true;
+      }
+    } catch (e: any) {
+      console.clear();
+      console.log('error status>>', e?.status);
+      console.error('error>>', e?.error?.message ?? e?.message);
+      if (e?.status === 404) {
+        this.hasWalletProfile = false;
+      }
+    }
+  }
+
+  async routeToWalletOnboarding() {
+    console.clear();
+    await this.router.navigateByUrl('/scouter/wallet-page/wallet-profile');
+  }
+
+  getPaymentStatus(): PaymentStatusValue {
+    // Check localStorage first (most reliable)
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+
+        // Check for paid status in various possible locations
+        let paidStatus =
+          parsed.paid || parsed.details?.user?.paid || parsed.user?.paid;
+
+        // Normalize to the three possible values
+        if (paidStatus === true || paidStatus === 'true') {
+          return 'true';
+        } else if (paidStatus === 'pendingPaymentVerification') {
+          return 'pendingPaymentVerification';
+        } else {
+          return 'false';
+        }
+      } catch (error) {
+        console.error('Error parsing user_data for payment status:', error);
+      }
+    }
+
+    return 'false';
+  }
+
+  ngOnInit(): void {
     this.getScouterDetails();
     this.setTimeOfDay();
     this.fetchWalletBalance();
-
-    // Initialize balance visibility state
-    await this.initializeBalanceVisibility();
-
-    // Just load from localStorage - data is already initialized by AppInitService
+    this.getWalletProfile();
+    this.initializeBalanceVisibility();
     this.loadNotificationCount();
-
-    // ✅ Set up listener for real-time updates
     this.setupNotificationListener();
 
-    const id = this.route.snapshot.paramMap.get('id');
-
-    // Subscribe to paymentStatus
-    this.paymentService.paymentStatus$.subscribe((status) => {
-      this.paymentStatus = status;
+    // Subscribe to paymentStatus FIRST - this will get the persisted state
+    this.paymentService.paymentStatus$.subscribe((paymentStatus) => {
+      this.paymentStatus = paymentStatus.status;
+      console.log(
+        '💰 Payment status updated in dashboard:',
+        this.paymentStatus,
+      );
     });
 
+    // Then fetch from backend to update if needed
     this.initializeDashboardData();
     this.loadDashboardData();
   }
@@ -187,8 +239,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     );
   }
 
-
-    async goToWalletPage(): Promise<void> {
+  async goToWalletPage(): Promise<void> {
     await this.router.navigate(['/scouter/wallet-page']);
   }
 
@@ -602,7 +653,11 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
 
     // Update the component's RecentHires array
     this.RecentHires = transformedHires;
-    console.log('✅ Updated RecentHires with', transformedHires.length, 'hires');
+    console.log(
+      '✅ Updated RecentHires with',
+      transformedHires.length,
+      'hires',
+    );
   }
 
   private extractTalentName(hire: any): string {

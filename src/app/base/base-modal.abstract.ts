@@ -25,7 +25,8 @@ export abstract class BaseModal implements OnInit, OnDestroy {
     }
   }
 
-  dismiss(data?: any, role?: string) {
-    this.modalCtrl.dismiss(data, role);
+  async dismiss(data?: any, role?: string) {
+    window.history.go(-1);
+   await this.modalCtrl.dismiss(data, role);
   }
 }

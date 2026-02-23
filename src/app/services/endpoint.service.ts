@@ -1472,4 +1472,11 @@ export class EndpointService {
       headers: this.jwtInterceptor.customNoAuthHttpHeaders,
     });
   }
+
+  public fetchWalletProfile(uniqueId:string):Observable<any>{
+    let url = `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?uniqueId=${uniqueId.trim()}`;
+    return this.http.get<any>(url, {
+      headers: this.jwtInterceptor.customHttpHeaders
+    });
+  }
 }

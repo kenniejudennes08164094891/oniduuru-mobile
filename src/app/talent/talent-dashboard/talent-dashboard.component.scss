@@ -85,12 +85,12 @@
 /* talent-dashboard.component.scss */
 .balance-toggle-btn {
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: scale(1.1);
     background-color: rgba(0, 0, 0, 0.05);
   }
-  
+
   &:active {
     transform: scale(0.95);
   }
@@ -104,4 +104,59 @@
 .hidden-balance {
   filter: blur(4px);
   user-select: none;
+}
+
+
+/* Wallet Alerts Card */
+
+.alert {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  font-size: 14px;
+  color: #1d4ed8;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.alert-left {
+  display: flex;
+  align-items: center;
+}
+
+.alert-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.alert-text {
+  margin: 0;
+}
+
+.alert-title {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+
+.alert-btn {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #1d4ed8;
+  background: white;
+  color: #1d4ed8;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.alert-btn:hover {
+  background: #1d4ed8;
+  color: white;
 }
