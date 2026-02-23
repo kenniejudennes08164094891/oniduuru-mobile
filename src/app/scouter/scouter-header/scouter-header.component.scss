@@ -1,26 +1,8 @@
-// /* Safe Area Fixes for Scouter Header */
-// .safe-area-header {
-//   padding-top: var(--ion-safe-area-top, 0px) !important;
-// }
+ion-header {
+  padding-top: env(safe-area-inset-top);
+}
 
-// .safe-area-toolbar {
-//   margin-top: var(--ion-safe-area-top, 0px) !important;
-//   min-height: calc(64px + var(--ion-safe-area-top, 0px)) !important;
-//   padding-top: calc(var(--ion-safe-area-top, 0px) / 2) !important;
-  
-//   /* Your existing navbar styles */
-//   background-color: #EEF0F6;
-//   display: flex;
-//   align-items: center;
-// }
-
-// /* Ensure header is always visible */
-// ion-header {
-//   position: relative !important;
-//   // z-index: 1000 !important;
-// }
-
-// ion-toolbar {
-//   --background: #EEF0F6;
-//   --border-width: 0 !important;
-// }
+ion-toolbar {
+  --padding-top: 0;
+  --min-height: 64px;
+}

@@ -1,41 +1,42 @@
 .navbar {
-    background-color: #A3A7A899; // rgba(0, 0, 0, 0.2);
-    border: 1px solid #1018280D;
-    /* Add a 1px solid black border */
+  background-color: #a3a7a899; // rgba(0, 0, 0, 0.2);
+  border: 1px solid #1018280d;
+  /* Add a 1px solid black border */
 }
 
 .example-spacer {
-    flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
-body{
-  font-family: 'Euclid Circular A';
-  background-image: url('/assets/images/bg-image.png');
+body {
+  background-image: url("/assets/images/bg-image.png");
   background-size: cover;
   background-position: center;
 }
 
-div,p,span,a,h1,h2,h3,h4,h5,h6,button{
-  font-family: 'Euclid Circular A';
-}
-
 .text-animation {
-    animation: slide-in 2s ease infinite;
-    // font-size: 30px;
+  animation: slide-in 2s ease infinite;
+  // font-size: 30px;
 }
 
 @keyframes slide-in {
-    0% {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
 
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
+ion-header {
+  padding-top: env(safe-area-inset-top);
+  background: #111827;
+}
 
-//
-
+ion-toolbar {
+  --padding-top: 0;
+  --min-height: 64px;
+}

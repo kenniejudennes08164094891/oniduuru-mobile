@@ -113,6 +113,7 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
   images = {
     NoDataImage: 'assets/images/NoDataImage.svg',
   };
+  hasWalletProfile: boolean | null = null;
 
   constructor(
     private router: Router,
@@ -122,9 +123,32 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
     private toggleVisibilityService: ToggleVisibilitySharedStateService, // Add this
   ) {}
 
+  async getWalletProfile(){
+    try{
+      const userData:any = localStorage.getItem('user_data');
+      const talentId = localStorage.getItem('talentId') ?? JSON.parse(userData)?.talentId;
+      const response = await firstValueFrom(this.endpointService.fetchWalletProfile(talentId));
+      if(response){
+        this.hasWalletProfile = true;
+      }
+    }catch (e:any) {
+      console.clear();
+      console.log("error status>>",e?.status);
+      console.error("error>>",e?.error?.message ?? e?.message);
+      if(e?.status === 404){
+        this.hasWalletProfile = false;
+      }
+    }
+  }
+
+  async routeToWalletOnboarding(){
+    console.clear();
+   await this.router.navigateByUrl("/talent/wallet-page/wallet-profile");
+  }
+
   async ngOnInit(): Promise<void> {
     console.log('ngOnInit has started running...');
-
+    await this.getWalletProfile();
     // Load balance visibility state BEFORE other initialization
     await this.loadBalanceVisibilityState();
 

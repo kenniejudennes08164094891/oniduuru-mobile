@@ -35,9 +35,9 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
     super(modalCtrl, platform); // ✅ gets dismiss + back button
   }
 
-  
-  override dismiss() {
-    this.modalCtrl.dismiss(); // ✅ closes the modal properly
+
+  override async dismiss() {
+   await this.modalCtrl.dismiss(); // ✅ closes the modal properly
   }
 
   // Filtering + pagination

@@ -16,12 +16,39 @@ import { ToastsService } from 'src/app/services/toasts.service';
   styleUrls: ['./onboarding.page.scss'],
 })
 export class OnboardingPage {
+  skillSetInputTouched: boolean = false;
+  skillSetInputError: string = '';
+
+  canResendOtp: boolean | null = null;
+  private timerInterval: any;
+
+  // --- Enhanced validation helpers ---
+  get isFullNameValid(): boolean {
+    return /^[a-zA-Z\s\-']{3,}$/.test(this.fullName.trim());
+  }
+  get isLocationValid(): boolean {
+    return this.location.trim().length >= 2;
+  }
+  get isSkillSetValid(): boolean {
+    return this.skillSets.length > 0;
+  }
+  get isPasswordValid(): boolean {
+    // At least 8 chars, upper, lower, number, special
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+      this.password,
+    );
+  }
+  get isConfirmPasswordValid(): boolean {
+    return (
+      this.confirmPassword === this.password && this.confirmPassword.length > 0
+    );
+  }
   constructor(
     private router: Router,
     // private toastCtrl: ToastController,
     private toast: ToastsService,
-    private talentService: TalentService
-  ) { }
+    private talentService: TalentService,
+  ) {}
 
   // ------------------- STEPS -------------------
   steps = [
@@ -85,11 +112,59 @@ export class OnboardingPage {
   ];
 
   addSkill() {
+    this.skillSetInputTouched = true;
+
     const trimmed = this.skillSetInput.trim();
-    if (trimmed && !this.skillSets.includes(trimmed)) {
-      this.skillSets.push(trimmed);
+
+    // Validate input
+    if (!trimmed) {
+      this.skillSetInputError = 'Please enter a skill';
+      this.toast.openSnackBar(this.skillSetInputError, 'warning');
+      return;
     }
+
+    if (trimmed.length < 2) {
+      this.skillSetInputError = 'Skill must be at least 2 characters';
+      this.toast.openSnackBar(this.skillSetInputError, 'warning');
+      return;
+    }
+
+    if (trimmed.length > 50) {
+      this.skillSetInputError = 'Skill cannot exceed 50 characters';
+      this.toast.openSnackBar(this.skillSetInputError, 'warning');
+      return;
+    }
+
+    // Check for duplicates
+    if (this.skillSets.includes(trimmed)) {
+      this.skillSetInputError = `"${trimmed}" is already added`;
+      this.toast.openSnackBar(this.skillSetInputError, 'warning');
+      return;
+    }
+
+    // Clear error on successful validation
+    this.skillSetInputError = '';
+
+    // Add the skill
+    this.skillSets.push(trimmed);
+
+    // Clear input and reset validation state
     this.skillSetInput = '';
+    this.skillSetInputTouched = false;
+
+    // Mark the overall skill set as touched for form validation
+    this.skillSetTouched = true;
+
+    this.toast.openSnackBar(`Added "${trimmed}"`, 'success');
+  }
+
+  // Add this method to handle input changes
+  onSkillInput(event: any) {
+    this.skillSetInput = event.target.value;
+    // Clear error when user starts typing
+    if (this.skillSetInputError) {
+      this.skillSetInputError = '';
+    }
   }
 
   removeSkill(skill: string) {
@@ -97,7 +172,7 @@ export class OnboardingPage {
   }
 
   // ------------------- LOGIN CREDENTIALS -------------------
-  emailLogin = '';
+  // emailLogin is now derived from the first step's email
   password = '';
   confirmPassword = '';
 
@@ -140,7 +215,7 @@ export class OnboardingPage {
   }
 
   get isEmailLoginValid(): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.emailLogin);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email);
   }
 
   get isTalentDetailsValid(): boolean {
@@ -163,11 +238,11 @@ export class OnboardingPage {
 
   get isLoginCredentialsValid(): boolean {
     return (
-      this.emailLogin.trim() !== '' &&
+      this.email.trim() !== '' &&
       this.password.trim() !== '' &&
       this.confirmPassword.trim() !== '' &&
       this.password === this.confirmPassword &&
-      this.isEmailLoginValid
+      this.isEmailValid
     );
   }
 
@@ -177,8 +252,8 @@ export class OnboardingPage {
 
   // ------------------- OTP METHODS -------------------
   maskedEmail() {
-    if (!this.emailLogin) return '';
-    const parts = this.emailLogin.split('@');
+    if (!this.email) return '';
+    const parts = this.email.split('@');
     return parts[0].slice(0, 2) + '***@' + parts[1];
   }
 
@@ -199,6 +274,12 @@ export class OnboardingPage {
     }
   }
 
+  isOtpHandled(event:any){
+    if(this.otp.length === 4){
+      this.canResendOtp = true;
+    }
+  }
+
   // ------------------- API: CREATE TALENT PROFILE -------------------
   submitTalentProfile() {
     if (this.isSubmitting) return;
@@ -206,7 +287,7 @@ export class OnboardingPage {
     this.error = '';
 
     const payload = {
-      email: this.emailLogin,
+      email: this.email,
       password: this.password,
       fullName: this.fullName,
       phoneNumber: this.phone,
@@ -231,18 +312,24 @@ export class OnboardingPage {
 
         if (backendMsg.includes('email')) {
           // this.showToast('Email already exists. Please use another email.');
-          this.toast.openSnackBar('Email already exists. Please use another email.', 'error');
-
+          this.toast.openSnackBar(
+            'Email already exists. Please use another email.',
+            'error',
+          );
         } else if (backendMsg.includes('phone')) {
           // this.showToast(
           //   'Phone number already in use. Please use another number.'
           // );
-          this.toast.openSnackBar('Phone number already in use. Please use another number.', 'error');
-
+          this.toast.openSnackBar(
+            'Phone number already in use. Please use another number.',
+            'error',
+          );
         } else {
           // this.showToast(err?.error?.message ?? 'Failed to create profile');
-          this.toast.openSnackBar(`${err?.error?.message ?? 'Failed to create profile'}`, 'error');
-
+          this.toast.openSnackBar(
+            `${err?.error?.message ?? 'Failed to create profile'}`,
+            'error',
+          );
         }
         console.error('Onboard Talent Error:', err);
         this.error =
@@ -251,7 +338,6 @@ export class OnboardingPage {
     });
   }
 
- 
   // ------------------- API: VERIFY OTP -------------------
   verifyOtp() {
     const otpValue = this.otp.join('');
@@ -263,7 +349,7 @@ export class OnboardingPage {
     const payload = {
       otp: otpValue,
       phoneNumber: this.phone,
-      email: this.emailLogin,
+      email: this.email,
     };
 
     this.talentService.verifyOTP(payload).subscribe({
@@ -287,15 +373,18 @@ export class OnboardingPage {
 
   // ------------------- API: RESEND OTP -------------------
   resendOtp() {
+    if (!this.canResendOtp) return; // Prevent resend if timer is still running
+
     const payload = {
       phoneNumber: this.phone,
-      email: this.emailLogin,
+      email: this.email,
     };
 
     this.talentService.resendOTP(payload).subscribe({
       next: (res) => {
         this.otp = ['', '', '', ''];
-        this.startTimer();
+        this.startTimer(); // This will set canResendOtp to false again
+        this.toast.openSnackBar('OTP resent successfully', 'success');
       },
       error: (err) => {
         this.error = err.error?.message || 'Failed to resend OTP';
@@ -306,12 +395,20 @@ export class OnboardingPage {
   // ------------------- TIMER -------------------
   startTimer() {
     this.timer = 120;
+    this.canResendOtp = false; // Disable resend when timer starts
 
-    const interval = setInterval(() => {
+    // Clear any existing interval
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+
+    this.timerInterval = setInterval(() => {
       if (this.timer > 0) {
         this.timer--;
       } else {
-        clearInterval(interval);
+        // Timer reached zero, enable resend
+        this.canResendOtp = true;
+        clearInterval(this.timerInterval);
       }
     }, 1000);
   }
@@ -357,5 +454,11 @@ export class OnboardingPage {
 
   handleWelcomeBack() {
     this.router.navigate(['/auth/welcome-page']);
+  }
+
+  ngOnDestroy() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   }
 }

@@ -77,7 +77,7 @@ export class ScouterEndpointsService {
 
   verifyOtp(payload: {
     otp: string;
-    email?: string;
+    email?: string | null;
     phoneNumber?: string;
   }): Observable<any> {
     // Convert payload to query parameters
@@ -357,13 +357,13 @@ export class ScouterEndpointsService {
       // All formats failed - provide detailed error
       const error = new Error(`
       All endpoint formats failed for profile update.
-      
+
       Possible issues:
       1. Backend endpoint might be different
       2. Scouter ID format might be incorrect
       3. PATCH method might not be supported
       4. Endpoint might require different parameters
-      
+
       Please check:
       - Backend API documentation
       - Scouter ID format in user data
@@ -397,7 +397,7 @@ export class ScouterEndpointsService {
           const finalError = new Error(`
           All update endpoints failed. Attempted URLs:
           ${urls.map((url) => `- ${url}`).join('\n')}
-          
+
           Last error: ${error.message}
           Status: ${error.status}
         `);
@@ -861,19 +861,103 @@ export class ScouterEndpointsService {
   }
 
   // ============ PAYMENT & RECEIPTS ============
-  verifyPaymentStatus(data: any): Observable<any> {
-    const url = `${this.baseUrl}/${endpoints.verifyPayment}`;
-    return this.http.post<any>(url, data, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+
+  /**
+   * POST /scouters/v1/verify-payment-status
+   * Verify payment done - for scouter use only
+   * Returns: paid: true || false
+   */
+  verifyPaymentStatus(payload: {
+    paymentReceipt: string;
+    email: string;
+    scouterId: string;
+  }): Observable<any> {
+    const url = `${this.baseUrl}/scouters/v1/verify-payment-status`;
+
+    console.log('💳 Verifying payment status:', {
+      url,
+      email: payload.email,
+      scouterId: payload.scouterId,
     });
+
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log('✅ Payment status verified:', response);
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to verify payment status:', error);
+
+          let errorMessage = 'Failed to verify payment status';
+          if (error.status === 401) {
+            errorMessage = 'Unauthorized. Scouter access only.';
+          } else if (error.status === 400) {
+            errorMessage = 'Invalid payment receipt or details.';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
   }
 
+  /**
+   * GET /scouters/v1/fetch-scouter-receipt/{scouterId}
+   * Fetch Scouter's payment receipt
+   * Scouter & admin use only!
+   * Expected format: "scouter/5042/28September2025"
+   */
   fetchScouterReceipt(scouterId: any): Observable<any> {
+    if (!scouterId || scouterId.toString().trim() === '') {
+      return throwError(() => new Error('Invalid scouterId provided'));
+    }
+
+    // Encode the scouterId properly (handles paths like "scouter/5042/28September2025")
     const encodedScouterId = encodeURIComponent(scouterId);
-    const url = `${this.baseUrl}/${endpoints.scouterPaymentRecipt}/${encodedScouterId}`;
-    return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders,
+    const url = `${this.baseUrl}/scouters/v1/fetch-scouter-receipt/${encodedScouterId}`;
+
+    console.log('📋 Fetching scouter payment receipt:', {
+      url,
+      scouterId: scouterId,
+      encodedScouterId: encodedScouterId,
     });
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) => {
+          console.log('✅ Payment receipt fetched successfully:', {
+            message: response.message,
+            hasReceipt: !!response.details?.paymentReceipt,
+            receiptUrl: response.details?.paymentReceipt,
+            timeOfUpload: response.details?.timeOfUpload,
+          });
+        }),
+        catchError((error) => {
+          console.error('❌ Failed to fetch payment receipt:', error);
+
+          let errorMessage = 'Failed to fetch payment receipt';
+          if (error.status === 401) {
+            errorMessage = 'Unauthorized. Please login again.';
+          } else if (error.status === 403) {
+            errorMessage = 'Access denied. Scouter/Admin access only.';
+          } else if (error.status === 404) {
+            errorMessage = 'Payment receipt not found for this scouter.';
+          } else if (error.error?.message) {
+            errorMessage = error.error.message;
+          }
+
+          return throwError(() => new Error(errorMessage));
+        }),
+      );
   }
 
   // ============ TALENT & SKILLSETS ============

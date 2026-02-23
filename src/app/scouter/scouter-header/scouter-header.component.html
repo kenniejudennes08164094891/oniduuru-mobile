@@ -1,7 +1,7 @@
 <!-- Fixed Scouter Header with safe areas -->
 <ion-header class="bg-[#EEF0F6] safe-area-header">
   <ion-toolbar class="safe-area-toolbar">
-    <div class="w-full flex justify-between items-center px-4 py-2">
+    <div class="w-full flex justify-between items-center -py-2 px-4">
       <!-- App Logo/Title -->
       <button *ngIf="!isWallet" class="text-2xl font-semibold text-[#101828]">
         ∯ Oniduuru
@@ -20,8 +20,8 @@
       <div class="flex items-center gap-4 relative">
         <!-- Notification Icon with Badge -->
         <button class="relative" (click)="openNotificationPopover($event)">
-          <button class="bg-[#444444] rounded-xl p-2.5 hover:cursor-pointer">
-            <img [src]="images.NotificationIcon" alt="Notification" />
+          <button class="bg-[#444444] rounded-xl p-2 hover:cursor-pointer">
+            <img [src]="images.NotificationIcon" class="w-4 h-4" alt="Notification" />
           </button>
           <!-- Show badge only if there are notifications -->
           <span
@@ -44,10 +44,10 @@
                 *ngIf="
                   profileImage && profileImage !== 'assets/default-avatar.png'
                 "
-                class="rounded-full w-10 h-10"
+                class="rounded-full w-8 h-8"
               >
                 <img
-                  class="rounded-full w-10 h-10 transition-opacity duration-500 ease-in-out opacity-100"
+                  class="rounded-full w-8 h-8 transition-opacity duration-500 ease-in-out opacity-100"
                   [src]="profileImage"
                   alt="Profile Picture"
                   (error)="handleImageError($event)"
@@ -69,7 +69,7 @@
 
           <!-- Status Dot -->
           <span
-            class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full border border-white"
+            class="absolute top-0 right-0 h-2 w-2 rounded-full border border-white"
             [ngClass]="{
               'bg-green-500': userStatus === 'online',
               'bg-yellow-500': userStatus === 'away',

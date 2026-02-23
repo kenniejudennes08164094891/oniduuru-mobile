@@ -7,8 +7,17 @@
 </ion-header>
 
 <ion-content>
-  <!-- UNPAID -->
-  <div *ngIf="!paymentStatus?.isPaid">
+  <!-- LOADING STATE -->
+  <div
+    *ngIf="isLoading"
+    class="flex flex-col items-center justify-center h-screen"
+  >
+    <ion-spinner name="crescent" class="text-2xl"></ion-spinner>
+    <p class="mt-4 text-gray-600">Fetching your payment status...</p>
+  </div>
+
+  <!-- UNPAID OR PENDING -->
+  <div *ngIf="!isLoading && paymentStatus.status !== 'true'">
     <div
       class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
     >
@@ -18,7 +27,8 @@
           name="information-circle-outline"
         ></ion-icon>
         <span>
-          Hi Viki West,
+          Hi <span class="font-bold">{{ userName }}</span
+          >,
           <span
             class="font-bold text-[16px] text-[#444444] cursor-pointer underline"
             (click)="openUploadScreenshotPopup()"
@@ -42,7 +52,7 @@
   </div>
 
   <!-- PAID -->
-  <div *ngIf="paymentStatus?.isPaid">
+  <div *ngIf="!isLoading && paymentStatus.status === 'true'">
     <div
       class="border border-[#33333333] bg-[#CDD5DF80] w-[95%] mx-auto mt-6 px-4 py-4 rounded-xl"
     >
@@ -52,20 +62,20 @@
           name="information-circle-outline"
         ></ion-icon>
         <span>
-          Hi Viki West,
+          Hi <span class="font-bold">{{ userName }}</span
+          >,
           <span class="font-bold text-[16px] text-[#444444]">
             Congratulations!....
           </span>
           please find below your evidence of one-year account activation
-          uploaded on {{ currentMonth }} {{ currentDate }}, {{ currentYear }},
-          {{ currentTime }}
+          uploaded on {{ uploadTimeFormatted }}
         </span>
       </div>
     </div>
 
     <div class="mt-4 text-center">
       <img
-        [src]="paymentStatus?.receiptUrl"
+        [src]="paymentStatus.receiptUrl"
         alt="Receipt"
         class="h-[70%] w-[70%] mx-auto shadow-md"
       />
@@ -93,11 +103,4 @@
       </div>
     </div>
   </div>
-
-  <!-- Footer -->
-  <!-- <footer class="mt-auto py-5">
-    <div class="container mx-auto px-4 text-left text-gray-600">
-      <p>Shoft Africa © {{ currentYear }}</p>
-    </div>
-  </footer> -->
 </ion-content>

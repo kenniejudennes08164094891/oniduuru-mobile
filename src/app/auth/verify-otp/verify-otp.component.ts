@@ -23,7 +23,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   timer: any;
   isProcessing = false;
   errorMessage = '';
-  email = '';
+  email: string | null = null;
   userData: any = null;
   requiresVerification = false;
 
@@ -33,24 +33,30 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private scouterService: ScouterEndpointsService,
-    private toast: ToastsService
+    private toast: ToastsService,
   ) {}
 
   ngOnInit() {
     this.initializeOtpForm();
+
+    // First try to get email from query params
+    const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
+    if (emailFromQuery) {
+      this.email = emailFromQuery;
+      localStorage.setItem('registration_email', emailFromQuery);
+      console.log('📧 Email from query params:', emailFromQuery);
+    }
+
     this.loadUserData();
-    const email = this.route.snapshot.queryParamMap.get('email');
-  console.log("Email passed:", email);
   }
 
   ngOnDestroy() {
     clearInterval(this.timer);
-    
   }
 
   private initializeOtpForm() {
     this.otpControls = Array.from({ length: this.otpLength }, () =>
-      this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)])
+      this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)]),
     );
 
     this.otpForm = this.fb.group({
@@ -58,26 +64,52 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Add this method to verify email exists before proceeding
+  private ensureEmailExists(): boolean {
+    const email = this.getEmailForVerification();
+    if (!email) {
+      this.toast.openSnackBar('Session expired. Please login again.', 'error');
+      this.router.navigate(['/auth/login']);
+      return false;
+    }
+    return true;
+  }
+
   private loadUserData() {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state as any;
 
     if (state) {
-      this.email = state.email;
+      this.email = state.email || this.email;
       this.userData = state.userData;
       this.requiresVerification = state.requiresVerification || false;
+
+      // Store email if present
+      if (this.email) {
+        localStorage.setItem('registration_email', this.email);
+      }
     } else {
       const pendingVerification = localStorage.getItem('pending_verification');
       if (pendingVerification) {
         try {
           const data = JSON.parse(pendingVerification);
-          this.email = data.email;
+          this.email = data.email || this.email;
           this.userData = data.userData || data.tempUserData;
           this.requiresVerification = true;
+
+          // Store email if present
+          if (this.email) {
+            localStorage.setItem('registration_email', this.email);
+          }
         } catch (error) {
           console.error('Error parsing pending verification data:', error);
         }
       }
+    }
+
+    // If still no email, try to get from localStorage
+    if (!this.email) {
+      this.email = localStorage.getItem('registration_email');
     }
 
     console.log('🔍 OTP Verification Data:', {
@@ -89,7 +121,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     if (!this.email) {
       this.toast.openSnackBar(
         'No verification session found. Please login again.',
-        'error'
+        'error',
       );
       this.router.navigate(['/auth/login']);
       return;
@@ -151,10 +183,18 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   sendOtpAutomatically() {
+    if (!this.ensureEmailExists()) return;
+
+    // Try multiple sources for email
+    this.email = this.getEmailForVerification();
+
     if (!this.email) {
       this.setError('Email is required to send OTP');
       return;
     }
+
+    // Store it for later use
+    localStorage.setItem('registration_email', this.email);
 
     console.log('🔍 Sending OTP to:', this.email);
     const payload = { email: this.email };
@@ -169,21 +209,32 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         console.error('❌ Failed to send OTP', err);
         this.setError(
-          err?.error?.message || 'Failed to send OTP. Please try again.'
+          err?.error?.message || 'Failed to send OTP. Please try again.',
         );
       },
     });
   }
 
   verifyOtpAndProceed() {
+    if (!this.ensureEmailExists()) return;
+
     const otpValue = this.getOtpValue();
     if (!otpValue || otpValue.length !== this.otpLength) {
       this.setError('Please enter complete 4-digit OTP.');
       return;
     }
 
+    // CRITICAL FIX: Ensure we have a valid email
+    const emailValue = this.getEmailForVerification();
+
+    if (!emailValue) {
+      this.setError('Email is required for verification. Please login again.');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
     this.isProcessing = true;
-    const payload = { otp: otpValue, email: this.email };
+    const payload = { otp: otpValue, email: emailValue };
     console.log('🔍 OTP Verification Payload:', payload);
 
     this.scouterService.verifyOtp(payload).subscribe({
@@ -199,16 +250,45 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
         this.isProcessing = false;
         if (err.status === 422) {
           this.setError(
-            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.'
+            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.',
           );
         } else {
           this.setError(
-            err?.error?.message || 'Invalid OTP. Please try again.'
+            err?.error?.message || 'Invalid OTP. Please try again.',
           );
         }
         this.clearOtpFields();
       },
     });
+  }
+
+  // Add this helper method to get email from multiple sources
+  private getEmailForVerification(): string | null {
+    // Try from component property first
+    if (this.email) {
+      return this.email;
+    }
+
+    // Try from localStorage
+    const storedEmail = localStorage.getItem('registration_email');
+    if (storedEmail) {
+      return storedEmail;
+    }
+
+    // Try from user_data
+    try {
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        return (
+          parsed.email || parsed.details?.user?.email || parsed.user?.email
+        );
+      }
+    } catch (e) {
+      console.error('Error parsing user_data for email:', e);
+    }
+
+    return null;
   }
 
   private updateUserVerificationStatus() {
@@ -261,7 +341,7 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
     const routes: Record<string, string> = {
       scouter: '/scouter/dashboard',
-      talent: '/talent/dashboard'
+      talent: '/talent/dashboard',
     };
 
     const route = routes[role] || '/auth/login';
@@ -274,6 +354,16 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   resendOtp() {
     if (this.countdown > 0) return;
+
+    // Ensure we have email before resending
+    this.email = this.getEmailForVerification();
+
+    if (!this.email) {
+      this.setError('No email found. Please login again.');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
     this.sendOtpAutomatically();
   }
 
@@ -288,9 +378,10 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  maskEmail(email: string): string {
+  maskEmail(email: string | null): string {
+    email = email ?? localStorage.getItem('registration_email');
     if (!email) return '';
-    const [user, domain] = email.split('@');
+    const [user, domain] = email?.split('@');
     if (!user || !domain) return '***@***';
 
     if (user.length <= 2) return `***@${domain}`;
@@ -305,26 +396,32 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     setTimeout(() => (this.errorMessage = ''), 5000);
   }
 
-  async goBack():Promise<void> {
-   await this.router.navigate(['/auth/login']);
+  async goBack(): Promise<void> {
+    await this.router.navigate(['/auth/login']);
   }
 
- async goToLogin():Promise<void> {
+  async goToLogin(): Promise<void> {
     await this.router.navigate(['/auth/login']);
   }
 
   // Prevents accidental reload or refresh during OTP verification
   @HostListener('window:keydown', ['$event'])
   disableReloadKeys(event: KeyboardEvent) {
-    if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key === 'r')) {
+    if (
+      event.key === 'F5' ||
+      ((event.ctrlKey || event.metaKey) && event.key === 'r')
+    ) {
       event.preventDefault();
       alert('Page reload is disabled during verification.');
     }
   }
 
   @HostListener('window:beforeunload', ['$event'])
-  preventBrowserRefresh(event: BeforeUnloadEvent) {
+  async preventBrowserRefresh(event: BeforeUnloadEvent) {
     event.preventDefault();
     event.returnValue = ''; // Required for Chrome
+    await this.router.navigateByUrl('/auth/login').then(() => {
+      this.authService.clearAllStorage();
+    });
   }
 }
