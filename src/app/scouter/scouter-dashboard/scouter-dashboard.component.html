@@ -1,33 +1,56 @@
 <!-- Modified HTML with header scroll behavior -->
-<div *ngIf="showSpinner" class="fixed inset-0 flex items-center justify-center bg-white z-50">
+<div
+  *ngIf="showSpinner"
+  class="fixed inset-0 flex items-center justify-center bg-white z-50"
+>
   <app-spinner [loadingText]="loading"></app-spinner>
 </div>
 
 <!-- Always show content but make it invisible during loading -->
-<ion-content fullscreen (ionScroll)="onContentScroll($event)" class="safe-area-content">
+<ion-content
+  fullscreen
+  (ionScroll)="onContentScroll($event)"
+  class="safe-area-content"
+>
   <div [class.invisible]="showSpinner" class="min-h-screen flex flex-col">
-    <app-scouter-header [class.header-hidden]="headerHidden"
-      [class.header-visible]="!headerHidden"></app-scouter-header>
+    <app-scouter-header
+      [class.header-hidden]="headerHidden"
+      [class.header-visible]="!headerHidden"
+    ></app-scouter-header>
 
     <!-- 🚨 Check payment status -->
-    <ng-container *ngIf="paymentStatus === 'true'; else unpaidOrPendingDashboard">
+    <ng-container
+      *ngIf="paymentStatus === 'true'; else unpaidOrPendingDashboard"
+    >
       <!-- Paid Dashboard -->
       <div class="container mx-auto px-4 py-4 flex-1">
         <!-- Greeting section -->
         <div class="flex items-center gap-3 mb-4">
-          <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
-            class="w-6 h-6 inline-block align-middle" />
+          <img
+            *ngIf="timeIcon"
+            [src]="timeIcon"
+            [alt]="timeOfDay + ' icon'"
+            class="w-6 h-6 inline-block align-middle"
+          />
           <span class="text-lg font-semibold text-gray-800">
-            {{ timeOfDay }}, {{ userName }}</span>
+            {{ timeOfDay }}, {{ userName }}</span
+          >
         </div>
-        
+
         <!-- Make Payment Info Card-->
-        <div class="paid-dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden flex flex-col md:flex-row gap-6">
+        <div
+          class="paid-dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden flex flex-col md:flex-row gap-6"
+        >
           <!-- LHS: Hire a Talent -->
           <div class="relative z-10 text-white md:w-1/2">
             <div class="flex items-center gap-3 mb-3">
-              <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-              <span class="font-medium text-[24px] leading-tight">HIRE A TALENT</span>
+              <ion-icon
+                class="h-7 w-7"
+                name="information-circle-outline"
+              ></ion-icon>
+              <span class="font-medium text-[24px] leading-tight"
+                >HIRE A TALENT</span
+              >
             </div>
             <p class="text-gray-200 mb-4 text-lg leading-relaxed">
               Proceed to hire talent professionals.
@@ -50,14 +73,22 @@
               (click)="goToWalletPage()"
             >
               <div class="w-full space-y-2">
-                <h3 class="text-[16px] font-normal text-[#364152]">WALLET BALANCE</h3>
+                <h3 class="text-[16px] font-normal text-[#364152]">
+                  WALLET BALANCE
+                </h3>
                 <div class="flex items-center justify-between">
                   <h3 class="text-[24px] text-[#101828] font-bold">
                     <span class="font-normal">₦</span>
-                    {{ balanceHidden ? '*******' : (walletBalance | number:'1.2-2') }}
+                    {{
+                      balanceHidden
+                        ? "*******"
+                        : (walletBalance | number: "1.2-2")
+                    }}
                   </h3>
                   <button
-                    (click)="toggleBalanceVisibility(); $event.stopPropagation()"
+                    (click)="
+                      toggleBalanceVisibility(); $event.stopPropagation()
+                    "
                     class="p-2 rounded-full hover:bg-gray-100 transition-colors"
                     type="button"
                   >
@@ -72,7 +103,12 @@
           </div>
         </div>
 
-        <div *ngIf="!hasWalletProfile" class="alert" role="alert">
+        <!-- In the paid dashboard section, update the alert div with this: -->
+        <div
+          *ngIf="paymentStatus === 'true' && hasWalletProfile === false"
+          class="alert"
+          role="alert"
+        >
           <div class="alert-left">
             <svg
               class="alert-icon"
@@ -90,10 +126,12 @@
             </svg>
             <p class="alert-text">
               <span class="alert-title">Action Required:</span>
-              Complete your wallet onboarding to get hired.
+              Complete your wallet onboarding to hire talents and make payments.
             </p>
           </div>
-          <button (click)="routeToWalletOnboarding()" class="alert-btn">Proceed</button>
+          <button (click)="routeToWalletOnboarding()" class="alert-btn">
+            Create Wallet
+          </button>
         </div>
 
         <div class="border py-6 px-3 mt-12">
@@ -101,12 +139,17 @@
             Scouter's Dashboard Statistics
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div *ngFor="let card of dashboardCardsPaid"
-              class="bg-white rounded-lg shadow-md p-6 border border-gray-300">
+            <div
+              *ngFor="let card of dashboardCardsPaid"
+              class="bg-white rounded-lg shadow-md p-6 border border-gray-300"
+            >
               <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
-                <span class="h-3 w-3 rounded-full" [ngStyle]="{
-                    'background-color': getStatusColor(card.status)
-                  }"></span>
+                <span
+                  class="h-3 w-3 rounded-full"
+                  [ngStyle]="{
+                    'background-color': getStatusColor(card.status),
+                  }"
+                ></span>
                 {{ card.title }}
               </h3>
               <p class="text-2xl font-semibold">{{ card.value }}</p>
@@ -116,62 +159,104 @@
           <div class="py-4 mt-5">
             <h3 class="text-xl font-semibold">Total Market by Percentage</h3>
           </div>
-          
+
           <div class="mt-10 flex flex-col justify-center items-center">
-            <div class="w-full flex flex-col md:flex-row justify-center items-center gap-8">
+            <div
+              class="w-full flex flex-col md:flex-row justify-center items-center gap-8"
+            >
               <!-- Left: Circle Chart -->
-              <div class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80">
-                <ng-container *ngFor="
+              <div
+                class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80"
+              >
+                <ng-container
+                  *ngFor="
                     let circle of percentageCirclesPaid;
                     let i = index;
                     trackBy: trackByCircle
-                  ">
-                  <svg class="absolute" [attr.width]="circle.size" [attr.height]="circle.size" [style.zIndex]="100 - i">
-                    <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" stroke="#e5e7eb"
-                      stroke-width="8" />
-                    <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" [attr.stroke]="circle.color"
-                      stroke-width="8" [attr.stroke-dasharray]="
+                  "
+                >
+                  <svg
+                    class="absolute"
+                    [attr.width]="circle.size"
+                    [attr.height]="circle.size"
+                    [style.zIndex]="100 - i"
+                  >
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      [attr.r]="circle.size / 2 - 8"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      stroke-width="8"
+                    />
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      [attr.r]="circle.size / 2 - 8"
+                      fill="none"
+                      [attr.stroke]="circle.color"
+                      stroke-width="8"
+                      [attr.stroke-dasharray]="
                         getCircumference(circle.size / 2 - 8)
-                      " [attr.stroke-dashoffset]="
+                      "
+                      [attr.stroke-dashoffset]="
                         getStrokeDashoffset(
                           circle.size / 2 - 8,
                           circle.percentage
                         )
-                      " class="transition-all duration-700 ease-in-out" [attr.transform]="
+                      "
+                      class="transition-all duration-700 ease-in-out"
+                      [attr.transform]="
                         'rotate(-90, ' +
                         circle.size / 2 +
                         ', ' +
                         circle.size / 2 +
                         ')'
-                      " />
-                    <circle [attr.cx]="
+                      "
+                    />
+                    <circle
+                      [attr.cx]="
                         getProgressDotPosition(
                           circle.size / 2 - 8,
                           circle.percentage,
                           circle.size
                         ).x
-                      " [attr.cy]="
+                      "
+                      [attr.cy]="
                         getProgressDotPosition(
                           circle.size / 2 - 8,
                           circle.percentage,
                           circle.size
                         ).y
-                      " r="5" [attr.fill]="circle.color" />
+                      "
+                      r="5"
+                      [attr.fill]="circle.color"
+                    />
                   </svg>
                 </ng-container>
               </div>
 
               <!-- Right: Percentage Breakdown -->
-              <div class="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
-                <div *ngFor="let card of dashboardStatCardsPaid"
-                  class="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
+              <div
+                class="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 md:gap-4"
+              >
+                <div
+                  *ngFor="let card of dashboardStatCardsPaid"
+                  class="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg"
+                >
                   <div class="flex items-center gap-3">
-                    <span class="h-3 w-3 rounded-full flex-shrink-0" [ngStyle]="{
+                    <span
+                      class="h-3 w-3 rounded-full flex-shrink-0"
+                      [ngStyle]="{
                         'background-color': getPercentageStatusColor(
                           card.status
-                        )
-                      }"></span>
-                    <span class="text-gray-700 text-sm font-medium whitespace-nowrap">{{ card.title }}</span>
+                        ),
+                      }"
+                    ></span>
+                    <span
+                      class="text-gray-700 text-sm font-medium whitespace-nowrap"
+                      >{{ card.title }}</span
+                    >
                   </div>
                   <span class="text-lg font-semibold text-gray-900 ml-4">
                     {{ card.value }}%
@@ -184,8 +269,14 @@
 
         <div class="border mt-6">
           <div class="py-4 sm:py-6 px-3 sm:px-6 mt-2 sm:mt-4">
-            <h3 class="px-2 sm:px-4 text-lg sm:text-xl font-semibold mb-4 sm:mb-6">My Recent Market Rating</h3>
-            <app-recent-market-rating-dashboard-component [marketRatingsData]="marketRatingsData">
+            <h3
+              class="px-2 sm:px-4 text-lg sm:text-xl font-semibold mb-4 sm:mb-6"
+            >
+              My Recent Market Rating
+            </h3>
+            <app-recent-market-rating-dashboard-component
+              [marketRatingsData]="marketRatingsData"
+            >
             </app-recent-market-rating-dashboard-component>
           </div>
 
@@ -202,54 +293,71 @@
       <div class="container mx-auto px-4 py-6 flex-1">
         <!-- Greeting section -->
         <div class="flex items-center gap-3 mb-6">
-          <img *ngIf="timeIcon" [src]="timeIcon" [alt]="timeOfDay + ' icon'"
-            class="w-10 h-10 inline-block align-middle" />
+          <img
+            *ngIf="timeIcon"
+            [src]="timeIcon"
+            [alt]="timeOfDay + ' icon'"
+            class="w-10 h-10 inline-block align-middle"
+          />
           <span class="text-xl font-semibold text-gray-800">
-            {{ timeOfDay }}, {{ userName }}</span>
+            {{ timeOfDay }}, {{ userName }}</span
+          >
         </div>
 
         <!-- Payment Status Card - Changes based on payment status -->
-        <div class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden">
+        <div
+          class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
+        >
           <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
-          
+
           <!-- Content changes based on payment status -->
           <ng-container [ngSwitch]="paymentStatus">
             <!-- Pending Payment Verification State -->
-            <div *ngSwitchCase="'pendingPaymentVerification'" class="relative z-10 text-white">
+            <div
+              *ngSwitchCase="'pendingPaymentVerification'"
+              class="relative z-10 text-white"
+            >
               <div class="flex items-center gap-3 mb-3">
                 <ion-icon class="h-7 w-7" name="time-outline"></ion-icon>
-                <span class="font-normal text-[20px] leading-tight">ACCOUNT AWAITING PAYMENT VERIFICATION</span>
+                <span class="font-normal text-[20px] leading-tight"
+                  >ACCOUNT AWAITING PAYMENT VERIFICATION</span
+                >
               </div>
               <p class="text-gray-200 mb-4 text-lg leading-relaxed">
-                Your payment receipt has been submitted and is currently being reviewed by our team. 
-                This process typically takes 24-48 hours. You'll be notified once your payment is verified.
+                Your payment receipt has been submitted and is currently being
+                reviewed by our team. This process typically takes 24-48 hours.
+                You'll be notified once your payment is verified.
               </p>
-              <ion-button fill="clear"
+              <ion-button
+                fill="clear"
                 class="bg-transparent border border-white rounded-lg text-white opacity-50 cursor-not-allowed"
-                disabled="true">
+                disabled="true"
+              >
                 Payment Pending
               </ion-button>
-              
-              <!-- Option to view receipt status -->
-              <div class="mt-4 text-gray-300 text-sm">
-                <p>Need to check status? Go to 
-                  <!-- <a (click)="goToAccountActivation()" class="underline cursor-pointer hover:text-white">Account Activation</a> page</p> -->
-              </div>
             </div>
 
             <!-- Unpaid State (false, null, undefined) -->
             <div *ngSwitchDefault class="relative z-10 text-white">
               <div class="flex items-center gap-3 mb-3">
-                <ion-icon class="h-7 w-7" name="information-circle-outline"></ion-icon>
-                <span class="font-normal text-[20px] leading-tight">YOU CAN HIRE TALENTS AFTER MAKING A YEARLY ONE-TIME PAYMENT</span>
+                <ion-icon
+                  class="h-7 w-7"
+                  name="information-circle-outline"
+                ></ion-icon>
+                <span class="font-normal text-[20px] leading-tight"
+                  >YOU CAN HIRE TALENTS AFTER MAKING A YEARLY ONE-TIME
+                  PAYMENT</span
+                >
               </div>
               <p class="text-gray-200 mb-4 text-lg leading-relaxed">
                 Please click the 'Make Payment' button below to initiate your
                 payment and upload your payment receipt.
               </p>
-              <ion-button fill="clear"
+              <ion-button
+                fill="clear"
                 class="bg-transparent border border-white rounded-lg text-white hover:bg-white hover:cursor-pointer hover:text-black"
-                (click)="openMakePaymentPopup()">
+                (click)="openMakePaymentPopup()"
+              >
                 Make Payment
               </ion-button>
             </div>
@@ -262,8 +370,10 @@
             Scouter's Dashboard Statistics
           </h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div *ngFor="let card of dashboardCardsUnpaid"
-              class="bg-white rounded-lg shadow-md p-6 border border-gray-300">
+            <div
+              *ngFor="let card of dashboardCardsUnpaid"
+              class="bg-white rounded-lg shadow-md p-6 border border-gray-300"
+            >
               <h3 class="text-[16px] font-medium mb-4 flex items-center gap-2">
                 {{ card.title }}
               </h3>
@@ -274,62 +384,104 @@
           <div class="py-4 mt-5">
             <h3 class="text-xl font-semibold">Total Market by Percentage</h3>
           </div>
-          
+
           <div class="mt-10 flex flex-col justify-center items-center">
-            <div class="w-full flex flex-col md:flex-row justify-center items-center gap-8">
+            <div
+              class="w-full flex flex-col md:flex-row justify-center items-center gap-8"
+            >
               <!-- Left: Circle Chart -->
-              <div class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80">
-                <ng-container *ngFor="
+              <div
+                class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80"
+              >
+                <ng-container
+                  *ngFor="
                     let circle of percentageCirclesUnpaid;
                     let i = index;
                     trackBy: trackByCircle
-                  ">
-                  <svg class="absolute" [attr.width]="circle.size" [attr.height]="circle.size" [style.zIndex]="100 - i">
-                    <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" stroke="#e5e7eb"
-                      stroke-width="8" />
-                    <circle cx="50%" cy="50%" [attr.r]="circle.size / 2 - 8" fill="none" [attr.stroke]="circle.color"
-                      stroke-width="8" [attr.stroke-dasharray]="
+                  "
+                >
+                  <svg
+                    class="absolute"
+                    [attr.width]="circle.size"
+                    [attr.height]="circle.size"
+                    [style.zIndex]="100 - i"
+                  >
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      [attr.r]="circle.size / 2 - 8"
+                      fill="none"
+                      stroke="#e5e7eb"
+                      stroke-width="8"
+                    />
+                    <circle
+                      cx="50%"
+                      cy="50%"
+                      [attr.r]="circle.size / 2 - 8"
+                      fill="none"
+                      [attr.stroke]="circle.color"
+                      stroke-width="8"
+                      [attr.stroke-dasharray]="
                         getCircumference(circle.size / 2 - 8)
-                      " [attr.stroke-dashoffset]="
+                      "
+                      [attr.stroke-dashoffset]="
                         getStrokeDashoffset(
                           circle.size / 2 - 8,
                           circle.percentage
                         )
-                      " class="transition-all duration-700 ease-in-out" [attr.transform]="
+                      "
+                      class="transition-all duration-700 ease-in-out"
+                      [attr.transform]="
                         'rotate(-90, ' +
                         circle.size / 2 +
                         ', ' +
                         circle.size / 2 +
                         ')'
-                      " />
-                    <circle [attr.cx]="
+                      "
+                    />
+                    <circle
+                      [attr.cx]="
                         getProgressDotPosition(
                           circle.size / 2 - 8,
                           circle.percentage,
                           circle.size
                         ).x
-                      " [attr.cy]="
+                      "
+                      [attr.cy]="
                         getProgressDotPosition(
                           circle.size / 2 - 8,
                           circle.percentage,
                           circle.size
                         ).y
-                      " r="5" [attr.fill]="circle.color" />
+                      "
+                      r="5"
+                      [attr.fill]="circle.color"
+                    />
                   </svg>
                 </ng-container>
               </div>
 
               <!-- Right: Percentage Breakdown -->
-              <div class="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 md:gap-4">
-                <div *ngFor="let card of dashboardStatCardsUnpaid"
-                  class="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
+              <div
+                class="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3 md:gap-4"
+              >
+                <div
+                  *ngFor="let card of dashboardStatCardsUnpaid"
+                  class="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg"
+                >
                   <div class="flex items-center gap-3">
-                    <span class="h-3 w-3 rounded-full flex-shrink-0" [ngStyle]="{
+                    <span
+                      class="h-3 w-3 rounded-full flex-shrink-0"
+                      [ngStyle]="{
                         'background-color': getPercentageStatusColor(
                           card.status
-                        )
-                      }"></span>
-                    <span class="text-gray-700 text-sm font-medium whitespace-nowrap">{{ card.title }}</span>
+                        ),
+                      }"
+                    ></span>
+                    <span
+                      class="text-gray-700 text-sm font-medium whitespace-nowrap"
+                      >{{ card.title }}</span
+                    >
                   </div>
                   <span class="text-lg font-semibold text-gray-900 ml-4">
                     {{ card.value }}%
@@ -344,7 +496,11 @@
           <div class="">
             <h3 class="px-4 text-xl font-semibold">My Recent Market Rating</h3>
             <div class="flex flex-col items-center mt-10">
-              <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
+              <img
+                class="w-[232px] h-[246px]"
+                [src]="images.NoDataImage"
+                alt="No Data"
+              />
               <div class="text-center space-y-2">
                 <h3 class="text-[#000000] font-semibold text-[20px]">
                   Oops! No Data Available
@@ -358,7 +514,11 @@
           <div class="mt-20">
             <h3 class="px-4 text-xl font-semibold">My Recent Hires</h3>
             <div class="flex flex-col items-center mt-10">
-              <img class="w-[232px] h-[246px]" [src]="images.NoDataImage" alt="No Data" />
+              <img
+                class="w-[232px] h-[246px]"
+                [src]="images.NoDataImage"
+                alt="No Data"
+              />
               <div class="text-center space-y-2">
                 <h3 class="text-[#000000] font-semibold text-[20px]">
                   Oops! No Data Available

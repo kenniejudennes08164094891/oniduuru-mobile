@@ -1,6 +1,6 @@
 <!-- app.component.html -->
 <ion-app>
-  <!-- Shared Dynamic Wallet Menu - Same styling as before -->
+  <!-- Shared Dynamic Wallet Menu -->
   <ion-menu *ngIf="showWalletMenu()" side="start" menuId="wallet-menu" contentId="main-content"
     class="scouter-menu-bg">
     <ion-header>
@@ -16,10 +16,10 @@
           <ion-label>Wallet Dashboard</ion-label>
         </ion-item>
 
-        <!-- Wallet Profile - Show only if NO wallet profile -->
+        <!-- Wallet Profile - Show only if NO wallet profile (to create one) -->
         <ion-item *ngIf="!hasWalletProfile" button class="menu-button"
           (click)="navigateToWallet('profile')">
-          <ion-label>Wallet Profile</ion-label>
+          <ion-label>Create Wallet Profile</ion-label>
         </ion-item>
 
         <!-- Fund Wallet - Show only if wallet profile EXISTS -->
