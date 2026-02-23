@@ -1008,42 +1008,67 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.sendOtpAutomatically();
   }
 
-  // OTP Input Handling
-  onOtpInput(event: Event, index: number) {
-    const input = event.target as HTMLInputElement;
-    const value = input.value;
+// OTP Input Handling
+onOtpInput(event: Event, index: number) {
+  const input = event.target as HTMLInputElement;
+  const value = input.value;
 
-    // Clear error when user starts typing
-    if (this.otpError) {
-      this.otpError = '';
-    }
+  // Clear error when user starts typing
+  if (this.otpError) {
+    this.otpError = '';
+  }
 
-    // Only allow numbers
-    if (value && !/^\d+$/.test(value)) {
-      input.value = '';
-      this.otpControls[index].setValue('');
-      return;
-    }
+  // Only allow single digit
+  if (value && !/^\d$/.test(value)) {
+    input.value = '';
+    this.otpControls[index].setValue('');
+    return;
+  }
 
-    this.otpControls[index].setValue(value);
+  // Update the control value
+  this.otpControls[index].setValue(value);
 
-    // Auto-advance to next input
-    if (value && index < this.otpControls.length - 1) {
-      const inputs = document.querySelectorAll('.otp-input');
-      if (inputs && inputs[index + 1]) {
-        (inputs[index + 1] as HTMLInputElement).focus();
-      }
-    }
-
-    // Auto-submit when last digit is entered
-    if (
-      value &&
-      index === this.otpControls.length - 1 &&
-      this.isOtpComplete()
-    ) {
-      setTimeout(() => this.verifyOtpAndProceed(), 100);
+  // Auto-advance to next input if current has value
+  if (value && index < this.otpControls.length - 1) {
+    // Find the next input with class 'otp-input'
+    const inputs = document.querySelectorAll('.otp-input');
+    if (inputs && inputs[index + 1]) {
+      (inputs[index + 1] as HTMLInputElement).focus();
     }
   }
+
+  // Auto-submit when last digit is entered
+  if (
+    value &&
+    index === this.otpControls.length - 1 &&
+    this.isOtpComplete()
+  ) {
+    setTimeout(() => this.verifyOtpAndProceed(), 100);
+  }
+}
+
+// Also update onKeyDown for better backspace handling
+onKeyDown(event: KeyboardEvent, index: number) {
+  const input = event.target as HTMLInputElement;
+  
+  if (event.key === 'Backspace') {
+    // If current input is empty and not first, move to previous
+    if (!input.value && index > 0) {
+      const inputs = document.querySelectorAll('.otp-input');
+      if (inputs && inputs[index - 1]) {
+        (inputs[index - 1] as HTMLInputElement).focus();
+      }
+    }
+  } else if (event.key === 'ArrowLeft' && index > 0) {
+    // Left arrow navigation
+    const inputs = document.querySelectorAll('.otp-input');
+    (inputs[index - 1] as HTMLInputElement)?.focus();
+  } else if (event.key === 'ArrowRight' && index < this.otpControls.length - 1) {
+    // Right arrow navigation
+    const inputs = document.querySelectorAll('.otp-input');
+    (inputs[index + 1] as HTMLInputElement)?.focus();
+  }
+}
 
   onOtpPaste(event: ClipboardEvent) {
     event.preventDefault();
@@ -1067,19 +1092,7 @@ export class ScouterPage implements OnInit, OnDestroy {
     }
   }
 
-  onKeyDown(event: KeyboardEvent, index: number) {
-    if (event.key === 'Backspace') {
-      const input = event.target as HTMLInputElement;
-
-      if (!input.value && index > 0) {
-        // Move to previous input if current is empty
-        const inputs = document.querySelectorAll('.otp-input');
-        if (inputs && inputs[index - 1]) {
-          (inputs[index - 1] as HTMLInputElement).focus();
-        }
-      }
-    }
-  }
+ 
 
   clearOtpFields() {
     this.otpControls.forEach((control) => {

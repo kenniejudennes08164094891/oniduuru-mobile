@@ -1,8 +1,7 @@
 <ion-header>
-  <!-- <div class="logcomplainModalBG "> -->
   <div class="items-center flex justify-between h-20 px-4 bg-[#CDD5DF33]">
     <p class="text-[#CC0000] text-[24px] font-semibold item-start">
-      Oniduuru Payment Invioce
+      Oniduuru Payment Invoice
     </p>
     <ion-buttons slot="end" class="">
       <ion-button (click)="dismiss()">
@@ -10,13 +9,12 @@
       </ion-button>
     </ion-buttons>
   </div>
-  <!-- </div> -->
 </ion-header>
 
 <ion-content>
   <div class="text-[#444444] space-y-5 px-4 py-4">
     <h3 class="text-[18px]">
-      Hi, <span class="font-bold text-[18px] text-[#444444]">Viki West</span>,
+      Hi, <span class="font-bold text-[18px] text-[#444444]">{{ userName }}</span>,
     </h3>
     <p class="text-[18px]">
       Thank you for trusting Oniduuru to find skilled professionals in your

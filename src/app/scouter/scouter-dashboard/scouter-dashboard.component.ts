@@ -152,23 +152,59 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     private toggleVisibilityService: ToggleVisibilitySharedStateService,
   ) {}
 
-  async getWalletProfile(): Promise<void> {
+  async checkWalletProfileFromUserData(): Promise<void> {
     try {
-      const userData: any = localStorage.getItem('user_data');
-      const scouterId = JSON.parse(userData)?.scouterId;
-      const response = await firstValueFrom(
-        this.endpointService.fetchWalletProfile(scouterId),
-      );
-      if (response) {
-        this.hasWalletProfile = true;
-      }
-    } catch (e: any) {
-      console.clear();
-      console.log('error status>>', e?.status);
-      console.error('error>>', e?.error?.message ?? e?.message);
-      if (e?.status === 404) {
+      const userData = localStorage.getItem('user_data');
+      if (!userData) {
         this.hasWalletProfile = false;
+        return;
       }
+
+      const parsed = JSON.parse(userData);
+      console.log('📦 User data for wallet check:', parsed);
+
+      // The wallet profile status is inside completeOnboarding object
+      if (parsed.completeOnboarding) {
+        // completeOnboarding is a JSON string, need to parse it
+        try {
+          const onboarding = JSON.parse(parsed.completeOnboarding);
+          console.log('📦 Parsed completeOnboarding:', onboarding);
+
+          // Check for hasWalletProfile flag
+          this.hasWalletProfile = onboarding.hasWalletProfile === true;
+          console.log(
+            '💰 Wallet profile from onboarding:',
+            this.hasWalletProfile,
+          );
+          return;
+        } catch (parseError) {
+          console.error('Error parsing completeOnboarding:', parseError);
+        }
+      }
+
+      // Also check if there's a direct hasWalletProfile property
+      if (parsed.hasWalletProfile !== undefined) {
+        this.hasWalletProfile = parsed.hasWalletProfile === true;
+        console.log(
+          '💰 Wallet profile from direct property:',
+          this.hasWalletProfile,
+        );
+        return;
+      }
+
+      // Check if wallet identifiers exist (alternative method)
+      if (parsed.walletId || parsed.walletAccountNumber) {
+        this.hasWalletProfile = true;
+        console.log('💰 Wallet profile from wallet identifiers');
+        return;
+      }
+
+      // Default to false
+      this.hasWalletProfile = false;
+      console.log('💰 No wallet profile found in user data');
+    } catch (error) {
+      console.error('Error checking wallet profile:', error);
+      this.hasWalletProfile = false;
     }
   }
 
@@ -205,26 +241,57 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    this.showSpinner = true;
+    this.loading = "Fetching Scouter's Dashboard...";
+
     this.getScouterDetails();
     this.setTimeOfDay();
-    this.fetchWalletBalance();
-    this.getWalletProfile();
     this.initializeBalanceVisibility();
     this.loadNotificationCount();
     this.setupNotificationListener();
 
-    // Subscribe to paymentStatus FIRST - this will get the persisted state
+    // Subscribe to payment status changes
     this.paymentService.paymentStatus$.subscribe((paymentStatus) => {
+      const previousStatus = this.paymentStatus;
       this.paymentStatus = paymentStatus.status;
-      console.log(
-        '💰 Payment status updated in dashboard:',
-        this.paymentStatus,
-      );
+
+      console.log('💰 Payment status updated in dashboard:', {
+        previous: previousStatus,
+        current: this.paymentStatus,
+        full: paymentStatus,
+      });
+
+      // If status changed, reload appropriate data
+      if (previousStatus !== this.paymentStatus) {
+        this.loadDashboardData();
+      }
     });
 
-    // Then fetch from backend to update if needed
-    this.initializeDashboardData();
+    // Load dashboard data
     this.loadDashboardData();
+
+    // Only check wallet if paid
+    if (this.paymentService.isPaid()) {
+      this.fetchWalletBalance();
+      this.checkWalletProfileFromUserData(); // ← Using the fixed method
+    } else {
+      this.hasWalletProfile = false; // Unpaid users don't need wallet
+    }
+
+    setTimeout(() => (this.showSpinner = false), 1500);
+  }
+
+  // Add method to refresh payment status from user_data
+  refreshPaymentStatusFromUserData(): void {
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        this.paymentService.syncWithUserData(parsed);
+      } catch (error) {
+        console.error('Error refreshing payment status:', error);
+      }
+    }
   }
 
   async toggleBalanceVisibility(): Promise<void> {
