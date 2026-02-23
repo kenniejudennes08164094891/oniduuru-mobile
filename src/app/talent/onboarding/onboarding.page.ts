@@ -124,7 +124,7 @@ export class OnboardingPage {
 
   // Add these missing properties
   isSubmitting = false;
-  showSuccessPopup = false;
+  //showSuccessPopup = false;
 
   ngOnInit() {
     // Timer should only run on OTP step
@@ -270,7 +270,11 @@ export class OnboardingPage {
       next: (res) => {
         if (res && res.success !== false) {
           this.error = '';
-          this.showSuccessPopup = true;
+          this.toast.openSnackBar('Account verified successfully. Redirecting to login...', 'success');
+          setTimeout(() => {
+            this.router.navigate(['/auth/login']);
+          }, 2000);
+          // this.showSuccessPopup = true;
         } else {
           this.error = res?.message || 'Invalid OTP';
         }
@@ -316,14 +320,14 @@ export class OnboardingPage {
    goToLogin() {
     this.router.navigate(['/auth/login']);
    }
-  goToDashboard() {
-  this.showSuccessPopup = false;
-  this.router.navigate(['/dashboard']);
-}
+//   goToDashboard() {
+//   this.showSuccessPopup = false;
+//   this.router.navigate(['/dashboard']);
+// }
 
-  closePopup() {
-    this.showSuccessPopup = false;
-  }
+//   closePopup() {
+//     this.showSuccessPopup = false;
+//   }
 
   // ------------------- NAVIGATION -------------------
   handleNextStep() {
