@@ -52,6 +52,7 @@ export class CreateRecordPage implements OnInit {
   // profile basics used for UI header (populated from talent profile)
   profile = {
     name: '',
+    email: '',
     address: '',
     bio: '',
     phone: '',
@@ -184,7 +185,6 @@ export class CreateRecordPage implements OnInit {
   //   });
   // }
 
-
   // -------------------- LOAD PROFILES --------------------
   loadMarketOrTalentProfile(): void {
     if (!this.talentId) return;
@@ -197,7 +197,7 @@ export class CreateRecordPage implements OnInit {
       .pipe(
         catchError((err) => {
           console.warn('Market profile error:', err);
-          return of(null); // Prevent forkJoin from failing
+          return of(null);
         })
       );
 
@@ -212,11 +212,22 @@ export class CreateRecordPage implements OnInit {
 
     forkJoin([market$, talent$]).subscribe({
       next: ([marketRes, talentRes]) => {
-        console.log('Market Response:', marketRes);
-        console.log('Talent Response:', talentRes);
 
         const marketDetails = marketRes?.details ?? null;
         const talentDetails = talentRes?.details ?? null;
+
+        //  POPULATE PROFILE FROM TALENT PROFILE
+        // -------
+        if (talentDetails) {
+          this.profile = {
+            name: talentDetails.fullName || '',
+            email: talentDetails.email || '',
+            address: talentDetails.address || '',
+            bio: '',
+            phone: talentDetails.phoneNumber || '',
+            photo: talentDetails.photo || ''
+          };
+        }
 
         const hasMarketData =
           marketDetails &&
@@ -224,12 +235,13 @@ export class CreateRecordPage implements OnInit {
             (Array.isArray(marketDetails.skillSets) && marketDetails.skillSets.length > 0) ||
             (typeof marketDetails.skillSets === 'string' && marketDetails.skillSets.trim().length > 0) ||
             (marketDetails.valueProposition && marketDetails.valueProposition.trim().length > 0) ||
-            (marketDetails.profileName && marketDetails.profileName.trim().length > 0) ||
             (Array.isArray(marketDetails.pictorialDocumentations) && marketDetails.pictorialDocumentations.length > 0)
           );
 
+        // 
+        //IF MARKET PROFILE EXISTS → LOAD ONLY MARKET DATA
+        // ----------------------
         if (hasMarketData) {
-          console.debug('Using MARKET profile data');
 
           const normalizedSkillSets = this.normalizeSkillSets(marketDetails.skillSets);
 
@@ -249,19 +261,21 @@ export class CreateRecordPage implements OnInit {
               : []
           };
 
-          this.profile.name = marketDetails.profileName ?? this.profile.name;
           this.isEditing = true;
           this.saveText = 'Update Record';
 
-        } else if (talentDetails) {
-          console.debug('Market profile empty — using TALENT profile data');
+        }
+
+        // IF NO MARKET PROFILE → INITIALIZE FROM TALENT SKILLS
+        // -------------
+        else if (talentDetails) {
 
           let parsedSkillNames: string[] = [];
 
           if (typeof talentDetails.skillSets === 'string') {
             try {
               parsedSkillNames = JSON.parse(talentDetails.skillSets);
-            } catch (e) {
+            } catch {
               parsedSkillNames = [];
             }
           } else if (Array.isArray(talentDetails.skillSets)) {
@@ -280,19 +294,12 @@ export class CreateRecordPage implements OnInit {
             pictorialDocumentations: []
           };
 
-          this.profile = {
-            name: talentDetails.fullName || '',
-            address: talentDetails.address || '',
-            bio: 'Sell yourself… Emphasize your skills and Achievements to recruiters.',
-            phone: talentDetails.phoneNumber || '',
-            photo: talentDetails.photo || ''
-          };
-
           this.isEditing = false;
           this.saveText = 'Create Record';
-        } else {
-          this.toast.openSnackBar('No profile data found.', 'error');
+        }
 
+        else {
+          this.toast.openSnackBar('No profile data found.', 'error');
         }
 
         this.isLoading = false;
@@ -301,14 +308,10 @@ export class CreateRecordPage implements OnInit {
       error: (err) => {
         console.error('Unexpected error:', err);
         this.toast.openSnackBar('Error loading profiles.', 'error');
-
         this.isLoading = false;
       }
     });
-
   }
-
-
 
   // -------------------- NORMALIZE HELPERS --------------------
   // normalize skillSets returned from backend (array, stringified JSON, single object, or comma string)

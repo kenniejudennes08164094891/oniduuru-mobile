@@ -11,7 +11,7 @@ import { ToastsService } from 'src/app/services/toasts.service';
   templateUrl: './onboarding.page.html',
   standalone: true,
   imports: [CommonModule, FormsModule, IonicModule, NgClass],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA], // Add this line
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], 
 
   styleUrls: ['./onboarding.page.scss'],
 })
@@ -118,7 +118,7 @@ export class OnboardingPage {
 
   // ------------------- VERIFY OTP -------------------
   otp: string[] = ['', '', '', ''];
-  otpFields = new Array(4);
+ otpFields = [0, 1, 2, 3];
   timer: number = 120;
   error: string = '';
 
@@ -171,9 +171,9 @@ export class OnboardingPage {
     );
   }
 
-  get isOtpValid(): boolean {
-    return this.otp.every((d) => d !== '');
-  }
+ get isOtpValid(): boolean {
+  return this.otp.every((d) => d && d.trim().length === 1);
+}
 
   // ------------------- OTP METHODS -------------------
   maskedEmail() {
@@ -268,8 +268,12 @@ export class OnboardingPage {
 
     this.talentService.verifyOTP(payload).subscribe({
       next: (res) => {
-        this.error = '';
-        this.showPopup(); // success popup
+        if (res && res.success !== false) {
+          this.error = '';
+          this.showSuccessPopup = true;
+        } else {
+          this.error = res?.message || 'Invalid OTP';
+        }
       },
       error: (err) => {
         this.error = err.error?.message || 'Invalid OTP';
@@ -309,17 +313,16 @@ export class OnboardingPage {
   }
 
   // ------------------- SUCCESS POPUP -------------------
-  showPopup() {
-    this.showSuccessPopup = true;
-  }
+   goToLogin() {
+    this.router.navigate(['/auth/login']);
+   }
+  goToDashboard() {
+  this.showSuccessPopup = false;
+  this.router.navigate(['/dashboard']);
+}
 
   closePopup() {
     this.showSuccessPopup = false;
-  }
-
-  goToLogin() {
-    this.showSuccessPopup = false;
-    this.router.navigate(['/auth/login']);
   }
 
   // ------------------- NAVIGATION -------------------
