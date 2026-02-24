@@ -11,6 +11,8 @@ import { Location } from '@angular/common';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import {firstValueFrom} from "rxjs";
+import {EmmittersService} from "../../services/emmitters.service";
 
 @Component({
   selector: 'app-conclude-your-hiring-process-page-component',
@@ -60,6 +62,7 @@ export class ConcludeYourHiringProcessPageComponent
     private loadingCtrl: LoadingController,
     modalCtrl: ModalController,
     platform: Platform,
+    private emitterService: EmmittersService
   ) {
     super(modalCtrl, platform);
   }
@@ -94,7 +97,7 @@ export class ConcludeYourHiringProcessPageComponent
 
       // Parse the user data
       let parsedUserData: any = {};
-      
+
       if (userProfileData) {
         parsedUserData = JSON.parse(userProfileData);
       } else if (userData) {
@@ -113,8 +116,8 @@ export class ConcludeYourHiringProcessPageComponent
 
       // If we still don't have email, try to get from other possible keys
       if (!this.scouterData.scouterEmail) {
-        const email = localStorage.getItem('email') || 
-                     localStorage.getItem('user_email') || 
+        const email = localStorage.getItem('email') ||
+                     localStorage.getItem('user_email') ||
                      localStorage.getItem('scouter_email');
         if (email) {
           this.scouterData.scouterEmail = email;
@@ -148,7 +151,7 @@ export class ConcludeYourHiringProcessPageComponent
   // NEW: Method to validate scouter data
   private validateScouterData(): boolean {
     const errors = [];
-    
+
     if (!this.scouterData.scouterId) {
       errors.push('scouterId should not be empty');
     }
@@ -306,22 +309,22 @@ export class ConcludeYourHiringProcessPageComponent
       console.log('Sending hire request with payload:', hirePayload);
 
       // Call the API endpoint
-      const response = await this.scouterEndpointsService
-        .hireTalent(hirePayload)
-        .toPromise();
+      const response = await firstValueFrom(this.scouterEndpointsService.hireTalent(hirePayload))
+      if(response){
+        console.log('Hire API Response:', response);
 
-      console.log('Hire API Response:', response);
+        // Show success message
+        this.toastService.openSnackBar(
+          'Hire offer sent successfully! ✅',
+          'success',
+        );
+        this.emitterService.clearTalentIdForHire();
 
-      // Show success message
-      this.toastService.openSnackBar(
-        'Hire offer sent successfully! ✅',
-        'success',
-      );
-
-      // Navigate back after a short delay
-      setTimeout(() => {
-        this.location.back();
-      }, 1500);
+        // Navigate back after a short delay
+        setTimeout(() => {
+          this.location.back();
+        }, 1500);
+      }
     } catch (error: any) {
       console.error('Error hiring talent:', error);
 
