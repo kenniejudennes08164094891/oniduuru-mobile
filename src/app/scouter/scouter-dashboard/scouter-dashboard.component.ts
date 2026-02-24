@@ -1,3 +1,4 @@
+// scouter-dashboard.component.ts
 import {
   Component,
   OnInit,
@@ -24,15 +25,15 @@ export interface RecentHire {
   profilePic: string;
   name: string;
   date: string;
-  time?: string; // Make optional
-  dateTime?: string; // Make optional
+  time?: string;
+  dateTime?: string;
   amount: number;
   offerStatus: string;
   status: string;
   marketHireId: string;
   talentId: string;
   scouterId: string;
-  _raw?: any; // For debugging
+  _raw?: any;
 }
 
 @Component({
@@ -42,10 +43,9 @@ export interface RecentHire {
   standalone: false,
 })
 export class ScouterDashboardComponent implements OnInit, OnChanges {
-  RecentHires: RecentHire[] = []; // Will be populated with real data
+  RecentHires: RecentHire[] = [];
   marketRatingsData: any[] = [];
 
-  // Add these properties to your component class
   walletBalance: number = 0;
   balanceHidden: boolean = false;
   walletLoading: boolean = false;
@@ -72,61 +72,58 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     title: string;
   }[] = [];
   paymentStatus: PaymentStatusValue = 'false';
-  scouterDetails: any; // Add this to store scouter details
+  scouterDetails: any;
 
-  // New properties for header scroll behavior
   headerHidden: boolean = false;
   scrollPosition: number = 0;
   previousScrollPosition: number = 0;
 
-  // Dashboard cards
   dashboardCardsUnpaid = [
     {
       title: 'Total Market Engagement',
       value: 0,
-      status: '', // grey
+      status: '',
     },
     {
       title: 'Total Offer Accepted',
       value: 0,
-      status: 'active', // green
+      status: 'active',
     },
     {
       title: 'Total Offer Rejected',
       value: 0,
-      status: 'inactive', // red
+      status: 'inactive',
     },
     {
       title: 'Total Offer Awaiting Acceptance',
       value: 0,
-      status: 'pending', // yellow
+      status: 'pending',
     },
   ];
 
   dashboardCardsPaid = [
     {
       title: 'Total Market Engagement',
-      value: 21,
-      status: '', // grey
+      value: 0,
+      status: '',
     },
     {
       title: 'Total Offer Accepted',
-      value: 17,
-      status: 'active', // green
+      value: 0,
+      status: 'active',
     },
     {
       title: 'Total Offer Rejected',
-      value: 2,
-      status: 'inactive', // red
+      value: 0,
+      status: 'inactive',
     },
     {
       title: 'Total Offer Awaiting Acceptance',
-      value: 2,
-      status: 'pending', // yellow
+      value: 0,
+      status: 'pending',
     },
   ];
 
-  // Add the missing dashboardStatCards array
   dashboardStatCardsUnpaid = [
     { title: 'Awaiting Acceptance', value: 0, status: 'pending' },
     { title: 'Offer Accepted', value: 0, status: 'active' },
@@ -138,6 +135,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     { title: 'Offer Accepted', value: 0, status: 'active' },
     { title: 'Offer Rejected', value: 0, status: 'inactive' },
   ];
+
   hasWalletProfile: boolean | null = null;
 
   constructor(
@@ -155,20 +153,69 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   async getWalletProfile(): Promise<void> {
     try {
       const userData: any = localStorage.getItem('user_data');
-      const scouterId = JSON.parse(userData)?.scouterId;
-      const response = await firstValueFrom(
-        this.endpointService.fetchWalletProfile(scouterId),
-      );
-      if (response) {
-        this.hasWalletProfile = true;
-      }
-    } catch (e: any) {
-      console.clear();
-      console.log('error status>>', e?.status);
-      console.error('error>>', e?.error?.message ?? e?.message);
-      if (e?.status === 404) {
+      if (!userData) {
         this.hasWalletProfile = false;
+        return;
       }
+
+      const parsed = JSON.parse(userData);
+      console.log('🔍 Checking wallet profile in user_data:', parsed);
+
+      // Method 1: Check completeOnboarding JSON string (primary source)
+      if (parsed.completeOnboarding) {
+        try {
+          const onboarding = JSON.parse(parsed.completeOnboarding);
+          console.log('📦 Parsed completeOnboarding:', onboarding);
+
+          // IMPORTANT: Check the value explicitly
+          if (onboarding.hasWalletProfile === true) {
+            this.hasWalletProfile = true;
+            console.log('✅ Wallet profile found in completeOnboarding (true)');
+            return;
+          } else if (onboarding.hasWalletProfile === false) {
+            this.hasWalletProfile = false;
+            console.log('❌ Wallet profile false in completeOnboarding');
+            return;
+          } else {
+            // If hasWalletProfile is undefined or null in onboarding, continue to other checks
+            console.log('⚠️ hasWalletProfile not explicitly set in onboarding');
+          }
+        } catch (e) {
+          console.error('Error parsing completeOnboarding:', e);
+        }
+      }
+
+      // Method 2: Check direct hasWalletProfile property
+      if (parsed.hasWalletProfile !== undefined) {
+        this.hasWalletProfile = parsed.hasWalletProfile === true;
+        console.log(
+          '💰 Wallet profile from direct property:',
+          this.hasWalletProfile,
+        );
+        return;
+      }
+
+      // Method 3: Check wallet identifiers (if they exist, wallet exists)
+      if (parsed.walletId || parsed.walletAccountNumber) {
+        this.hasWalletProfile = true;
+        console.log('💰 Wallet profile from identifiers');
+        return;
+      }
+
+      // Method 4: Check if wallet balance was successfully fetched
+      // This is a fallback - if we have wallet balance > 0, wallet must exist
+      if (this.walletBalance > 0) {
+        this.hasWalletProfile = true;
+        console.log('💰 Wallet profile inferred from positive balance');
+        return;
+      }
+
+      // Default to false
+      this.hasWalletProfile = false;
+      console.log('💰 No wallet profile found');
+    } catch (e: any) {
+      console.error('Error checking wallet profile:', e);
+      this.hasWalletProfile = false;
     }
   }
 
@@ -178,17 +225,13 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   }
 
   getPaymentStatus(): PaymentStatusValue {
-    // Check localStorage first (most reliable)
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const parsed = JSON.parse(userData);
-
-        // Check for paid status in various possible locations
         let paidStatus =
           parsed.paid || parsed.details?.user?.paid || parsed.user?.paid;
 
-        // Normalize to the three possible values
         if (paidStatus === true || paidStatus === 'true') {
           return 'true';
         } else if (paidStatus === 'pendingPaymentVerification') {
@@ -200,43 +243,75 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         console.error('Error parsing user_data for payment status:', error);
       }
     }
-
     return 'false';
   }
 
+  // Add this debug method to your component
+  debugWalletCheck(): void {
+    console.log('🔍 DEBUG - Current hasWalletProfile:', this.hasWalletProfile);
+    console.log('🔍 DEBUG - Current paymentStatus:', this.paymentStatus);
+
+    const userData = localStorage.getItem('user_data');
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      console.log('🔍 DEBUG - Raw user_data:', parsed);
+
+      if (parsed.completeOnboarding) {
+        try {
+          const onboarding = JSON.parse(parsed.completeOnboarding);
+          console.log('🔍 DEBUG - Parsed completeOnboarding:', onboarding);
+          console.log(
+            '🔍 DEBUG - hasWalletProfile in onboarding:',
+            onboarding.hasWalletProfile,
+          );
+        } catch (e) {
+          console.error('Error parsing completeOnboarding:', e);
+        }
+      }
+    }
+  }
+
+  // Update ngOnInit to call debug after wallet check
   ngOnInit(): void {
     this.getScouterDetails();
     this.setTimeOfDay();
-    this.fetchWalletBalance();
-    this.getWalletProfile();
     this.initializeBalanceVisibility();
     this.loadNotificationCount();
     this.setupNotificationListener();
 
-    // Subscribe to paymentStatus FIRST - this will get the persisted state
+    // Get payment status from service first
     this.paymentService.paymentStatus$.subscribe((paymentStatus) => {
       this.paymentStatus = paymentStatus.status;
       console.log(
         '💰 Payment status updated in dashboard:',
         this.paymentStatus,
       );
+
+      // Only fetch wallet-related data if paid
+      if (this.paymentStatus === 'true') {
+        this.fetchWalletBalance();
+        this.getWalletProfile().then(() => {
+          // Debug after wallet profile is checked
+          this.debugWalletCheck();
+        });
+      } else {
+        // Reset wallet profile for unpaid users
+        this.hasWalletProfile = false;
+        this.walletBalance = 0;
+      }
     });
 
-    // Then fetch from backend to update if needed
     this.initializeDashboardData();
     this.loadDashboardData();
+
+    setTimeout(() => (this.showSpinner = false), 1500);
   }
 
   async toggleBalanceVisibility(): Promise<void> {
-    // Use the service to toggle and save
     this.balanceHidden =
       await this.toggleVisibilityService.toggleBalanceVisibility(
         this.balanceHidden,
       );
-    console.log(
-      '👁️ Dashboard balance visibility toggled to:',
-      this.balanceHidden,
-    );
   }
 
   async goToWalletPage(): Promise<void> {
@@ -247,20 +322,15 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     try {
       this.balanceHidden =
         await this.toggleVisibilityService.getBalanceVisibility();
-      console.log(
-        '🔍 Dashboard initialized balance visibility:',
-        this.balanceHidden,
-      );
     } catch (error) {
       console.error('Error initializing balance visibility:', error);
-      this.balanceHidden = false; // Default value
+      this.balanceHidden = false;
     }
   }
 
   private fetchWalletBalance(): void {
     this.walletLoading = true;
 
-    // Get user identifiers (similar to wallet page)
     const currentUser = this.authService.getCurrentUser();
     const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
 
@@ -269,51 +339,49 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       userData?.walletId ||
       userData?.wallet?.id ||
       userData?.walletAccountNumber;
-
     const uniqueId =
       currentUser?.id ||
       userData?.id ||
       userData?.userId ||
       userData?.scouterId;
 
-    console.log('🔍 Fetching wallet balance:', { walletId, uniqueId });
-
-    // Call the endpoint service to fetch wallet
     this.endpointService.fetchMyWallet(walletId, uniqueId).subscribe({
       next: (res: any) => {
         this.walletLoading = false;
-
         if (res?.walletNotFound) {
-          console.log('Wallet not created yet');
           this.walletBalance = 0;
+          // If wallet not found, ensure hasWalletProfile is false
+          if (this.hasWalletProfile !== false) {
+            this.hasWalletProfile = false;
+          }
           return;
         }
-
         if (res && res.data) {
           const walletData = res.data;
           this.walletBalance = parseFloat(walletData.currentAcctBalance) || 0;
-          console.log('💰 Wallet balance loaded:', this.walletBalance);
+
+          // If we successfully got wallet data, wallet profile exists
+          if (this.hasWalletProfile !== true) {
+            this.hasWalletProfile = true;
+            console.log('💰 Wallet profile confirmed from API response');
+          }
         }
       },
       error: (error: any) => {
         this.walletLoading = false;
         console.error('Error fetching wallet balance:', error);
         this.walletBalance = 0;
+
+        // On error, don't change hasWalletProfile - it might be a temporary issue
       },
     });
   }
 
-  // ✅ ENHANCED: Load notification count
   private loadNotificationCount(): void {
     const storedCount = localStorage.getItem('notification_count');
     this.notificationCount = storedCount ? parseInt(storedCount, 10) : 0;
-    console.log(
-      '📬 Dashboard: Loaded notification count:',
-      this.notificationCount,
-    );
   }
 
-  // ✅ NEW: Setup notification listener for dashboard
   private setupNotificationListener(): void {
     const storageHandler = (event: StorageEvent) => {
       if (event.key === 'notification_count') {
@@ -321,7 +389,6 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         this.notificationCount = newCount;
       }
     };
-
     window.addEventListener('storage', storageHandler);
   }
 
@@ -340,8 +407,6 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         setTimeout(() => (this.showSpinner = false), 2000);
       }
     }
-
-    // Final fallback
     console.warn('No user details found');
     this.userName = 'User';
   }
@@ -349,24 +414,16 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   private extractUserName(userData: any): string {
     if (!userData) return 'User';
 
-    console.log('🔍 Extracting user name from:', userData);
-
-    // Try different possible structures and property names
     const user =
       userData.details?.user ||
       userData.user ||
       userData.data?.user ||
       userData;
-
-    // Try multiple possible property names for full name
     let fullName = 'User';
 
-    // First, check if we have separate first and last name
     if (user.firstName && user.lastName) {
       fullName = `${user.firstName} ${user.lastName}`.trim();
-    }
-    // Check for full name in various formats
-    else if (user.fullName) {
+    } else if (user.fullName) {
       fullName = user.fullName;
     } else if (user.fullname) {
       fullName = user.fullname;
@@ -376,25 +433,18 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       fullName = user.username;
     } else if (user.displayName) {
       fullName = user.displayName;
-    }
-    // Try email as last resort
-    else if (user.email) {
+    } else if (user.email) {
       const emailUsername = user.email.split('@')[0];
-      // Capitalize first letter of email username
       fullName = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
     }
 
-    console.log('✅ Extracted user name:', fullName);
     return fullName;
   }
 
   private loadDashboardData(): void {
-    // Get scouter ID from auth service or localStorage
     const scouterId =
       this.authService.getCurrentUser()?.scouterId ||
       localStorage.getItem('id');
-
-    console.log('🔍 Loading dashboard data for scouterId:', scouterId);
 
     if (!scouterId) {
       console.warn('No scouter ID found, using mock data');
@@ -403,42 +453,21 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
 
     this.scouterEndpointsService.getScouterStats(scouterId).subscribe({
       next: (stats: any) => {
-        console.log('📊 FULL Dashboard stats received:', stats);
-        console.log('📈 Market ratings count:', stats.marketRatings?.length);
-        console.log('👥 Recent hires count:', stats.recentHires?.length);
-        console.log('💵 Recent hires data:', stats.recentHires);
-        console.log('🎯 Stats structure:', {
-          engagements: stats.scoutersTotalMarketEngagements,
-          accepted: stats.scoutersTotalMarketOfferAccepted,
-          declined: stats.scoutersTotalMarketOfferDeclined,
-          awaiting: stats.scoutersTotalMarketsAwaitingAcceptance,
-        });
-
-        // Update dashboard with real data
         this.updateDashboardWithRealData(stats);
       },
       error: (error: any) => {
         console.error('❌ Failed to load dashboard stats:', error);
-        console.error('Error details:', error.message, error.status);
       },
     });
   }
 
-  // Add this method to track changes
   ngOnChanges(changes: SimpleChanges) {
     if (changes['RecentHires']) {
-      console.log('🔄 RecentHires changed in parent:', {
-        old: changes['RecentHires'].previousValue?.length,
-        new: changes['RecentHires'].currentValue?.length,
-        data: changes['RecentHires'].currentValue,
-      });
+      console.log('🔄 RecentHires changed in parent');
     }
   }
 
   private updateDashboardWithRealData(stats: any): void {
-    console.log('📊 Dashboard stats received:', stats);
-
-    // Store market ratings
     this.marketRatingsData = stats.marketRatings || [];
 
     // Update both paid and unpaid dashboard cards with real data
@@ -488,33 +517,24 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       },
     ];
 
-    // Update recent hires in the RecentHiresDashboardComponent
     if (stats.recentHires && stats.recentHires.length > 0) {
       this.updateRecentHiresComponent(stats.recentHires);
     }
 
-    // Update recent market ratings
     if (stats.marketRatings && stats.marketRatings.length > 0) {
       this.updateRecentMarketRatingsComponent(stats.marketRatings);
     }
 
-    // Recalculate percentages
     this.initializeDashboardData();
   }
 
   private updateRecentHiresComponent(recentHires: any[]): void {
-    console.log('🔄 Processing recent hires:', recentHires);
-
     if (!recentHires || recentHires.length === 0) {
-      console.log('No recent hires data');
       this.RecentHires = [];
       return;
     }
 
-    // Transform API data to match the structure expected by the template
     const transformedHires = recentHires.map((hire) => {
-      console.log('Processing hire object:', hire);
-
       let formattedDate = '';
       let formattedTime = '';
       let dateTime = '';
@@ -522,41 +542,25 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       if (hire.dateOfHire) {
         try {
           const dateString = hire.dateOfHire.toString();
-          console.log('Original date string:', dateString);
-
-          // Handle format like "Jan 16, 2026, 1:31 PM"
           if (dateString.includes(',')) {
             const parts = dateString.split(',');
             if (parts.length >= 3) {
-              // Date part: "Jan 16, 2026" -> "Jan 16, 2026"
               formattedDate = `${parts[0].trim()}, ${parts[1].trim()}`;
-
-              // Time part: " 1:31 PM" -> "1:31 PM"
               formattedTime = parts[2].trim();
-
-              // Full datetime: "Jan 16, 2026 at 1:31 PM"
               dateTime = `${formattedDate} at ${formattedTime}`;
             }
-          }
-          // Handle format like "16/January/2026:1:31pm"
-          else if (dateString.includes('/') && dateString.includes(':')) {
+          } else if (dateString.includes('/') && dateString.includes(':')) {
             const [datePart, timePart] = dateString.split(':');
             if (datePart) {
-              // Format date from "16/January/2026" to "Jan 16, 2026"
               const dateParts = datePart.split('/');
               if (dateParts.length === 3) {
                 const day = dateParts[0];
                 const month = dateParts[1];
                 const year = dateParts[2];
-
-                // Convert month to short format
                 const monthShort = month.substring(0, 3);
                 formattedDate = `${monthShort} ${day}, ${year}`;
-
-                // Format time from "1:31pm" to "1:31 PM"
                 if (timePart) {
                   let time = timePart;
-                  // Convert to uppercase AM/PM
                   if (time.includes('am') || time.includes('pm')) {
                     time = time
                       .replace('am', ' AM')
@@ -567,9 +571,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
                 }
               }
             }
-          }
-          // Handle ISO date format
-          else if (hire.createdAt) {
+          } else if (hire.createdAt) {
             try {
               const date = new Date(hire.createdAt);
               if (!isNaN(date.getTime())) {
@@ -589,47 +591,26 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
               console.error('Error parsing createdAt:', e);
             }
           }
-
-          console.log('Date/time transformation:', {
-            original: hire.dateOfHire,
-            date: formattedDate,
-            time: formattedTime,
-            datetime: dateTime,
-          });
         } catch (e) {
-          console.error(
-            'Error parsing date/time:',
-            e,
-            'Date string:',
-            hire.dateOfHire,
-          );
+          console.error('Error parsing date/time:', e);
           formattedDate = hire.dateOfHire;
         }
       }
 
-      // Parse amount from "450,000" to number
       let amount = 0;
       if (hire.amountToPay) {
         try {
-          // Remove commas and any non-numeric characters except decimal point
           const cleaned = hire.amountToPay.toString().replace(/[^\d.]/g, '');
           amount = parseFloat(cleaned) || 0;
-          console.log('Amount transformation:', hire.amountToPay, '->', amount);
         } catch (e) {
-          console.error(
-            'Error parsing amount:',
-            e,
-            'Amount string:',
-            hire.amountToPay,
-          );
+          console.error('Error parsing amount:', e);
           amount = 0;
         }
       }
 
-      // Extract talent name
       const talentName = this.extractTalentName(hire);
 
-      const transformedHire = {
+      return {
         id: hire.id?.toString() || '',
         profilePic: hire.talentPicture || 'assets/images/default-avatar.png',
         name: talentName,
@@ -646,22 +627,12 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         marketHireId: hire.marketHireId || '',
         _raw: hire,
       };
-
-      console.log('Transformed hire:', transformedHire);
-      return transformedHire;
     });
 
-    // Update the component's RecentHires array
     this.RecentHires = transformedHires;
-    console.log(
-      '✅ Updated RecentHires with',
-      transformedHires.length,
-      'hires',
-    );
   }
 
   private extractTalentName(hire: any): string {
-    // Check talent object
     if (hire.talent) {
       const talent = hire.talent;
       if (talent.fullName) return talent.fullName;
@@ -670,8 +641,6 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         return `${talent.firstName || ''} ${talent.lastName || ''}`.trim();
       }
     }
-
-    // Try details object
     if (hire.details?.talent) {
       const talent = hire.details.talent;
       if (talent.fullName) return talent.fullName;
@@ -680,23 +649,9 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         return `${talent.firstName || ''} ${talent.lastName || ''}`.trim();
       }
     }
-
-    // If nothing found, check the hire data structure
-    console.warn(
-      '⚠️ Could not find talent name in hire data. Available keys:',
-      Object.keys(hire),
-    );
-
-    // Log the full hire object for debugging
-    console.log(
-      '🔍 Full hire object for debugging:',
-      JSON.stringify(hire, null, 2),
-    );
-
     return 'Unknown Talent';
   }
 
-  // Update the mapHireStatus method to handle all possible statuses:
   private mapHireStatus(apiStatus: string): string {
     const statusMap: { [key: string]: string } = {
       'offer-accepted': 'Offer Accepted',
@@ -721,59 +676,25 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     return statusMap[apiStatus?.toLowerCase()] || 'Pending';
   }
 
-  // Add this method to check if there are recent hires
   get hasRecentHires(): boolean {
     return this.RecentHires && this.RecentHires.length > 0;
   }
 
   private updateRecentMarketRatingsComponent(marketRatings: any[]): void {
-    // Transform API data for the chart component
-    // You'll need to update RecentMarketRatingDashboardComponent
-    // based on your actual chart requirements
     console.log('Market ratings data:', marketRatings);
   }
 
-  private parseAmount(amountString: string): number {
-    if (!amountString) return 0;
-    // Remove commas and convert to number
-    const cleaned = amountString.replace(/,/g, '');
-    return parseFloat(cleaned) || 0;
-  }
-
   initializeDashboardData() {
-    console.log('🔄 Initializing dashboard data...');
-
-    // Calculate totals based ONLY on the three status cards (Accepted, Rejected, Awaiting)
-    // NOT including "Total Market Engagement" (index 0)
-
-    // For unpaid dashboard
     const unpaidAccepted = this.dashboardCardsUnpaid[1].value || 0;
     const unpaidRejected = this.dashboardCardsUnpaid[2].value || 0;
     const unpaidAwaiting = this.dashboardCardsUnpaid[3].value || 0;
     const unpaidStatusTotal = unpaidAccepted + unpaidRejected + unpaidAwaiting;
 
-    console.log('📊 Unpaid Status Totals:', {
-      accepted: unpaidAccepted,
-      rejected: unpaidRejected,
-      awaiting: unpaidAwaiting,
-      total: unpaidStatusTotal,
-    });
-
-    // For paid dashboard
     const paidAccepted = this.dashboardCardsPaid[1].value || 0;
     const paidRejected = this.dashboardCardsPaid[2].value || 0;
     const paidAwaiting = this.dashboardCardsPaid[3].value || 0;
     const paidStatusTotal = paidAccepted + paidRejected + paidAwaiting;
 
-    console.log('📊 Paid Status Totals:', {
-      accepted: paidAccepted,
-      rejected: paidRejected,
-      awaiting: paidAwaiting,
-      total: paidStatusTotal,
-    });
-
-    // Update the dashboardStatCards with correct percentages
-    // Calculate percentages based only on status cards total
     this.dashboardStatCardsUnpaid = [
       {
         title: 'Offer Accepted',
@@ -828,32 +749,6 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       },
     ];
 
-    console.log(
-      '📈 Calculated Percentages - Unpaid:',
-      this.dashboardStatCardsUnpaid,
-    );
-    console.log(
-      '📈 Calculated Percentages - Paid:',
-      this.dashboardStatCardsPaid,
-    );
-
-    // Check if percentages add up (for debugging)
-    const unpaidPercentTotal = this.dashboardStatCardsUnpaid.reduce(
-      (sum, card) => sum + card.value,
-      0,
-    );
-    const paidPercentTotal = this.dashboardStatCardsPaid.reduce(
-      (sum, card) => sum + card.value,
-      0,
-    );
-    console.log(
-      '🔢 Percentage Totals - Unpaid:',
-      unpaidPercentTotal + '%',
-      'Paid:',
-      paidPercentTotal + '%',
-    );
-
-    // Build circle layers with proper sizing
     const baseSize = 120;
 
     this.percentageCirclesUnpaid = this.dashboardStatCardsUnpaid
@@ -886,15 +781,12 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   }
 
   async goToHireTalent(): Promise<void> {
-    // Get user email
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const parsedUser = JSON.parse(userData);
         const email = parsedUser.email || parsedUser.details?.user?.email;
-
         if (email) {
-          // Call OTP endpoint (fire and forget - don't wait for response)
           this.scouterEndpointsService.resendOtp({ email }).subscribe({
             next: (response) => console.log('✅ OTP sent:', response),
             error: (error) => console.error('❌ OTP failed:', error),
@@ -904,7 +796,6 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         console.error('Error getting user email:', error);
       }
     }
-
     await this.router.navigate(['/scouter/hire-talent']);
   }
 
@@ -915,11 +806,8 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     ]);
   }
 
-  // Keep this method but ensure it uses the same logic
   getPercentageForStatus(value: number, statusType: string): number {
-    // Get the correct total based on status type
     let total = 0;
-
     if (statusType === 'unpaid') {
       const unpaidAccepted = this.dashboardCardsUnpaid[1].value || 0;
       const unpaidRejected = this.dashboardCardsUnpaid[2].value || 0;
@@ -931,70 +819,44 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       const paidAwaiting = this.dashboardCardsPaid[3].value || 0;
       total = paidAccepted + paidRejected + paidAwaiting;
     }
-
-    if (total === 0) {
-      return 0;
-    }
-
-    const percentage = Math.round((value / total) * 100);
-    console.log(
-      `📐 Percentage calculation: ${value} / ${total} = ${percentage}%`,
-    );
-    return percentage;
+    if (total === 0) return 0;
+    return Math.round((value / total) * 100);
   }
 
-  // Calculate the circumference for the SVG circles
   getCircumference(radius: number): number {
     return 2 * Math.PI * radius;
   }
 
-  // Calculate the stroke dashoffset for the progress
   getStrokeDashoffset(radius: number, percentage: number): number {
-    // Handle NaN case when percentage is not a number
-    if (isNaN(percentage)) {
-      percentage = 0;
-    }
-
+    if (isNaN(percentage)) percentage = 0;
     const circumference = this.getCircumference(radius);
     return circumference - (percentage / 100) * circumference;
   }
 
-  // Calculate the position for the progress dot
   getProgressDotPosition(
     radius: number,
     percentage: number,
     circleSize: number,
   ): { x: number; y: number } {
-    if (isNaN(percentage)) {
-      percentage = 0;
-    }
-
+    if (isNaN(percentage)) percentage = 0;
     const center = circleSize / 2;
     const angleInDegrees = (percentage / 100) * 360;
     const angleInRadians = (angleInDegrees - 90) * (Math.PI / 180);
-
     const x = center + radius * Math.cos(angleInRadians);
     const y = center + radius * Math.sin(angleInRadians);
-
     return { x, y };
   }
 
-  // Handle scroll events
   onContentScroll(event: any) {
     this.scrollPosition = event.detail.scrollTop;
-
-    // Show/hide header based on scroll direction
     if (
       this.scrollPosition > this.previousScrollPosition &&
       this.scrollPosition > 100
     ) {
-      // Scrolling down and past a threshold
       this.headerHidden = true;
     } else if (this.scrollPosition < this.previousScrollPosition) {
-      // Scrolling up
       this.headerHidden = false;
     }
-
     this.previousScrollPosition = this.scrollPosition;
   }
 
@@ -1005,15 +867,14 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   async openMakePaymentPopup() {
     const modal = await this.modalCtrl.create({
       component: MakePaymentPopupModalComponent,
-      cssClass: 'make-payment-modal', // optional custom style
-      backdropDismiss: true, // allow closing on backdrop click
+      cssClass: 'make-payment-modal',
+      backdropDismiss: true,
     });
     return await modal.present();
   }
 
   private setTimeOfDay(): void {
     const hour = new Date().getHours();
-
     if (hour < 5) {
       this.timeOfDay = "It's Bed Time";
       this.timeIcon = imageIcons.Night;
@@ -1035,26 +896,26 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   getStatusColor(status: string): string {
     switch (status) {
       case 'active':
-        return '#189537'; //GREEN
+        return '#189537';
       case 'pending':
-        return '#FFA086'; //YELLOWISH
+        return '#FFA086';
       case 'inactive':
-        return '#CC0000'; //RED
+        return '#CC0000';
       default:
-        return '#79797B'; //GRAY
+        return '#79797B';
     }
   }
 
   getPercentageStatusColor(status: string): string {
     switch (status) {
       case 'active':
-        return '#189537'; //GREEN
+        return '#189537';
       case 'pending':
-        return '#FFA086'; //YELLOWISH
+        return '#FFA086';
       case 'inactive':
-        return '#CC0000'; //RED
+        return '#CC0000';
       default:
-        return '#79797B'; //GRAY
+        return '#79797B';
     }
   }
 

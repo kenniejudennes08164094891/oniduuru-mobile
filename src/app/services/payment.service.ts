@@ -1,3 +1,4 @@
+// payment.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
@@ -24,11 +25,40 @@ export class PaymentService {
 
   private loadInitialState(): PaymentStatus {
     try {
-      // Try to load from localStorage first
+      // First, check user_data from login (this is the source of truth)
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        
+        // Extract paid status from user_data - this comes from login response
+        // It could be: "true", "false", "pendingPaymentVerification", null, or undefined
+        let paidStatus = parsed.paid;
+        
+        // Also check nested locations just in case
+        if (paidStatus === undefined && parsed.details?.user?.paid) {
+          paidStatus = parsed.details.user.paid;
+        }
+        if (paidStatus === undefined && parsed.user?.paid) {
+          paidStatus = parsed.user.paid;
+        }
+
+        console.log('💰 PaymentService loading initial state from user_data:', paidStatus);
+
+        // Normalize the value
+        if (paidStatus === true || paidStatus === 'true') {
+          return { status: 'true' };
+        } else if (paidStatus === 'pendingPaymentVerification') {
+          return { status: 'pendingPaymentVerification' };
+        } else {
+          // This handles: false, "false", null, undefined, or any other value
+          return { status: 'false' };
+        }
+      }
+      
+      // If no user_data, try stored payment status (as fallback)
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Validate and normalize the status
         if (parsed && typeof parsed === 'object') {
           const status = parsed.status;
           if (status === 'true' || status === 'false' || status === 'pendingPaymentVerification') {
@@ -39,19 +69,6 @@ export class PaymentService {
               timeOfUpload: parsed.timeOfUpload
             };
           }
-        }
-      }
-      
-      // If no stored state, try to get from user_data
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        let paidStatus = parsed.paid || parsed.details?.user?.paid || parsed.user?.paid;
-        
-        if (paidStatus === true || paidStatus === 'true') {
-          return { status: 'true' };
-        } else if (paidStatus === 'pendingPaymentVerification') {
-          return { status: 'pendingPaymentVerification' };
         }
       }
     } catch (error) {
@@ -77,24 +94,32 @@ export class PaymentService {
     return this.paymentStatusSubject.value.status;
   }
 
-  // For backward compatibility - returns boolean if paid
   isPaid(): boolean {
     return this.paymentStatusSubject.value.status === 'true';
   }
 
-  // Set just the status string
-  setPaymentStatus(status: PaymentStatusValue | string) {
+  isPending(): boolean {
+    return this.paymentStatusSubject.value.status === 'pendingPaymentVerification';
+  }
+
+  isUnpaid(): boolean {
+    return this.paymentStatusSubject.value.status === 'false';
+  }
+
+  setPaymentStatus(status: PaymentStatusValue | string | boolean) {
     let normalizedStatus: PaymentStatusValue = 'false';
     
-    if (status === 'true') {
+    // Handle both string and boolean inputs
+    if (status === true || status === 'true') {
       normalizedStatus = 'true';
+    } else if (status === false || status === 'false') {
+      normalizedStatus = 'false';
     } else if (status === 'pendingPaymentVerification') {
       normalizedStatus = 'pendingPaymentVerification';
     } else {
       normalizedStatus = 'false';
     }
     
-    // Create a properly typed new state
     const newState: PaymentStatus = { 
       ...this.paymentStatusSubject.value,
       status: normalizedStatus 
@@ -102,16 +127,16 @@ export class PaymentService {
     
     this.paymentStatusSubject.next(newState);
     this.persistState(newState);
+    
+    console.log('💰 Payment status updated:', newState);
   }
 
-  // Set full payment status with receipt details
   setFullPaymentStatus(status: {
     status: PaymentStatusValue;
     receiptUrl?: string;
     transactionId?: string;
     timeOfUpload?: string;
   }) {
-    // Create a properly typed new state
     const newState: PaymentStatus = {
       status: status.status,
       receiptUrl: status.receiptUrl,
@@ -121,35 +146,34 @@ export class PaymentService {
     
     this.paymentStatusSubject.next(newState);
     this.persistState(newState);
-  }
-
-  // For backward compatibility - handle old format
-  setLegacyPaymentStatus(legacyStatus: { isPaid: boolean; receiptUrl?: string; transactionId?: string; timeOfUpload?: string }) {
-    const newStatus: PaymentStatusValue = legacyStatus.isPaid ? 'true' : 'false';
     
-    const newState: PaymentStatus = {
-      status: newStatus,
-      receiptUrl: legacyStatus.receiptUrl,
-      transactionId: legacyStatus.transactionId,
-      timeOfUpload: legacyStatus.timeOfUpload
-    };
-    
-    this.paymentStatusSubject.next(newState);
-    this.persistState(newState);
-  }
-
-  // Helper methods
-  isPending(): boolean {
-    return this.paymentStatusSubject.value.status === 'pendingPaymentVerification';
-  }
-
-  isUnpaid(): boolean {
-    return this.paymentStatusSubject.value.status === 'false';
+    console.log('💰 Full payment status updated:', newState);
   }
 
   clearPaymentStatus() {
     const newState: PaymentStatus = { status: 'false' };
     this.paymentStatusSubject.next(newState);
     this.persistState(newState);
+  }
+
+  // Sync with user_data from login
+  syncWithUserData(userData: any): void {
+    if (!userData) return;
+    
+    let paidStatus = userData.paid;
+    
+    if (paidStatus === undefined && userData.details?.user?.paid) {
+      paidStatus = userData.details.user.paid;
+    }
+    
+    console.log('🔄 Syncing payment service with user data:', paidStatus);
+    
+    if (paidStatus === true || paidStatus === 'true') {
+      this.setPaymentStatus('true');
+    } else if (paidStatus === 'pendingPaymentVerification') {
+      this.setPaymentStatus('pendingPaymentVerification');
+    } else {
+      this.setPaymentStatus('false');
+    }
   }
 }

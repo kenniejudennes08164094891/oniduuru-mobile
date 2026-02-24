@@ -1,3 +1,4 @@
+// app.component.ts
 import {
   Component,
   OnInit,
@@ -8,12 +9,11 @@ import {
 import { Subscription } from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 import { MenuController, Platform } from '@ionic/angular';
-import { App as CapacitorApp } from '@capacitor/app';
 import { initFlowbite } from 'flowbite';
 import { AuthService } from './services/auth.service';
 import { UserService } from './services/user.service';
 import { AppInitService } from './services/app-init.service';
-import { EndpointService } from './services/endpoint.service'; // Add this import
+import { EndpointService } from './services/endpoint.service';
 import { WalletEventsService } from './services/wallet-events.service';
 
 @Component({
@@ -29,40 +29,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentUserRole: string = '';
 
-  walletMenuItems:any[] = [
-    {
-      label: 'Wallet Dashboard',
-      action: () => this.navigateToWallet('dashboard'),
-      show: () => true
-    },
-    {
-      label: 'Wallet Profile',
-      action: () => this.navigateToWallet('profile'),
-      show: () => !this.hasWalletProfile
-    },
-    {
-      label: 'Fund Wallet',
-      action: () => this.navigateToWallet('fund'),
-      show: () => true
-    },
-    {
-      label: 'Withdraw to Bank',
-      action: () => this.navigateToWallet('withdraw'),
-      show: () => true
-    },
-    {
-      label: 'Funds Transfer',
-      action: () => this.navigateToWallet('transfer'),
-      show: () => true
-    },
-    {
-      label: 'Dashboard',
-      action: () => this.navigateToDashboard(),
-      show: () => true
-    }
-  ];
-
-
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
@@ -70,7 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private userService: UserService,
     private appInitService: AppInitService,
-    private endpointService: EndpointService, // Inject endpoint service
+    private endpointService: EndpointService,
     private walletEvents: WalletEventsService,
   ) {
     document.body.classList.remove('dark');
@@ -82,27 +48,19 @@ export class AppComponent implements OnInit, OnDestroy {
     initFlowbite();
     document.body.classList.remove('dark');
 
+    // Handle menu closing on navigation
     this.router.events.subscribe(async (event) => {
       if (event instanceof NavigationStart) {
-        const isOpen = await this.menuCtrl.isOpen('scouter-menu');
+        const isOpen = await this.menuCtrl.isOpen('wallet-menu');
         if (isOpen) {
-          await this.menuCtrl.close('scouter-menu');
-        }
-      }
-    });
-
-    // Watch for route changes to update menu visibility
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationStart) {
-        // Close menu when navigating away from wallet pages
-        if (!this.showWalletMenu()) {
-          this.menuCtrl.close('scouter-menu');
+          await this.menuCtrl.close('wallet-menu');
         }
       }
     });
 
     this.getUserRole();
 
+    // Listen for login events
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
         setTimeout(() => {
@@ -122,33 +80,29 @@ export class AppComponent implements OnInit, OnDestroy {
 
     (window as any).appComponentRef = this;
 
-    // Listen for wallet profile events
+    // Listen for wallet profile creation events
     this.walletEvents.walletProfileCreated$.subscribe(() => {
       console.log('🎯 Received wallet profile created event');
       this.hasWalletProfile = true;
+      // Optionally refresh the check to ensure everything is synced
+      setTimeout(() => this.checkWalletProfile(), 500);
     });
-
-    // Initial check
-    this.checkWalletProfileSimplified();
   }
 
   ngAfterViewInit() {
-    // Set role attribute on menu for CSS targeting
     const menu = document.querySelector('ion-menu[menuId="wallet-menu"]');
     if (menu && this.currentUserRole) {
       menu.setAttribute('data-role', this.currentUserRole);
     }
   }
 
-  // Helper method to get user role
-  private getUserRole(): any {
+  private getUserRole(): void {
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
         const user = JSON.parse(userData);
         this.currentUserRole = user.role || user.details?.user?.role || '';
         console.log('👤 Current user role:', this.currentUserRole);
-        return this.currentUserRole
       } catch (e) {
         console.warn('Error getting user role:', e);
         this.currentUserRole = '';
@@ -157,244 +111,75 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * SIMPLIFIED: Check if wallet profile exists based on localStorage flag
+   * Check wallet profile status from user_data only (no API calls)
    */
-  private checkWalletProfileSimplified(): void {
-    console.log('🔍 Checking wallet profile...');
-
-    // FIRST: Check localStorage flag
-    const walletProfileCreated =
-      localStorage.getItem('walletProfileCreated') === 'true';
-
-    if (walletProfileCreated) {
-      console.log('✅ Found walletProfileCreated in localStorage');
-      this.hasWalletProfile = true;
-      return;
-    }
-
-    // Check if hasWalletProfile is set in localStorage
-    const hasWalletProfileLocal =
-      localStorage.getItem('hasWalletProfile') === 'true';
-    if (hasWalletProfileLocal) {
-      console.log('✅ Found hasWalletProfile in localStorage');
-      this.hasWalletProfile = true;
-      return;
-    }
-
-    // SECOND: Check user data - IMPORTANT: Check INSIDE completeOnboarding JSON string
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        console.log('🔍 Parsed user data:', user);
-
-        // Check direct property first
-        if (user.hasWalletProfile === true) {
-          console.log('✅ Found hasWalletProfile as direct property');
-          this.hasWalletProfile = true;
-          return;
-        }
-
-        // Check inside completeOnboarding JSON string
-        if (user.completeOnboarding) {
-          try {
-            const onboardingData = JSON.parse(user.completeOnboarding);
-            console.log('🔍 Parsed completeOnboarding:', onboardingData);
-
-            if (onboardingData.hasWalletProfile === true) {
-              console.log(
-                '✅ Found hasWalletProfile inside completeOnboarding',
-              );
-              this.hasWalletProfile = true;
-
-              // Store for future quick access
-              localStorage.setItem('hasWalletProfile', 'true');
-              return;
-            }
-          } catch (parseError) {
-            console.warn('Could not parse completeOnboarding:', parseError);
-          }
-        }
-
-        // Check if wallet exists in user object (maybe from previous versions)
-        if (user.walletId || user.walletAccountNumber) {
-          console.log('✅ Found wallet identifiers in user data');
-          this.hasWalletProfile = true;
-          localStorage.setItem('hasWalletProfile', 'true');
-          return;
-        }
-      } catch (e) {
-        console.warn('Error parsing user data:', e);
-      }
-    }
-
-    // THIRD: Check via API if no local flags found
-    console.log('🔍 No local wallet flags found, checking via API...');
-    this.checkWalletProfileViaAPI();
-  }
-
-  /**
-   * Enhanced API check with better logging
-   */
-  private checkWalletProfileViaAPI(): void {
-    const userData = localStorage.getItem('user_data');
-    if (!userData) {
-      this.hasWalletProfile = false;
-      return;
-    }
-
+  private checkWalletProfile(): void {
     try {
-      const user = JSON.parse(userData);
-      // Extract uniqueId, checking for scouterId, talentId, and other variants
-      const uniqueId =
-        user.uniqueId ||
-        user.id ||
-        user.scouterId ||
-        user.talentId ||
-        user.userId;
-
-      console.log('🔍 Checking wallet via API with uniqueId:', uniqueId);
-
-      if (uniqueId) {
-        this.endpointService.fetchMyWallet(null, uniqueId).subscribe({
-          next: (response) => {
-            console.log('🔍 Wallet API response:', response);
-
-            // Simple check: does response contain wallet data?
-            const hasWallet =
-              response &&
-              !response.walletNotFound &&
-              response.data !== undefined;
-
-            console.log('🔍 API indicates wallet exists:', hasWallet);
-            this.hasWalletProfile = hasWallet;
-
-            // Store result for future use
-            if (hasWallet) {
-              localStorage.setItem('walletProfileCreated', 'true');
-              localStorage.setItem('hasWalletProfile', 'true');
-
-              // Update user data
-              if (user) {
-                try {
-                  // Update completeOnboarding if it exists
-                  if (user.completeOnboarding) {
-                    const onboardingData = JSON.parse(user.completeOnboarding);
-                    onboardingData.hasWalletProfile = true;
-                    user.completeOnboarding = JSON.stringify(onboardingData);
-                  } else {
-                    user.hasWalletProfile = true;
-                  }
-                  localStorage.setItem('user_data', JSON.stringify(user));
-                  console.log('✅ Updated user_data with wallet profile flag');
-                } catch (e) {
-                  console.warn('Could not update user_data:', e);
-                }
-              }
-            }
-          },
-          error: (error) => {
-            console.error('❌ API check error:', error);
-            this.hasWalletProfile = false;
-          },
-        });
-      } else {
-        console.warn('❌ No uniqueId found for API check');
+      const userData = localStorage.getItem('user_data');
+      if (!userData) {
         this.hasWalletProfile = false;
+        return;
       }
-    } catch (e) {
-      console.error('❌ Error in API check:', e);
+
+      const user = JSON.parse(userData);
+      console.log('🔍 Checking wallet profile for role:', this.currentUserRole);
+
+      // Method 1: Check completeOnboarding JSON string (primary source)
+      if (user.completeOnboarding) {
+        try {
+          const onboardingData = JSON.parse(user.completeOnboarding);
+          console.log('🔍 Parsed completeOnboarding:', onboardingData);
+
+          if (onboardingData.hasWalletProfile === true) {
+            console.log('✅ Found hasWalletProfile in completeOnboarding');
+            this.hasWalletProfile = true;
+            return;
+          }
+        } catch (parseError) {
+          console.warn('Could not parse completeOnboarding:', parseError);
+        }
+      }
+
+      // Method 2: Check direct hasWalletProfile property
+      if (user.hasWalletProfile !== undefined) {
+        this.hasWalletProfile = user.hasWalletProfile === true;
+        console.log('💰 Wallet profile from direct property:', this.hasWalletProfile);
+        return;
+      }
+
+      // Method 3: Check wallet identifiers
+      if (user.walletId || user.walletAccountNumber) {
+        console.log('✅ Found wallet identifiers in user data');
+        this.hasWalletProfile = true;
+        return;
+      }
+
+      // No wallet profile found
+      this.hasWalletProfile = false;
+      console.log('❌ No wallet profile found for user');
+
+    } catch (error) {
+      console.error('Error checking wallet profile:', error);
       this.hasWalletProfile = false;
     }
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-
     (window as any).appComponentRef = null;
   }
 
   /**
-   * Check if user has a wallet profile
-   */
-  private checkWalletProfile(): void {
-    const userData = localStorage.getItem('user_data');
-    if (!userData) {
-      this.hasWalletProfile = false;
-      return;
-    }
-
-    try {
-      const user = JSON.parse(userData);
-      // Extract uniqueId, checking for scouterId, talentId, and other variants
-      const uniqueId =
-        user.uniqueId ||
-        user.id ||
-        user.scouterId ||
-        user.talentId ||
-        user.userId;
-
-      if (uniqueId) {
-        // Check if user already has wallet profile flag
-        if (user.hasWalletProfile === true) {
-          this.hasWalletProfile = true;
-          return;
-        }
-
-        // Make API call to check wallet
-        this.subscriptions.add(
-          this.endpointService.fetchMyWallet(null, uniqueId).subscribe({
-            next: (response) => {
-              // Check if wallet exists
-              const hasWallet =
-                !response.walletNotFound &&
-                response.data &&
-                !response.message?.includes('not created');
-
-              this.hasWalletProfile = hasWallet;
-
-              // Update user data with wallet status
-              if (hasWallet && user) {
-                user.hasWalletProfile = true;
-                localStorage.setItem('user_data', JSON.stringify(user));
-              }
-            },
-            error: (error) => {
-              console.error('Error checking wallet profile:', error);
-              this.hasWalletProfile = false;
-            },
-          }),
-        );
-      }
-    } catch (e) {
-      console.warn('Error parsing user data:', e);
-      this.hasWalletProfile = false;
-    }
-  }
-
-  /**
-   * Clear wallet cache and recheck
+   * Force refresh wallet profile check
    */
   public refreshWalletProfile(): void {
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        const uniqueId = user.uniqueId || user.id;
-        if (uniqueId) {
-          localStorage.removeItem(`wallet_${uniqueId}`);
-          this.checkWalletProfile();
-        }
-      } catch (e) {
-        console.warn('Error refreshing wallet profile:', e);
-      }
-    }
+    this.checkWalletProfile();
   }
 
   async navigateAndCloseMenu(route: string) {
     await this.menuCtrl.close('wallet-menu');
 
-    if (route === '/scouter/dashboard') {
+    if (route === '/scouter/dashboard' || route === '/talent/dashboard' || route === '/admin/dashboard') {
       if (!this.authService.validateStoredToken()) {
         await this.router.navigate(['/auth/login']);
         return;
@@ -444,20 +229,8 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!isAuthenticated) return false;
 
     // Only show if user has a valid role and is on a wallet route
-    // console.clear();
-    // console.log("checkers>>",{
-    //   isWalletRoute,
-    //   isCurrentUserRole: (this.getUserRole() === 'scouter' || this.getUserRole() === 'talent')
-    // })
-    return isWalletRoute && (this.getUserRole() === 'scouter' || this.getUserRole() === 'talent');
+    return isWalletRoute && !!this.currentUserRole;
   }
-
-
-  get filteredWalletMenuItems() {
-    return this.walletMenuItems.filter(item => item.show());
-  }
-
-
 
   // Dynamic navigation method
   async navigateToWallet(page: string) {
