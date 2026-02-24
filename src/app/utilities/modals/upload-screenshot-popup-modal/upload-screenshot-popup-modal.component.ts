@@ -1,5 +1,6 @@
+// upload-screenshot-popup-modal.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ModalController, Platform, ToastController } from '@ionic/angular';
+import { ModalController, Platform } from '@ionic/angular';
 import { Router, NavigationStart } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { imageIcons } from 'src/app/models/stores';
@@ -38,7 +39,6 @@ export class UploadScreenshotPopupModalComponent
   }
 
   override ngOnInit() {
-    // auto close modal on any route navigation
     this.navSub = this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
         this.dismiss();
@@ -50,8 +50,8 @@ export class UploadScreenshotPopupModalComponent
     this.navSub?.unsubscribe();
   }
 
-  override async dismiss() {
-   await super.dismiss();
+  override async dismiss(data?: any) {
+    await super.dismiss(data);
   }
 
   onFileSelected(event: Event) {
@@ -82,10 +82,10 @@ export class UploadScreenshotPopupModalComponent
     this.isUploading = true;
 
     try {
-      // Get scouterId from localStorage
       const userData = localStorage.getItem('user_data');
-      const scouterId = userData ? JSON.parse(userData).scouterId : null;
-      const email = userData ? JSON.parse(userData).email : null;
+      const parsed = JSON.parse(userData || '{}');
+      const scouterId = parsed.scouterId;
+      const email = parsed.email;
 
       if (!scouterId || !email) {
         this.toast.openSnackBar('Unable to get scouter information', 'error');
@@ -99,7 +99,6 @@ export class UploadScreenshotPopupModalComponent
         hasFile: !!this.selectedFile,
       });
 
-      // Call the backend endpoint to verify payment
       this.scouterEndpoints
         .verifyPaymentStatus({
           paymentReceipt: this.previewUrl as string,
@@ -109,12 +108,7 @@ export class UploadScreenshotPopupModalComponent
         .subscribe({
           next: (response) => {
             console.log('✅ Payment verification successful:', response);
-            console.log(
-              '📋 Full verification response:',
-              JSON.stringify(response, null, 2),
-            );
 
-            // Extract timeOfUpload if available in response
             const timeOfUpload =
               response.details?.timeOfUpload ||
               response.timeOfUpload ||
@@ -128,16 +122,14 @@ export class UploadScreenshotPopupModalComponent
                 hour12: true,
               });
 
-            console.log('📅 Extracted timeOfUpload:', timeOfUpload);
-
-            // FIXED: Use setFullPaymentStatus with the correct structure
+            // IMPORTANT: Set status to pendingPaymentVerification after upload
             this.paymentService.setFullPaymentStatus({
-              status: 'pendingPaymentVerification', // Set to pending since it needs verification
+              status: 'pendingPaymentVerification', // This changes the status from false to pending
               receiptUrl: this.previewUrl as string,
               transactionId:
                 response.transactionId ||
                 response.details?.id ||
-                'INV-2025-0615-013',
+                'INV-' + Date.now(),
               timeOfUpload: timeOfUpload,
             });
 
@@ -148,7 +140,7 @@ export class UploadScreenshotPopupModalComponent
 
             // Close current modal after brief delay
             setTimeout(async () => {
-              await this.dismiss();
+              await this.dismiss({ success: true, status: 'pending' });
 
               // Open awaiting verification modal
               const modal = await this.modalCtrl.create({

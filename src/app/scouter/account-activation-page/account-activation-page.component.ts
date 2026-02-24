@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+// account-activation-page.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { UploadScreenshotPopupModalComponent } from 'src/app/utilities/modals/upload-screenshot-popup-modal/upload-screenshot-popup-modal.component';
@@ -6,6 +7,7 @@ import { PaymentService, PaymentStatus } from 'src/app/services/payment.service'
 import { Router } from '@angular/router';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { ToastsService } from 'src/app/services/toasts.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-account-activation-page',
@@ -13,7 +15,7 @@ import { ToastsService } from 'src/app/services/toasts.service';
   styleUrls: ['./account-activation-page.component.scss'],
   standalone: false,
 })
-export class AccountActivationPageComponent implements OnInit {
+export class AccountActivationPageComponent implements OnInit, OnDestroy {
   images = imageIcons;
   headerHidden: boolean = false;
   currentMonth: string = new Date().toLocaleString('en-US', { month: 'short' });
@@ -24,6 +26,8 @@ export class AccountActivationPageComponent implements OnInit {
   isLoading: boolean = true;
   userName: string = 'Scouter';
   uploadTimeFormatted: string = '';
+  
+  private paymentSubscription: Subscription;
 
   constructor(
     private modalCtrl: ModalController,
@@ -31,25 +35,27 @@ export class AccountActivationPageComponent implements OnInit {
     private router: Router,
     private scouterEndpoints: ScouterEndpointsService,
     private toast: ToastsService,
-  ) {}
-
-  ngOnInit() {
-    this.extractUserName();
-    
-    // Subscribe to payment status changes
-    this.paymentService.paymentStatus$.subscribe(status => {
+  ) {
+    this.paymentSubscription = this.paymentService.paymentStatus$.subscribe(status => {
       this.paymentStatus = status;
       this.uploadTimeFormatted = status.timeOfUpload || '';
       console.log('💰 Payment status updated in activation page:', status);
     });
-    
-    // Fetch from backend to ensure we have latest
-    this.fetchPaymentReceipt();
   }
 
-  /**
-   * Extract user's name from localStorage
-   */
+  ngOnInit() {
+    this.extractUserName();
+    
+    // Fetch receipt based on payment status
+    this.loadPaymentData();
+  }
+
+  ngOnDestroy() {
+    if (this.paymentSubscription) {
+      this.paymentSubscription.unsubscribe();
+    }
+  }
+
   private extractUserName(): void {
     try {
       const userData = localStorage.getItem('user_data');
@@ -57,7 +63,6 @@ export class AccountActivationPageComponent implements OnInit {
         const parsed = JSON.parse(userData);
         this.userName =
           parsed.fullName || parsed.name || parsed.firstName || 'Scouter';
-        console.log('👤 User name extracted:', this.userName);
       }
     } catch (error) {
       console.warn('⚠️ Could not extract user name:', error);
@@ -65,12 +70,25 @@ export class AccountActivationPageComponent implements OnInit {
     }
   }
 
-  /**
-   * Fetch scouter's payment receipt from backend
-   */
+  private loadPaymentData(): void {
+    this.isLoading = true;
+    
+    // Check current payment status
+    const currentStatus = this.paymentService.getPaymentStatusString();
+    console.log('📋 Current payment status:', currentStatus);
+    
+    // Only fetch receipt if status is 'true' or 'pendingPaymentVerification'
+    if (currentStatus === 'true' || currentStatus === 'pendingPaymentVerification') {
+      this.fetchPaymentReceipt();
+    } else {
+      // For 'false', don't fetch receipt, just stop loading
+      console.log('ℹ️ User is unpaid, not fetching receipt');
+      this.isLoading = false;
+    }
+  }
+
   private fetchPaymentReceipt(): void {
     try {
-      // Get scouterId from localStorage
       const userData = localStorage.getItem('user_data');
       const scouterId = userData ? JSON.parse(userData).scouterId : null;
 
@@ -89,17 +107,26 @@ export class AccountActivationPageComponent implements OnInit {
           if (response.details && response.details.paymentReceipt) {
             const timeOfUpload = response.details.timeOfUpload || '';
             
-            // Update payment service with full details
+            // Get current status from payment service
+            const currentStatus = this.paymentService.getPaymentStatusString();
+            
+            // Update payment service with receipt details but PRESERVE the status
+            // The status should come from login response, not from receipt fetch
             this.paymentService.setFullPaymentStatus({
-              status: 'true', // Has receipt means paid
+              status: currentStatus, // Keep existing status from login
               receiptUrl: response.details.paymentReceipt,
               transactionId: response.details.id,
               timeOfUpload: timeOfUpload,
             });
           } else {
-            // No receipt found - keep existing status or set to false
-            if (this.paymentStatus.status !== 'pendingPaymentVerification') {
-              this.paymentService.setPaymentStatus('false');
+            // No receipt found, but status might be pending
+            // This could happen if status is pending but receipt not yet uploaded
+            console.log('⚠️ No receipt details in response');
+            
+            // If status is 'true' but no receipt, something is wrong
+            if (this.paymentService.isPaid()) {
+              console.warn('⚠️ Status is true but no receipt found');
+              this.toast.openSnackBar('Receipt not found. Please contact support.', 'warning');
             }
           }
 
@@ -108,11 +135,13 @@ export class AccountActivationPageComponent implements OnInit {
         error: (error) => {
           console.error('❌ Failed to fetch payment receipt:', error);
 
-          // Treat 404 as "not paid yet" but preserve pending status if exists
+          // Handle 404 gracefully
           if (error.status === 404) {
-            console.log('⚠️ Payment receipt not found');
-            if (this.paymentStatus.status !== 'pendingPaymentVerification') {
-              this.paymentService.setPaymentStatus('false');
+            console.log('ℹ️ No receipt found (404)');
+            
+            // If status is 'true' but receipt not found, show warning
+            if (this.paymentService.isPaid()) {
+              this.toast.openSnackBar('Receipt not found. Please contact support.', 'warning');
             }
           } else {
             let errorMessage = 'Failed to fetch payment receipt';
@@ -147,9 +176,11 @@ export class AccountActivationPageComponent implements OnInit {
     await modal.present();
 
     // Refresh receipt after modal is dismissed
-    await modal.onDidDismiss();
-    this.isLoading = true;
-    this.fetchPaymentReceipt();
+    const { data } = await modal.onDidDismiss();
+    console.log('Modal dismissed with data:', data);
+    
+    // Reload payment data
+    this.loadPaymentData();
   }
 
   downloadReceipt() {
@@ -211,8 +242,15 @@ export class AccountActivationPageComponent implements OnInit {
       });
   }
 
-  // Computed property for template compatibility
   get isPaid(): boolean {
     return this.paymentStatus.status === 'true';
+  }
+
+  get isPending(): boolean {
+    return this.paymentStatus.status === 'pendingPaymentVerification';
+  }
+
+  get isUnpaid(): boolean {
+    return this.paymentStatus.status === 'false';
   }
 }
