@@ -23,38 +23,39 @@
 
     <!-- Account Number -->
     <div class="space-y-2 mt-8">
-      <label class="text-[#344054] text-[14px]"
-        >Designated Wallet Acct Number</label
-      >
+      <label class="text-[#344054] text-[14px]">Designated Wallet Acct Number</label>
       <input
         type="text"
         formControlName="accountNumber"
-        placeholder="3056578914"
+        placeholder="i.e 0123456787"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
+        inputmode="numeric"
+        pattern="[0-9]*"
       />
-      <div
-        *ngIf="
-          transferForm.get('accountNumber')?.touched &&
-          transferForm.get('accountNumber')?.invalid
-        "
-        class="text-red-500 text-sm"
-      >
-        <span *ngIf="transferForm.get('accountNumber')?.errors?.['required']">
-          Account number is required.
-        </span>
-        <span *ngIf="transferForm.get('accountNumber')?.errors?.['pattern']">
-          Must be 11 digits only.
-        </span>
+      <div *ngIf="isLoading" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+        <span class="text-xs text-blue-700 italic">Processing...</span>
+        <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
+
+      <div *ngIf="transferForm.get('accountNumber')?.touched && transferForm.get('accountNumber')?.invalid" class="text-red-500 text-sm">
+    <span *ngIf="transferForm.get('accountNumber')?.errors?.['required']">
+      Account number is required.
+    </span>
+        <span *ngIf="transferForm.get('accountNumber')?.errors?.['pattern']">
+      Must be 11 digits only.
+    </span>
+      </div>
+
     </div>
+
 
     <!-- Wallet Name -->
     <div class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Designated Wallet Name</label>
       <input
         type="text"
+        readonly
         formControlName="walletName"
-        placeholder="Viki West"
         class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
       />
       <div
@@ -93,18 +94,17 @@
       </div>
     </div>
 
-    <!-- Info Note -->
-    <div
-      class="flex items-center gap-3 mb-3 bg-[#DDE3EC] border border-[#A3AFE3] rounded-xl py-4 px-6 mt-[10%]"
-    >
-      <ion-icon
-        class="h-7 w-[15%] text-blue-700"
-        name="information-circle"
-      ></ion-icon>
-      <span class="font-normal text-[16px] leading-tight text-[#1E4E99]">
-        Important!: Due to bank Charges, a 200.00 charge shall be deducted from
-        this transaction.
-      </span>
+    <!--Market Hire Reference Id -->
+    <div class="space-y-2 mt-8">
+      <label class="text-[#344054] text-[14px]">
+        Market Hire Reference Date Id (From Talent's mail)
+      </label>
+      <input
+        type="text"
+        formControlName="marketHireDateReferenceId"
+        placeholder="i.e 24-January-2026-1:27am"
+        class="border border-[#D9DCE5] px-3 py-4 w-full rounded-lg bg-white"
+      />
     </div>
 
     <!-- Terms -->

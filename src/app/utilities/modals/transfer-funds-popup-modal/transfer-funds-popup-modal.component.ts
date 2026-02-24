@@ -6,15 +6,19 @@ import {
   Output,
   NgZone,
 } from '@angular/core';
-import { ModalController, Platform } from '@ionic/angular';
-import { BaseModal } from 'src/app/base/base-modal.abstract';
-import { MockRecentHires } from 'src/app/models/mocks';
-import { imageIcons } from 'src/app/models/stores';
-import { PaymentService } from 'src/app/services/payment.service';
-import { TransferFundsReceiptModalComponent } from '../transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ToastsService } from 'src/app/services/toasts.service';
-import { EndpointService } from 'src/app/services/endpoint.service';
+import {ModalController, Platform} from '@ionic/angular';
+import {BaseModal} from 'src/app/base/base-modal.abstract';
+import {MockRecentHires} from 'src/app/models/mocks';
+import {imageIcons} from 'src/app/models/stores';
+import {PaymentService} from 'src/app/services/payment.service';
+import {
+  TransferFundsReceiptModalComponent
+} from '../transfer-funds-receipt-modal/transfer-funds-receipt-modal.component';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {ToastsService} from 'src/app/services/toasts.service';
+import {EndpointService} from 'src/app/services/endpoint.service';
+import {debounceTime, distinctUntilChanged, filter, from, of, Subject, tap} from "rxjs";
+import {catchError, map, switchMap} from "rxjs/operators";
 
 @Component({
   selector: 'app-transfer-funds-popup-modal',
@@ -24,8 +28,7 @@ import { EndpointService } from 'src/app/services/endpoint.service';
 })
 export class TransferFundsPopupModalComponent
   extends BaseModal
-  implements OnInit
-{
+  implements OnInit {
   @Input() isModalOpen: boolean = false;
   @Input() currentUser: any = null;
   @Input() userUniqueId: string | null = null;
@@ -41,6 +44,7 @@ export class TransferFundsPopupModalComponent
   // Transaction charge
   transactionCharge: number = 200;
   isLoadingCharge: boolean = false;
+  isLoading = false;
 
   constructor(
     modalCtrl: ModalController,
@@ -78,38 +82,35 @@ export class TransferFundsPopupModalComponent
         null,
         [Validators.required, Validators.min(100)], // Must be ≥ 100
       ],
-      marketHireId: [''], // Optional
+      marketHireDateReferenceId: [''], // Optional
       agreeTerms: [false, Validators.requiredTrue], // Must tick checkbox
     });
 
-    // Calculate transaction charge when amount changes
-    this.transferForm.get('amount')?.valueChanges.subscribe((amount) => {
-      if (amount && amount > 0) {
-        this.calculateCharge(amount);
+    this.transferForm.get('accountNumber')?.valueChanges.pipe(
+      filter(value => value && value.length === 10),
+      distinctUntilChanged(),
+      tap(() => {
+        this.isLoading = true;
+        this.transferForm.get('walletName')?.reset();
+      }),
+      debounceTime(300),
+      switchMap(value => this.endpointService.fetchWalletProfile(undefined, value, true))
+    ).subscribe({
+      next: (walletResponse: any) => {
+        this.isLoading = false;
+        if (walletResponse?.data) {
+          const {firstName, middleName, lastName} = walletResponse.data;
+          const walletName = `${firstName || ''} ${middleName || ''} ${lastName || ''}`.replace(/\s+/g, ' ').trim();
+          this.transferForm.get('walletName')?.setValue(walletName);
+        }
+      },
+      error: () => {
+        this.isLoading = false;
+        this.transferForm.get('walletName')?.reset();
       }
     });
   }
 
-  /**
-   * Calculate transaction charge
-   */
-  private calculateCharge(amount: number) {
-    this.isLoadingCharge = true;
-    this.endpointService.calculateTransactionCharge(amount.toString()).subscribe({
-      next: (response) => {
-        this.isLoadingCharge = false;
-        // Adjust based on actual API response structure
-        this.transactionCharge = response?.data?.charge || response?.charge || 200;
-        console.log('💰 Transaction charge:', this.transactionCharge);
-      },
-      error: (error) => {
-        this.isLoadingCharge = false;
-        console.error('❌ Error calculating charge:', error);
-        // Use default charge
-        this.transactionCharge = 200;
-      }
-    });
-  }
 
   async createFundTransfer() {
     if (this.transferForm.invalid) {
@@ -130,7 +131,7 @@ export class TransferFundsPopupModalComponent
       amount: formData.amount,
       designatedWalletAcct: formData.accountNumber, // The wallet ID you're sending funds to
       originatingWalletAcct: this.originatingWalletId, // Your wallet ID you're removing money from
-      marketHireId: formData.marketHireId || undefined // Optional
+      marketHireDateReferenceId: formData.marketHireDateReferenceId || null
     };
 
     console.log('💰 Submitting transfer with payload:', payload);
@@ -159,7 +160,7 @@ export class TransferFundsPopupModalComponent
         };
 
         // Pass data back to parent
-        this.modalCtrl.dismiss(newTransfer, 'submitted');
+        await this.modalCtrl.dismiss(newTransfer, 'submitted');
 
         // Show receipt modal
         const receiptModal = await this.modalCtrl.create({
@@ -183,7 +184,7 @@ export class TransferFundsPopupModalComponent
         const errorMessage = err.error?.message || err.message || 'Transfer failed. Please try again.';
         this.toast.openSnackBar(errorMessage, 'error');
 
-        this.modalCtrl.dismiss(null, 'error');
+        await this.modalCtrl.dismiss(null, 'error');
       },
     });
   }
@@ -200,17 +201,28 @@ export class TransferFundsPopupModalComponent
     });
   }
 
-  closeModal() {
-    this.modalCtrl.dismiss();
+  async closeModal() {
+    await this.modalCtrl.dismiss();
   }
 
   override async dismiss() {
-   await super.dismiss();
+    await super.dismiss();
   }
 
   // Getters for form controls
-  get accountNumberControl() { return this.transferForm.get('accountNumber'); }
-  get walletNameControl() { return this.transferForm.get('walletName'); }
-  get amountControl() { return this.transferForm.get('amount'); }
-  get agreeTermsControl() { return this.transferForm.get('agreeTerms'); }
+  get accountNumberControl() {
+    return this.transferForm.get('accountNumber');
+  }
+
+  get walletNameControl() {
+    return this.transferForm.get('walletName');
+  }
+
+  get amountControl() {
+    return this.transferForm.get('amount');
+  }
+
+  get agreeTermsControl() {
+    return this.transferForm.get('agreeTerms');
+  }
 }

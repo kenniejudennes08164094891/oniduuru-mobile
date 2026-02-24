@@ -41,4 +41,16 @@ export class EmmittersService {
   public getMarketStats(): Observable<any> {
     return this.recentMarketHires$.asObservable();
   }
+
+  public setTalentIdForHire(talentId:string){
+    sessionStorage.setItem('talentToHire', talentId);
+  }
+
+  public getTalentIdForHire(){
+    return sessionStorage.getItem('talentToHire');
+  }
+
+  public clearTalentIdForHire(){
+    sessionStorage.removeItem('talentToHire');
+  }
 }

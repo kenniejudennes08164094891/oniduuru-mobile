@@ -15,6 +15,7 @@ import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-mod
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import {EmmittersService} from "../../../services/emmitters.service";
 
 declare var google: any;
 
@@ -122,7 +123,7 @@ class PulseOverlay {
           opacity: 0;
         }
       }
-      
+
       @keyframes activePulse {
         0% {
           transform: scale(0.8);
@@ -136,12 +137,12 @@ class PulseOverlay {
           opacity: 0;
         }
       }
-      
+
       .pulse-overlay {
         pointer-events: none;
         will-change: transform, opacity;
       }
-      
+
       .pulse-overlay .pulse-ring {
         position: absolute;
         top: 0;
@@ -156,7 +157,7 @@ class PulseOverlay {
         box-shadow: 0 0 8px rgba(255, 59, 59, 0.3);
         transform-origin: center;
       }
-      
+
       .pulse-overlay.active .pulse-ring {
         border-color: #FF0000;
         border-width: 2.5px;
@@ -394,6 +395,7 @@ export class FindProfessionalsByLocationModalComponent
     platform: Platform,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private emmitters: EmmittersService
   ) {
     super(modalCtrl, platform);
   }
@@ -1057,8 +1059,8 @@ export class FindProfessionalsByLocationModalComponent
 
   private showProfileCard(talent: any, marker: any, index: number): void {
     this.selectedTalent = talent;
+    this.emmitters.setTalentIdForHire(talent?.talentId);
     this.cdr.detectChanges();
-
     // Create the profile card element
     const div = document.createElement('div');
     div.className = 'profile-card-overlay';
@@ -1085,17 +1087,17 @@ export class FindProfessionalsByLocationModalComponent
     // Create card HTML - REMOVED any extra red dots
     div.innerHTML = `
     <div class="profile-card" style="position: relative; padding: 24px; height: 100%; background: white; border-radius: 20px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3); border: 2px solid #FF3B3B; overflow: hidden;">
-      <button class="close-card-btn" 
+      <button class="close-card-btn"
               aria-label="Close profile card"
               style="position: absolute; top: 12px; right: 12px; background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
           <path d="M13 1L1 13M1 1L13 13" stroke="#666666" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      
+
       <div class="card-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; margin-top: 8px;">
         <div class="avatar-container" style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 3px solid #FF3B3B; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3); transition: all 0.2s ease;">
-          <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
+          <img src="${talent.profilePic || 'assets/images/default-avatar.png'}"
                class="profile-avatar"
                alt="${talent.name}"
                style="width: 100%; height: 100%; object-fit: cover;"
@@ -1119,8 +1121,8 @@ export class FindProfessionalsByLocationModalComponent
           </div>
         </div>
       </div>
-      
-      <button class="view-profile-btn" 
+
+      <button class="view-profile-btn"
               data-talent-id="${talent.id || index}"
               style="width: 100%; background: linear-gradient(135deg, #FF3B3B, #FF6B6B); color: white; border: none; border-radius: 12px; padding: 14px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin-top: auto; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3);">
         View Full Profile
@@ -1215,13 +1217,13 @@ export class FindProfessionalsByLocationModalComponent
           <div class="relative bg-gradient-to-r from-red-900/20 to-transparent p-3">
             <div class="flex items-center gap-3">
               <div class="relative">
-                <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
+                <img src="${talent.profilePic || 'assets/images/default-avatar.png'}"
                      class="w-12 h-12 rounded-full border-3 border-red-500 object-cover shadow-lg"
                      alt="${talent.name}"
                      onerror="this.src='assets/images/default-avatar.png'">
                 <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
               </div>
-              
+
               <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base text-white truncate">${talent.name}</h3>
                 <div class="flex items-center gap-1 mt-1">
@@ -1232,7 +1234,7 @@ export class FindProfessionalsByLocationModalComponent
               </div>
             </div>
           </div>
-          
+
           <div class="p-3 bg-gray-800/50">
             <button id="view-profile-${talent.id || index}"
                     class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-3 rounded-lg text-sm font-bold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
