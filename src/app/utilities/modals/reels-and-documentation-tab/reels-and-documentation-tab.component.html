@@ -1,7 +1,17 @@
 <div class="space-y-6">
+  <div *ngIf="hasVideo">
+    <video
+      class="w-full h-auto max-w-full border border-gray-200 rounded-lg"
+      controls
+      autoplay
+      muted
+      [src]="videoReel?.videoUrl || videoReel?.filePath"
+    >
+    </video>
+  </div>
+
   <!-- Portfolio Images Section -->
   <div *ngIf="pictures.length > 0" class="space-y-4">
-    <h3 class="text-lg font-semibold text-gray-800">Portfolio Gallery</h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       <div *ngFor="let pic of pictures; let i = index"
         class="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -25,14 +35,4 @@
     </p>
   </div>
 
-  <!-- Video/Reels Section (if implemented) -->
-  <div *ngIf="hasVideo" class="space-y-4 mt-8">
-    <h3 class="text-lg font-semibold text-gray-800">Video Reels</h3>
-    <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-      <!-- Video player would go here -->
-      <div class="w-full h-full flex items-center justify-center text-white">
-        <p>Video content would be displayed here</p>
-      </div>
-    </div>
-  </div>
 </div>

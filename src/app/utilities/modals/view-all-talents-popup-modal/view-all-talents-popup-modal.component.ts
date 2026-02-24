@@ -179,8 +179,8 @@ export class ViewAllTalentsPopupModalComponent
     }
   }
 
-  closeModal() {
-    this.modalCtrl.dismiss();
+ async closeModal() {
+   await this.modalCtrl.dismiss();
   }
 
   get hasTalentData(): boolean {

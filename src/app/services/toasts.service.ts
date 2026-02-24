@@ -20,7 +20,7 @@ export class ToastsService {
       data: { message, panelClass, type },
       duration: duration === undefined ? this.duration : duration,
       verticalPosition: 'bottom',
-      horizontalPosition: 'center',
+      horizontalPosition: 'right',
       panelClass: ['safe-area-snackbar', panelClass], // Add safe area class
     });
   }

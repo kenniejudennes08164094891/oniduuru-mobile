@@ -1473,10 +1473,24 @@ export class EndpointService {
     });
   }
 
-  public fetchWalletProfile(uniqueId:string):Observable<any>{
-    let url = `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?uniqueId=${uniqueId.trim()}`;
-    return this.http.get<any>(url, {
+  public fetchWalletProfile(uniqueId?:string, walletId?:string, isValidation?: boolean):Observable<any>{
+    const url = (uniqueId && !walletId) ?
+      `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?uniqueId=${uniqueId.trim()}` :
+      (!uniqueId && walletId) ?
+        `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?wallet_id=${walletId.trim()}`
+        :
+        (uniqueId && walletId) ? `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?uniqueId=${uniqueId.trim()}&wallet_id=${walletId.trim()}` :
+          ""
+    return this.http.get<any>(
+      isValidation ? `${url}&isValidation=${isValidation}` : url,
+      {
       headers: this.jwtInterceptor.customHttpHeaders
     });
+  }
+
+  public fetchTalentMarketReel(talentId: string):Observable<any>{
+    let encodedTalentId = encodeURIComponent(talentId);
+    let url = `${environment?.baseUrl}/${endpoints?.getTalentReel}/${encodedTalentId}`;
+    return this.http.get<any>(url, {headers: this.jwtInterceptor.customHttpHeaders});
   }
 }
