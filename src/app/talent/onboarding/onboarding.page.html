@@ -1,18 +1,12 @@
 <ion-header class="bg-white">
-  <div
-    class="w-full flex flex-wrap justify-between items-center px-4 py-2 gap-2"
-  >
-    <button class="text-xl md:text-2xl font-semibold text-[#101828]">
-      ∯ Oniduuru
-    </button>
-    <div class="flex items-center gap-4">
-      <button
-        (click)="handleWelcomeBack()"
-        class="shadow-2xl px-4 md:px-5 py-1.5 md:py-2 rounded-xl border-2 border-white bg-[#101828] text-white text-sm md:text-base hover:bg-opacity-90 transition-all"
-      >
+  <div class="w-full flex justify-between items-center px-4 py-1">
+    <button class="text-2xl font-semibold text-[#101828]">∯ Oniduuru</button>
+    <!-- <div class="flex items-center gap-4">
+      <button (click)="handleWelcomeBack()"
+        class="shadow-2xl px-5 py-2 rounded-xl border-2 border-white bg-[#101828] text-white">
         Back
       </button>
-    </div>
+    </div> -->
   </div>
 </ion-header>
 
@@ -390,23 +384,14 @@
     </form>
 
     <!-- STEP 4: Verify OTP -->
-    <form *ngIf="currentStep === 3" class="space-y-6 text-center px-4">
-      <h2 class="text-[16px] md:text-[18px] font-semibold mb-4">
-        OTP Verification
-      </h2>
-      <p class="text-sm md:text-base text-gray-700">
-        We have sent an OTP to {{ maskedEmail() }}
+    <form *ngIf="currentStep === 3"  #otpForm="ngForm" class="space-y-6 text-center">
+      <h2 class="text-[18px] font-semibold mb-4"> OTP Verification</h2>
+      <p class="text-gray-700">
+        We have sent an OTP to {{ maskedEmail() }} and {{ maskedPhone() }}
       </p>
-      <div class="flex flex-wrap justify-center gap-2 md:gap-3">
-        <input
-          *ngFor="let field of otpFields; let i = index"
-          type="text"
-          maxlength="1"
-          [(ngModel)]="otp[i]"
-          (ngModelChange)="isOtpHandled($event)"
-          (input)="moveNext($event, i)"
-          class="w-14 h-14 md:w-16 md:h-16 text-[30px] md:text-[40px] text-center border border-[#D0D5DD] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#101828] focus:border-transparent"
-        />
+      <div class="flex justify-center gap-3">
+        <input *ngFor="let field of otpFields; let i = index" type="text" maxlength="1" [(ngModel)]="otp[i]"   name="otp{{i}}"
+          (input)="moveNext($event, i)" class="w-16 h-16 text-[40px] text-center border border-[#D0D5DD] rounded-lg" />
       </div>
       <p class="text-xs md:text-sm text-gray-500 mt-2">
         Enter the 4-digit OTP sent to your email and phone number.
@@ -428,14 +413,9 @@
         </button>
       </p>
 
-      <div class="flex flex-col mt-32 space-y-3 justify-between">
-        <button
-          type="button"
-          (click)="verifyOtp()"
-          [disabled]="!isOtpValid"
-          [ngClass]="!isOtpValid ? 'opacity-40 cursor-not-allowed' : 'hover:bg-opacity-90 active:scale-95 transition-all'"
-          class="bg-[#101828] text-white w-full py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base"
-        >
+      <div class="flex flex-col mt-32 space-y-3 justify-between ">
+        <button type="button" (click)="verifyOtp()" [disabled]="!isOtpValid" [class.opacity-40]="!isOtpValid"
+          [class.cursor-not-allowed]="!isOtpValid" class="bg-[#101828] text-white w-full py-2 rounded-lg font-medium">
           Verify OTP
         </button>
         <button
@@ -450,55 +430,37 @@
       <p *ngIf="error" class="text-red-600 text-sm mt-2">{{ error }}</p>
       <p class="text-sm mt-2">Time remaining: {{ timer }}s</p>
     </form>
+    <!-- <div *ngIf="showSuccessPopup" class="fixed inset-0 bg-black/40 flex items-center justify-center"
+      style="z-index: 9999;"> -->
 
-    <!-- SUCCESS POPUP -->
-    <div
-      *ngIf="showSuccessPopup"
-      class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 px-4"
-    >
-      <div
-        class="bg-white rounded-2xl w-full max-w-md p-4 md:p-6 text-center shadow-xl mx-4"
-      >
-        <!-- Success icon container -->
+      <!-- <div class="bg-white rounded-2xl p-6 w-[90%] max-w-md text-center">
+
         <div class="flex justify-center mb-4">
-          <div
-            class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-green-100 flex items-center justify-center"
-          >
-            <ion-icon
-              name="checkmark-circle"
-              class="text-green-600 text-4xl md:text-5xl"
-            ></ion-icon>
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <ion-icon name="checkmark-circle" class="text-green-600 text-5xl">
+            </ion-icon>
           </div>
         </div>
 
-        <!-- Title -->
-        <h2 class="text-lg md:text-xl font-semibold text-[#1D2939] mb-2">
-          You have been verified successfully
-        </h2>
+        <h3 class="text-lg font-semibold mb-2">
+          Account Verified Successfully
+        </h3>
 
-        <!-- Subtitle -->
-        <p class="text-xs md:text-sm text-gray-500 mb-6">
-          You have successfully been onboarded<br />
-          Kindly proceed to login.
+        <p class="text-gray-600 mb-6">
+          Your account has been successfully verified.
         </p>
 
-        <!-- Login button -->
-        <button
-          (click)="goToLogin()"
-          class="w-full bg-green-700 text-white py-2.5 md:py-2 rounded-lg font-medium mb-3 text-sm md:text-base hover:bg-green-800 active:scale-95 transition-all"
-        >
-          Login
-        </button>
+        <div class="flex flex-col space-y-3">
+          <button (click)="goToLogin()" class="bg-[#101828] text-white py-2 rounded-lg">
+            Go to Login
+          </button>
 
-        <!-- Cancel button -->
-        <button
-          (click)="closePopup()"
-          class="w-full border border-gray-400 text-gray-700 py-2.5 md:py-2 rounded-lg font-medium text-sm md:text-base hover:bg-gray-50 active:scale-95 transition-all"
-        >
-          Cancel
-        </button>
+          <button (click)="closePopup()" class="border border-gray-300 py-2 rounded-lg">
+            Cancels
+          </button>
+        </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </ion-content>
 
