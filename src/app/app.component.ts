@@ -29,6 +29,40 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentUserRole: string = '';
 
+  walletMenuItems:any[] = [
+    {
+      label: 'Wallet Dashboard',
+      action: () => this.navigateToWallet('dashboard'),
+      show: () => true
+    },
+    {
+      label: 'Wallet Profile',
+      action: () => this.navigateToWallet('profile'),
+      show: () => !this.hasWalletProfile
+    },
+    {
+      label: 'Fund Wallet',
+      action: () => this.navigateToWallet('fund'),
+      show: () => true
+    },
+    {
+      label: 'Withdraw to Bank',
+      action: () => this.navigateToWallet('withdraw'),
+      show: () => true
+    },
+    {
+      label: 'Funds Transfer',
+      action: () => this.navigateToWallet('transfer'),
+      show: () => true
+    },
+    {
+      label: 'Dashboard',
+      action: () => this.navigateToDashboard(),
+      show: () => true
+    }
+  ];
+
+
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
@@ -63,8 +97,8 @@ export class AppComponent implements OnInit, OnDestroy {
     // Listen for login events
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
-        setTimeout(() => {
-          this.appInitService.onUserLogin();
+        setTimeout(async () => {
+         await this.appInitService.onUserLogin();
           this.checkWalletProfile(); // Check wallet when user logs in
         }, 1000);
       } else {
@@ -296,5 +330,9 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       await this.router.navigate(['/auth/login']);
     }
+  }
+
+  get filteredWalletMenuItems() {
+    return this.walletMenuItems.filter(item => item.show());
   }
 }
