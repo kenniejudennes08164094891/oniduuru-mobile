@@ -1,6 +1,6 @@
 <!-- app.component.html -->
 <ion-app>
-  <!-- Shared Dynamic Wallet Menu - Same styling as before -->
+  <!-- Shared Dynamic Wallet Menu -->
   <ion-menu *ngIf="showWalletMenu()" side="start" menuId="wallet-menu" contentId="main-content"
     class="scouter-menu-bg">
     <ion-header>
@@ -11,33 +11,33 @@
 
     <ion-content>
       <ion-list class="px-4 flex flex-col gap-2">
-        <!-- Dynamic Wallet Dashboard -->
+        <!-- Wallet Dashboard - Always visible -->
         <ion-item button class="menu-button" (click)="navigateToWallet('dashboard')">
           <ion-label>Wallet Dashboard</ion-label>
         </ion-item>
 
-        <!-- Show only if NO wallet profile -->
+        <!-- Wallet Profile - Show only if NO wallet profile (to create one) -->
         <ion-item *ngIf="!hasWalletProfile" button class="menu-button"
           (click)="navigateToWallet('profile')">
-          <ion-label>Wallet Profile</ion-label>
+          <ion-label>Create Wallet Profile</ion-label>
         </ion-item>
 
-        <!-- Fund Wallet -->
-        <ion-item button class="menu-button" (click)="navigateToWallet('fund')">
+        <!-- Fund Wallet - Show only if wallet profile EXISTS -->
+        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('fund')">
           <ion-label>Fund Wallet</ion-label>
         </ion-item>
 
-        <!-- Withdraw Funds -->
-        <ion-item button class="menu-button" (click)="navigateToWallet('withdraw')">
+        <!-- Withdraw Funds - Show only if wallet profile EXISTS -->
+        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('withdraw')">
           <ion-label>Withdraw to Bank</ion-label>
         </ion-item>
 
-        <!-- Funds Transfer -->
-        <ion-item button class="menu-button" (click)="navigateToWallet('transfer')">
+        <!-- Funds Transfer - Show only if wallet profile EXISTS -->
+        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('transfer')">
           <ion-label>Funds Transfer</ion-label>
         </ion-item>
 
-        <!-- Dynamic Dashboard Navigation -->
+        <!-- Dashboard - Always visible -->
         <ion-item button class="menu-button" (click)="navigateToDashboard()">
           <ion-label>Dashboard</ion-label>
         </ion-item>

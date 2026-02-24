@@ -49,3 +49,42 @@ ion-content {
   --padding-start: env(safe-area-inset-left);
   --padding-end: env(safe-area-inset-right);
 }
+
+
+
+// For the organization type container
+.flex-wrap {
+  .whitespace-nowrap {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// For the input container on mobile
+@media (max-width: 640px) {
+  .flex.items-stretch {
+    flex-direction: column;
+    
+    input {
+      width: 100%;
+    }
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Ensure OTP inputs are properly styled
+.otp-input {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}

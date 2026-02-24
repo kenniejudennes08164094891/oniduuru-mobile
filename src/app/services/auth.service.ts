@@ -15,6 +15,7 @@ import {
   ForgotPasswordResendOtpPayload,
   ForgotPasswordVerifyOtpPayload,
 } from '../models/mocks';
+import { PaymentService } from './payment.service';
 export interface verifyOTP {
   otp: string;
   phoneNumber: string;
@@ -229,6 +230,7 @@ export class AuthService {
   }
 
   // ============ USER MANAGEMENT ============
+
   setUserCredentialFromBackend(loginResponse: any): void {
     if (!loginResponse.access_token) {
       throw new Error('No access token received');
@@ -236,6 +238,7 @@ export class AuthService {
 
     localStorage.setItem('access_token', loginResponse.access_token);
 
+    // Store the user data exactly as received from login
     const userData =
       loginResponse.details?.user || loginResponse.user || loginResponse;
     localStorage.setItem('user_data', JSON.stringify(userData));
@@ -244,11 +247,16 @@ export class AuthService {
       localStorage.setItem('eniyan', loginResponse.eniyan);
     }
 
+    // ✅ IMPORTANT: Sync payment service with the paid status from login
+    const paymentService = this.injector.get(PaymentService);
+    paymentService.syncWithUserData(userData);
+
     const userService = this.injector.get(UserService);
     userService.updateFullProfile(userData);
     this.currentUserSubject.next(userData);
     this.userLoggedInSubject.next(true);
-    console.log('Credentials stored and all services updated');
+
+    console.log('Credentials stored and payment status synced from login');
   }
 
   notifyProfileUpdated(): void {
@@ -562,7 +570,7 @@ export class AuthService {
     });
   }
 
-  clearAllStorage(){
+  clearAllStorage() {
     localStorage.clear();
     sessionStorage.clear();
     console.clear();
