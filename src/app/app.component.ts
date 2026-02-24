@@ -29,6 +29,40 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentUserRole: string = '';
 
+  walletMenuItems:any[] = [
+    {
+      label: 'Wallet Dashboard',
+      action: () => this.navigateToWallet('dashboard'),
+      show: () => true
+    },
+    {
+      label: 'Wallet Profile',
+      action: () => this.navigateToWallet('profile'),
+      show: () => !this.hasWalletProfile
+    },
+    {
+      label: 'Fund Wallet',
+      action: () => this.navigateToWallet('fund'),
+      show: () => true
+    },
+    {
+      label: 'Withdraw to Bank',
+      action: () => this.navigateToWallet('withdraw'),
+      show: () => true
+    },
+    {
+      label: 'Funds Transfer',
+      action: () => this.navigateToWallet('transfer'),
+      show: () => true
+    },
+    {
+      label: 'Dashboard',
+      action: () => this.navigateToDashboard(),
+      show: () => true
+    }
+  ];
+
+
   constructor(
     private menuCtrl: MenuController,
     private router: Router,
@@ -63,8 +97,8 @@ export class AppComponent implements OnInit, OnDestroy {
     // Listen for login events
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
-        setTimeout(() => {
-          this.appInitService.onUserLogin();
+        setTimeout(async () => {
+         await this.appInitService.onUserLogin();
           this.checkWalletProfile(); // Check wallet when user logs in
         }, 1000);
       } else {
@@ -120,16 +154,16 @@ export class AppComponent implements OnInit, OnDestroy {
         this.hasWalletProfile = false;
         return;
       }
-      
+
       const user = JSON.parse(userData);
       console.log('🔍 Checking wallet profile for role:', this.currentUserRole);
-      
+
       // Method 1: Check completeOnboarding JSON string (primary source)
       if (user.completeOnboarding) {
         try {
           const onboardingData = JSON.parse(user.completeOnboarding);
           console.log('🔍 Parsed completeOnboarding:', onboardingData);
-          
+
           if (onboardingData.hasWalletProfile === true) {
             console.log('✅ Found hasWalletProfile in completeOnboarding');
             this.hasWalletProfile = true;
@@ -139,25 +173,25 @@ export class AppComponent implements OnInit, OnDestroy {
           console.warn('Could not parse completeOnboarding:', parseError);
         }
       }
-      
+
       // Method 2: Check direct hasWalletProfile property
       if (user.hasWalletProfile !== undefined) {
         this.hasWalletProfile = user.hasWalletProfile === true;
         console.log('💰 Wallet profile from direct property:', this.hasWalletProfile);
         return;
       }
-      
+
       // Method 3: Check wallet identifiers
       if (user.walletId || user.walletAccountNumber) {
         console.log('✅ Found wallet identifiers in user data');
         this.hasWalletProfile = true;
         return;
       }
-      
+
       // No wallet profile found
       this.hasWalletProfile = false;
       console.log('❌ No wallet profile found for user');
-      
+
     } catch (error) {
       console.error('Error checking wallet profile:', error);
       this.hasWalletProfile = false;
@@ -296,5 +330,9 @@ export class AppComponent implements OnInit, OnDestroy {
     } else {
       await this.router.navigate(['/auth/login']);
     }
+  }
+
+  get filteredWalletMenuItems() {
+    return this.walletMenuItems.filter(item => item.show());
   }
 }

@@ -46,7 +46,7 @@ export class FundWalletComponent implements OnInit, OnDestroy {
   // Deposit data
   deposit: any[] = [];
   isLoading: boolean = false;
-  
+
   // Track active status filter
   activeStatusFilter: string | null = null;
 
@@ -377,7 +377,7 @@ export class FundWalletComponent implements OnInit, OnDestroy {
         reason: 'Failed transaction',
       },
     ];
-    
+
     this.deposit = [...this.allDeposits];
     this.calculateCounts();
     this.totalDeposits = this.allDeposits.length;
@@ -489,7 +489,7 @@ export class FundWalletComponent implements OnInit, OnDestroy {
     const baseClass = 'min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-sm px-6 py-4 rounded-md transition-colors cursor-pointer';
     const activeClass = 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100';
     const inactiveClass = 'bg-[#E5E7EB] hover:bg-gray-200';
-    
+
     return `${baseClass} ${this.getStatusButtonColorClass(status)} ${this.isStatusActive(status) ? activeClass : inactiveClass}`;
   }
 

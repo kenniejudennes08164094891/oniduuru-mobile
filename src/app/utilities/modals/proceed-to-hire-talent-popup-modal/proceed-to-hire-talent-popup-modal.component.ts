@@ -5,6 +5,7 @@ import { MockPayment, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import {EmmittersService} from "../../../services/emmitters.service";
 
 @Component({
   selector: 'app-proceed-to-hire-talent-popup-modal',
@@ -30,7 +31,8 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
-    private router: Router
+    private router: Router,
+    private emitterService: EmmittersService
   ) {
     super(modalCtrl, platform); // ✅ gets dismiss + back button
   }
@@ -87,12 +89,12 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
         return '#ffffff';
     }
   }
-  close() {
-    this.dismiss();
+  async close() {
+   await this.dismiss();
   }
   async openTalentModal(hire: MockPayment) {
     await this.dismiss(); // ✅ inherited dismiss
-
+    this.emitterService.setTalentIdForHire(hire?.talentId);
     const modal = await this.modalCtrl.create({
       component: ViewAllTalentsPopupModalComponent,
       componentProps: { hire },
