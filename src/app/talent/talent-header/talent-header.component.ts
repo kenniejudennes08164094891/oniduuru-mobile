@@ -24,7 +24,7 @@ export class TalentHeaderComponent implements OnInit {
 
   constructor(
     private popoverCtrl: PopoverController,
-    private router: Router,
+    protected router: Router,
     private emmitterService: EmmittersService,
     private endpointService: EndpointService,
     private menuCtrl: MenuController,
@@ -37,9 +37,9 @@ export class TalentHeaderComponent implements OnInit {
   }
 
   // Add this method to open the shared wallet menu
-  openMenu() {
-    this.menuCtrl.enable(true, 'wallet-menu');
-    this.menuCtrl.open('wallet-menu');
+  async openMenu() {
+   await this.menuCtrl.enable(true, 'wallet-menu');
+   await this.menuCtrl.open('wallet-menu');
   }
 
   // Add this method to close the menu
@@ -119,5 +119,9 @@ export class TalentHeaderComponent implements OnInit {
 
   ngOnInit() {
     this.fetchProfilePicture();
+  }
+
+  routeBack(){
+    window.history.go(-1);
   }
 }

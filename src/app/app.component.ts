@@ -6,7 +6,7 @@ import {
   ElementRef,
   ViewChild,
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import {firstValueFrom, Subscription} from 'rxjs';
 import { Router, NavigationStart } from '@angular/router';
 import { MenuController, Platform } from '@ionic/angular';
 import { initFlowbite } from 'flowbite';
@@ -70,14 +70,13 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private userService: UserService,
     private appInitService: AppInitService,
-    private endpointService: EndpointService,
+    private walletService: EndpointService,
     private walletEvents: WalletEventsService,
   ) {
     document.body.classList.remove('dark');
   }
 
-  ngOnInit(): void {
-    this.appInitService.initializeApp();
+ async ngOnInit(): Promise<any> {
     this.userService.initializeProfileImage();
     initFlowbite();
     document.body.classList.remove('dark');
@@ -121,6 +120,8 @@ export class AppComponent implements OnInit, OnDestroy {
       // Optionally refresh the check to ensure everything is synced
       setTimeout(() => this.checkWalletProfile(), 500);
     });
+  await this.appInitService.initializeApp();
+  await this.handleWalletAuthorization();
   }
 
   ngAfterViewInit() {
@@ -335,4 +336,49 @@ export class AppComponent implements OnInit, OnDestroy {
   get filteredWalletMenuItems() {
     return this.walletMenuItems.filter(item => item.show());
   }
+
+  async handleWalletAuthorization():Promise<void>{
+    try{
+      const userDetails:any = localStorage.getItem('user_data');
+      const role = userDetails ? JSON.parse(userDetails)?.role : null;
+      if(role === "scouter" || role === "talent"){
+        const userWallet = await firstValueFrom(this.walletService.fetchMyWallet(
+          undefined,
+          role === 'talent' ? userDetails?.talentId : role === 'scouter' ? userDetails?.scouterId : null
+        ));
+
+        // console.clear();
+        // console.log("siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu", role)
+        // console.log("userWallet>>",userWallet);
+
+        if(userWallet?.data?.status === 'active'){
+          this.walletMenuItems = this.walletMenuItems.filter((item:any) => item?.label?.toLowerCase() !== 'wallet profile');
+        }else if(userWallet?.data?.status === 'awaiting_approval'){
+          this.walletMenuItems = this.walletMenuItems.filter((item:any) =>
+            item?.label?.toLowerCase() !== 'wallet profile' &&
+            item?.label?.toLowerCase() !== 'fund wallet' &&
+            item?.label?.toLowerCase() !== 'withdraw to bank' &&
+            item?.label?.toLowerCase() !== 'funds transfer'
+          );
+        }else{
+          this.walletMenuItems = this.walletMenuItems.filter((item:any) =>
+            item?.label?.toLowerCase() !== 'fund wallet' &&
+            item?.label?.toLowerCase() !== 'withdraw to bank' &&
+            item?.label?.toLowerCase() !== 'funds transfer'
+          );
+        }
+      }
+    }catch (err:any) {
+      console.error("error from handling wallets authorization>>", err);
+      if(err?.error?.message === 'Wallet not found' || err?.error?.statusCode === 404){
+        console.clear();
+        this.walletMenuItems = this.walletMenuItems.filter((item:any) =>
+          item?.label?.toLowerCase() !== 'fund wallet' &&
+          item?.label?.toLowerCase() !== 'withdraw to bank' &&
+          item?.label?.toLowerCase() !== 'funds transfer'
+        );
+      }
+    }
+  }
+
 }

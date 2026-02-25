@@ -87,6 +87,9 @@ export class WalletPageComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription = new Subscription();
 
+  loading: string = 'Fetching Wallet Dashboard...';
+  showSpinner: boolean = true;
+
   constructor(
     private clipboard: Clipboard,
     private toast: ToastsService,
@@ -130,14 +133,14 @@ export class WalletPageComponent implements OnInit, OnDestroy {
   }
 
   async fetchAllData(): Promise<void> {
-    // Fetch wallet details first
-    await this.fetchWalletDetails();
-
     // Then fetch wallet stats
     this.fetchWalletStats();
 
     // Finally fetch histogram data
-    await this.fetchHistogramData();
+     this.fetchHistogramData();
+
+    // Fetch wallet details first
+    await this.fetchWalletDetails();
   }
 
   async toggleBalance(): Promise<void> {
@@ -602,10 +605,12 @@ export class WalletPageComponent implements OnInit, OnDestroy {
           next: (res: any) => {
             this.handleWalletResponse(res);
             this.loadingWallet = false;
+            setTimeout(() => this.showSpinner = false, 1200);
           },
           error: (err: any) => {
             this.handleWalletError(err);
             this.loadingWallet = false;
+            setTimeout(() => this.showSpinner = false, 1200);
           },
         });
 
