@@ -39,7 +39,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     public userService: UserService,
     private scouterService: ScouterEndpointsService,
     private authService: AuthService,
-    private router: Router,
+    protected router: Router,
     private menuCtrl: MenuController,
   ) {
     this.profileImage = this.userService.getProfileImage();
@@ -412,9 +412,9 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  openMenu() {
-    this.menuCtrl.enable(true, 'wallet-menu');
-    this.menuCtrl.open('wallet-menu');
+  async openMenu() {
+   await this.menuCtrl.enable(true, 'wallet-menu');
+   await this.menuCtrl.open('wallet-menu');
   }
 
   async closeMenu() {
@@ -424,5 +424,9 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.sub) this.sub.unsubscribe();
     if (this.authSub) this.authSub.unsubscribe();
+  }
+
+  routeBack(){
+    window.history.go(-1);
   }
 }
