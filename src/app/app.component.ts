@@ -134,6 +134,20 @@ export class AppComponent implements OnInit, OnDestroy {
       this.overlayCleanup.cleanBackdrops();
     });
 
+    // EMERGENCY: Add keyboard listener to unfreeze app if UI becomes unresponsive
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        // Press ESC twice rapidly to force unfreeze
+        if (e.key === 'Escape') {
+          this.overlayCleanup.cleanBackdrops();
+          this.overlayCleanup.cleanOverlays();
+          console.log('🔆 Emergency unfreeze triggered - cleaned all overlays');
+        }
+      },
+      true,
+    );
+
     // Listen for wallet profile creation events
     this.walletEvents.walletProfileCreated$.subscribe(() => {
       console.log('🎯 Received wallet profile created event');
@@ -144,9 +158,21 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    // Force the menu visible immediately to ensure it's in DOM and clickable
     const menu = document.querySelector('ion-menu[menuId="wallet-menu"]');
-    if (menu && this.currentUserRole) {
-      menu.setAttribute('data-role', this.currentUserRole);
+    if (menu) {
+      // Don't hide the menu - let [disabled] and CSS handle visibility
+      menu.removeAttribute('hidden');
+      if (this.currentUserRole) {
+        menu.setAttribute('data-role', this.currentUserRole);
+      }
+
+      // Re-check menu status in case role was just set
+      setTimeout(() => {
+        if (this.showWalletMenu() && menu.hasAttribute('hidden')) {
+          menu.removeAttribute('hidden');
+        }
+      }, 100);
     }
   }
 

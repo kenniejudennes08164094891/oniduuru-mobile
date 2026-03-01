@@ -23,11 +23,62 @@ export class OverlayCleanupService {
    */
   cleanBackdrops(): void {
     const backdrops = document.querySelectorAll('ion-backdrop');
-    backdrops.forEach((b) => b.remove());
+    backdrops.forEach((b) => {
+      // Check if backdrop is hidden or should be hidden
+      const parent = b.parentElement;
+      const parentHidden =
+        parent?.hasAttribute('hidden') ||
+        parent?.getAttribute('aria-hidden') === 'true' ||
+        parent?.style.display === 'none' ||
+        b.style.opacity === '0';
+
+      // Remove orphaned or hidden backdrops
+      if (
+        parentHidden ||
+        b.classList.contains('hidden') ||
+        b.hasAttribute('hidden')
+      ) {
+        b.remove();
+      }
+    });
 
     // also remove any custom overlays we add manually (profile cards, etc.)
     const custom = document.querySelectorAll('.profile-card-overlay');
     custom.forEach((el) => el.remove());
+
+    // Remove any leftover modal wrappers
+    const modalWrappers = document.querySelectorAll('.modal-wrapper');
+    modalWrappers.forEach((wrapper) => {
+      const parent = wrapper.parentElement;
+      // Only remove if parent is hidden/removed
+      if (
+        parent &&
+        (parent.hasAttribute('hidden') || parent.style.display === 'none')
+      ) {
+        wrapper.remove();
+      }
+    });
+  }
+
+  /**
+   * Force fix any backdrop that's blocking interactions by removing pointer-events
+   */
+  forceFixBlockingBackdrops(): void {
+    const backdrops = document.querySelectorAll('ion-backdrop');
+    backdrops.forEach((b) => {
+      // Force pointer-events to none if backdrop is invisible
+      const style = window.getComputedStyle(b);
+      const opacity = parseFloat(style.opacity);
+      const visibility = style.visibility;
+
+      // If backdrop is invisible but still accepting events, fix it
+      if (
+        (opacity === 0 || visibility === 'hidden') &&
+        style.pointerEvents !== 'none'
+      ) {
+        b.style.pointerEvents = 'none !important';
+      }
+    });
   }
 
   /**
@@ -68,7 +119,8 @@ export class OverlayCleanupService {
 
     this.pollIntervalId = window.setInterval(() => {
       this.cleanBackdrops();
-    }, 2000);
+      this.forceFixBlockingBackdrops();
+    }, 1500);
   }
 
   /**

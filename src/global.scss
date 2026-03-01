@@ -189,9 +189,14 @@ h3,
 h4,
 h5,
 h6,
-span,select,
+span,
+select,
 b,
-strong,ion-content,ion-list,ion-item,ion-label,
+strong,
+ion-content,
+ion-list,
+ion-item,
+ion-label,
 a {
   font-family: "Euclid Circular A", sans-serif !important;
 }
@@ -236,13 +241,28 @@ a {
    but is not removed are the primary cause of the "frozen app" issue, so
    we add several safeguards. */
 ion-backdrop {
+  /* By default, backdrops can receive pointer events */
   pointer-events: auto;
 }
 
+/* CRITICAL: Hidden or transparent backdrops must NOT accept pointer events */
 ion-backdrop[hidden],
 ion-backdrop.hidden,
 ion-backdrop.backdrop-hidden,
-ion-backdrop[style*="opacity: 0"] {
+ion-backdrop[style*="opacity: 0"],
+ion-backdrop[style*="display: none"],
+ion-backdrop[style*="visibility: hidden"] {
+  pointer-events: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Remove backdrops from orphaned modals/popovers */
+ion-popover[hidden] ion-backdrop,
+ion-modal[hidden] ion-backdrop,
+ion-alert[hidden] ion-backdrop {
+  display: none !important;
   pointer-events: none !important;
 }
 

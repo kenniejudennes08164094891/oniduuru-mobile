@@ -99,6 +99,14 @@ ion-router-outlet app-chat-page.ion-page {
   transition: none !important;
 }
 
+/* Hide disabled menu while keeping it in DOM */
+ion-menu.menu-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Remove any built-in Ionic animations */
 .ion-page-invisible,
 .ion-page-hidden {

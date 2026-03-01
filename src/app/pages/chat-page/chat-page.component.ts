@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { ChatService, ChatMessage } from '../../services/chat.service';
 import { ChatVisibilityService } from '../../services/chat-visibility.service';
+import { OverlayCleanupService } from '../../services/overlay-cleanup.service';
 import { imageIcons } from 'src/app/models/stores';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -40,8 +41,9 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
   constructor(
     private chatService: ChatService,
     private chatVisibilityService: ChatVisibilityService,
-    private router: Router
-  ) { }
+    private overlayCleanup: OverlayCleanupService,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.chatVisibilityService.setChatPageOpen(true);
@@ -62,6 +64,17 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
         }
       }
     });
+
+    // Add keyboard listener for ESC to close chat
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Escape') {
+          this.goBackImmediately();
+        }
+      },
+      true,
+    );
   }
 
   // MODIFIED: Only cleans up and hides chat, no navigation
@@ -77,21 +90,32 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     // Notify chat service/page that chat is being closed
     this.chatVisibilityService.setChatPageOpen(false);
 
-    window.history.back();
+    // Clean up any overlays
+    this.overlayCleanup.cleanBackdrops();
+    this.overlayCleanup.cleanOverlays();
 
+    window.history.back();
   }
 
   // NEW METHOD: Remove background image from DOM immediately
   private removeBackgroundImmediately() {
     const headers = document.querySelectorAll('.chatBotPageHeaderBg');
-    headers.forEach(header => {
-      header.setAttribute('style', 'display: none !important; opacity: 0 !important; visibility: hidden !important; background-image: none !important;');
+    headers.forEach((header) => {
+      header.setAttribute(
+        'style',
+        'display: none !important; opacity: 0 !important; visibility: hidden !important; background-image: none !important;',
+      );
     });
 
     // Also remove any background from toolbars
-    const toolbars = document.querySelectorAll('ion-toolbar.chatBotPageHeaderBg');
-    toolbars.forEach(toolbar => {
-      toolbar.setAttribute('style', 'display: none !important; opacity: 0 !important; visibility: hidden !important; --background: transparent !important;');
+    const toolbars = document.querySelectorAll(
+      'ion-toolbar.chatBotPageHeaderBg',
+    );
+    toolbars.forEach((toolbar) => {
+      toolbar.setAttribute(
+        'style',
+        'display: none !important; opacity: 0 !important; visibility: hidden !important; --background: transparent !important;',
+      );
     });
   }
 
@@ -101,12 +125,20 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.removeBackgroundImmediately();
     this.cleanup();
     this.chatVisibilityService.setChatPageOpen(false);
+
+    // Clean up overlays when navigating away
+    this.overlayCleanup.cleanBackdrops();
+    this.overlayCleanup.cleanOverlays();
   }
 
   ngOnDestroy() {
     this.removeBackgroundImmediately();
     this.chatVisibilityService.setChatPageOpen(false);
     this.cleanup();
+
+    // Clean up any overlays/backdrops when leaving chat page
+    this.overlayCleanup.cleanBackdrops();
+    this.overlayCleanup.cleanOverlays();
 
     if (this.messagesSubscription) {
       this.messagesSubscription.unsubscribe();
@@ -177,7 +209,7 @@ export class ChatPageComponent implements AfterViewChecked, OnInit, OnDestroy {
       console.error('Error sending message:', error);
       await this.chatService.addMessage(
         'Sorry, I encountered an error. Please try again.',
-        'bot'
+        'bot',
       );
     } finally {
       if (!this.isNavigatingAway) {

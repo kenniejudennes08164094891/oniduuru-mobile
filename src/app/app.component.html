@@ -1,10 +1,10 @@
 <!-- app.component.html -->
 <ion-app>
   <!-- Shared Dynamic Wallet Menu (always in DOM to avoid initialization race) -->
-  <!-- We rely on [hidden] so the menu element exists before a user can click the hamburger. -->
-  <!-- showWalletMenu still controls whether the menu is visible/enabled. -->
+  <!-- Menu is always in DOM - visibility is controlled purely by CSS -->
   <ion-menu
-    [hidden]="!showWalletMenu()"
+    [disabled]="!showWalletMenu()"
+    [ngClass]="{ 'menu-hidden': !showWalletMenu() }"
     side="start"
     menuId="wallet-menu"
     contentId="main-content"
