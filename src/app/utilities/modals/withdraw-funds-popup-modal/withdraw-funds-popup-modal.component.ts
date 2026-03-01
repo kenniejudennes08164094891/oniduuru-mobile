@@ -67,6 +67,10 @@ export class WithdrawFundsPopupModalComponent
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
 
+  // Account validation properties
+  isValidAcctNum: boolean | 'processing' = false;
+  validationProps: { fullName: string } = { fullName: '' };
+
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
@@ -161,6 +165,41 @@ export class WithdrawFundsPopupModalComponent
   removeScreenshot() {
     this.selectedFile = null;
     this.previewUrl = null;
+  }
+
+  /**
+   * Handle account number validation
+   */
+  handleAcctNum(event: any): void {
+    const accountNumber = event.target?.value || event;
+
+    // Reset validation state
+    if (!accountNumber || accountNumber.length < 10) {
+      this.isValidAcctNum = false;
+      this.validationProps = { fullName: '' };
+      return;
+    }
+
+    // Show processing state
+    this.isValidAcctNum = 'processing';
+
+    // Validate account number via API
+    this.endpointService.validateAccountNumber(accountNumber).subscribe({
+      next: (res: any) => {
+        if (res?.data?.account_name) {
+          this.isValidAcctNum = true;
+          this.validationProps = { fullName: res.data.account_name };
+        } else {
+          this.isValidAcctNum = false;
+          this.validationProps = { fullName: '' };
+        }
+      },
+      error: (err) => {
+        console.error('Account validation error:', err);
+        this.isValidAcctNum = false;
+        this.validationProps = { fullName: '' };
+      },
+    });
   }
 
   private validateInputs(): boolean {

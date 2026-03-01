@@ -1347,6 +1347,64 @@ export class EndpointService {
     );
   }
 
+  /**
+   * Validate account number (NUBAN verification)
+   * Only requires account number - used for quick validation before withdrawal
+   * GET /wallets/v1/validate-account/{accountNumber}
+   */
+  public validateAccountNumber(accountNumber: string): Observable<any> {
+    const url = `${environment.baseUrl}/wallets/v1/validate-account/${accountNumber}`;
+
+    console.log('🔍 Validating account number:', accountNumber);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        map((response: any) => {
+          console.log('✅ Account validation response:', response);
+
+          // Handle successful response
+          if (response && response.statusCode === 200) {
+            return {
+              success: true,
+              data: response.data || response,
+              fullName:
+                response.data?.accountName || response.accountName || '',
+            };
+          }
+
+          // Handle other success indicators
+          if (
+            response &&
+            (response.accountName || response.data?.accountName)
+          ) {
+            return {
+              success: true,
+              data: response.data || response,
+              fullName: response.accountName || response.data?.accountName,
+            };
+          }
+
+          return {
+            success: false,
+            data: null,
+            fullName: '',
+          };
+        }),
+        catchError((error) => {
+          console.error('❌ Account validation error:', error);
+          return of({
+            success: false,
+            data: null,
+            fullName: '',
+            error: error,
+          });
+        }),
+      );
+  }
+
   // ==================== FALLBACK DATA ====================
   private getFallbackBanks(): any[] {
     return [

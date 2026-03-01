@@ -25,12 +25,17 @@ export class TalentHeaderComponent implements OnInit {
 
   constructor(
     private popoverCtrl: PopoverController,
-    private router: Router,
+    public router: Router,
     private emmitterService: EmmittersService,
     private endpointService: EndpointService,
     private menuCtrl: MenuController,
     private overlayCleanup: OverlayCleanupService,
   ) {}
+
+  // Method to navigate back
+  routeBack(): void {
+    this.router.navigate(['/talent/dashboard']);
+  }
 
   // Check if we're on a wallet page
   get isWalletPage(): boolean {
