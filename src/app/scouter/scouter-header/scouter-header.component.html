@@ -4,7 +4,7 @@
     <div class="w-full flex justify-between items-center px-2 min-h-[60px]">
       <!-- App Logo/Title -->
       <button *ngIf="!isWallet" class="text-2xl font-semibold text-[#101828]">
-        ∯ Oniduuru
+        <b *ngIf="router.url !== '/scouter/dashboard'"  (click)="routeBack()">⇦</b> &nbsp;&nbsp; Oniduuru ∯
       </button>
 
       <div
@@ -14,7 +14,7 @@
         <button (click)="openMenu()">
           <ion-icon name="menu-outline"></ion-icon>
         </button>
-        <span> ∯ Oniduuru </span>
+        <span> &nbsp;&nbsp; Oniduuru ∯ </span>
       </div>
 
       <div class="flex items-center gap-4 relative">

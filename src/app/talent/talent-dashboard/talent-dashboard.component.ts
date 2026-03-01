@@ -237,11 +237,11 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
       await this.toggleVisibilityService.toggleBalanceVisibility(
         this.balanceHidden,
       );
-    console.log('👁️ Balance visibility toggled to:', this.balanceHidden);
+    // console.log('👁️ Balance visibility toggled to:', this.balanceHidden);
 
     // Optional: Show a brief toast notification
-    const message = this.balanceHidden ? 'Balance hidden' : 'Balance visible';
-    this.toast.openSnackBar(message, 'success');
+    // const message = this.balanceHidden ? 'Balance hidden' : 'Balance visible';
+    // this.toast.openSnackBar(message, 'success');
   }
 
   async routeToWallet(event?: Event): Promise<void> {

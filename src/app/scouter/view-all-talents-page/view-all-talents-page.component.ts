@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { Subscription } from 'rxjs';
 import { SharedTalentDataService } from 'src/app/services/shared-talent-data.service';
+import {EmmittersService} from "../../services/emmitters.service";
 
 @Component({
   selector: 'app-view-all-talents-page',
@@ -41,6 +42,7 @@ export class ViewAllTalentsPageComponent implements OnInit, OnDestroy {
     private router: Router,
     private scouterService: ScouterEndpointsService,
     private sharedData: SharedTalentDataService, // Add this
+    private emitterService: EmmittersService
   ) {}
 
   ngOnInit() {
@@ -266,6 +268,7 @@ export class ViewAllTalentsPageComponent implements OnInit, OnDestroy {
   }
 
   async openViewAllTalentsPopupModal(talent: any) {
+    this.emitterService.setTalentIdForHire(talent.talentId)
     const modal = await this.modalCtrl.create({
       component: ViewAllTalentsPopupModalComponent,
       componentProps: {
@@ -286,8 +289,8 @@ export class ViewAllTalentsPageComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  goToTalentLocation() {
-    this.router.navigate([
+  async goToTalentLocation() {
+   await this.router.navigate([
       '/scouter/hire-talent/welcome-to-oniduuru/view-all-talents/view-talents-location',
     ]);
   }

@@ -8,9 +8,9 @@
       <button *ngIf="isWalletPage" (click)="openMenu()" class="mr-2">
         <ion-icon name="menu-outline" class="text-2xl text-[#101828]"></ion-icon>
       </button>
-      
+
       <button class="text-2xl font-semibold text-[#101828]">
-        ∯ Oniduuru
+        <b *ngIf="router.url !== '/talent/dashboard'" (click)="routeBack()">⇦</b> &nbsp;&nbsp; Oniduuru ∯
       </button>
     </div>
 
