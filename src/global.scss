@@ -12,6 +12,21 @@
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
+/* Safe Area CSS Variables - Must be defined for Ionic components */
+:root {
+  /* iOS safe area insets - these are set by Cordova/Capacitor */
+  --ion-safe-area-top: env(safe-area-inset-top);
+  --ion-safe-area-bottom: env(safe-area-inset-bottom);
+  --ion-safe-area-left: env(safe-area-inset-left);
+  --ion-safe-area-right: env(safe-area-inset-right);
+
+  /* Fallback for older iOS versions */
+  --ion-safe-area-top: constant(safe-area-inset-top);
+  --ion-safe-area-bottom: constant(safe-area-inset-bottom);
+  --ion-safe-area-left: constant(safe-area-inset-left);
+  --ion-safe-area-right: constant(safe-area-inset-right);
+}
+
 /* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
@@ -40,17 +55,11 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-
 body,
 ion-content,
 ion-app {
   font-family: "Euclid Circular A", sans-serif !important;
 }
-
-
-
-
-
 
 ion-button {
   text-transform: none !important;
@@ -220,6 +229,21 @@ a {
   --backdrop-opacity: 0.5;
 
   margin: auto; /* centers modal both vertically and horizontally */
+}
+
+/* Ensure any ion-backdrop that is hidden or transparent stops blocking
+   pointer events.  Strange situations where a backdrop remains in the DOM
+   but is not removed are the primary cause of the "frozen app" issue, so
+   we add several safeguards. */
+ion-backdrop {
+  pointer-events: auto;
+}
+
+ion-backdrop[hidden],
+ion-backdrop.hidden,
+ion-backdrop.backdrop-hidden,
+ion-backdrop[style*="opacity: 0"] {
+  pointer-events: none !important;
 }
 
 .confirmation-modal {

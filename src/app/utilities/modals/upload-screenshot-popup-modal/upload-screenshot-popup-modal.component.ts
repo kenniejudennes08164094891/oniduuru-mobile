@@ -7,6 +7,7 @@ import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
 import { AwaitingPaymentVerificationModalComponent } from '../awaiting-payment-verification-modal/awaiting-payment-verification-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 
@@ -34,8 +35,9 @@ export class UploadScreenshotPopupModalComponent
     private paymentService: PaymentService,
     private toast: ToastsService,
     private scouterEndpoints: ScouterEndpointsService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {

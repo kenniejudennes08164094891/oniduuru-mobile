@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { EndpointService } from 'src/app/services/endpoint.service';
 import { FundWalletReceiptModalComponent } from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 import { ToastsService } from 'src/app/services/toasts.service';
@@ -34,7 +35,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     walletName: '',
     reason: '',
     fundType: '',
-    agreed: ''
+    agreed: '',
   };
 
   // Payment processing state
@@ -46,8 +47,9 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     private paymentService: PaymentService,
     private toastService: ToastsService,
     private endpointService: EndpointService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -58,7 +60,9 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   }
 
   loadCurrentUser() {
-    const userData = localStorage.getItem('user_data') || localStorage.getItem('user_profile_data');
+    const userData =
+      localStorage.getItem('user_data') ||
+      localStorage.getItem('user_profile_data');
     if (userData) {
       try {
         this.currentUser = JSON.parse(userData);
@@ -80,8 +84,10 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     this.amount = numericValue ? parseInt(numericValue, 10) : null;
 
     // Format with commas & ₦
-    this.formattedAmount = this.amount ? '₦ ' + this.amount.toLocaleString() : '';
-    
+    this.formattedAmount = this.amount
+      ? '₦ ' + this.amount.toLocaleString()
+      : '';
+
     // Clear validation error
     this.validationErrors.amount = '';
   }
@@ -89,7 +95,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   onWalletAccNoChange(value: string) {
     // Remove any non-numeric characters
     this.walletAccNo = value.replace(/\D/g, '');
-    
+
     // Clear validation error
     this.validationErrors.walletAccNo = '';
   }
@@ -97,7 +103,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   onWalletNameChange(value: string) {
     // Allow only letters and spaces, remove any numbers or special characters
     this.walletName = value.replace(/[^A-Za-z\s]/g, '');
-    
+
     // Clear validation error
     this.validationErrors.walletName = '';
   }
@@ -125,7 +131,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       walletName: '',
       reason: '',
       fundType: '',
-      agreed: ''
+      agreed: '',
     };
   }
 
@@ -138,7 +144,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     if (!this.amount || this.amount <= 0) {
       this.validationErrors.amount = 'Enter a valid amount greater than zero.';
       isValid = false;
-    } else if (this.amount > 10000000) { // 10 million limit example
+    } else if (this.amount > 10000000) {
+      // 10 million limit example
       this.validationErrors.amount = 'Amount cannot exceed ₦10,000,000.';
       isValid = false;
     }
@@ -148,10 +155,12 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       this.validationErrors.walletAccNo = 'Wallet account number is required.';
       isValid = false;
     } else if (this.walletAccNo.length < 10 || this.walletAccNo.length > 11) {
-      this.validationErrors.walletAccNo = 'Enter a valid wallet account number (10–11 digits).';
+      this.validationErrors.walletAccNo =
+        'Enter a valid wallet account number (10–11 digits).';
       isValid = false;
     } else if (!/^\d{10,11}$/.test(this.walletAccNo)) {
-      this.validationErrors.walletAccNo = 'Wallet account number must contain only digits.';
+      this.validationErrors.walletAccNo =
+        'Wallet account number must contain only digits.';
       isValid = false;
     }
 
@@ -160,13 +169,16 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       this.validationErrors.walletName = 'Wallet name is required.';
       isValid = false;
     } else if (!/^[A-Za-z\s]+$/.test(this.walletName)) {
-      this.validationErrors.walletName = 'Wallet name must contain only letters and spaces.';
+      this.validationErrors.walletName =
+        'Wallet name must contain only letters and spaces.';
       isValid = false;
     } else if (this.walletName.trim().length < 2) {
-      this.validationErrors.walletName = 'Wallet name must be at least 2 characters.';
+      this.validationErrors.walletName =
+        'Wallet name must be at least 2 characters.';
       isValid = false;
     } else if (this.walletName.trim().length > 50) {
-      this.validationErrors.walletName = 'Wallet name cannot exceed 50 characters.';
+      this.validationErrors.walletName =
+        'Wallet name cannot exceed 50 characters.';
       isValid = false;
     }
 
@@ -178,7 +190,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
 
     // Validate terms agreement
     if (!this.agreed) {
-      this.validationErrors.agreed = 'You must agree to the terms and conditions.';
+      this.validationErrors.agreed =
+        'You must agree to the terms and conditions.';
       isValid = false;
     }
 
@@ -193,7 +206,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
 
   // Show validation errors as toast messages
   private showValidationErrors() {
-    Object.values(this.validationErrors).forEach(error => {
+    Object.values(this.validationErrors).forEach((error) => {
       if (error) {
         this.toastService.openSnackBar(error, 'warning');
       }
@@ -212,7 +225,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     if (!this.currentUser) {
       this.toastService.openSnackBar(
         'User information not found. Please try again.',
-        'error'
+        'error',
       );
       return;
     }
@@ -234,7 +247,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
         const customerCodePayload = {
           email: this.currentUser.email || '',
           first_name: this.currentUser.fullName?.split(' ')[0] || '',
-          last_name: this.currentUser.fullName?.split(' ').slice(1).join(' ') || '',
+          last_name:
+            this.currentUser.fullName?.split(' ').slice(1).join(' ') || '',
           phone: this.currentUser.phoneNumber || '',
         };
 
@@ -262,7 +276,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
         designatedWalletName: this.walletName.trim(),
         designatedWalletAcct: this.walletAccNo,
         bankDepositReceipt: '', // Empty since we removed screenshot upload
-        identifier: this.fundType === 'Fund Self' ? 'Fund my wallet' : 'Fund others',
+        identifier:
+          this.fundType === 'Fund Self' ? 'Fund my wallet' : 'Fund others',
         isTermsAgreed: this.agreed ? 'true' : 'false',
         paystackCustomerCode: paystackCustomerCode,
       };
@@ -286,7 +301,8 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
                 amount: this.amount,
                 walletName: this.walletName.trim(),
                 walletAcctNo: this.walletAccNo,
-                identifier: this.fundType === 'Fund Self' ? 'Fund Self' : 'Fund Others',
+                identifier:
+                  this.fundType === 'Fund Self' ? 'Fund Self' : 'Fund Others',
                 status: 'Pending', // Initial status
                 reason: this.reason,
               },
@@ -299,13 +315,13 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
 
             this.toastService.openSnackBar(
               'Deposit request submitted successfully!',
-              'success'
+              'success',
             );
           } else if (response?.authorization_url) {
             // Paystack payment URL returned - redirect to Paystack
             this.toastService.openSnackBar(
               'Redirecting to Paystack payment gateway...',
-              'success'
+              'success',
             );
 
             // Open Paystack payment in new tab
@@ -318,13 +334,13 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
                 paymentUrl: response.authorization_url,
                 depositData: depositPayload,
               },
-              'submitted'
+              'submitted',
             );
           } else {
             // Unexpected response
             this.toastService.openSnackBar(
               'Deposit submitted. Please check your transaction history.',
-              'success'
+              'success',
             );
             this.modalCtrl.dismiss(depositPayload, 'submitted');
           }
@@ -336,13 +352,16 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
           let errorMessage = 'Deposit request failed. Please try again.';
 
           if (error.status === 400) {
-            errorMessage = error.error?.message || 'Invalid deposit details. Please check your inputs.';
-            
+            errorMessage =
+              error.error?.message ||
+              'Invalid deposit details. Please check your inputs.';
+
             // Check for specific validation errors from backend
             if (error.error?.errors) {
               const backendErrors = error.error.errors;
               if (backendErrors.designatedWalletAcct) {
-                this.validationErrors.walletAccNo = backendErrors.designatedWalletAcct;
+                this.validationErrors.walletAccNo =
+                  backendErrors.designatedWalletAcct;
                 this.showValidationErrors();
                 return;
               }
@@ -366,7 +385,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       console.error('Unexpected error:', error);
       this.toastService.openSnackBar(
         'An unexpected error occurred. Please try again.',
-        'error'
+        'error',
       );
     }
   }
@@ -384,7 +403,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
 
               this.toastService.openSnackBar(
                 `Transaction charge: ₦${charge.toLocaleString()}. Total: ₦${totalAmount.toLocaleString()}`,
-                'info'
+                'info',
               );
             }
           },
@@ -405,7 +424,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
   // Handle fund type change
   onFundTypeChangeEvent(event: any) {
     this.onFundTypeChange(event.target.value);
-    
+
     // Recalculate charge if amount is set and funding others
     if (this.amount && this.amount > 0 && this.fundType === 'Fund Others') {
       this.calculateTransactionCharge();

@@ -110,71 +110,72 @@
     </div>
   </div>
 
-  <!-- Status Filter Buttons -->
-  <div class="overflow-x-auto mt-10">
-    <div
-      class="flex space-x-4 bg-white py-3 md:space-x-6 md:justify-between md:flex-wrap"
+<!-- Status Filter Buttons -->
+<div class="overflow-x-auto mt-10">
+  <!-- Updated container with better responsive classes -->
+  <div
+    class="flex flex-nowrap md:flex-wrap gap-4 bg-white py-3"
+  >
+    <!-- Successful -->
+    <button
+      (click)="filterByStatus('Successful')"
+      [class]="getStatusButtonClass('Successful') + ' flex-1 min-w-[100px]'"
     >
-      <!-- Successful -->
-      <button
-        (click)="filterByStatus('Successful')"
-        [class]="getStatusButtonClass('Successful')"
-      >
-        <p class="text-lg font-semibold">{{ successfulCount }}</p>
-        <p>Successful</p>
-      </button>
+      <p class="text-lg font-semibold">{{ successfulCount }}</p>
+      <p>Successful</p>
+    </button>
 
-      <!-- Pending - NEW -->
-      <button
-        (click)="filterByStatus('Pending')"
-        [class]="getStatusButtonClass('Pending')"
-      >
-        <p class="text-lg font-semibold">{{ pendingCount }}</p>
-        <p>Pending</p>
-      </button>
+    <!-- Pending - NEW -->
+    <button
+      (click)="filterByStatus('Pending')"
+      [class]="getStatusButtonClass('Pending') + ' flex-1 min-w-[100px]'"
+    >
+      <p class="text-lg font-semibold">{{ pendingCount }}</p>
+      <p>Pending</p>
+    </button>
 
-      <!-- Invalid -->
-      <button
-        (click)="filterByStatus('Invalid')"
-        [class]="getStatusButtonClass('Invalid')"
-      >
-        <p class="text-lg font-semibold">{{ invalidCount }}</p>
-        <p>Invalid</p>
-      </button>
+    <!-- Invalid -->
+    <button
+      (click)="filterByStatus('Invalid')"
+      [class]="getStatusButtonClass('Invalid') + ' flex-1 min-w-[100px]'"
+    >
+      <p class="text-lg font-semibold">{{ invalidCount }}</p>
+      <p>Invalid</p>
+    </button>
 
-      <!-- Reversed -->
-      <button
-        (click)="filterByStatus('Reversed')"
-        [class]="getStatusButtonClass('Reversed')"
-      >
-        <p class="text-lg font-semibold">{{ reversedCount }}</p>
-        <p>Reversed</p>
-      </button>
+    <!-- Reversed -->
+    <button
+      (click)="filterByStatus('Reversed')"
+      [class]="getStatusButtonClass('Reversed') + ' flex-1 min-w-[100px]'"
+    >
+      <p class="text-lg font-semibold">{{ reversedCount }}</p>
+      <p>Reversed</p>
+    </button>
 
-      <!-- Failed -->
-      <button
-        (click)="filterByStatus('Failed')"
-        [class]="getStatusButtonClass('Failed')"
-      >
-        <p class="text-lg font-semibold">{{ failedCount }}</p>
-        <p>Failed</p>
-      </button>
+    <!-- Failed -->
+    <button
+      (click)="filterByStatus('Failed')"
+      [class]="getStatusButtonClass('Failed') + ' flex-1 min-w-[100px]'"
+    >
+      <p class="text-lg font-semibold">{{ failedCount }}</p>
+      <p>Failed</p>
+    </button>
 
-      <!-- Fetched all (Show All) -->
-      <button
-        (click)="loadDeposits()"
-        [class]="
-          'min-w-[120px] md:flex-1 flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-6 py-4 rounded-md hover:bg-gray-200 transition-colors cursor-pointer ' +
-          (activeStatusFilter === null
-            ? 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100'
-            : '')
-        "
-      >
-        <p class="text-lg font-semibold">{{ totalCount }}</p>
-        <p>All deposits</p>
-      </button>
-    </div>
+    <!-- Fetched all (Show All) -->
+    <button
+      (click)="loadDeposits()"
+      [class]="
+        'flex-1 min-w-[100px] flex flex-col items-center justify-center text-gray-500 text-sm bg-[#E5E7EB] px-4 py-3 rounded-md hover:bg-gray-200 transition-colors cursor-pointer ' +
+        (activeStatusFilter === null
+          ? 'ring-2 ring-offset-2 ring-indigo-500 bg-gray-100'
+          : '')
+      "
+    >
+      <p class="text-lg font-semibold">{{ totalCount }}</p>
+      <p>All deposits</p>
+    </button>
   </div>
+</div>
 
   <!-- TABLE + Pagination -->
   <div class="mt-[10%]">

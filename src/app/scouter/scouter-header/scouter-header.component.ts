@@ -5,6 +5,7 @@ import {
   MenuController,
   PopoverController,
 } from '@ionic/angular';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { UserService } from 'src/app/services/user.service';
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopoverComponent } from 'src/app/utilities/modals/notifications-popover.component/notifications-popover.component';
@@ -41,6 +42,7 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private menuCtrl: MenuController,
+    private overlayCleanup: OverlayCleanupService,
   ) {
     this.profileImage = this.userService.getProfileImage();
   }
@@ -378,6 +380,8 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     popover.onDidDismiss().then(() => {
       console.log('📬 Notification popover dismissed, checking count...');
       this.loadStoredNotificationCount();
+      // final safety: remove any leftover backdrop
+      this.overlayCleanup.cleanBackdrops();
     });
 
     await popover.present();
@@ -412,9 +416,26 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  openMenu() {
-    this.menuCtrl.enable(true, 'wallet-menu');
-    this.menuCtrl.open('wallet-menu');
+  async openMenu() {
+    // ensure the menu controller knows about the menu id and it is enabled
+    await this.menuCtrl.enable(true, 'wallet-menu');
+
+    try {
+      const menu = await this.menuCtrl.get('wallet-menu');
+      if (menu) {
+        await this.menuCtrl.open('wallet-menu');
+      } else {
+        console.warn(
+          '⚠️ openMenu invoked but wallet-menu element not available yet',
+        );
+        // try again slightly later in case it's being added to the DOM
+        setTimeout(() => {
+          this.menuCtrl.open('wallet-menu');
+        }, 200);
+      }
+    } catch (e) {
+      console.error('❌ error opening wallet-menu', e);
+    }
   }
 
   async closeMenu() {

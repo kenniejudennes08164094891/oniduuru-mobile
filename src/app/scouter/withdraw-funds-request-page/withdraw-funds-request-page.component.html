@@ -12,7 +12,7 @@
         <img [src]="images.ViewHireFolderIcon" alt="" />
         <div class="items-center">
           <span class="font-medium text-[24px] leading-tight">
-            Hi Viki West,
+            Hi {{ userName || "User" }},
           </span>
           <p class="text-gray-200 text-lg leading-relaxed">
             View specific details of your fund withdrawal request.
@@ -107,7 +107,7 @@
               w.status === 'Successful' ? 'bg-[#057A55]' : '',
               w.status === 'Pending' ? 'bg-[#EB0B00]' : '',
               w.status === 'Reversed' ? 'bg-[#0033FF]' : '',
-              w.status === 'Declined' ? 'bg-[#EB0B00]' : ''
+              w.status === 'Declined' ? 'bg-[#EB0B00]' : '',
             ]"
           ></span>
           {{ w.status }}
@@ -124,7 +124,7 @@
           Date of Withdrawa Request
         </h4>
         <p class="text-[16px] text-[#919194] font-normal">
-          {{ withdrawal?.date | date : "MMM d, y h:mma" }}
+          {{ withdrawal?.date | date: "MMM d, y h:mma" }}
         </p>
       </div>
     </div>
@@ -144,115 +144,251 @@
     </div>
   </div>
 
+  <div *ngIf="isLoadingReceipt" class="flex justify-center items-center py-10">
+    <div class="text-center">
+      <svg
+        class="animate-spin h-8 w-8 text-indigo-600 mx-auto"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        ></circle>
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        ></path>
+      </svg>
+      <p class="text-gray-500 mt-2">Loading receipt...</p>
+    </div>
+  </div>
+
   <!-- THEN A VERSION OF THE RECIEPT GENERATED GOES HERE -->
-  <div class="p-4 mt-10">
+  <div *ngIf="!isLoadingReceipt" class="p-4 mt-10">
+    <!-- Show API receipt if available -->
     <div
-      id="receipt"
-      class="bg-white w-full h-full mx-auto shadow-md rounded-md"
+      *ngIf="receiptUrl; else htmlReceipt"
+      class="flex flex-col items-center"
     >
       <div
-        class="logcomplainModalBG flex justify-center items-center px-4 py-3 border-b rounded-t-xl bg-[#1A1A1A]"
+        class="bg-white rounded-2xl shadow-lg w-[350px] mx-auto border border-[#E3E5EA] overflow-hidden p-4"
       >
-        <h2 class="text-lg font-bold text-white">Withdrawal Receipt</h2>
+        <img
+          [src]="receiptUrl"
+          alt="Transaction Receipt"
+          class="w-full h-auto rounded-lg"
+          (load)="onReceiptLoaded()"
+          (error)="onReceiptError()"
+        />
       </div>
-
-      <div class="px-4 py-6">
-        <!-- Powered by -->
-        <h3 class="w-full mx-auto p-3 text-[#49536E] text-[16px] text-center">
-          Powered by Shoft Africa ❤️
-        </h3>
-
-        <!-- Gradient Bar -->
-        <div
-          class="w-full h-2 rounded-full my-4"
-          style="
-            background: linear-gradient(to right, #daa21f, #cc0000, #057a55);
-          "
-        ></div>
-
-        <!-- Parties -->
-        <div class="space-y-2">
-          <div
-            class="flex justify-between items-center text-[#49536E] text-[12px]"
-          >
-            <span>From(Wallet)</span>
-            <span>To (Bank)</span>
-          </div>
-          <div
-            class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
-          >
-            <!-- From Name: your platform wallet user -->
-            <span>{{ withdrawal?.fromName || "Omosehin Kehinde Jude" }}</span>
-            <!-- To Name: actual bank account name -->
-            <span>{{ withdrawal?.acctName || "Olorunda Victory Chidi" }}</span>
-          </div>
-          <div
-            class="flex justify-between items-center text-[12px] text-[#49536E]"
-          >
-            <span
-              >Wallet ID: {{ withdrawal?.walletAcctNo || "0325062797" }}</span
-            >
-            <!-- <span>Wallet ID: {{ toWalletId || "" }}</span> -->
-          </div>
-        </div>
-
-        <div
-          class="space-y-4 mt-6 bg-[#F3F4F6] px-4 py-2 rounded-lg text-[#49536E] text-[12px]"
-        >
-          <p class="flex justify-between items-center">
-            <span>Amount Withdrawn</span
-            ><span class="text-[13px] text-[#057A55] font-semibold"
-              >₦{{ withdrawal?.amount | number }}
-            </span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Transaction ID</span>
-            <span>{{ referenceId }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Bank Name</span> <span>{{ withdrawal?.bank }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Account Number</span>
-            <span>{{ withdrawal?.nubamAccNo }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Date</span>
-            <span>{{ withdrawal?.date | date : "MMM d, y h:mma" }}</span>
-          </p>
-          <p class="flex justify-between items-center">
-            <span>Status</span>
-            <span *ngIf="withdrawal as w">
-              <span
-                [ngClass]="[
-                  '',
-                  w.status === 'Successful' ? 'text-[#057A55]' : '',
-                  w.status === 'Pending' ? 'text-[#EB0B00]' : '',
-                  w.status === 'Reversed' ? 'text-[#0033FF]' : '',
-                  w.status === 'Declined' ? 'text-[#EB0B00]' : ''
-                ]"
-              >
-                {{ w.status }}
-              </span>
-            </span>
-          </p>
-        </div>
-        <!-- Footer -->
-        <div class="w-full mx-auto mt-6 text-center">
-          <p class="p-3 text-[#49536E] text-[16px]">
-            Thanks for trusting Oniduuru ∯
-          </p>
-          <p class="text-[#968A64] text-[12px]">
-            <span>#Secure.</span><span>#Fast.</span><span>#ProudlyAfrican</span>
-          </p>
-        </div>
-      </div>
+      <p class="text-sm text-gray-500 mt-2">
+        Official Receipt from Shoft Africa
+      </p>
     </div>
+
+    <ng-template #htmlReceipt>
+      <div
+        id="receipt"
+        class="bg-white w-full h-full mx-auto shadow-md rounded-md"
+      >
+        <div
+          class="logcomplainModalBG flex justify-center items-center px-4 py-3 border-b rounded-t-xl bg-[#1A1A1A]"
+        >
+          <h2 class="text-lg font-bold text-white">Withdrawal Receipt</h2>
+        </div>
+
+        <div class="px-4 py-6">
+          <!-- Powered by -->
+          <h3 class="w-full mx-auto p-3 text-[#49536E] text-[16px] text-center">
+            Powered by Shoft Africa ❤️
+          </h3>
+
+          <!-- Gradient Bar -->
+          <div
+            class="w-full h-2 rounded-full my-4"
+            style="
+              background: linear-gradient(to right, #daa21f, #cc0000, #057a55);
+            "
+          ></div>
+
+          <!-- Parties -->
+          <div class="space-y-2">
+            <div
+              class="flex justify-between items-center text-[#49536E] text-[12px]"
+            >
+              <span>From(Wallet)</span>
+              <span>To (Bank)</span>
+            </div>
+            <div
+              class="flex justify-between items-center text-[#101828] text-[12px] font-semibold"
+            >
+              <!-- From Name: your platform wallet user -->
+              <span>{{ withdrawal?.fromName || "Omosehin Kehinde Jude" }}</span>
+              <!-- To Name: actual bank account name -->
+              <span>{{
+                withdrawal?.acctName || "Olorunda Victory Chidi"
+              }}</span>
+            </div>
+            <div
+              class="flex justify-between items-center text-[12px] text-[#49536E]"
+            >
+              <span
+                >Wallet ID: {{ withdrawal?.walletAcctNo || "0325062797" }}</span
+              >
+              <!-- <span>Wallet ID: {{ toWalletId || "" }}</span> -->
+            </div>
+          </div>
+
+          <div
+            class="space-y-4 mt-6 bg-[#F3F4F6] px-4 py-2 rounded-lg text-[#49536E] text-[12px]"
+          >
+            <p class="flex justify-between items-center">
+              <span>Amount Withdrawn</span
+              ><span class="text-[13px] text-[#057A55] font-semibold"
+                >₦{{ withdrawal?.amount | number }}
+              </span>
+            </p>
+            <p class="flex justify-between items-center">
+              <span>Transaction ID</span>
+              <span>{{ referenceId }}</span>
+            </p>
+            <p class="flex justify-between items-center">
+              <span>Bank Name</span> <span>{{ withdrawal?.bank }}</span>
+            </p>
+            <p class="flex justify-between items-center">
+              <span>Account Number</span>
+              <span>{{ withdrawal?.nubamAccNo }}</span>
+            </p>
+            <p class="flex justify-between items-center">
+              <span>Date</span>
+              <span>{{ withdrawal?.date | date: "MMM d, y h:mma" }}</span>
+            </p>
+            <p class="flex justify-between items-center">
+              <span>Status</span>
+              <span *ngIf="withdrawal as w">
+                <span
+                  [ngClass]="[
+                    '',
+                    w.status === 'Successful' ? 'text-[#057A55]' : '',
+                    w.status === 'Pending' ? 'text-[#EB0B00]' : '',
+                    w.status === 'Reversed' ? 'text-[#0033FF]' : '',
+                    w.status === 'Declined' ? 'text-[#EB0B00]' : '',
+                  ]"
+                >
+                  {{ w.status }}
+                </span>
+              </span>
+            </p>
+          </div>
+          <!-- Footer -->
+          <div class="w-full mx-auto mt-6 text-center">
+            <p class="p-3 text-[#49536E] text-[16px]">
+              Thanks for trusting Oniduuru ∯
+            </p>
+            <p class="text-[#968A64] text-[12px]">
+              <span>#Secure.</span><span>#Fast.</span
+              ><span>#ProudlyAfrican</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
     <button
       (click)="downloadReceipt()"
-      class="bg-[#101828] text-white px-6 py-2 text-[20px] font-medium rounded-lg mt-10"
+      [disabled]="isDownloading"
+      class="bg-[#101828] text-white px-6 py-2 text-[20px] font-medium rounded-lg mt-10 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed w-full"
     >
-      Download Receipt
+      <span *ngIf="!isDownloading">Download Receipt</span>
+      <span *ngIf="isDownloading" class="flex items-center gap-2">
+        <svg
+          class="animate-spin h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          ></path>
+        </svg>
+        <span>Downloading...</span>
+      </span>
     </button>
+
+    <!-- Optional: Show receipt preview if URL is available -->
+    <div *ngIf="receiptUrl" class="mt-4 text-center">
+      <p class="text-sm text-green-600 mb-2">Receipt available</p>
+      <a
+        [href]="receiptUrl"
+        target="_blank"
+        class="text-indigo-600 underline text-sm"
+      >
+        View Receipt
+      </a>
+    </div>
   </div>
 </ion-content>
+
+<!-- Receipt Preview Modal -->
+<ion-modal [isOpen]="showReceiptModal" (didDismiss)="showReceiptModal = false">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Receipt Preview</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="showReceiptModal = false">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="flex flex-col items-center">
+        <img
+          *ngIf="receiptUrl"
+          [src]="receiptUrl"
+          alt="Transaction Receipt"
+          class="w-full max-w-md rounded-lg shadow-lg"
+        />
+        <div class="flex gap-4 mt-6">
+          <button
+            (click)="downloadReceipt()"
+            class="bg-[#101828] text-white px-6 py-2 rounded-lg"
+          >
+            Download
+          </button>
+          <button
+            (click)="showReceiptModal = false"
+            class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<!-- Button to open modal -->
+<button
+  *ngIf="receiptUrl"
+  (click)="showReceiptModal = true"
+  class="mt-4 text-indigo-600 underline"
+>
+  Preview Receipt
+</button>

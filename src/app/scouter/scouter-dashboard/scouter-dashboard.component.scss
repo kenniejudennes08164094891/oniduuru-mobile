@@ -87,12 +87,25 @@ app-scouter-header {
   border-radius: 0.5rem;
 }
 
-
 .safe-area-content {
   --padding-top: var(--ion-safe-area-top, 0px) !important;
   margin-top: var(--ion-safe-area-top, 0px) !important;
 }
 
+/* Ensure the chart snapshot area keeps space and doesn't collapse */
+.chart-snapshot {
+  min-height: 16rem;
+  min-width: 16rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Prevent SVG layers from capturing pointer events */
+.chart-snapshot svg {
+  pointer-events: none;
+}
 
 /* Wallet Alerts Card */
 
@@ -129,7 +142,6 @@ app-scouter-header {
   font-weight: 600;
   margin-right: 4px;
 }
-
 
 .alert-btn {
   margin-left: auto;

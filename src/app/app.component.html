@@ -1,8 +1,16 @@
 <!-- app.component.html -->
 <ion-app>
-  <!-- Shared Dynamic Wallet Menu -->
-  <ion-menu *ngIf="showWalletMenu()" side="start" menuId="wallet-menu" contentId="main-content"
-    class="scouter-menu-bg">
+  <!-- Shared Dynamic Wallet Menu (always in DOM to avoid initialization race) -->
+  <!-- We rely on [hidden] so the menu element exists before a user can click the hamburger. -->
+  <!-- showWalletMenu still controls whether the menu is visible/enabled. -->
+  <ion-menu
+    [hidden]="!showWalletMenu()"
+    side="start"
+    menuId="wallet-menu"
+    contentId="main-content"
+    class="scouter-menu-bg"
+    (ionDidOpen)="onWalletMenuOpen()"
+  >
     <ion-header>
       <ion-toolbar class="menu-toolbar">
         <ion-title class="menu-title">Wallets (₦)</ion-title>
@@ -12,34 +20,57 @@
     <ion-content>
       <ion-list class="px-4 flex flex-col gap-2">
         <!-- Wallet Dashboard - Always visible -->
-        <ion-item button class="menu-button" (click)="navigateToWallet('dashboard')">
-          <ion-label>Wallet Dashboard</ion-label>
+        <ion-item
+          button
+          class="menu-button"
+          (click)="navigateToWallet('dashboard')"
+        >
+          <ion-label class="px-4">Wallet Dashboard</ion-label>
         </ion-item>
 
         <!-- Wallet Profile - Show only if NO wallet profile (to create one) -->
-        <ion-item *ngIf="!hasWalletProfile" button class="menu-button"
-          (click)="navigateToWallet('profile')">
-          <ion-label>Create Wallet Profile</ion-label>
+        <ion-item
+          *ngIf="!hasWalletProfile"
+          button
+          class="menu-button"
+          (click)="navigateToWallet('profile')"
+        >
+          <ion-label class="px-4">Create Wallet Profile</ion-label>
         </ion-item>
 
         <!-- Fund Wallet - Show only if wallet profile EXISTS -->
-        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('fund')">
-          <ion-label>Fund Wallet</ion-label>
+        <ion-item
+          *ngIf="hasWalletProfile"
+          button
+          class="menu-button"
+          (click)="navigateToWallet('fund')"
+        >
+          <ion-label class="px-4">Fund Wallet</ion-label>
         </ion-item>
 
         <!-- Withdraw Funds - Show only if wallet profile EXISTS -->
-        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('withdraw')">
-          <ion-label>Withdraw to Bank</ion-label>
+        <ion-item
+          *ngIf="hasWalletProfile"
+          button
+          class="menu-button"
+          (click)="navigateToWallet('withdraw')"
+        >
+          <ion-label class="px-4">Withdraw to Bank</ion-label>
         </ion-item>
 
         <!-- Funds Transfer - Show only if wallet profile EXISTS -->
-        <ion-item *ngIf="hasWalletProfile" button class="menu-button" (click)="navigateToWallet('transfer')">
-          <ion-label>Funds Transfer</ion-label>
+        <ion-item
+          *ngIf="hasWalletProfile"
+          button
+          class="menu-button"
+          (click)="navigateToWallet('transfer')"
+        >
+          <ion-label class="px-4">Funds Transfer</ion-label>
         </ion-item>
 
         <!-- Dashboard - Always visible -->
         <ion-item button class="menu-button" (click)="navigateToDashboard()">
-          <ion-label>Dashboard</ion-label>
+          <ion-label class="px-4">Dashboard</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>

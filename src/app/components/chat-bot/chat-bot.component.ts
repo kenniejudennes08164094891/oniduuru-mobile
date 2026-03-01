@@ -14,6 +14,7 @@ import { ChatVisibilityService } from '../../services/chat-visibility.service';
 import { imageIcons } from 'src/app/models/stores';
 import { AuthService } from '../../services/auth.service';
 import { filter, Subscription } from 'rxjs';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 
 @Component({
   selector: 'app-chat-bot',
@@ -39,8 +40,6 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   private lastTouchStart = 0;
 
-
-
   // Visibility properties
   showChatButton = false;
   private routerSubscription?: Subscription;
@@ -50,8 +49,9 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
     private chatService: ChatService,
     private router: Router,
     private authService: AuthService,
-    private chatVisibilityService: ChatVisibilityService
-  ) { }
+    private chatVisibilityService: ChatVisibilityService,
+    private overlayCleanup: OverlayCleanupService,
+  ) {}
 
   ngOnInit() {
     this.loadPositionFromStorage();
@@ -78,7 +78,7 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
         const isOnChatPage = this.isOnChatPage(this.router.url);
 
         this.showChatButton = loggedIn && !isOnAuthPage && !isOnChatPage;
-      }
+      },
     );
 
     // Initial check
@@ -122,64 +122,63 @@ export class ChatBotComponent implements AfterViewChecked, OnInit, OnDestroy {
     return chatRoutes.some((route) => url.startsWith(route));
   }
 
+  onPointerDown(event: PointerEvent) {
+    if (this.showChatButton) {
+      event.preventDefault();
+      event.stopPropagation();
 
+      const startX = event.clientX;
+      const startY = event.clientY;
 
+      this.dragStartPosition = {
+        x: startX - this.position.x,
+        y: startY - this.position.y,
+      };
 
-onPointerDown(event: PointerEvent) {
-  if (this.showChatButton) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const startX = event.clientX;
-    const startY = event.clientY;
-    
-    this.dragStartPosition = {
-      x: startX - this.position.x,
-      y: startY - this.position.y,
-    };
-    
-    const onPointerMove = (moveEvent: PointerEvent) => {
-      this.isDragging = true;
-      this.position.x = moveEvent.clientX - this.dragStartPosition.x;
-      this.position.y = moveEvent.clientY - this.dragStartPosition.y;
-      this.constrainToViewport();
-    };
-    
-    const onPointerUp = (upEvent: PointerEvent) => {
-      const endX = upEvent.clientX;
-      const endY = upEvent.clientY;
-      
-      // Calculate distance moved
-      const distance = Math.sqrt(
-        Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
-      );
-      
-      // If moved less than 8px, treat as click
-      if (distance < 8) {
-        this.openChat();
-      }
-      
-      if (this.isDragging) {
-        this.savePositionToStorage();
-      }
-      
-      this.isDragging = false;
-      
-      // Clean up listeners
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
-    };
-    
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', onPointerUp);
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        this.isDragging = true;
+        this.position.x = moveEvent.clientX - this.dragStartPosition.x;
+        this.position.y = moveEvent.clientY - this.dragStartPosition.y;
+        this.constrainToViewport();
+      };
+
+      const onPointerUp = (upEvent: PointerEvent) => {
+        const endX = upEvent.clientX;
+        const endY = upEvent.clientY;
+
+        // Calculate distance moved
+        const distance = Math.sqrt(
+          Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2),
+        );
+
+        // If moved less than 8px, treat as click
+        if (distance < 8) {
+          this.openChat();
+        }
+
+        if (this.isDragging) {
+          this.savePositionToStorage();
+        }
+
+        this.isDragging = false;
+
+        // Clean up listeners
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+      };
+
+      document.addEventListener('pointermove', onPointerMove);
+      document.addEventListener('pointerup', onPointerUp);
+    }
   }
-}
 
-openChat() {
-  if (this.showChatButton) {
-    this.router.navigate(['/chat']);
+  openChat() {
+    if (this.showChatButton) {
+      // clear any stray backdrops before leaving the current screen
+      this.overlayCleanup.cleanBackdrops();
+      this.router.navigate(['/chat']);
+    }
   }
-}
   private constrainToViewport() {
     const buttonWidth = 56; // w-14 = 3.5rem = 56px
     const buttonHeight = 56;
@@ -189,11 +188,11 @@ openChat() {
 
     this.position.x = Math.max(
       padding,
-      Math.min(this.position.x, viewportWidth - buttonWidth - padding)
+      Math.min(this.position.x, viewportWidth - buttonWidth - padding),
     );
     this.position.y = Math.max(
       padding,
-      Math.min(this.position.y, viewportHeight - buttonHeight - padding)
+      Math.min(this.position.y, viewportHeight - buttonHeight - padding),
     );
   }
 
@@ -207,7 +206,7 @@ openChat() {
       // Default position: bottom right with some padding
       this.position = {
         x: window.innerWidth - 72, // 56px (button) + 16px (padding)
-        y: window.innerHeight - 72
+        y: window.innerHeight - 72,
       };
     }
   }
@@ -220,7 +219,7 @@ openChat() {
   resetPosition() {
     this.position = {
       x: window.innerWidth - 72,
-      y: window.innerHeight - 72
+      y: window.innerHeight - 72,
     };
     this.savePositionToStorage();
   }
@@ -247,7 +246,7 @@ openChat() {
         this.messagesContainer.nativeElement.scrollTop =
           this.messagesContainer.nativeElement.scrollHeight;
       }
-    } catch (err) { }
+    } catch (err) {}
   }
 
   loadMessages() {
@@ -276,7 +275,7 @@ openChat() {
 
     const userMessage = await this.chatService.addMessage(
       this.newMessage,
-      'user'
+      'user',
     );
     this.messages.push(userMessage);
 
@@ -292,7 +291,7 @@ openChat() {
       console.error('Error sending message:', error);
       const errorMessage = await this.chatService.addMessage(
         'Sorry, I encountered an error. Please try again.',
-        'bot'
+        'bot',
       );
       this.messages.push(errorMessage);
     } finally {

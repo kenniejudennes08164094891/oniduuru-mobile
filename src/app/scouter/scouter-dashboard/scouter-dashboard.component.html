@@ -166,7 +166,7 @@
             >
               <!-- Left: Circle Chart -->
               <div
-                class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80"
+                class="relative flex items-center justify-center h-64 w-64 md:h-80 md:w-80 chart-snapshot"
               >
                 <ng-container
                   *ngFor="
@@ -306,9 +306,12 @@
 
         <!-- Payment Status Card - Changes based on payment status -->
         <div
-          class="dark-card-background relative rounded-lg p-6 mb-6 overflow-hidden"
+          class="dark-card-background relative rounded-xl p-6 mb-6 overflow-hidden"
         >
-          <div class="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+          <!-- Fixed: Added rounded-lg with !important -->
+          <div
+            class="absolute inset-0 bg-black bg-opacity-60 z-0 rounded-[inherit]"
+          ></div>
 
           <!-- Content changes based on payment status -->
           <ng-container [ngSwitch]="paymentStatus">

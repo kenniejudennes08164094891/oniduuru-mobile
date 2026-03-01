@@ -2,6 +2,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { PopoverController, MenuController, IonIcon } from '@ionic/angular';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopoverComponent } from 'src/app/utilities/modals/notifications-popover.component/notifications-popover.component';
 import { Router } from '@angular/router';
@@ -28,6 +29,7 @@ export class TalentHeaderComponent implements OnInit {
     private emmitterService: EmmittersService,
     private endpointService: EndpointService,
     private menuCtrl: MenuController,
+    private overlayCleanup: OverlayCleanupService,
   ) {}
 
   // Check if we're on a wallet page
@@ -37,9 +39,21 @@ export class TalentHeaderComponent implements OnInit {
   }
 
   // Add this method to open the shared wallet menu
-  openMenu() {
-    this.menuCtrl.enable(true, 'wallet-menu');
-    this.menuCtrl.open('wallet-menu');
+  async openMenu() {
+    await this.menuCtrl.enable(true, 'wallet-menu');
+    try {
+      const menu = await this.menuCtrl.get('wallet-menu');
+      if (menu) {
+        await this.menuCtrl.open('wallet-menu');
+      } else {
+        console.warn('⚠️ openMenu invoked but wallet-menu not yet available');
+        setTimeout(() => {
+          this.menuCtrl.open('wallet-menu');
+        }, 200);
+      }
+    } catch (e) {
+      console.error('❌ error opening wallet-menu', e);
+    }
   }
 
   // Add this method to close the menu
@@ -63,6 +77,11 @@ export class TalentHeaderComponent implements OnInit {
       side: 'bottom',
       translucent: true,
     });
+
+    popover.onDidDismiss().then(() => {
+      this.overlayCleanup.cleanBackdrops();
+    });
+
     await popover.present();
   }
 

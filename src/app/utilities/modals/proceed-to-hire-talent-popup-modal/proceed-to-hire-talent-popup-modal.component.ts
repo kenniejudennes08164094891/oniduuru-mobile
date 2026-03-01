@@ -5,6 +5,7 @@ import { MockPayment, SkillSet } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 
 @Component({
   selector: 'app-proceed-to-hire-talent-popup-modal',
@@ -30,14 +31,14 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
-    private router: Router
+    private router: Router,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform); // ✅ gets dismiss + back button
+    super(modalCtrl, platform, overlayCleanup); // ✅ gets dismiss + back button
   }
 
-
   override async dismiss() {
-   await this.modalCtrl.dismiss(); // ✅ closes the modal properly
+    await this.modalCtrl.dismiss(); // ✅ closes the modal properly
   }
 
   // Filtering + pagination
@@ -51,7 +52,8 @@ export class ProceedToHireTalentPopupModalComponent extends BaseModal {
         !this.selectedSkillLevel ||
         hire.skillSet.some(
           (s: SkillSet) =>
-            s.skillLevel.toLowerCase() === this.selectedSkillLevel.toLowerCase()
+            s.skillLevel.toLowerCase() ===
+            this.selectedSkillLevel.toLowerCase(),
         );
 
       return matchesSearch && matchesSkill;

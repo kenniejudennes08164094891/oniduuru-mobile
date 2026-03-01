@@ -1,8 +1,29 @@
-// @import url('https://fonts.cdnfonts.com/css/euclid-circular-a');
+/* Safe Area Handling for App Shell */
+ion-app {
+  /* Ensure the app respects safe areas */
+  padding-top: var(--ion-safe-area-top, 0px);
+  padding-bottom: var(--ion-safe-area-bottom, 0px);
+  padding-left: var(--ion-safe-area-left, 0px);
+  padding-right: var(--ion-safe-area-right, 0px);
+}
 
-// body, html, ion-app, div, ion-content, ion-header {
-//   // font-family: 'Euclid Circular A', sans-serif;
-// }
+/* Ensure ion-router-outlet respects safe areas */
+ion-router-outlet {
+  padding-top: var(--ion-safe-area-top, 0px);
+  padding-bottom: var(--ion-safe-area-bottom, 0px);
+}
+
+/* Ensure ion-content respects safe areas */
+ion-content {
+  --padding-top: var(--ion-safe-area-top, 0px);
+  --padding-bottom: var(--ion-safe-area-bottom, 0px);
+  --padding-start: var(--ion-safe-area-left, 0px);
+  --padding-end: var(--ion-safe-area-right, 0px);
+
+  /* Also handle safe area directly */
+  --ion-safe-area-top: var(--ion-safe-area-top, 0px);
+  --ion-safe-area-bottom: var(--ion-safe-area-bottom, 0px);
+}
 
 /* Sidebar menu background */
 .scouter-menu-bg {
@@ -15,6 +36,9 @@
     --background: #1f2937;
     color: white;
     padding: 5px;
+
+    /* Ensure toolbar respects safe area */
+    padding-top: var(--ion-safe-area-top, 0px);
   }
 
   /* Title left-aligned using toolbar flex */
@@ -47,6 +71,14 @@
     &:hover {
       background: #1a3a8a; /* slightly darker on hover */
     }
+  }
+
+  /* Menu content safe area */
+  ion-content {
+    --padding-top: var(--ion-safe-area-top, 0px);
+    --padding-bottom: var(--ion-safe-area-bottom, 0px);
+    --padding-start: var(--ion-safe-area-left, 0px);
+    --padding-end: var(--ion-safe-area-right, 0px);
   }
 }
 

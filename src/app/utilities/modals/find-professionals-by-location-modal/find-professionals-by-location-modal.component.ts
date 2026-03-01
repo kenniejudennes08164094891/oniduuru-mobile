@@ -13,6 +13,7 @@ import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -394,8 +395,9 @@ export class FindProfessionalsByLocationModalComponent
     platform: Platform,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -1427,5 +1429,8 @@ export class FindProfessionalsByLocationModalComponent
 
     this.navSub?.unsubscribe();
     this.mapInitialized = false;
+
+    // ensure no stray backdrops remain when this modal closes
+    this.overlayCleanup.cleanBackdrops();
   }
 }

@@ -1,6 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
+import {
+  catchError,
+  map,
+  Observable,
+  of,
+  tap,
+  throwError,
+  timeout,
+} from 'rxjs';
 import { JwtInterceptorService } from './jwt-interceptor.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../environments/environment';
@@ -1473,10 +1481,55 @@ export class EndpointService {
     });
   }
 
-  public fetchWalletProfile(uniqueId:string):Observable<any>{
+  public fetchWalletProfile(uniqueId: string): Observable<any> {
     let url = `${environment?.baseUrl}/${endpoints?.fetchMyWallet}?uniqueId=${uniqueId.trim()}`;
     return this.http.get<any>(url, {
-      headers: this.jwtInterceptor.customHttpHeaders
+      headers: this.jwtInterceptor.customHttpHeaders,
     });
+  }
+
+  /**
+   * Fetch transaction receipt by type and reference ID
+   * POST /wallets/v1/fetch-transaction-receipt
+   * Returns the image URL in response.data
+   */
+  public fetchTransactionReceipt(
+    receiptType: 'deposit' | 'transfer' | 'withdrawal',
+    referenceId: string,
+  ): Observable<any> {
+    const url = `${environment.baseUrl}/${endpoints.fetchTransactionReceipt}`;
+
+    const payload = {
+      receiptType: receiptType,
+      referenceId: referenceId,
+    };
+
+    console.log('📄 Fetching transaction receipt from backend:', {
+      endpoint: url,
+      receiptType: receiptType,
+      referenceId: referenceId,
+    });
+
+    return this.http
+      .post<any>(url, payload, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000), // 15 second timeout
+        tap((response) => {
+          console.log('✅ Receipt fetched successfully:', response);
+          if (response?.data) {
+            console.log('🖼️ Receipt URL:', response.data);
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Error fetching transaction receipt:', {
+            status: error.status,
+            message: error.message,
+            error: error.error,
+          });
+          return throwError(() => error);
+        }),
+      );
   }
 }

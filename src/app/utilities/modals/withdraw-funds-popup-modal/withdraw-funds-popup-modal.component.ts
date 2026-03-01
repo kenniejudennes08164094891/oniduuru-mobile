@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { banks, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
@@ -32,7 +33,7 @@ export class WithdrawFundsPopupModalComponent
   implements OnInit
 {
   @Input() isModalOpen: boolean = false;
-  
+
   // Add these Input properties to receive data from parent component
   @Input() currentUser: any = null;
   @Input() userUniqueId: string | null = null;
@@ -73,8 +74,9 @@ export class WithdrawFundsPopupModalComponent
     private toast: ToastsService,
     private ngZone: NgZone,
     private endpointService: EndpointService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -83,7 +85,7 @@ export class WithdrawFundsPopupModalComponent
       currentUser: this.currentUser,
       userUniqueId: this.userUniqueId,
       walletId: this.walletId,
-      userRole: this.userRole
+      userRole: this.userRole,
     });
 
     // Load banks from API
@@ -95,30 +97,30 @@ export class WithdrawFundsPopupModalComponent
    */
   loadBanks() {
     this.isLoadingBanks = true;
-    
+
     this.endpointService.getNigerianBanks().subscribe({
       next: (response) => {
         this.isLoadingBanks = false;
         console.log('🏦 Banks loaded:', response);
-        
+
         // Store the full bank objects
         this.banks = response;
-        
+
         // Extract bank names for dropdown display
         this.bankNames = response.map((bank: Bank) => bank.bankName);
-        
+
         console.log('🏦 Bank names extracted:', this.bankNames.length);
       },
       error: (error) => {
         this.isLoadingBanks = false;
         console.error('❌ Error loading banks:', error);
-        
+
         // Fallback to mock banks if API fails
         this.bankNames = banks;
         this.banks = banks.map((name: string) => ({ bankName: name }));
-        
+
         this.toast.openSnackBar('Using offline bank list', 'info');
-      }
+      },
     });
   }
 
@@ -130,9 +132,9 @@ export class WithdrawFundsPopupModalComponent
     this.selectedBank = bankName;
     this.isBankDropdownOpen = false;
     this.bank = bankName;
-    
+
     // Find the full bank object if needed
-    const selectedBankObj = this.banks.find(b => b.bankName === bankName);
+    const selectedBankObj = this.banks.find((b) => b.bankName === bankName);
     console.log('🏦 Selected bank:', selectedBankObj);
   }
 
@@ -155,7 +157,7 @@ export class WithdrawFundsPopupModalComponent
       reader.readAsDataURL(file);
     }
   }
-  
+
   removeScreenshot() {
     this.selectedFile = null;
     this.previewUrl = null;
@@ -198,7 +200,10 @@ export class WithdrawFundsPopupModalComponent
 
     // Check if we have the required user data
     if (!this.userUniqueId) {
-      this.toast.openSnackBar('User information missing. Please try again.', 'error');
+      this.toast.openSnackBar(
+        'User information missing. Please try again.',
+        'error',
+      );
       console.error('❌ Missing userUniqueId in withdraw modal');
       return;
     }
@@ -224,7 +229,8 @@ export class WithdrawFundsPopupModalComponent
         const withdrawalData = res.data || res;
         const newWithdrawal = {
           id: withdrawalData.withdrawalReferenceNumber || transactionId,
-          transactionId: withdrawalData.withdrawalReferenceNumber || transactionId,
+          transactionId:
+            withdrawalData.withdrawalReferenceNumber || transactionId,
           amount: this.amount!,
           bank: this.bank!,
           nubamAccNo: this.accountNumber,
@@ -255,9 +261,12 @@ export class WithdrawFundsPopupModalComponent
       },
       error: async (err: any) => {
         console.error('❌ Withdrawal error:', err);
-        
+
         // Show error toast with specific message
-        const errorMessage = err.error?.message || err.message || 'Withdrawal failed. Please try again.';
+        const errorMessage =
+          err.error?.message ||
+          err.message ||
+          'Withdrawal failed. Please try again.';
         this.toast.openSnackBar(errorMessage, 'error');
 
         // Still dismiss but with error status

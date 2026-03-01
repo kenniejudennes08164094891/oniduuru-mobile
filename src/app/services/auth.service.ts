@@ -253,6 +253,14 @@ export class AuthService {
 
     const userService = this.injector.get(UserService);
     userService.updateFullProfile(userData);
+    try {
+      // Ensure a consistent persisted copy of profile data is present
+      localStorage.setItem('user_profile_data', JSON.stringify(userData));
+      // Let UserService pick up the latest storage values immediately
+      userService.refreshFromStorage();
+    } catch (e) {
+      console.warn('Could not persist user_profile_data:', e);
+    }
     this.currentUserSubject.next(userData);
     this.userLoggedInSubject.next(true);
 

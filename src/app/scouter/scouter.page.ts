@@ -93,11 +93,51 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
+  // Add this to your component
+  private setupRealtimePasswordMatch() {
+    const passwordControl = this.forms[2].get('password');
+    const confirmPasswordControl = this.forms[2].get('confirmPassword');
+
+    if (confirmPasswordControl) {
+      // Listen to changes on confirm password
+      confirmPasswordControl.valueChanges.subscribe(() => {
+        const password = passwordControl?.value;
+        const confirmPassword = confirmPasswordControl.value;
+
+        if (confirmPassword && password !== confirmPassword) {
+          // Set mismatch error immediately
+          confirmPasswordControl.setErrors({
+            ...confirmPasswordControl.errors,
+            mismatch: true,
+          });
+        } else if (confirmPasswordControl.errors?.['mismatch']) {
+          // Remove mismatch error if passwords match
+          const { mismatch, ...errors } = confirmPasswordControl.errors;
+          confirmPasswordControl.setErrors(
+            Object.keys(errors).length ? errors : null,
+          );
+        }
+      });
+
+      // Also listen to password changes to update confirm password validation
+      if (passwordControl) {
+        passwordControl.valueChanges.subscribe(() => {
+          const confirmPassword = confirmPasswordControl.value;
+          if (confirmPassword) {
+            // Trigger validation on confirm password when password changes
+            confirmPasswordControl.updateValueAndValidity({ emitEvent: false });
+          }
+        });
+      }
+    }
+  }
+
   ngOnInit() {
     this.initializeForms();
     this.initializeOtpControls();
     this.setupEmailValidation();
     this.setupPasswordStrengthListener();
+    this.setupRealtimePasswordMatch(); 
   }
 
   ngOnDestroy() {
@@ -1008,67 +1048,70 @@ export class ScouterPage implements OnInit, OnDestroy {
     this.sendOtpAutomatically();
   }
 
-// OTP Input Handling
-onOtpInput(event: Event, index: number) {
-  const input = event.target as HTMLInputElement;
-  const value = input.value;
+  // OTP Input Handling
+  onOtpInput(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
 
-  // Clear error when user starts typing
-  if (this.otpError) {
-    this.otpError = '';
-  }
-
-  // Only allow single digit
-  if (value && !/^\d$/.test(value)) {
-    input.value = '';
-    this.otpControls[index].setValue('');
-    return;
-  }
-
-  // Update the control value
-  this.otpControls[index].setValue(value);
-
-  // Auto-advance to next input if current has value
-  if (value && index < this.otpControls.length - 1) {
-    // Find the next input with class 'otp-input'
-    const inputs = document.querySelectorAll('.otp-input');
-    if (inputs && inputs[index + 1]) {
-      (inputs[index + 1] as HTMLInputElement).focus();
+    // Clear error when user starts typing
+    if (this.otpError) {
+      this.otpError = '';
     }
-  }
 
-  // Auto-submit when last digit is entered
-  if (
-    value &&
-    index === this.otpControls.length - 1 &&
-    this.isOtpComplete()
-  ) {
-    setTimeout(() => this.verifyOtpAndProceed(), 100);
-  }
-}
+    // Only allow single digit
+    if (value && !/^\d$/.test(value)) {
+      input.value = '';
+      this.otpControls[index].setValue('');
+      return;
+    }
 
-// Also update onKeyDown for better backspace handling
-onKeyDown(event: KeyboardEvent, index: number) {
-  const input = event.target as HTMLInputElement;
-  
-  if (event.key === 'Backspace') {
-    // If current input is empty and not first, move to previous
-    if (!input.value && index > 0) {
+    // Update the control value
+    this.otpControls[index].setValue(value);
+
+    // Auto-advance to next input if current has value
+    if (value && index < this.otpControls.length - 1) {
+      // Find the next input with class 'otp-input'
       const inputs = document.querySelectorAll('.otp-input');
-      if (inputs && inputs[index - 1]) {
-        (inputs[index - 1] as HTMLInputElement).focus();
+      if (inputs && inputs[index + 1]) {
+        (inputs[index + 1] as HTMLInputElement).focus();
       }
     }
-  } else if (event.key === 'ArrowLeft' && index > 0) {
-    // Left arrow navigation
-    const inputs = document.querySelectorAll('.otp-input');
-    (inputs[index - 1] as HTMLInputElement)?.focus();
-  } else if (event.key === 'ArrowRight' && index < this.otpControls.length - 1) {
-    // Right arrow navigation
-    const inputs = document.querySelectorAll('.otp-input');
-    (inputs[index + 1] as HTMLInputElement)?.focus();
+
+    // Auto-submit when last digit is entered
+    if (
+      value &&
+      index === this.otpControls.length - 1 &&
+      this.isOtpComplete()
+    ) {
+      setTimeout(() => this.verifyOtpAndProceed(), 100);
+    }
   }
-}
+
+  // Also update onKeyDown for better backspace handling
+  onKeyDown(event: KeyboardEvent, index: number) {
+    const input = event.target as HTMLInputElement;
+
+    if (event.key === 'Backspace') {
+      // If current input is empty and not first, move to previous
+      if (!input.value && index > 0) {
+        const inputs = document.querySelectorAll('.otp-input');
+        if (inputs && inputs[index - 1]) {
+          (inputs[index - 1] as HTMLInputElement).focus();
+        }
+      }
+    } else if (event.key === 'ArrowLeft' && index > 0) {
+      // Left arrow navigation
+      const inputs = document.querySelectorAll('.otp-input');
+      (inputs[index - 1] as HTMLInputElement)?.focus();
+    } else if (
+      event.key === 'ArrowRight' &&
+      index < this.otpControls.length - 1
+    ) {
+      // Right arrow navigation
+      const inputs = document.querySelectorAll('.otp-input');
+      (inputs[index + 1] as HTMLInputElement)?.focus();
+    }
+  }
 
   onOtpPaste(event: ClipboardEvent) {
     event.preventDefault();
@@ -1091,8 +1134,6 @@ onKeyDown(event: KeyboardEvent, index: number) {
       }
     }
   }
-
- 
 
   clearOtpFields() {
     this.otpControls.forEach((control) => {

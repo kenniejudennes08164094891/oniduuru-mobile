@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
@@ -49,9 +50,10 @@ export class TransferFundsPopupModalComponent
     private toast: ToastsService,
     private ngZone: NgZone,
     private fb: FormBuilder,
-    private endpointService: EndpointService
+    private endpointService: EndpointService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -60,7 +62,7 @@ export class TransferFundsPopupModalComponent
       currentUser: this.currentUser,
       userUniqueId: this.userUniqueId,
       originatingWalletId: this.originatingWalletId,
-      userRole: this.userRole
+      userRole: this.userRole,
     });
   }
 
@@ -95,20 +97,23 @@ export class TransferFundsPopupModalComponent
    */
   private calculateCharge(amount: number) {
     this.isLoadingCharge = true;
-    this.endpointService.calculateTransactionCharge(amount.toString()).subscribe({
-      next: (response) => {
-        this.isLoadingCharge = false;
-        // Adjust based on actual API response structure
-        this.transactionCharge = response?.data?.charge || response?.charge || 200;
-        console.log('💰 Transaction charge:', this.transactionCharge);
-      },
-      error: (error) => {
-        this.isLoadingCharge = false;
-        console.error('❌ Error calculating charge:', error);
-        // Use default charge
-        this.transactionCharge = 200;
-      }
-    });
+    this.endpointService
+      .calculateTransactionCharge(amount.toString())
+      .subscribe({
+        next: (response) => {
+          this.isLoadingCharge = false;
+          // Adjust based on actual API response structure
+          this.transactionCharge =
+            response?.data?.charge || response?.charge || 200;
+          console.log('💰 Transaction charge:', this.transactionCharge);
+        },
+        error: (error) => {
+          this.isLoadingCharge = false;
+          console.error('❌ Error calculating charge:', error);
+          // Use default charge
+          this.transactionCharge = 200;
+        },
+      });
   }
 
   async createFundTransfer() {
@@ -130,7 +135,7 @@ export class TransferFundsPopupModalComponent
       amount: formData.amount,
       designatedWalletAcct: formData.accountNumber, // The wallet ID you're sending funds to
       originatingWalletAcct: this.originatingWalletId, // Your wallet ID you're removing money from
-      marketHireId: formData.marketHireId || undefined // Optional
+      marketHireId: formData.marketHireId || undefined, // Optional
     };
 
     console.log('💰 Submitting transfer with payload:', payload);
@@ -140,7 +145,8 @@ export class TransferFundsPopupModalComponent
         console.log('✅ Transfer successful:', res);
 
         const transferData = res.data || res;
-        const transactionId = transferData.transferReferenceId || 'TRF-' + Date.now();
+        const transactionId =
+          transferData.transferReferenceId || 'TRF-' + Date.now();
 
         const newTransfer = {
           amount: formData.amount,
@@ -155,7 +161,7 @@ export class TransferFundsPopupModalComponent
           toName: formData.walletName,
           fromWalletId: this.originatingWalletId,
           toWalletId: formData.accountNumber,
-          charge: this.transactionCharge
+          charge: this.transactionCharge,
         };
 
         // Pass data back to parent
@@ -180,7 +186,10 @@ export class TransferFundsPopupModalComponent
       error: async (err: any) => {
         console.error('❌ Transfer error:', err);
 
-        const errorMessage = err.error?.message || err.message || 'Transfer failed. Please try again.';
+        const errorMessage =
+          err.error?.message ||
+          err.message ||
+          'Transfer failed. Please try again.';
         this.toast.openSnackBar(errorMessage, 'error');
 
         this.modalCtrl.dismiss(null, 'error');
@@ -192,7 +201,7 @@ export class TransferFundsPopupModalComponent
    * Mark all form controls as touched
    */
   private markFormGroupTouched(formGroup: FormGroup) {
-    Object.values(formGroup.controls).forEach(control => {
+    Object.values(formGroup.controls).forEach((control) => {
       control.markAsTouched();
       if (control instanceof FormGroup) {
         this.markFormGroupTouched(control);
@@ -205,12 +214,20 @@ export class TransferFundsPopupModalComponent
   }
 
   override async dismiss() {
-   await super.dismiss();
+    await super.dismiss();
   }
 
   // Getters for form controls
-  get accountNumberControl() { return this.transferForm.get('accountNumber'); }
-  get walletNameControl() { return this.transferForm.get('walletName'); }
-  get amountControl() { return this.transferForm.get('amount'); }
-  get agreeTermsControl() { return this.transferForm.get('agreeTerms'); }
+  get accountNumberControl() {
+    return this.transferForm.get('accountNumber');
+  }
+  get walletNameControl() {
+    return this.transferForm.get('walletName');
+  }
+  get amountControl() {
+    return this.transferForm.get('amount');
+  }
+  get agreeTermsControl() {
+    return this.transferForm.get('agreeTerms');
+  }
 }
