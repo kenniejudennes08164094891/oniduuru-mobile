@@ -18,7 +18,7 @@ import { ConcludeYourHiringProcessPageComponent } from './scouter/conclude-your-
 import { FundWalletRequestPageComponent } from './scouter/fund-wallet-request-page/fund-wallet-request-page.component';
 import { WithdrawFundsRequestPageComponent } from './scouter/withdraw-funds-request-page/withdraw-funds-request-page.component';
 import { TransferFundsRequestPageComponent } from './scouter/transfer-funds-request-page/transfer-funds-request-page.component';
-import { AuthRedirectGuard } from './guard/auth.guard';
+import { AuthRedirectGuard, ProtectedRouteGuard } from './guard/auth.guard';
 import { LoginGuard } from './guard/login.guard';
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { ChatPageComponent } from './pages/chat-page/chat-page.component';
@@ -46,15 +46,19 @@ const routes: Routes = [
   {
     path: 'talent/onboarding',
     loadComponent: () =>
-      import('./talent/onboarding/onboarding.page').then(m => m.OnboardingPage)
+      import('./talent/onboarding/onboarding.page').then(
+        (m) => m.OnboardingPage,
+      ),
   },
   {
     path: 'scouter',
+    canActivate: [ProtectedRouteGuard],
     loadChildren: () =>
       import('./scouter/scouter.module').then((m) => m.ScouterPageModule),
   },
   {
     path: 'talent',
+    canActivate: [ProtectedRouteGuard],
     loadChildren: () =>
       import('./talent/talent.module').then((m) => m.TalentPageModule),
   },
@@ -62,90 +66,103 @@ const routes: Routes = [
     path: 'create-record/:talentId',
     loadChildren: () =>
       import('./talent/create-record/create-record.module').then(
-        (m) => m.CreateRecordPageModule
+        (m) => m.CreateRecordPageModule,
       ),
   },
   {
     path: 'view-hires',
     loadChildren: () =>
       import('./talent/view-hires/view-hires.module').then(
-        (m) => m.ViewHiresPageModule
+        (m) => m.ViewHiresPageModule,
       ),
   },
   {
     path: 'market-price-preposition',
     loadChildren: () =>
-      import(
-        './talent/market-price-preposition/market-price-preposition.module'
-      ).then((m) => m.MarketPricePrepositionPageModule),
+      import('./talent/market-price-preposition/market-price-preposition.module').then(
+        (m) => m.MarketPricePrepositionPageModule,
+      ),
   },
   {
     path: 'utilities',
     loadChildren: () =>
       import('./utilities/utilities.module').then((m) => m.UtilitiesPageModule),
   },
-  { path: 'scouter/profile', component: ProfilePageComponent },
+  {
+    path: 'scouter/profile',
+    component: ProfilePageComponent,
+    canActivate: [ProtectedRouteGuard],
+  },
   {
     path: 'scouter/account-activation',
     component: AccountActivationPageComponent,
+    canActivate: [ProtectedRouteGuard],
   },
-  { path: 'scouter/view-hires', component: ViewAllHiresPageComponent },
-  { path: 'scouter/hire-talent', component: HireTalentPageComponent },
-  
+  {
+    path: 'scouter/view-hires',
+    component: ViewAllHiresPageComponent,
+    canActivate: [ProtectedRouteGuard],
+  },
+  {
+    path: 'scouter/hire-talent',
+    component: HireTalentPageComponent,
+    canActivate: [ProtectedRouteGuard],
+  },
+
   // ========== SCOUTER WALLET ROUTES ==========
-  { 
-    path: 'scouter/wallet-page', 
+  {
+    path: 'scouter/wallet-page',
     component: WalletPageComponent,
-    data: { role: 'scouter' }
+    data: { role: 'scouter' },
   },
-  { 
-    path: 'scouter/wallet-page/wallet-profile', 
+  {
+    path: 'scouter/wallet-page/wallet-profile',
     component: WalletProfileComponent,
-    data: { role: 'scouter' }
+    data: { role: 'scouter' },
   },
-  { 
-    path: 'scouter/wallet-page/fund-wallet', 
+  {
+    path: 'scouter/wallet-page/fund-wallet',
     component: FundWalletComponent,
-    data: { role: 'scouter' }
+    data: { role: 'scouter' },
   },
-  { 
-    path: 'scouter/wallet-page/withdraw-funds', 
+  {
+    path: 'scouter/wallet-page/withdraw-funds',
     component: WithdrawFundComponent,
-    data: { role: 'scouter' }
+    data: { role: 'scouter' },
   },
-  { 
-    path: 'scouter/wallet-page/fund-transfer', 
+  {
+    path: 'scouter/wallet-page/fund-transfer',
     component: FundTransferComponent,
-    data: { role: 'scouter' }
+    data: { role: 'scouter' },
   },
-  
+
   // ========== TALENT WALLET ROUTES ==========
-  { 
-    path: 'talent/wallet-page', 
+  {
+    path: 'talent/wallet-page',
     component: WalletPageComponent,
-    data: { role: 'talent' }
+    data: { role: 'talent' },
   },
-  { 
-    path: 'talent/wallet-page/wallet-profile', 
+  {
+    path: 'talent/wallet-page/wallet-profile',
     component: WalletProfileComponent,
-    data: { role: 'talent' }
+    data: { role: 'talent' },
   },
-  { 
-    path: 'talent/wallet-page/fund-wallet', 
+  {
+    path: 'talent/wallet-page/fund-wallet',
     component: FundWalletComponent,
-    data: { role: 'talent' }
+    data: { role: 'talent' },
   },
-  { 
-    path: 'talent/wallet-page/withdraw-funds', 
+  {
+    path: 'talent/wallet-page/withdraw-funds',
     component: WithdrawFundComponent,
-    data: { role: 'talent' }
+    data: { role: 'talent' },
   },
-  { 
-    path: 'talent/wallet-page/fund-transfer', 
+  {
+    path: 'talent/wallet-page/fund-transfer',
     component: FundTransferComponent,
-    data: { role: 'talent' }
+    data: { role: 'talent' },
   },
-  
+
   // ========== COMMON REQUEST ROUTES (shared between roles) ==========
   {
     path: ':role/wallet-page/fund-wallet/fund-wallet-request/:id',
@@ -159,7 +176,7 @@ const routes: Routes = [
     path: ':role/wallet-page/fund-transfer/fund-transfer-request/:id',
     component: TransferFundsRequestPageComponent,
   },
-  
+
   // ========== OTHER SCOUTER-SPECIFIC ROUTES ==========
   {
     path: 'scouter/market-engagement-market-price-preparation/:id',

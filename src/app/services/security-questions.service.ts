@@ -139,7 +139,8 @@ export class SecurityQuestionsService {
             return throwError(() => ({
               ...errorResponse,
               type: 'other',
-              displayMessage: error?.error?.message || 'Failed to load security questions',
+              displayMessage:
+                error?.error?.message || 'Failed to load security questions',
             }));
           }
         }),

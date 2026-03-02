@@ -114,7 +114,7 @@ export class AuthService {
         },
       })
       .pipe(
-        timeout(15000),
+        timeout(60000), // increased from 15s to 60s to prevent timeout on slow network/backend
         retry({
           count: 2,
           delay: (error, retryCount) => {
@@ -159,7 +159,11 @@ export class AuthService {
     sessionStorage.clear();
     localStorage.clear();
     this.toastr.openSnackBar('Logging out...', 'success');
-    setTimeout(() => this.router.navigate(['/auth/login']), 300);
+    // Use replaceUrl to prevent back button navigation
+    setTimeout(
+      () => this.router.navigate(['/auth/login'], { replaceUrl: true }),
+      300,
+    );
 
     const url = `${this.baseUrl}/${endpoints.logoutUser}`;
     const token = this.getToken();
@@ -181,7 +185,8 @@ export class AuthService {
             console.error('Server logout failed, clearing local data:', err);
             this.clearAuthData();
           },
-          complete: () => this.router.navigate(['/auth/login']),
+          complete: () =>
+            this.router.navigate(['/auth/login'], { replaceUrl: true }),
         }),
         catchError((error) => throwError(() => error)),
       );
