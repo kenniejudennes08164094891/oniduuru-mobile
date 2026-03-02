@@ -72,18 +72,29 @@ ion-input input {
 
 // NOTIFICATIONS
 /* NOTIFICATIONS MODAL - FIXED */
-// .notification-fullscreen-modal {
-//   --height: 100%;
-//   --width: 85%;
-//   --border-radius: 0;
-//   --box-shadow: none;
+.notification-fullscreen-modal {
+  /* make modal occupy entire viewport for any screen size */
+  --height: 100vh;
+  --width: 100vw;
+  --max-width: 100vw;
+  --border-radius: 0;
+  --box-shadow: none;
 
-//   /* ✅ CRITICAL: Disable all scroll-based gestures on the modal wrapper */
-//   --overflow: hidden;
-//   overscroll-behavior: contain;
-// }
+  /* ✅ Prevent scroll gestures on wrapper */
+  --overflow: hidden;
+  overscroll-behavior: contain;
+  margin: 0; /* no horizontal centering needed */
+}
 
-// /* ✅ Target the modal wrapper to prevent pull-to-dismiss */
+/* ensure inner wrapper also stretches */
+.notification-fullscreen-modal .modal-wrapper {
+  height: 100vh !important;
+  width: 100vw !important;
+  overscroll-behavior: contain !important;
+  background: white !important;
+}
+
+/* ✅ Target the modal wrapper to prevent pull-to-dismiss */
 // .notification-fullscreen-modal .modal-wrapper {
 //   overscroll-behavior: contain !important;
 //   overflow-y: hidden !important;
@@ -96,14 +107,14 @@ ion-input input {
 //   --background: white;
 // }
 
-// /* ✅ Prevent any touch actions that could cause dismissal */
-// .notification-fullscreen-modal {
-//   pointer-events: auto;
-// }
+/* ✅ Prevent any touch actions that could cause dismissal */
+.notification-fullscreen-modal {
+  pointer-events: auto;
+}
 
-// .notification-fullscreen-modal .modal-shadow {
-//   display: none;
-// }
+.notification-fullscreen-modal .modal-shadow {
+  display: none;
+}
 
 // NOTIFICATION POPOVER - FIXED POSITION
 ion-popover.notification-popover {
@@ -118,17 +129,18 @@ ion-popover.notification-popover {
   --backdrop-opacity: 0.3;
   --border-radius: 24px;
 
-  // Position - align right edge with trigger
-  --offset-x: 0px; // Reset offset
+  // Position - align left-start to prevent overflow on right side
+  --offset-x: -8px; // Small margin from left
   --offset-y: 12px; // Space below trigger
 
-  // Transform origin to right side
-  --transform-origin: right top;
+  // Transform origin to top-left
+  --transform-origin: left top;
 
   &::part(content) {
     border-radius: 24px;
     overflow: hidden;
-    transform-origin: right top; // Ensure animation from right
+    transform-origin: left top; // Ensure animation from left
+    max-width: calc(100vw - 16px); // Prevent overflow past viewport
   }
 
   &::part(backdrop) {

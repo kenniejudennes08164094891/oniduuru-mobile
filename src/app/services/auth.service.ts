@@ -223,9 +223,19 @@ export class AuthService {
       'profile_was_saved',
     ].forEach((key) => localStorage.removeItem(key));
 
+    // update reactive subjects
     this.currentUserSubject.next(null);
     this.userLoggedInSubject.next(false);
     this.profileUpdatedSubject.next(false);
+
+    // Also clear payment status so next login starts fresh
+    try {
+      const paymentService = this.injector.get(PaymentService);
+      paymentService.clearPaymentStatus();
+    } catch (e) {
+      console.warn('PaymentService not available when clearing auth data');
+    }
+
     console.log('All auth data cleared completely');
   }
 
@@ -235,6 +245,21 @@ export class AuthService {
     if (!loginResponse.access_token) {
       throw new Error('No access token received');
     }
+
+    // 🔴 CRITICAL FIX: Clear any old user data BEFORE setting new credentials
+    // This prevents previous user's data from persisting when a new user logs in
+    [
+      'user_data',
+      'user_profile_data',
+      'profile_image',
+      'eniyan',
+      'hasWalletProfile',
+      'registration_email',
+      'talentId',
+      'scouterId',
+      'chatButtonPosition',
+    ].forEach((key) => localStorage.removeItem(key));
+    sessionStorage.clear();
 
     localStorage.setItem('access_token', loginResponse.access_token);
 

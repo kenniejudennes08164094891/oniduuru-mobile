@@ -289,13 +289,18 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
 
   async openNotificationPopover(event: any) {
     console.log('📬 Opening notification popover');
-    const popover = await this.popoverCtrl.create({
+    const popover = await this.popoverCtrl.create(<any>{
       component: NotificationsPopoverComponent,
       event: event,
       translucent: false,
       showBackdrop: true,
-      backdropDismiss: true,
-      alignment: 'end',
+      // do not dismiss when user scrolls or taps outside;
+      // this makes the popover persistent until the close button is used
+      backdropDismiss: false,
+      // disable swipe-to-close gestures (iOS default) and keyboard
+      swipeToClose: false,
+      keyboardClose: false,
+      alignment: 'start',
       side: 'bottom',
       cssClass: 'notification-popover',
       arrow: false,
@@ -320,13 +325,17 @@ export class ScouterHeaderComponent implements OnInit, OnDestroy {
   }
 
   async openNotificationModal() {
-    const modal = await this.modalCtrl.create({
+    const modal = await this.modalCtrl.create(<any>{
       component: NotificationsPopoverComponent,
       cssClass: 'notification-fullscreen-modal',
-      breakpoints: [0, 1],
-      initialBreakpoint: 1,
-      backdropDismiss: true,
-      canDismiss: true,
+      // remove sliding breakpoints to prevent swipe gestures entirely
+      // keeper users from accidentally dragging it closed
+      // breakpoints: [0, 1],
+      // initialBreakpoint: 1,
+      backdropDismiss: false,
+      canDismiss: false, // will be dismissed only via close button
+      swipeToClose: false,
+      keyboardClose: false,
     });
     modal.onDidDismiss().then(() => {
       console.log('📬 Notification modal dismissed, checking count...');

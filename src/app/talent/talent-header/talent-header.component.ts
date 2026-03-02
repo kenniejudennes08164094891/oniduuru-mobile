@@ -76,11 +76,14 @@ export class TalentHeaderComponent implements OnInit {
   }
 
   async openNotificationPopover(ev: any) {
-    const popover = await this.popoverCtrl.create({
+    const popover = await this.popoverCtrl.create(<any>{
       component: NotificationsPopoverComponent,
       event: ev,
       side: 'bottom',
       translucent: true,
+      backdropDismiss: false,
+      swipeToClose: false,
+      keyboardClose: false,
     });
 
     popover.onDidDismiss().then(() => {

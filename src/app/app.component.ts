@@ -88,12 +88,34 @@ export class AppComponent implements OnInit, OnDestroy {
     // Listen for login events
     this.authService.userLoggedIn$.subscribe((loggedIn) => {
       if (loggedIn) {
+        console.log('✅ User logged in event detected in AppComponent');
+        this.getUserRole(); // Update user role immediately
+        // immediately clear and check profile
+        this.hasWalletProfile = false;
+        this.checkWalletProfile();
         setTimeout(() => {
           this.appInitService.onUserLogin();
-          this.checkWalletProfile(); // Check wallet when user logs in
+          this.checkWalletProfile(); // Check wallet when user logs in again
         }, 1000);
       } else {
+        console.log('❌ User logged out event detected in AppComponent');
         this.hasWalletProfile = false; // Reset when logged out
+        this.currentUserRole = ''; // Reset role when logged out
+        this.currentUrl = ''; // Reset URL cache
+      }
+    });
+
+    // Also react to explicit user data changes (profileUpdated or currentUser)
+    this.authService.currentUser$.subscribe((user) => {
+      console.log('👤 currentUser$ changed, re-checking wallet');
+      this.getUserRole();
+      this.checkWalletProfile();
+    });
+
+    this.authService.profileUpdated$.subscribe((updated) => {
+      if (updated) {
+        console.log('📝 Profile updated event received in AppComponent');
+        this.checkWalletProfile();
       }
     });
 
@@ -187,6 +209,9 @@ export class AppComponent implements OnInit, OnDestroy {
         console.warn('Error getting user role:', e);
         this.currentUserRole = '';
       }
+    } else {
+      this.currentUserRole = '';
+      console.log('👤 No user data, clearing role');
     }
   }
 
@@ -196,40 +221,51 @@ export class AppComponent implements OnInit, OnDestroy {
   private checkWalletProfile(): void {
     console.log('🔍 === WALLET PROFILE CHECK START ===');
     try {
-      // Get user data from multiple sources
-      const userData = localStorage.getItem('user_data');
-      const userProfileData = localStorage.getItem('user_profile_data');
-      const localStorageFlag = localStorage.getItem('hasWalletProfile');
+      // always reset before recalculating
+      this.hasWalletProfile = false;
 
-      console.log('📦 Available data sources:');
-      console.log('  - user_data exists:', !!userData);
-      console.log('  - user_profile_data exists:', !!userProfileData);
-      console.log('  - hasWalletProfile flag:', localStorageFlag);
+      // Prefer currentUser subject (should be up-to-date)
+      const storedUser = this.authService.getCurrentUser() || null;
+      let user = storedUser;
 
-      if (!userData && !userProfileData) {
-        this.hasWalletProfile = false;
-        console.log('❌ No user data found');
-        return;
-      }
-
-      // Try parsing user_data first, then user_profile_data as fallback
-      let user = null;
-      try {
-        user = userData ? JSON.parse(userData) : null;
-        if (!user && userProfileData) {
-          user = JSON.parse(userProfileData);
-          console.log('ℹ️ Using user_profile_data instead of user_data');
-        }
-      } catch (parseError) {
-        console.error('❌ Error parsing user data:', parseError);
-        this.hasWalletProfile = false;
-        return;
-      }
-
+      // fall back to localStorage if needed
       if (!user) {
-        this.hasWalletProfile = false;
-        console.log('❌ Could not parse any user data');
-        return;
+        const userData = localStorage.getItem('user_data');
+        const userProfileData = localStorage.getItem('user_profile_data');
+        const localStorageFlag = localStorage.getItem('hasWalletProfile');
+
+        console.log('📦 Available data sources:');
+        console.log('  - user_data exists:', !!userData);
+        console.log('  - user_profile_data exists:', !!userProfileData);
+        console.log('  - hasWalletProfile flag:', localStorageFlag);
+
+        if (userData) {
+          try {
+            user = JSON.parse(userData);
+          } catch (parseError) {
+            console.error('❌ Error parsing user_data:', parseError);
+          }
+        }
+        if (!user && userProfileData) {
+          try {
+            user = JSON.parse(userProfileData);
+            console.log('ℹ️ Using user_profile_data instead of user_data');
+          } catch (parseError) {
+            console.error('❌ Error parsing user_profile_data:', parseError);
+          }
+        }
+
+        // if still no user, check storage flag
+        if (!user && localStorageFlag === 'true') {
+          this.hasWalletProfile = true;
+          console.log('✅ Inferred wallet from storage flag only');
+          return;
+        }
+
+        if (!user) {
+          console.log('❌ No user data found, abort');
+          return;
+        }
       }
 
       const userId = user?.scouterId || user?.talentId || user?.id || 'unknown';
@@ -302,10 +338,13 @@ export class AppComponent implements OnInit, OnDestroy {
       }
 
       // CHECK 7: Simple localStorage flag (set by wallet profile creation)
-      if (!foundWallet && localStorageFlag === 'true') {
-        console.log('✅ CHECK 7: localStorage hasWalletProfile flag is true');
-        foundWallet = true;
-        reasons.push('localStorage flag');
+      if (!foundWallet) {
+        const localStorageFlag = localStorage.getItem('hasWalletProfile');
+        if (localStorageFlag === 'true') {
+          console.log('✅ CHECK 7: localStorage hasWalletProfile flag is true');
+          foundWallet = true;
+          reasons.push('localStorage flag');
+        }
       }
 
       // Log full user object for debugging if wallet not found

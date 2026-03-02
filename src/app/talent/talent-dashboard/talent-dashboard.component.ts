@@ -121,29 +121,70 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
     private endpointService: EndpointService,
     private toast: ToastsService,
     private toggleVisibilityService: ToggleVisibilitySharedStateService, // Add this
-  ) {}
-
-  async getWalletProfile(){
-    try{
-      const userData:any = localStorage.getItem('user_data');
-      const talentId = localStorage.getItem('talentId') ?? JSON.parse(userData)?.talentId;
-      const response = await firstValueFrom(this.endpointService.fetchWalletProfile(talentId));
-      if(response){
-        this.hasWalletProfile = true;
+  ) {
+    // clear and refresh when authentication state changes to avoid stale data
+    this.authService.userLoggedIn$.subscribe((loggedIn) => {
+      console.log('🔄 Talent dashboard login state changed:', loggedIn);
+      this.resetDashboardState();
+      if (loggedIn) {
+        // reload everything fresh
+        this.getWalletProfile();
+        this.loadBalanceVisibilityState().catch(() => {});
+        this.getTalentDetails();
+        this.loadTalentProfile();
+        this.fetchWalletBalance();
+        this.loadDashboardData();
       }
-    }catch (e:any) {
+    });
+  }
+
+  /**
+   * Notify application-wide listeners that a wallet profile exists. This mirrors
+   * the helper used in the scouter dashboard so that the menu button and other
+   * components can react regardless of which dashboard page performed the
+   * lookup.
+   */
+  private emitWalletFound(): void {
+    try {
+      const walletEvents: any = (this.authService as any).injector?.get
+        ? (this.authService as any).injector.get('WalletEventsService')
+        : null;
+      if (walletEvents && walletEvents.emitWalletProfileCreated) {
+        walletEvents.emitWalletProfileCreated();
+      }
+    } catch (e) {
+      console.warn(
+        'Unable to emit wallet found event from talent dashboard',
+        e,
+      );
+    }
+  }
+
+  async getWalletProfile() {
+    try {
+      const userData: any = localStorage.getItem('user_data');
+      const talentId =
+        localStorage.getItem('talentId') ?? JSON.parse(userData)?.talentId;
+      const response = await firstValueFrom(
+        this.endpointService.fetchWalletProfile(talentId),
+      );
+      if (response) {
+        this.hasWalletProfile = true;
+        this.emitWalletFound();
+      }
+    } catch (e: any) {
       console.clear();
-      console.log("error status>>",e?.status);
-      console.error("error>>",e?.error?.message ?? e?.message);
-      if(e?.status === 404){
+      console.log('error status>>', e?.status);
+      console.error('error>>', e?.error?.message ?? e?.message);
+      if (e?.status === 404) {
         this.hasWalletProfile = false;
       }
     }
   }
 
-  async routeToWalletOnboarding(){
+  async routeToWalletOnboarding() {
     console.clear();
-   await this.router.navigateByUrl("/talent/wallet-page/wallet-profile");
+    await this.router.navigateByUrl('/talent/wallet-page/wallet-profile');
   }
 
   async ngOnInit(): Promise<void> {
@@ -193,6 +234,27 @@ export class TalentDashboardComponent implements OnInit, OnDestroy {
       this.ratingsChart.destroy();
       this.ratingsChart = null;
     }
+  }
+
+  /**
+   * Resets component state to defaults. Used when the user logs out or when the
+   * view needs to be re-initialized (e.g. switching accounts).
+   */
+  private resetDashboardState(): void {
+    this.loading = 'Loading...';
+    this.showSpinner = true;
+    this.walletBalance = 0;
+    this.walletData = null;
+    this.hasWalletProfile = null;
+    this.talentStats = null;
+    this.dashboardCards.forEach((c) => (c.value = 0));
+    this.dashboardStatCards = [];
+    this.percentageCircles = [];
+    this.ratingsData = [];
+    this.recentHires = [];
+    this.userName = 'User';
+    this.timeOfDay = '';
+    this.timeIcon = '';
   }
 
   private async loadBalanceVisibilityState(): Promise<void> {
