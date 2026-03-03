@@ -11,28 +11,30 @@ import { imageIcons } from 'src/app/models/stores';
   standalone: true,
 })
 export class SignupSelectComponent implements OnInit {
-
   talentImage = imageIcons.talentImage;
   scouterImage = imageIcons.scouterImage;
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute
-  ) { }
+    private route: ActivatedRoute,
+  ) {}
 
-  ngOnInit() { }
+  ngOnInit() {}
   // 'create-account',
 
-  routeToTalentSignup(){
-   setTimeout(() => {
-    this.router.navigate(['/talent/onboarding'], {relativeTo: this.route});
-   }, 200)
+  routeToTalentSignup() {
+    setTimeout(() => {
+      // absolute navigation avoids any quirks with the current ActivatedRoute
+      this.router.navigateByUrl('/talent/onboarding');
+    }, 200);
   }
 
-  routeToScouterSignup(){
-   setTimeout(() => {
-     this.router.navigate(['/scouter/create-account'], {relativeTo: this.route});
-   },200)
+  routeToScouterSignup() {
+    setTimeout(() => {
+      // previously the navigation target was protected by the top‑level
+      // ProtectedRouteGuard; moving the signup route outside of that guard
+      // (see app-routing.module.ts) means an absolute path is safe.
+      this.router.navigateByUrl('/scouter/create-account');
+    }, 200);
   }
-
 }

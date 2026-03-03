@@ -54,7 +54,9 @@ import { FundWalletRequestPageComponent } from './fund-wallet-request-page/fund-
 import { WithdrawFundsRequestPageComponent } from './withdraw-funds-request-page/withdraw-funds-request-page.component';
 import { TransferFundsRequestPageComponent } from './transfer-funds-request-page/transfer-funds-request-page.component';
 
-import { RouterModule } from '@angular/router';
+// RouterModule import was only used for a default route.  The
+// necessary paths are now defined in ScouterPageRoutingModule.
+// import { RouterModule } from '@angular/router';
 import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 import { AuthPageModule } from '../auth/auth.module';
 import { ReconsiderConfirmationModalComponent } from '../utilities/modals/reconsider-confirmation-modal/reconsider-confirmation-modal.component';
@@ -65,7 +67,6 @@ import { ReconsiderOfferModalComponent } from '../utilities/modals/reconsider-of
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild([{ path: '', component: ScouterPage }]),
     ScouterPageRoutingModule,
     //TalentPageModule,
     NgChartsModule,

@@ -50,6 +50,14 @@ const routes: Routes = [
         (m) => m.OnboardingPage,
       ),
   },
+  // public entry point for scouter sign‑up (doesn't require authentication)
+  // placed before the guarded "scouter" route so it matches first.
+  {
+    path: 'scouter/create-account',
+    canActivate: [LoginGuard], // prevent logged‑in users from accessing the signup flow
+    loadChildren: () =>
+      import('./scouter/scouter.module').then((m) => m.ScouterPageModule),
+  },
   {
     path: 'scouter',
     canActivate: [ProtectedRouteGuard],
@@ -85,8 +93,11 @@ const routes: Routes = [
   },
   {
     path: 'utilities',
-    loadChildren: () =>
-      import('./utilities/utilities.module').then((m) => m.UtilitiesPageModule),
+    // load the page component directly so the module's own routing is not
+    // invoked; avoids registering a stray empty child path when the module
+    // is imported elsewhere (see scouter/talent modules).
+    loadComponent: () =>
+      import('./utilities/utilities.page').then((m) => m.UtilitiesPage),
   },
   {
     path: 'scouter/profile',
