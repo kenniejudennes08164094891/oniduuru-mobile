@@ -249,6 +249,8 @@ export class FindProfessionalsByLocationModalComponent
   extends BaseModal
   implements OnInit, AfterViewInit, OnDestroy
 {
+  // used to ignore the very next document click when a card is shown (marker click)
+  private ignoreNextOutsideClick: boolean = false;
   @Input() hires: any[] = [];
   @Input() location: string = '';
   @Input() allSkills: string[] = [];
@@ -1058,16 +1060,20 @@ export class FindProfessionalsByLocationModalComponent
   }
 
   private showProfileCard(talent: any, marker: any, index: number): void {
+    console.log('📍 Showing profile card for marker', index, talent?.name);
     this.selectedTalent = talent;
     this.cdr.detectChanges();
 
     // Create the profile card element
     const div = document.createElement('div');
     div.className = 'profile-card-overlay';
+    // mark this card as protected from the global cleanup service while visible
+    div.setAttribute('data-ignore-cleanup', 'true');
     div.style.position = 'fixed';
     div.style.width = '320px';
     div.style.minHeight = '220px';
-    div.style.zIndex = '10000';
+    // make sure it sits above the modal/backdrop
+    div.style.zIndex = '20000';
     div.style.pointerEvents = 'auto';
     div.style.opacity = '0';
     div.style.transition =
@@ -1077,14 +1083,14 @@ export class FindProfessionalsByLocationModalComponent
     div.style.transform = 'translate(-50%, -45%) scale(0.95)';
     div.style.backgroundColor = 'transparent';
 
-    // Get skills as skill tags
-    const skillTags =
-      talent.skillSet
-        ?.slice(0, 3)
-        .map((s: any) => s.jobTitle)
-        .filter(Boolean) || [];
+    // Generate skill tags and compute hidden count
+    const allSkills = (talent.skillSet || [])
+      .map((s: any) => s.jobTitle)
+      .filter(Boolean);
+    const visibleSkills = allSkills.slice(0, 3);
+    const hiddenCount = allSkills.length - visibleSkills.length;
 
-    // Create card HTML - REMOVED any extra red dots
+    // Create card HTML
     div.innerHTML = `
     <div class="profile-card" style="position: relative; padding: 24px; height: 100%; background: white; border-radius: 20px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3); border: 2px solid #FF3B3B; overflow: hidden;">
       <button class="close-card-btn" 
@@ -1108,7 +1114,7 @@ export class FindProfessionalsByLocationModalComponent
             ${talent.name}
           </h3>
           <div class="skill-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
-            ${skillTags
+            ${visibleSkills
               .map(
                 (skill: any) => `
               <span class="skill-tag" style="background: #f5f5f5; color: #666; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; white-space: nowrap;">
@@ -1117,7 +1123,7 @@ export class FindProfessionalsByLocationModalComponent
             `,
               )
               .join('')}
-            ${talent.skillSet?.length > 3 ? `<span class="more-skills" style="color: #FF3B3B; font-size: 11px; font-weight: bold; margin-left: 4px;">+${talent.skillSet.length - 3}</span>` : ''}
+            ${hiddenCount > 0 ? `<span class="more-skills" style="color: #FF3B3B; font-size: 11px; font-weight: bold; margin-left: 4px;">+${hiddenCount}</span>` : ''}
           </div>
         </div>
       </div>
@@ -1138,10 +1144,11 @@ export class FindProfessionalsByLocationModalComponent
     requestAnimationFrame(() => {
       div.style.opacity = '1';
       div.style.transform = 'translate(-50%, -50%) scale(1)';
+      div.classList.add('visible');
     });
 
     // Add event listeners
-    setTimeout(() => {
+    {
       const viewProfileBtn = div.querySelector('.view-profile-btn');
       const closeBtn = div.querySelector('.close-card-btn');
 
@@ -1162,17 +1169,21 @@ export class FindProfessionalsByLocationModalComponent
 
       // Close card when clicking outside
       const closeOnOutsideClick = (e: MouseEvent) => {
+        // ignore the very first click that opened the card
+        if (this.ignoreNextOutsideClick) {
+          this.ignoreNextOutsideClick = false;
+          return;
+        }
         if (div && !div.contains(e.target as Node)) {
           this.closeProfileCardElement(div);
         }
       };
 
-      setTimeout(() => {
-        document.addEventListener('click', closeOnOutsideClick);
-      }, 0);
-
+      // mark flag so the soon-to-fire map click doesn't immediately close
+      this.ignoreNextOutsideClick = true;
+      document.addEventListener('click', closeOnOutsideClick);
       (div as any).outsideClickListener = closeOnOutsideClick;
-    }, 50);
+    }
   }
 
   private closeProfileCardElement(cardElement: HTMLElement): void {
@@ -1186,6 +1197,8 @@ export class FindProfessionalsByLocationModalComponent
           (cardElement as any).outsideClickListener,
         );
       }
+      // remove protection attribute so cleanup won't accidentally keep it later
+      cardElement.removeAttribute('data-ignore-cleanup');
 
       setTimeout(() => {
         if (cardElement.parentNode) {
@@ -1204,13 +1217,13 @@ export class FindProfessionalsByLocationModalComponent
     this.cdr.detectChanges();
 
     try {
-      const skillsText =
-        talent.skillSet
-          ?.slice(0, 2)
-          .map((s: any) => s.jobTitle)
-          .join(', ') || 'No skills listed';
-
-      const hasMoreSkills = talent.skillSet?.length > 2;
+      const allSkills = (talent.skillSet || [])
+        .map((s: any) => s.jobTitle)
+        .filter(Boolean);
+      const visible = allSkills.slice(0, 2);
+      const skillsText = visible.join(', ') || 'No skills listed';
+      const hidden = allSkills.length - visible.length;
+      const hasMoreSkills = hidden > 0;
 
       const content = `
         <div class="bg-gray-900 text-white rounded-xl border-2 border-red-500 shadow-2xl overflow-hidden max-w-xs">
@@ -1229,7 +1242,7 @@ export class FindProfessionalsByLocationModalComponent
                 <div class="flex items-center gap-1 mt-1">
                   <ion-icon name="briefcase-outline" class="text-red-400 text-xs"></ion-icon>
                   <span class="text-xs text-gray-300 truncate">${skillsText}</span>
-                  ${hasMoreSkills ? '<span class="text-xs text-red-400 ml-1">+ more</span>' : ''}
+                  ${hasMoreSkills ? `<span class="text-xs text-red-400 ml-1">+${hidden}</span>` : ''}
                 </div>
               </div>
             </div>

@@ -43,7 +43,11 @@ export class OverlayCleanupService {
     });
 
     // also remove any custom overlays we add manually (profile cards, etc.)
-    const custom = document.querySelectorAll('.profile-card-overlay');
+    // but allow callers to mark a card as protected by adding
+    // `data-ignore-cleanup="true"` so it doesn't disappear immediately
+    const custom = document.querySelectorAll(
+      '.profile-card-overlay:not([data-ignore-cleanup])',
+    );
     custom.forEach((el) => el.remove());
 
     // Remove any leftover modal wrappers
