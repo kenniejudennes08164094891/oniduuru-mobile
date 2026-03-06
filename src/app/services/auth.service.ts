@@ -156,34 +156,66 @@ export class AuthService {
 
   // ============ LOGOUT ============
   logoutUser(): Observable<any> {
-    sessionStorage.clear();
-    localStorage.clear();
-    this.toastr.openSnackBar('Logging out...', 'success');
-    setTimeout(() => this.router.navigate(['/auth/login']), 300);
-
-    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
+    // ✅ Get token BEFORE clearing storage
     const token = this.getToken();
 
+    this.toastr.openSnackBar('Logging out...', 'success');
+
+    // ✅ If no token, just clear local data and redirect
     if (!token) {
+      // ✅ Clear all auth data AFTER getting token
       this.clearAuthData();
+      sessionStorage.clear();
+      
+      setTimeout(() => {
+        this.router.navigate(['/auth/login'], { replaceUrl: true });
+      }, 300);
+
       return of({ message: 'Local logout completed' });
     }
+
+    // ✅ Call server logout endpoint BEFORE clearing storage
+    const url = `${this.baseUrl}/${endpoints.logoutUser}`;
 
     return this.http
       .post<any>(url, {}, { headers: { Authorization: `Bearer ${token}` } })
       .pipe(
+        timeout(5000), // 5 second timeout for logout endpoint
         tap({
           next: (res) => {
-            console.log('Server logout successful:', res);
+            console.log('✅ Server logout successful:', res);
+            // Clear data only after successful server response
             this.clearAuthData();
+            sessionStorage.clear();
+            
+            // Prevent browser back navigation by replacing history
+            setTimeout(() => {
+              this.router.navigate(['/auth/login'], { replaceUrl: true });
+            }, 100);
           },
           error: (err) => {
-            console.error('Server logout failed, clearing local data:', err);
+            console.error('⚠️ Server logout failed, clearing local data anyway:', err);
+            // Clear data even if server call fails
             this.clearAuthData();
+            sessionStorage.clear();
+            
+            // Still navigate to login
+            setTimeout(() => {
+              this.router.navigate(['/auth/login'], { replaceUrl: true });
+            }, 100);
           },
-          complete: () => this.router.navigate(['/auth/login']),
         }),
-        catchError((error) => throwError(() => error)),
+        catchError((error) => {
+          // Final safety net - ensure data is cleared
+          this.clearAuthData();
+          sessionStorage.clear();
+          
+          setTimeout(() => {
+            this.router.navigate(['/auth/login'], { replaceUrl: true });
+          }, 100);
+          
+          return of({ message: 'Logout completed with errors', error });
+        }),
       );
   }
   // ============ TOKEN MANAGEMENT ============

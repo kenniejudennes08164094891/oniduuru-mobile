@@ -2,7 +2,7 @@ import {Component, Input, OnInit} from '@angular/core';
 import {ModalController, Platform} from '@ionic/angular';
 import {BaseModal} from 'src/app/base/base-modal.abstract';
 import {EndpointService} from 'src/app/services/endpoint.service';
-import {FundWalletReceiptModalComponent} from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
+import {FundWalletReceiptModalComponent} from '../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';'../fund-wallet-receipt-modal/fund-wallet-receipt-modal.component';
 import {ToastsService} from 'src/app/services/toasts.service';
 import {PaymentService} from 'src/app/services/payment.service';
 import {AuthService} from "../../../services/auth.service";

@@ -17,7 +17,7 @@ export class AuthRedirectGuard implements CanActivate {
       return false;
     }
     if (token && userData) {
-      return true; // ✅ User is logged in
+      return true; // ✅ User is loged in
     }
 
     // ❌ No token, redirect to login

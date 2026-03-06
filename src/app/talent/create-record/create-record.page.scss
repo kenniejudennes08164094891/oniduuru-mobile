@@ -13,3 +13,13 @@ img {
   transition: opacity .2s ease;
 }
 
+/* Make textarea placeholder lighter than entered text */
+textarea::placeholder {
+  color: rgba(15, 23, 42, 0.45); /* slightly muted/dim placeholder */
+}
+
+/* Ensure entered text stays darker */
+textarea {
+  color: #0f172a; /* dark text color for user input */
+}
+
