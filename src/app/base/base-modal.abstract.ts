@@ -1,5 +1,6 @@
 import { Directive, OnInit, OnDestroy } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
+import { OverlayCleanupService } from '../services/overlay-cleanup.service';
 
 @Directive()
 export abstract class BaseModal implements OnInit, OnDestroy {
@@ -7,7 +8,8 @@ export abstract class BaseModal implements OnInit, OnDestroy {
 
   constructor(
     protected modalCtrl: ModalController,
-    protected platform: Platform
+    protected platform: Platform,
+    protected overlayCleanup: OverlayCleanupService,
   ) {}
 
   ngOnInit() {
@@ -15,7 +17,7 @@ export abstract class BaseModal implements OnInit, OnDestroy {
       10,
       () => {
         this.dismiss();
-      }
+      },
     );
   }
 
@@ -23,10 +25,15 @@ export abstract class BaseModal implements OnInit, OnDestroy {
     if (this.backButtonListener) {
       this.backButtonListener.unsubscribe();
     }
+    // ensure any backdrop left by this modal is cleared
+    this.overlayCleanup.cleanBackdrops();
   }
 
   async dismiss(data?: any, role?: string) {
-    window.history.go(-1);
-   await this.modalCtrl.dismiss(data, role);
+    // Don't call window.history.go(-1) as it causes unwanted navigation back
+    await this.modalCtrl.dismiss(data, role);
+    // after dismissing, also run a quick cleanup in case the framework left a
+    // backdrop behind (seen on older Ionic versions in Android webview)
+    this.overlayCleanup.cleanBackdrops();
   }
 }

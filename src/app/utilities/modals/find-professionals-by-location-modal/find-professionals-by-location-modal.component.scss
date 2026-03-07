@@ -71,7 +71,8 @@
 /* Profile card overlay - keep same size */
 .profile-card-overlay {
   position: fixed !important;
-  z-index: 10000 !important;
+  /* make sure card sits above any ion-modal backdrop/UI */
+  z-index: 20000 !important;
   pointer-events: auto !important;
   transition:
     opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),

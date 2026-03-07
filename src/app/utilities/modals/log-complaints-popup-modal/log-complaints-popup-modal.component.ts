@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 
@@ -18,9 +19,10 @@ export class LogComplaintsPopupModalComponent extends BaseModal {
   constructor(
     modalCtrl: ModalController,
     platform: Platform,
-    private location: Location
+    private location: Location,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   async closeModal(): Promise<void> {

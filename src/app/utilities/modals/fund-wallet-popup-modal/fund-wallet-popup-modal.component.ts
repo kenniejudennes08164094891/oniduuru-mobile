@@ -9,6 +9,7 @@ import {AuthService} from "../../../services/auth.service";
 import {Browser} from '@capacitor/browser';
 import {Subject, firstValueFrom, debounceTime, distinctUntilChanged, filter, from, of} from "rxjs";
 import {catchError, map, switchMap} from "rxjs/operators";
+import {OverlayCleanupService} from "../../../services/overlay-cleanup.service";
 
 @Component({
   selector: 'app-fund-wallet-popup-modal',
@@ -58,9 +59,10 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
     private paymentService: PaymentService,
     private toastService: ToastsService,
     private endpointService: EndpointService,
-    private authService: AuthService
+    private authService: AuthService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform,overlayCleanup);
   }
 
   override ngOnInit() {
@@ -141,24 +143,26 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
       debounceTime(1500),
       distinctUntilChanged(),
       filter((value:string) => value.length === 10),
-      switchMap((value: string) => from(this.endpointService.fetchWalletProfile(undefined, value, true))
+      switchMap((value: string) => from(this.endpointService.fetchWalletProfile(
+        this.loadCurrentUser()?.role === "scouter" ? this.loadCurrentUser()?.scouterId : this.loadCurrentUser()?.role === "talent" ? this.loadCurrentUser()?.talentId : ""
+      ))
         .pipe(catchError(err => of({error: err})))))
       .subscribe((walletResponse: any) => {
-      if (walletResponse?.error) {
-        this.showMessageResp = false;
-        this.designatedAcctName = "";
-        if (walletResponse.error?.error?.statusCode === 400) {
-          this.responseMessage = "Invalid wallet account!";
-          this.walletAccNo = "";
+        if (walletResponse?.error) {
+          this.showMessageResp = false;
+          this.designatedAcctName = "";
+          if (walletResponse.error?.error?.statusCode === 400) {
+            this.responseMessage = "Invalid wallet account!";
+            this.walletAccNo = "";
+          } else {
+            this.responseMessage = walletResponse.error?.error?.message || "Unexpected error";
+          }
         } else {
-          this.responseMessage = walletResponse.error?.error?.message || "Unexpected error";
+          this.showMessageResp = true;
+          this.responseMessage = "Valid Wallet profile!✅";
+          this.walletName = `${walletResponse.data?.firstName} ${walletResponse.data?.middleName} ${walletResponse.data?.lastName}`;
         }
-      } else {
-        this.showMessageResp = true;
-        this.responseMessage = "Valid Wallet profile!✅";
-        this.walletName = `${walletResponse.data?.firstName} ${walletResponse.data?.middleName} ${walletResponse.data?.lastName}`;
-      }
-    });
+      });
   }
 
   onReasonChange(value: string) {
@@ -305,7 +309,7 @@ export class FundWalletPopupModalComponent extends BaseModal implements OnInit {
         identifier: this.fundType === 'Fund Self' ? 'Fund my wallet' : 'Fund others',
         isTermsAgreed: this.agreed ? 'true' : 'false',
       };
-      console.log('Submitting deposit payload:', depositPayload);
+    //  console.log('Submitting deposit payload:', depositPayload);
       // Call the deposit endpoint
       if (this.amount && (this.amount > 1000000)) {
         this.toastService.openSnackBar("The maximum permissible deposit is ₦1,000,000", "error");

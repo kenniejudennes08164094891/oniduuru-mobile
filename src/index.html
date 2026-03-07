@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -7,9 +7,13 @@
     <base href="/" />
 
     <meta name="color-scheme" content="light dark" />
+<!--    <meta-->
+<!--      name="viewport"-->
+<!--      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"-->
+<!--    />-->
     <meta
       name="viewport"
-      content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
@@ -36,6 +40,22 @@
 
       body {
         font-family: "Euclid Circular A";
+        /* Safe area padding - prevents content from overlapping with status bar */
+        padding-top: env(safe-area-inset-top);
+        /* Prevent content from being hidden behind the status bar */
+        padding-top: constant(safe-area-inset-top);
+      }
+
+      /* Also apply to html for full coverage */
+      html {
+        /* Safe area for status bar (top notch) */
+        padding-top: env(safe-area-inset-top);
+        padding-top: constant(safe-area-inset-top);
+      }
+
+      /* When keyboard is open, prevent layout issues */
+      body.keyboard-open {
+        overflow: hidden;
       }
     </style>
   </head>

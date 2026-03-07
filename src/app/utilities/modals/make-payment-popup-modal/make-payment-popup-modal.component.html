@@ -29,12 +29,20 @@
 
   <div class="px-4 flex flex-col items-end mt-4 space-y-1">
     <h3 class="text-[16px] text-[#CC0000]">Invoice ID:</h3>
-    <p class="text-[16px]">#INV-2025-0615-013</p>
-    <p class="text-[16px]">15th,JUNE 2025</p>
+    <p class="text-[16px]">#{{ invoiceId }}</p>
+    <p class="text-[16px]">{{ invoiceDate }}</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="px-4 mt-6">
+    <div class="bg-[#CDD5DF33] border-t border-1 border-[#364152] rounded-xl px-3 py-12 flex justify-center items-center">
+      <ion-spinner name="crescent"></ion-spinner>
+      <span class="ml-3">Loading payment details...</span>
+    </div>
   </div>
 
   <!-- Payment Details Card -->
-  <div class="px-4 mt-6">
+  <div *ngIf="!isLoading" class="px-4 mt-6">
     <div
       *ngFor="let item of paymentDetails"
       class="bg-[#CDD5DF33] border-t border-1 border-[#364152] rounded-xl px-3 py-6 flex justify-between items-center"
@@ -70,8 +78,9 @@
     <button
       class="bg-[#101828] rounded-lg w-full py-2 text-white font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       (click)="goToActivateAccount()"
+      [disabled]="isLoading"
     >
-      Save
+      {{ isLoading ? 'Loading...' : 'Save' }}
     </button>
   </div>
 </ion-content>

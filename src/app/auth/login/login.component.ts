@@ -16,7 +16,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -38,8 +38,12 @@ export class LoginComponent implements OnInit {
 
     this.authService.loginUser(this.loginForm.value).subscribe({
       next: () => {
-        this.isLoading = false;
-        this.router.navigate(['/dashboard']);
+        // Wait for user data to be fully initialized before navigating
+        // This ensures the user data is properly loaded into all services
+        setTimeout(() => {
+          this.isLoading = false;
+          this.router.navigate(['/dashboard']);
+        }, 100); // Small delay to allow auth service to complete initialization
       },
       error: () => {
         this.isLoading = false;

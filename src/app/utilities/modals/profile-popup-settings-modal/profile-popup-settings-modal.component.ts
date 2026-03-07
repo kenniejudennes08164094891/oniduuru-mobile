@@ -5,6 +5,7 @@ import {
   NavController,
   Platform,
 } from '@ionic/angular';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { LogComplaintsPopupModalComponent } from '../log-complaints-popup-modal/log-complaints-popup-modal.component';
 // import { ProfilePageComponent } from 'src/app/scouter/profile-page/profile-page.component';
 import { Router, NavigationStart } from '@angular/router';
@@ -29,7 +30,8 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
     private navCtrl: NavController,
     private location: Location,
     private platform: Platform,
-    private authService: AuthService
+    private authService: AuthService,
+    private overlayCleanup: OverlayCleanupService,
   ) {}
 
   ngOnInit(): void {
@@ -38,7 +40,7 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
       9999,
       async () => {
         await this.dismiss();
-      }
+      },
     );
 
     // Browser back/forward
@@ -52,6 +54,9 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.backButtonSub?.unsubscribe();
     this.routerEventsSub?.unsubscribe();
+
+    // ensure backdrop cleaned in case popover auto-removed without dismiss
+    this.overlayCleanup.cleanBackdrops();
   }
 
   get isDashboard(): boolean {
@@ -60,12 +65,13 @@ export class ProfilePopupSettingsModalComponent implements OnInit, OnDestroy {
 
   async dismiss(data?: any) {
     await this.popoverCtrl.dismiss(data);
+    this.overlayCleanup.cleanBackdrops();
   }
 
   /** 🔙 Go back to dashboard */
   async goBack(): Promise<void> {
     await this.popoverCtrl.dismiss();
-    window.history.go(-1)
+    window.history.go(-1);
     //await this.router.navigate(['/scouter/dashboard']); // ✅ always route to dashboard
   }
 

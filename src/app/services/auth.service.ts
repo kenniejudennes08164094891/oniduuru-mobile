@@ -166,7 +166,7 @@ export class AuthService {
       // ✅ Clear all auth data AFTER getting token
       this.clearAuthData();
       sessionStorage.clear();
-      
+
       setTimeout(() => {
         this.router.navigate(['/auth/login'], { replaceUrl: true });
       }, 300);
@@ -187,7 +187,7 @@ export class AuthService {
             // Clear data only after successful server response
             this.clearAuthData();
             sessionStorage.clear();
-            
+
             // Prevent browser back navigation by replacing history
             setTimeout(() => {
               this.router.navigate(['/auth/login'], { replaceUrl: true });
@@ -198,7 +198,7 @@ export class AuthService {
             // Clear data even if server call fails
             this.clearAuthData();
             sessionStorage.clear();
-            
+
             // Still navigate to login
             setTimeout(() => {
               this.router.navigate(['/auth/login'], { replaceUrl: true });
@@ -209,11 +209,11 @@ export class AuthService {
           // Final safety net - ensure data is cleared
           this.clearAuthData();
           sessionStorage.clear();
-          
+
           setTimeout(() => {
             this.router.navigate(['/auth/login'], { replaceUrl: true });
           }, 100);
-          
+
           return of({ message: 'Logout completed with errors', error });
         }),
       );
@@ -368,12 +368,12 @@ export class AuthService {
   public validateTalentSecurityQuestion(
     payload:
       | {
-          talentId: string;
-          answerSecurityQuestion: {
-            question: string;
-            answer: string;
-          };
-        }
+      talentId: string;
+      answerSecurityQuestion: {
+        question: string;
+        answer: string;
+      };
+    }
       | any,
   ): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.validateTalentSecurityQuestion}`;
@@ -392,12 +392,12 @@ export class AuthService {
   public validateScouterSecurityQuestion(
     payload:
       | {
-          scouterId: string;
-          answerSecurityQuestion: {
-            question: string;
-            answer: string;
-          };
-        }
+      scouterId: string;
+      answerSecurityQuestion: {
+        question: string;
+        answer: string;
+      };
+    }
       | any,
   ): Observable<any> {
     const url = `${this.baseUrl}/${endpoints.validateScouterSecurityQuestions}`;

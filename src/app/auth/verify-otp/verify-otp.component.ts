@@ -9,6 +9,7 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { ScouterEndpointsService } from '../../services/scouter-endpoints.service';
 import { ToastsService } from '../../services/toasts.service';
+import { Subject, takeUntil, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-verify-otp',
@@ -16,7 +17,7 @@ import { ToastsService } from '../../services/toasts.service';
   styleUrls: ['./verify-otp.component.scss'],
 })
 export class VerifyOtpComponent implements OnInit, OnDestroy {
-  otpForm!: FormGroup | any;
+  otpForm!: FormGroup;
   otpControls: FormControl[] = [];
   otpLength = 4;
   countdown = 0;
@@ -26,6 +27,13 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   email: string | null = null;
   userData: any = null;
   requiresVerification = false;
+  
+  private destroy$ = new Subject<void>();
+  private readonly STORAGE_KEYS = {
+    EMAIL: 'registration_email',
+    PENDING_VERIFICATION: 'pending_verification',
+    USER_DATA: 'user_data'
+  } as const;
 
   constructor(
     private router: Router,
@@ -38,41 +46,57 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initializeOtpForm();
-
-    // First try to get email from query params
-    const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
-    if (emailFromQuery) {
-      this.email = emailFromQuery;
-      localStorage.setItem('registration_email', emailFromQuery);
-      console.log('📧 Email from query params:', emailFromQuery);
-    }
-
+    this.loadEmailFromSources();
     this.loadUserData();
   }
 
   ngOnDestroy() {
-    clearInterval(this.timer);
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.clearTimer();
   }
 
   private initializeOtpForm() {
     this.otpControls = Array.from({ length: this.otpLength }, () =>
-      this.fb.control('', [Validators.required, Validators.pattern(/^[0-9]$/)]),
+      this.fb.control('', [
+        Validators.required, 
+        Validators.pattern(/^[0-9]$/),
+        Validators.maxLength(1)
+      ]),
     );
 
     this.otpForm = this.fb.group({
-      otp: this.fb.array(this.otpControls),
+      otpArray: this.fb.array(this.otpControls)
     });
   }
 
-  // Add this method to verify email exists before proceeding
-  private ensureEmailExists(): boolean {
-    const email = this.getEmailForVerification();
-    if (!email) {
-      this.toast.openSnackBar('Session expired. Please login again.', 'error');
-      this.router.navigate(['/auth/login']);
-      return false;
+  private loadEmailFromSources(): void {
+    // Try query params first
+    const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
+    if (emailFromQuery) {
+      this.email = emailFromQuery;
+      this.saveEmailToStorage(emailFromQuery);
+      return;
     }
-    return true;
+
+    // Try navigation state
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state as any;
+    if (state?.email) {
+      this.email = state.email;
+      this.saveEmailToStorage(state.email);
+      return;
+    }
+
+    // Try localStorage
+    const storedEmail = localStorage.getItem(this.STORAGE_KEYS.EMAIL);
+    if (storedEmail) {
+      this.email = storedEmail;
+      return;
+    }
+
+    // If no email found, redirect to login
+    this.handleMissingEmail();
   }
 
   private loadUserData() {
@@ -80,87 +104,85 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const state = navigation?.extras?.state as any;
 
     if (state) {
-      this.email = state.email || this.email;
       this.userData = state.userData;
       this.requiresVerification = state.requiresVerification || false;
-
-      // Store email if present
-      if (this.email) {
-        localStorage.setItem('registration_email', this.email);
-      }
     } else {
-      const pendingVerification = localStorage.getItem('pending_verification');
+      const pendingVerification = localStorage.getItem(this.STORAGE_KEYS.PENDING_VERIFICATION);
       if (pendingVerification) {
         try {
           const data = JSON.parse(pendingVerification);
-          this.email = data.email || this.email;
           this.userData = data.userData || data.tempUserData;
           this.requiresVerification = true;
-
-          // Store email if present
-          if (this.email) {
-            localStorage.setItem('registration_email', this.email);
-          }
         } catch (error) {
           console.error('Error parsing pending verification data:', error);
         }
       }
     }
 
-    // If still no email, try to get from localStorage
-    if (!this.email) {
-      this.email = localStorage.getItem('registration_email');
-    }
-
     console.log('🔍 OTP Verification Data:', {
       email: this.email,
       requiresVerification: this.requiresVerification,
-      userData: this.userData,
+      hasUserData: !!this.userData,
     });
 
-    if (!this.email) {
-      this.toast.openSnackBar(
-        'No verification session found. Please login again.',
-        'error',
-      );
-      this.router.navigate(['/auth/login']);
-      return;
-    }
-
-    if (this.requiresVerification) {
+    if (this.requiresVerification && this.email) {
       this.sendOtpAutomatically();
     }
+  }
+
+  private saveEmailToStorage(email: string): void {
+    localStorage.setItem(this.STORAGE_KEYS.EMAIL, email);
+  }
+
+  private handleMissingEmail(): void {
+    console.error('No email found for verification');
+    this.toast.openSnackBar(
+      'Session expired. Please login again.',
+      'error'
+    );
+    this.navigateToLogin();
   }
 
   onOtpInput(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     const value = input.value;
 
-    if (value && index < this.otpControls.length - 1) {
-      const inputs = input.parentElement?.querySelectorAll('input');
-      if (inputs && inputs[index + 1]) {
-        const nextInput = inputs[index + 1] as HTMLInputElement;
-        nextInput.focus();
-      }
+    // Only allow numbers
+    if (value && !/^\d+$/.test(value)) {
+      input.value = '';
+      this.otpControls[index].setValue('');
+      return;
     }
 
+    if (value && index < this.otpControls.length - 1) {
+      this.focusNextInput(input, index);
+    }
+
+    // Auto-submit when last digit is entered
     if (value && index === this.otpControls.length - 1) {
-      if (this.getOtpValue().length === this.otpLength) {
+      const otpValue = this.getOtpValue();
+      if (otpValue.length === this.otpLength) {
         this.verifyOtpAndProceed();
       }
     }
   }
 
+  private focusNextInput(currentInput: HTMLInputElement, index: number): void {
+    const inputs = currentInput.parentElement?.querySelectorAll('input');
+    if (inputs && inputs[index + 1]) {
+      const nextInput = inputs[index + 1] as HTMLInputElement;
+      setTimeout(() => nextInput.focus());
+    }
+  }
+
   onKeyDown(event: KeyboardEvent, index: number) {
+    const input = event.target as HTMLInputElement;
+
     if (event.key === 'Backspace') {
-      const input = event.target as HTMLInputElement;
+      event.preventDefault();
+      
       if (!input.value && index > 0) {
-        const inputs = input.parentElement?.querySelectorAll('input');
-        if (inputs && inputs[index - 1]) {
-          const prevInput = inputs[index - 1] as HTMLInputElement;
-          prevInput.focus();
-          prevInput.select();
-        }
+        this.focusPreviousInput(input, index);
       } else if (input.value) {
         input.value = '';
         this.otpControls[index].setValue('');
@@ -168,11 +190,22 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     }
   }
 
+  private focusPreviousInput(currentInput: HTMLInputElement, index: number): void {
+    const inputs = currentInput.parentElement?.querySelectorAll('input');
+    if (inputs && inputs[index - 1]) {
+      const prevInput = inputs[index - 1] as HTMLInputElement;
+      setTimeout(() => {
+        prevInput.focus();
+        prevInput.select();
+      });
+    }
+  }
+
   getOtpValue(): string {
     return this.otpControls
       .map((control) => control?.value || '')
       .join('')
-      .replace(/\s/g, '');
+      .trim();
   }
 
   clearOtpFields() {
@@ -180,154 +213,137 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
       control.setValue('');
       control.markAsUntouched();
     });
+    
+    // Focus first input
+    setTimeout(() => {
+      const firstInput = document.querySelector('input') as HTMLInputElement;
+      if (firstInput) firstInput.focus();
+    });
   }
 
   sendOtpAutomatically() {
-    if (!this.ensureEmailExists()) return;
-
-    // Try multiple sources for email
-    this.email = this.getEmailForVerification();
-
     if (!this.email) {
       this.setError('Email is required to send OTP');
       return;
     }
 
-    // Store it for later use
-    localStorage.setItem('registration_email', this.email);
-
     console.log('🔍 Sending OTP to:', this.email);
-    const payload = { email: this.email };
+    
+    this.isProcessing = true;
+    this.clearError();
 
-    this.scouterService.resendOtp(payload).subscribe({
-      next: (res: any) => {
-        console.log('✅ OTP sent successfully', res);
-        this.startCountdown();
-        this.clearOtpFields();
-        this.toast.openSnackBar('OTP sent successfully!', 'success');
-      },
-      error: (err: any) => {
-        console.error('❌ Failed to send OTP', err);
-        this.setError(
-          err?.error?.message || 'Failed to send OTP. Please try again.',
-        );
-      },
-    });
+    this.scouterService.resendOtp({ email: this.email })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isProcessing = false)
+      )
+      .subscribe({
+        next: (res: any) => {
+          console.log('✅ OTP sent successfully', res);
+          this.startCountdown();
+          this.clearOtpFields();
+          this.toast.openSnackBar('OTP sent successfully!', 'success');
+        },
+        error: (err: any) => {
+          console.error('❌ Failed to send OTP', err);
+          const errorMessage = err?.error?.message || 
+                              err?.message || 
+                              'Failed to send OTP. Please try again.';
+          this.setError(errorMessage);
+        },
+      });
   }
 
   verifyOtpAndProceed() {
-    if (!this.ensureEmailExists()) return;
+    if (!this.email) {
+      this.setError('Session expired. Please login again.');
+      this.navigateToLogin();
+      return;
+    }
 
     const otpValue = this.getOtpValue();
+    
     if (!otpValue || otpValue.length !== this.otpLength) {
       this.setError('Please enter complete 4-digit OTP.');
       return;
     }
 
-    // CRITICAL FIX: Ensure we have a valid email
-    const emailValue = this.getEmailForVerification();
-
-    if (!emailValue) {
-      this.setError('Email is required for verification. Please login again.');
-      this.router.navigate(['/auth/login']);
-      return;
-    }
-
     this.isProcessing = true;
-    const payload = { otp: otpValue, email: emailValue };
+    this.clearError();
+
+    const payload = { 
+      otp: otpValue, 
+      email: this.email 
+    };
+    
     console.log('🔍 OTP Verification Payload:', payload);
 
-    this.scouterService.verifyOtp(payload).subscribe({
-      next: (res: any) => {
-        console.log('✅ OTP verified successfully', res);
-        this.isProcessing = false;
-        this.updateUserVerificationStatus();
-        this.toast.openSnackBar('Account verified successfully!', 'success');
-        this.handleSuccessfulVerification();
-      },
-      error: (err: any) => {
-        console.error('❌ OTP verification failed', err);
-        this.isProcessing = false;
-        if (err.status === 422) {
-          this.setError(
-            'The OTP you entered is invalid or has expired. Please try again or request a new OTP.',
-          );
-        } else {
-          this.setError(
-            err?.error?.message || 'Invalid OTP. Please try again.',
-          );
-        }
-        this.clearOtpFields();
-      },
-    });
-  }
-
-  // Add this helper method to get email from multiple sources
-  private getEmailForVerification(): string | null {
-    // Try from component property first
-    if (this.email) {
-      return this.email;
-    }
-
-    // Try from localStorage
-    const storedEmail = localStorage.getItem('registration_email');
-    if (storedEmail) {
-      return storedEmail;
-    }
-
-    // Try from user_data
-    try {
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        return (
-          parsed.email || parsed.details?.user?.email || parsed.user?.email
-        );
-      }
-    } catch (e) {
-      console.error('Error parsing user_data for email:', e);
-    }
-
-    return null;
+    this.scouterService.verifyOtp(payload)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isProcessing = false)
+      )
+      .subscribe({
+        next: (res: any) => {
+          console.log('✅ OTP verified successfully', res);
+          this.updateUserVerificationStatus();
+          this.toast.openSnackBar('Account verified successfully!', 'success');
+          this.handleSuccessfulVerification();
+        },
+        error: (err: any) => {
+          console.error('❌ OTP verification failed', err);
+          
+          if (err.status === 422) {
+            this.setError(
+              'The OTP you entered is invalid or has expired. Please try again or request a new OTP.'
+            );
+          } else {
+            this.setError(
+              err?.error?.message || err?.message || 'Invalid OTP. Please try again.'
+            );
+          }
+          
+          this.clearOtpFields();
+        },
+      });
   }
 
   private updateUserVerificationStatus() {
-    const userData = localStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
+    const userData = localStorage.getItem(this.STORAGE_KEYS.USER_DATA);
+    if (!userData) return;
 
-        user.isVerified = true;
-        user.verified = true;
-        user.emailVerified = true;
-        user.otpVerified = true;
+    try {
+      const user = JSON.parse(userData);
 
-        if (user.details?.user) {
-          user.details.user.isVerified = true;
-          user.details.user.verified = true;
-          user.details.user.emailVerified = true;
-          user.details.user.otpVerified = true;
-        }
+      // Update verification flags at all levels
+      const updateNestedObject = (obj: any) => {
+        if (!obj) return;
+        
+        obj.isVerified = true;
+        obj.verified = true;
+        obj.emailVerified = true;
+        obj.otpVerified = true;
+      };
 
-        if (user.user) {
-          user.user.isVerified = true;
-          user.user.verified = true;
-          user.user.emailVerified = true;
-          user.user.otpVerified = true;
-        }
+      // Update main user object
+      updateNestedObject(user);
 
-        localStorage.setItem('user_data', JSON.stringify(user));
-        console.log('✅ User verification status updated');
-      } catch (error) {
-        console.error('Error updating user verification status:', error);
-      }
+      // Update nested structures
+      if (user.details?.user) updateNestedObject(user.details.user);
+      if (user.user) updateNestedObject(user.user);
+
+      localStorage.setItem(this.STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+      console.log('✅ User verification status updated');
+    } catch (error) {
+      console.error('Error updating user verification status:', error);
     }
 
-    localStorage.removeItem('pending_verification');
+    // Clean up
+    localStorage.removeItem(this.STORAGE_KEYS.PENDING_VERIFICATION);
   }
 
   private handleSuccessfulVerification() {
-    const userData = localStorage.getItem('user_data');
+    const userData = localStorage.getItem(this.STORAGE_KEYS.USER_DATA);
     let role = '';
 
     if (userData) {
@@ -347,20 +363,21 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
     const route = routes[role] || '/auth/login';
     console.log('🧭 Navigating to:', route);
 
-    setTimeout(async () => {
-      await this.router.navigateByUrl(route, { replaceUrl: true });
+    // Short delay for success message to be seen
+    setTimeout(() => {
+      this.navigateToUrl(route);
     }, 1500);
   }
 
   resendOtp() {
-    if (this.countdown > 0) return;
-
-    // Ensure we have email before resending
-    this.email = this.getEmailForVerification();
+    if (this.countdown > 0) {
+      this.toast.openSnackBar(`Please wait ${this.countdown}s before resending`, 'info');
+      return;
+    }
 
     if (!this.email) {
       this.setError('No email found. Please login again.');
-      this.router.navigate(['/auth/login']);
+      this.navigateToLogin();
       return;
     }
 
@@ -368,60 +385,98 @@ export class VerifyOtpComponent implements OnInit, OnDestroy {
   }
 
   private startCountdown() {
-    clearInterval(this.timer);
+    this.clearTimer();
     this.countdown = 120;
+    
     this.timer = setInterval(() => {
-      this.countdown--;
-      if (this.countdown <= 0) {
-        clearInterval(this.timer);
+      if (this.countdown > 0) {
+        this.countdown--;
+      } else {
+        this.clearTimer();
       }
     }, 1000);
   }
 
-  maskEmail(email: string | null): string {
-    email = email ?? localStorage.getItem('registration_email');
-    if (!email) return '';
-    const [user, domain] = email?.split('@');
-    if (!user || !domain) return '***@***';
+  private clearTimer(): void {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
 
-    if (user.length <= 2) return `***@${domain}`;
-    const maskedUser =
-      user.slice(0, 2) + '*'.repeat(Math.min(3, user.length - 2));
+  maskEmail(email: string | null): string {
+    if (!email) return '';
+    
+    const parts = email.split('@');
+    if (parts.length !== 2) return email;
+    
+    const [user, domain] = parts;
+    if (!user || !domain) return email;
+
+    if (user.length <= 2) {
+      return `***@${domain}`;
+    }
+    
+    const visibleChars = 2;
+    const maskedUser = user.slice(0, visibleChars) + '*'.repeat(Math.min(3, user.length - visibleChars));
     return `${maskedUser}@${domain}`;
   }
 
-  private setError(message: string) {
+  private clearError(): void {
+    this.errorMessage = '';
+  }
+
+  private setError(message: string): void {
     this.errorMessage = message;
     this.toast.openSnackBar(message, 'error');
-    setTimeout(() => (this.errorMessage = ''), 5000);
+    
+    // Auto-clear error after 5 seconds
+    setTimeout(() => {
+      if (this.errorMessage === message) {
+        this.clearError();
+      }
+    }, 5000);
+  }
+
+  private navigateToLogin(): void {
+    this.navigateToUrl('/auth/login');
+  }
+
+  private async navigateToUrl(url: string): Promise<void> {
+    try {
+      await this.router.navigateByUrl(url, { replaceUrl: true });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   }
 
   async goBack(): Promise<void> {
-    await this.router.navigate(['/auth/login']);
+    await this.navigateToLogin();
   }
 
   async goToLogin(): Promise<void> {
-    await this.router.navigate(['/auth/login']);
+    await this.navigateToLogin();
   }
 
-  // Prevents accidental reload or refresh during OTP verification
+  // Prevent accidental reload during verification
   @HostListener('window:keydown', ['$event'])
   disableReloadKeys(event: KeyboardEvent) {
-    if (
-      event.key === 'F5' ||
-      ((event.ctrlKey || event.metaKey) && event.key === 'r')
-    ) {
-      event.preventDefault();
-      alert('Page reload is disabled during verification.');
+    if (this.isProcessing) {
+      if (
+        event.key === 'F5' ||
+        ((event.ctrlKey || event.metaKey) && event.key === 'r')
+      ) {
+        event.preventDefault();
+        this.toast.openSnackBar('Please wait while we verify your OTP', 'info');
+      }
     }
   }
 
   @HostListener('window:beforeunload', ['$event'])
-  async preventBrowserRefresh(event: BeforeUnloadEvent) {
-    event.preventDefault();
-    event.returnValue = ''; // Required for Chrome
-    await this.router.navigateByUrl('/auth/login').then(() => {
-      this.authService.clearAllStorage();
-    });
+  handleBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.isProcessing) {
+      event.preventDefault();
+      event.returnValue = 'Verification in progress. Are you sure you want to leave?';
+    }
   }
 }

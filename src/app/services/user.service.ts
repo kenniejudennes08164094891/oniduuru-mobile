@@ -15,7 +15,7 @@ import { AuthService } from './auth.service';
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private profileImageSubject = new BehaviorSubject<string>(
-    'assets/default-avatar.jpg'
+    'assets/default-avatar.jpg',
   );
   public profileImage$ = this.profileImageSubject.asObservable();
 
@@ -23,7 +23,7 @@ export class UserService {
   public profileData$ = this.profileDataSubject.asObservable();
 
   private statusSubject = new BehaviorSubject<'online' | 'away' | 'offline'>(
-    'online'
+    'online',
   );
   public status$ = this.statusSubject.asObservable();
 
@@ -72,7 +72,7 @@ export class UserService {
 
   constructor(
     private authService: AuthService, // Inject AuthService
-    private http: HttpClient
+    private http: HttpClient,
   ) {
     this.initializeProfileImage();
 
@@ -93,59 +93,55 @@ export class UserService {
     this.profileDataSubject.next(null);
     this.statusSubject.next('online');
 
-    // Don't clear profile_image from localStorage here - let auth service handle complete cleanup
+    // Be defensive: clear cached profile-related localStorage entries so
+    // components that read them directly don't retain stale data.
+    localStorage.removeItem('profile_image');
+    localStorage.removeItem('user_profile_data');
+    localStorage.removeItem('profile');
+    localStorage.removeItem('hasWalletProfile');
   }
 
   private setupAuthListeners(): void {
-    // Listen for login events
-    this.authSubscription = this.authService.userLoggedIn$.subscribe(
-      (loggedIn) => {
-        if (loggedIn) {
-          console.log('🔄 UserService: User logged in, reloading profile data');
-          this.initializeProfileImage();
-          this.loadUserDataFromStorage();
-        } else {
-          // ✅ NEW: Handle logout by resetting data
-          console.log('🔄 UserService: User logged out, resetting data');
-          this.resetUserData();
-        }
-      }
-    );
+    // Consolidate subscriptions into a single Subscription container to
+    // avoid duplicate subscriptions and ensure predictable teardown.
+    this.authSubscription = new Subscription();
 
-    // Listen for login events
-    this.authSubscription = this.authService.userLoggedIn$.subscribe(
-      (loggedIn) => {
-        if (loggedIn) {
-          console.log('🔄 UserService: User logged in, reloading profile data');
-          this.initializeProfileImage();
-          this.loadUserDataFromStorage();
-        }
+    // Listen for login/logout events
+    const loginSub = this.authService.userLoggedIn$.subscribe((loggedIn) => {
+      if (loggedIn) {
+        console.log('🔄 UserService: User logged in, reloading profile data');
+        this.initializeProfileImage();
+        this.loadUserDataFromStorage();
+      } else {
+        console.log('🔄 UserService: User logged out, resetting data');
+        this.resetUserData();
       }
-    );
+    });
+    this.authSubscription.add(loginSub);
 
     // Listen for profile update events
-    this.authSubscription.add(
-      this.authService.profileUpdated$.subscribe((updated) => {
+    const profileUpdatedSub = this.authService.profileUpdated$.subscribe(
+      (updated) => {
         if (updated) {
           console.log('🔄 UserService: Profile updated, reloading data');
           this.initializeProfileImage();
           this.loadUserDataFromStorage();
         }
-      })
+      },
     );
+    this.authSubscription.add(profileUpdatedSub);
 
     // Listen for current user data changes
-    this.authSubscription.add(
-      this.authService.currentUser$.subscribe((user) => {
-        if (user) {
-          console.log('🔄 UserService: Current user data updated');
-          this.setProfileData(user);
-          if (user.profileImage || user.profilePicture) {
-            this.setProfileImage(user.profileImage || user.profilePicture);
-          }
+    const currentUserSub = this.authService.currentUser$.subscribe((user) => {
+      if (user) {
+        console.log('🔄 UserService: Current user data updated');
+        this.setProfileData(user);
+        if (user.profileImage || user.profilePicture) {
+          this.setProfileImage(user.profileImage || user.profilePicture);
         }
-      })
-    );
+      }
+    });
+    this.authSubscription.add(currentUserSub);
   }
 
   private loadUserDataFromStorage(): void {
@@ -251,7 +247,7 @@ export class UserService {
   getStatus(): 'online' | 'away' | 'offline' {
     return this.statusSubject.value;
   }
-  
+
   getTalentId(): string | null {
     // Try multiple sources in order
     const profile = this.getProfileData();
@@ -299,14 +295,14 @@ export class UserService {
         `${environment.baseUrl}/${endpoints.verifyUserEmail}?email=${email}`,
         {
           headers: new HttpHeaders({ 'Skip-Interceptor': 'true' }), // 👈 bypass auth
-        }
+        },
       )
 
       .pipe(
         catchError((err) => {
           console.error('Email check error', err);
           return of({ exists: false });
-        })
+        }),
       );
   }
 
@@ -321,7 +317,7 @@ export class UserService {
         catchError((err) => {
           console.error('Failed to fetch profile', err);
           return of(null);
-        })
+        }),
       );
   }
 
@@ -336,7 +332,7 @@ export class UserService {
         catchError((err) => {
           console.error('Failed to update profile', err);
           return of(null);
-        })
+        }),
       );
   }
 

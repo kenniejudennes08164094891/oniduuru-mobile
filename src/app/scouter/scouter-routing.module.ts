@@ -6,6 +6,10 @@ import { ScouterDashboardComponent } from './scouter-dashboard/scouter-dashboard
 import { AuthRedirectGuard } from '../guard/auth.guard';
 
 const routes: Routes = [
+  // default entry for the scouter segment should forward guests to the
+  // signup flow; once logged in the guard on the top‑level patch will take
+  // the user to the dashboard instead.
+  { path: '', redirectTo: 'create-account', pathMatch: 'full' },
   {
     path: 'create-account',
     component: ScouterPage,
@@ -15,10 +19,6 @@ const routes: Routes = [
     // canActivate: [AuthRedirectGuard],
     component: ScouterDashboardComponent,
   },
-  //   {
-  //   path: '',
-  //   component: ViewTalentsLocationPageComponent,
-  // },
 ];
 
 @NgModule({
