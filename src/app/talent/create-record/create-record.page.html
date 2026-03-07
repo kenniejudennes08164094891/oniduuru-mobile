@@ -55,7 +55,9 @@
           <!-- Bio text -->
           <div class="flex items-center gap-2">
             <!-- Bio text -->
-            <p class="text-gray-700">{{ marketProfile.valueProposition || bio }}</p>
+            <p class="text-gray-700">
+            {{ marketProfile.valueProposition || bio || 'update bio' }}
+          </p>
 
             <!-- Pencil Icon -->
             <img src="assets/icon/pink-pencil.png" alt="Edit Bio" class="w-5 h-5 cursor-pointer"
@@ -76,7 +78,7 @@
                   </div>
 
                   <!-- Textarea -->
-                  <textarea [(ngModel)]="editedBio" rows="5"
+                  <textarea [(ngModel)]="editedBio" rows="5" placeholder="Update bio"
                     class="border border-gray-400 rounded p-4 w-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"></textarea>
 
                   <!-- Button -->
@@ -96,15 +98,15 @@
 
 
       <!-- Phone -->
-      <div class="flex items-center gap-2 cursor-pointer" (click)="copyPhone()">
-        <p class="text-sm text-gray-700">{{ profile.phone }}</p>
+      <!-- <div class="flex items-center gap-2 cursor-pointer" (click)="copyPhone()">
+        <p class="text-sm text-gray-700">{{ profile.phone }}</p> -->
 
         <!-- Copy icon -->
-        <img *ngIf="!copied" src="assets/icon/Group.png" alt="copy icon" class="w-5 h-5 object-contain" />
+        <!-- <img *ngIf="!copied" src="assets/icon/Group.png" alt="copy icon" class="w-5 h-5 object-contain" /> -->
 
         <!-- Checkmark icon (when copied) -->
-        <img *ngIf="copied" src="assets/icon/check.png" alt="copied icon" class="w-5 h-5 object-contain" />
-      </div>
+        <!-- <img *ngIf="copied" src="assets/icon/check.png" alt="copied icon" class="w-5 h-5 object-contain" />
+      </div> -->
 
     </div>
   </div>

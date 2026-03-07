@@ -31,7 +31,7 @@ export class CreateRecordPage implements OnInit {
   // bio editor
   isBioEditorOpen = false;
   editedBio = '';
-  bio = 'Sell yourself... Emphasizing your skills and achieving your skills to recruiters.';
+  bio = '';
   // convenience computed property for template
   get isNewUser(): boolean {
     // A user is "new" for this page if we are not editing an existing market profile
