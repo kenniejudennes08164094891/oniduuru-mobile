@@ -13,9 +13,9 @@ import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { ViewAllTalentsPopupModalComponent } from '../view-all-talents-popup-modal/view-all-talents-popup-modal.component';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import {EmmittersService} from "../../../services/emmitters.service";
 
 declare var google: any;
 
@@ -123,7 +123,7 @@ class PulseOverlay {
           opacity: 0;
         }
       }
-
+      
       @keyframes activePulse {
         0% {
           transform: scale(0.8);
@@ -137,12 +137,12 @@ class PulseOverlay {
           opacity: 0;
         }
       }
-
+      
       .pulse-overlay {
         pointer-events: none;
         will-change: transform, opacity;
       }
-
+      
       .pulse-overlay .pulse-ring {
         position: absolute;
         top: 0;
@@ -157,7 +157,7 @@ class PulseOverlay {
         box-shadow: 0 0 8px rgba(255, 59, 59, 0.3);
         transform-origin: center;
       }
-
+      
       .pulse-overlay.active .pulse-ring {
         border-color: #FF0000;
         border-width: 2.5px;
@@ -249,6 +249,8 @@ export class FindProfessionalsByLocationModalComponent
   extends BaseModal
   implements OnInit, AfterViewInit, OnDestroy
 {
+  // used to ignore the very next document click when a card is shown (marker click)
+  private ignoreNextOutsideClick: boolean = false;
   @Input() hires: any[] = [];
   @Input() location: string = '';
   @Input() allSkills: string[] = [];
@@ -395,9 +397,9 @@ export class FindProfessionalsByLocationModalComponent
     platform: Platform,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private emmitters: EmmittersService
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -1058,16 +1060,20 @@ export class FindProfessionalsByLocationModalComponent
   }
 
   private showProfileCard(talent: any, marker: any, index: number): void {
+    console.log('📍 Showing profile card for marker', index, talent?.name);
     this.selectedTalent = talent;
-    this.emmitters.setTalentIdForHire(talent?.talentId);
     this.cdr.detectChanges();
+
     // Create the profile card element
     const div = document.createElement('div');
     div.className = 'profile-card-overlay';
+    // mark this card as protected from the global cleanup service while visible
+    div.setAttribute('data-ignore-cleanup', 'true');
     div.style.position = 'fixed';
     div.style.width = '320px';
     div.style.minHeight = '220px';
-    div.style.zIndex = '10000';
+    // make sure it sits above the modal/backdrop
+    div.style.zIndex = '20000';
     div.style.pointerEvents = 'auto';
     div.style.opacity = '0';
     div.style.transition =
@@ -1077,27 +1083,27 @@ export class FindProfessionalsByLocationModalComponent
     div.style.transform = 'translate(-50%, -45%) scale(0.95)';
     div.style.backgroundColor = 'transparent';
 
-    // Get skills as skill tags
-    const skillTags =
-      talent.skillSet
-        ?.slice(0, 3)
-        .map((s: any) => s.jobTitle)
-        .filter(Boolean) || [];
+    // Generate skill tags and compute hidden count
+    const allSkills = (talent.skillSet || [])
+      .map((s: any) => s.jobTitle)
+      .filter(Boolean);
+    const visibleSkills = allSkills.slice(0, 3);
+    const hiddenCount = allSkills.length - visibleSkills.length;
 
-    // Create card HTML - REMOVED any extra red dots
+    // Create card HTML
     div.innerHTML = `
     <div class="profile-card" style="position: relative; padding: 24px; height: 100%; background: white; border-radius: 20px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3); border: 2px solid #FF3B3B; overflow: hidden;">
-      <button class="close-card-btn"
+      <button class="close-card-btn" 
               aria-label="Close profile card"
               style="position: absolute; top: 12px; right: 12px; background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
           <path d="M13 1L1 13M1 1L13 13" stroke="#666666" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-
+      
       <div class="card-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px; margin-top: 8px;">
         <div class="avatar-container" style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 3px solid #FF3B3B; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3); transition: all 0.2s ease;">
-          <img src="${talent.profilePic || 'assets/images/default-avatar.png'}"
+          <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
                class="profile-avatar"
                alt="${talent.name}"
                style="width: 100%; height: 100%; object-fit: cover;"
@@ -1108,7 +1114,7 @@ export class FindProfessionalsByLocationModalComponent
             ${talent.name}
           </h3>
           <div class="skill-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
-            ${skillTags
+            ${visibleSkills
               .map(
                 (skill: any) => `
               <span class="skill-tag" style="background: #f5f5f5; color: #666; padding: 4px 10px; border-radius: 16px; font-size: 11px; font-weight: 500; white-space: nowrap;">
@@ -1117,12 +1123,12 @@ export class FindProfessionalsByLocationModalComponent
             `,
               )
               .join('')}
-            ${talent.skillSet?.length > 3 ? `<span class="more-skills" style="color: #FF3B3B; font-size: 11px; font-weight: bold; margin-left: 4px;">+${talent.skillSet.length - 3}</span>` : ''}
+            ${hiddenCount > 0 ? `<span class="more-skills" style="color: #FF3B3B; font-size: 11px; font-weight: bold; margin-left: 4px;">+${hiddenCount}</span>` : ''}
           </div>
         </div>
       </div>
-
-      <button class="view-profile-btn"
+      
+      <button class="view-profile-btn" 
               data-talent-id="${talent.id || index}"
               style="width: 100%; background: linear-gradient(135deg, #FF3B3B, #FF6B6B); color: white; border: none; border-radius: 12px; padding: 14px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); margin-top: auto; box-shadow: 0 4px 12px rgba(255, 59, 59, 0.3);">
         View Full Profile
@@ -1138,10 +1144,11 @@ export class FindProfessionalsByLocationModalComponent
     requestAnimationFrame(() => {
       div.style.opacity = '1';
       div.style.transform = 'translate(-50%, -50%) scale(1)';
+      div.classList.add('visible');
     });
 
     // Add event listeners
-    setTimeout(() => {
+    {
       const viewProfileBtn = div.querySelector('.view-profile-btn');
       const closeBtn = div.querySelector('.close-card-btn');
 
@@ -1162,17 +1169,21 @@ export class FindProfessionalsByLocationModalComponent
 
       // Close card when clicking outside
       const closeOnOutsideClick = (e: MouseEvent) => {
+        // ignore the very first click that opened the card
+        if (this.ignoreNextOutsideClick) {
+          this.ignoreNextOutsideClick = false;
+          return;
+        }
         if (div && !div.contains(e.target as Node)) {
           this.closeProfileCardElement(div);
         }
       };
 
-      setTimeout(() => {
-        document.addEventListener('click', closeOnOutsideClick);
-      }, 0);
-
+      // mark flag so the soon-to-fire map click doesn't immediately close
+      this.ignoreNextOutsideClick = true;
+      document.addEventListener('click', closeOnOutsideClick);
       (div as any).outsideClickListener = closeOnOutsideClick;
-    }, 50);
+    }
   }
 
   private closeProfileCardElement(cardElement: HTMLElement): void {
@@ -1186,6 +1197,8 @@ export class FindProfessionalsByLocationModalComponent
           (cardElement as any).outsideClickListener,
         );
       }
+      // remove protection attribute so cleanup won't accidentally keep it later
+      cardElement.removeAttribute('data-ignore-cleanup');
 
       setTimeout(() => {
         if (cardElement.parentNode) {
@@ -1204,37 +1217,37 @@ export class FindProfessionalsByLocationModalComponent
     this.cdr.detectChanges();
 
     try {
-      const skillsText =
-        talent.skillSet
-          ?.slice(0, 2)
-          .map((s: any) => s.jobTitle)
-          .join(', ') || 'No skills listed';
-
-      const hasMoreSkills = talent.skillSet?.length > 2;
+      const allSkills = (talent.skillSet || [])
+        .map((s: any) => s.jobTitle)
+        .filter(Boolean);
+      const visible = allSkills.slice(0, 2);
+      const skillsText = visible.join(', ') || 'No skills listed';
+      const hidden = allSkills.length - visible.length;
+      const hasMoreSkills = hidden > 0;
 
       const content = `
         <div class="bg-gray-900 text-white rounded-xl border-2 border-red-500 shadow-2xl overflow-hidden max-w-xs">
           <div class="relative bg-gradient-to-r from-red-900/20 to-transparent p-3">
             <div class="flex items-center gap-3">
               <div class="relative">
-                <img src="${talent.profilePic || 'assets/images/default-avatar.png'}"
+                <img src="${talent.profilePic || 'assets/images/default-avatar.png'}" 
                      class="w-12 h-12 rounded-full border-3 border-red-500 object-cover shadow-lg"
                      alt="${talent.name}"
                      onerror="this.src='assets/images/default-avatar.png'">
                 <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
               </div>
-
+              
               <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-base text-white truncate">${talent.name}</h3>
                 <div class="flex items-center gap-1 mt-1">
                   <ion-icon name="briefcase-outline" class="text-red-400 text-xs"></ion-icon>
                   <span class="text-xs text-gray-300 truncate">${skillsText}</span>
-                  ${hasMoreSkills ? '<span class="text-xs text-red-400 ml-1">+ more</span>' : ''}
+                  ${hasMoreSkills ? `<span class="text-xs text-red-400 ml-1">+${hidden}</span>` : ''}
                 </div>
               </div>
             </div>
           </div>
-
+          
           <div class="p-3 bg-gray-800/50">
             <button id="view-profile-${talent.id || index}"
                     class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white py-2 px-3 rounded-lg text-sm font-bold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
@@ -1429,5 +1442,8 @@ export class FindProfessionalsByLocationModalComponent
 
     this.navSub?.unsubscribe();
     this.mapInitialized = false;
+
+    // ensure no stray backdrops remain when this modal closes
+    this.overlayCleanup.cleanBackdrops();
   }
 }

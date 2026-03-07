@@ -12,6 +12,21 @@
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
+/* Safe Area CSS Variables - Must be defined for Ionic components */
+:root {
+  /* iOS safe area insets - these are set by Cordova/Capacitor */
+  --ion-safe-area-top: env(safe-area-inset-top);
+  --ion-safe-area-bottom: env(safe-area-inset-bottom);
+  --ion-safe-area-left: env(safe-area-inset-left);
+  --ion-safe-area-right: env(safe-area-inset-right);
+
+  /* Fallback for older iOS versions */
+  --ion-safe-area-top: constant(safe-area-inset-top);
+  --ion-safe-area-bottom: constant(safe-area-inset-bottom);
+  --ion-safe-area-left: constant(safe-area-inset-left);
+  --ion-safe-area-right: constant(safe-area-inset-right);
+}
+
 /* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
@@ -40,17 +55,11 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-
 body,
 ion-content,
 ion-app {
   font-family: "Euclid Circular A", sans-serif !important;
 }
-
-
-
-
-
 
 ion-button {
   text-transform: none !important;
@@ -63,18 +72,29 @@ ion-input input {
 
 // NOTIFICATIONS
 /* NOTIFICATIONS MODAL - FIXED */
-// .notification-fullscreen-modal {
-//   --height: 100%;
-//   --width: 85%;
-//   --border-radius: 0;
-//   --box-shadow: none;
+.notification-fullscreen-modal {
+  /* make modal occupy entire viewport for any screen size */
+  --height: 100vh;
+  --width: 100vw;
+  --max-width: 100vw;
+  --border-radius: 0;
+  --box-shadow: none;
 
-//   /* ✅ CRITICAL: Disable all scroll-based gestures on the modal wrapper */
-//   --overflow: hidden;
-//   overscroll-behavior: contain;
-// }
+  /* ✅ Prevent scroll gestures on wrapper */
+  --overflow: hidden;
+  overscroll-behavior: contain;
+  margin: 0; /* no horizontal centering needed */
+}
 
-// /* ✅ Target the modal wrapper to prevent pull-to-dismiss */
+/* ensure inner wrapper also stretches */
+.notification-fullscreen-modal .modal-wrapper {
+  height: 100vh !important;
+  width: 100vw !important;
+  overscroll-behavior: contain !important;
+  background: white !important;
+}
+
+/* ✅ Target the modal wrapper to prevent pull-to-dismiss */
 // .notification-fullscreen-modal .modal-wrapper {
 //   overscroll-behavior: contain !important;
 //   overflow-y: hidden !important;
@@ -87,14 +107,14 @@ ion-input input {
 //   --background: white;
 // }
 
-// /* ✅ Prevent any touch actions that could cause dismissal */
-// .notification-fullscreen-modal {
-//   pointer-events: auto;
-// }
+/* ✅ Prevent any touch actions that could cause dismissal */
+.notification-fullscreen-modal {
+  pointer-events: auto;
+}
 
-// .notification-fullscreen-modal .modal-shadow {
-//   display: none;
-// }
+.notification-fullscreen-modal .modal-shadow {
+  display: none;
+}
 
 // NOTIFICATION POPOVER - FIXED POSITION
 ion-popover.notification-popover {
@@ -109,17 +129,18 @@ ion-popover.notification-popover {
   --backdrop-opacity: 0.3;
   --border-radius: 24px;
 
-  // Position - align right edge with trigger
-  --offset-x: 0px; // Reset offset
+  // Position - align left-start to prevent overflow on right side
+  --offset-x: -8px; // Small margin from left
   --offset-y: 12px; // Space below trigger
 
-  // Transform origin to right side
-  --transform-origin: right top;
+  // Transform origin to top-left
+  --transform-origin: left top;
 
   &::part(content) {
     border-radius: 24px;
     overflow: hidden;
-    transform-origin: right top; // Ensure animation from right
+    transform-origin: left top; // Ensure animation from left
+    max-width: calc(100vw - 16px); // Prevent overflow past viewport
   }
 
   &::part(backdrop) {
@@ -180,9 +201,14 @@ h3,
 h4,
 h5,
 h6,
-span,select,
+span,
+select,
 b,
-strong,ion-content,ion-list,ion-item,ion-label,
+strong,
+ion-content,
+ion-list,
+ion-item,
+ion-label,
 a {
   font-family: "Euclid Circular A", sans-serif !important;
 }
@@ -220,6 +246,36 @@ a {
   --backdrop-opacity: 0.5;
 
   margin: auto; /* centers modal both vertically and horizontally */
+}
+
+/* Ensure any ion-backdrop that is hidden or transparent stops blocking
+   pointer events.  Strange situations where a backdrop remains in the DOM
+   but is not removed are the primary cause of the "frozen app" issue, so
+   we add several safeguards. */
+ion-backdrop {
+  /* By default, backdrops can receive pointer events */
+  pointer-events: auto;
+}
+
+/* CRITICAL: Hidden or transparent backdrops must NOT accept pointer events */
+ion-backdrop[hidden],
+ion-backdrop.hidden,
+ion-backdrop.backdrop-hidden,
+ion-backdrop[style*="opacity: 0"],
+ion-backdrop[style*="display: none"],
+ion-backdrop[style*="visibility: hidden"] {
+  pointer-events: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Remove backdrops from orphaned modals/popovers */
+ion-popover[hidden] ion-backdrop,
+ion-modal[hidden] ion-backdrop,
+ion-alert[hidden] ion-backdrop {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 .confirmation-modal {

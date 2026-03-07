@@ -2022,6 +2022,34 @@ export class ScouterEndpointsService {
       );
   }
 
+  // Add this method to your scouter-endpoints.service.ts
+
+  /**
+   * GET /admin/v1/admin/account-activation-amount
+   * Get Activation Amount
+   * Amount necessary for scouters to activate their Account
+   */
+  public fetchActivationAmount(): Observable<any> {
+    const url = `${environment?.baseUrl}/${endpoints?.accountActivatiomAmount}`;
+
+    console.log('💰 Fetching activation amount from:', url);
+
+    return this.http
+      .get<any>(url, {
+        headers: this.jwtInterceptor.customHttpHeaders,
+      })
+      .pipe(
+        timeout(15000),
+        tap((response) =>
+          console.log('✅ Activation amount fetched:', response),
+        ),
+        catchError((error) => {
+          console.error('❌ Failed to fetch activation amount:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
   /**
    * Helper method to decode base64 metadata from response
    * @param metaData - Base64 encoded string from API response

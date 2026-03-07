@@ -26,7 +26,7 @@ export class ReelsAndDocumentationTabComponent implements OnInit {
   getTalentReel() {
     const talentId = this.emitterService.getTalentIdForHire();
    if(talentId){
-     this.marketService.fetchTalentMarketReel(talentId).subscribe({
+     this.marketService.fetchTalentReel(talentId).subscribe({
        next: (response: any) => {
          this.hasVideo = true;
          this.videoReel = response;

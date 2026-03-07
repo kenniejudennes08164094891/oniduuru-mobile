@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModalController, Platform } from '@ionic/angular';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
 
 @Component({
@@ -35,8 +36,9 @@ export class ViewAllTalentsPopupModalComponent
     private router: Router,
     platform: Platform,
     private scouterService: ScouterEndpointsService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {

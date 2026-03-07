@@ -124,6 +124,8 @@ export const endpoints = {
   transferFunds: 'wallets/v1/transfer-funds',
   fetchMyTransfers: 'wallets/v1/fetch-my-transfers',
   fetchSingleTransfer: 'wallets/v1/fetch-single-transfer',
+  fetchTransactionReceipt: 'wallets/v1/fetch-transaction-receipt',
+
   walletStats: 'wallets/v1/my-wallet-stats',
   histogramData: 'wallets/v1/my-monthly-stats',
   adminHistogramData: 'wallets/v1/all-monthly-stats',
@@ -138,7 +140,6 @@ export const endpoints = {
   adminFetchSingleWithdrawal: 'wallets/v1/admin/fetch-single-withdrawal',
   adminToggleFundWithdrawal: 'wallets/v1/toggle-fund-withdrawal',
   adminFetchAllFundsTransfers: 'wallets/v1/admin/fetch-all-transfers',
-
 
   // utils
   getAllCountryFlags: 'api-service/fetch-all-countries',

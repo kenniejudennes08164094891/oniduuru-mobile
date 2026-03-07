@@ -2,6 +2,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { imageIcons } from 'src/app/models/stores';
 import { PopoverController, MenuController, IonIcon } from '@ionic/angular';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { ProfilePopupSettingsModalComponent } from 'src/app/utilities/modals/profile-popup-settings-modal/profile-popup-settings-modal.component';
 import { NotificationsPopoverComponent } from 'src/app/utilities/modals/notifications-popover.component/notifications-popover.component';
 import { Router } from '@angular/router';
@@ -24,11 +25,17 @@ export class TalentHeaderComponent implements OnInit {
 
   constructor(
     private popoverCtrl: PopoverController,
-    protected router: Router,
+    public router: Router,
     private emmitterService: EmmittersService,
     private endpointService: EndpointService,
     private menuCtrl: MenuController,
+    private overlayCleanup: OverlayCleanupService,
   ) {}
+
+  // Method to navigate back
+  routeBack(): void {
+    this.router.navigate(['/talent/dashboard']);
+  }
 
   // Check if we're on a wallet page
   get isWalletPage(): boolean {
@@ -38,8 +45,20 @@ export class TalentHeaderComponent implements OnInit {
 
   // Add this method to open the shared wallet menu
   async openMenu() {
-   await this.menuCtrl.enable(true, 'wallet-menu');
-   await this.menuCtrl.open('wallet-menu');
+    await this.menuCtrl.enable(true, 'wallet-menu');
+    try {
+      const menu = await this.menuCtrl.get('wallet-menu');
+      if (menu) {
+        await this.menuCtrl.open('wallet-menu');
+      } else {
+        console.warn('⚠️ openMenu invoked but wallet-menu not yet available');
+        setTimeout(() => {
+          this.menuCtrl.open('wallet-menu');
+        }, 200);
+      }
+    } catch (e) {
+      console.error('❌ error opening wallet-menu', e);
+    }
   }
 
   // Add this method to close the menu
@@ -57,12 +76,20 @@ export class TalentHeaderComponent implements OnInit {
   }
 
   async openNotificationPopover(ev: any) {
-    const popover = await this.popoverCtrl.create({
+    const popover = await this.popoverCtrl.create(<any>{
       component: NotificationsPopoverComponent,
       event: ev,
       side: 'bottom',
       translucent: true,
+      backdropDismiss: false,
+      swipeToClose: false,
+      keyboardClose: false,
     });
+
+    popover.onDidDismiss().then(() => {
+      this.overlayCleanup.cleanBackdrops();
+    });
+
     await popover.present();
   }
 
@@ -119,9 +146,5 @@ export class TalentHeaderComponent implements OnInit {
 
   ngOnInit() {
     this.fetchProfilePicture();
-  }
-
-  routeBack(){
-    window.history.go(-1);
   }
 }

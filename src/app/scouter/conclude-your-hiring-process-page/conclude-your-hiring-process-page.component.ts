@@ -9,10 +9,9 @@ import {
 } from '@ionic/angular';
 import { Location } from '@angular/common';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { ToastsService } from 'src/app/services/toasts.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
-import {firstValueFrom} from "rxjs";
-import {EmmittersService} from "../../services/emmitters.service";
 
 @Component({
   selector: 'app-conclude-your-hiring-process-page-component',
@@ -62,9 +61,9 @@ export class ConcludeYourHiringProcessPageComponent
     private loadingCtrl: LoadingController,
     modalCtrl: ModalController,
     platform: Platform,
-    private emitterService: EmmittersService
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -106,19 +105,36 @@ export class ConcludeYourHiringProcessPageComponent
 
       // Set scouter data based on localStorage values
       this.scouterData = {
-        scouterId: parsedUserData.id || parsedUserData.scouterId || parsedUserData.userId || '',
-        scouterName: parsedUserData.name || parsedUserData.fullName || parsedUserData.username || '',
-        scouterPhoneNumber: parsedUserData.phoneNumber || parsedUserData.phone || parsedUserData.contact || '',
-        scouterEmail: registrationEmail || parsedUserData.email || parsedUserData.userEmail || '',
+        scouterId:
+          parsedUserData.id ||
+          parsedUserData.scouterId ||
+          parsedUserData.userId ||
+          '',
+        scouterName:
+          parsedUserData.name ||
+          parsedUserData.fullName ||
+          parsedUserData.username ||
+          '',
+        scouterPhoneNumber:
+          parsedUserData.phoneNumber ||
+          parsedUserData.phone ||
+          parsedUserData.contact ||
+          '',
+        scouterEmail:
+          registrationEmail ||
+          parsedUserData.email ||
+          parsedUserData.userEmail ||
+          '',
       };
 
       console.log('Scouter data loaded from localStorage:', this.scouterData);
 
       // If we still don't have email, try to get from other possible keys
       if (!this.scouterData.scouterEmail) {
-        const email = localStorage.getItem('email') ||
-                     localStorage.getItem('user_email') ||
-                     localStorage.getItem('scouter_email');
+        const email =
+          localStorage.getItem('email') ||
+          localStorage.getItem('user_email') ||
+          localStorage.getItem('scouter_email');
         if (email) {
           this.scouterData.scouterEmail = email;
         }
@@ -128,22 +144,22 @@ export class ConcludeYourHiringProcessPageComponent
       const missingFields = [];
       if (!this.scouterData.scouterId) missingFields.push('scouterId');
       if (!this.scouterData.scouterName) missingFields.push('scouterName');
-      if (!this.scouterData.scouterPhoneNumber) missingFields.push('scouterPhoneNumber');
+      if (!this.scouterData.scouterPhoneNumber)
+        missingFields.push('scouterPhoneNumber');
       if (!this.scouterData.scouterEmail) missingFields.push('scouterEmail');
 
       if (missingFields.length > 0) {
         console.warn('Missing scouter data in localStorage:', missingFields);
         this.toastService.openSnackBar(
           `Some profile information is missing. Please update your profile.`,
-          'warn'
+          'warn',
         );
       }
-
     } catch (error) {
       console.error('Error loading scouter data from localStorage:', error);
       this.toastService.openSnackBar(
         'Unable to load your profile data. Please log in again.',
-        'error'
+        'error',
       );
     }
   }
@@ -165,7 +181,10 @@ export class ConcludeYourHiringProcessPageComponent
       errors.push('scouterEmail should not be empty');
     }
     // Basic email validation
-    if (this.scouterData.scouterEmail && !this.isValidEmail(this.scouterData.scouterEmail)) {
+    if (
+      this.scouterData.scouterEmail &&
+      !this.isValidEmail(this.scouterData.scouterEmail)
+    ) {
       errors.push('scouterEmail must be an email');
     }
 
@@ -252,7 +271,10 @@ export class ConcludeYourHiringProcessPageComponent
       await new Promise((resolve) => setTimeout(resolve, 1000));
       this.isFormDisabled = true;
       this.isFormEditable = false;
-      this.toastService.openSnackBar('Record updated successfully! ✅', 'success');
+      this.toastService.openSnackBar(
+        'Record updated successfully! ✅',
+        'success',
+      );
       this.originalFormData = {};
     } catch (error) {
       console.error('Error updating record:', error);
@@ -276,7 +298,7 @@ export class ConcludeYourHiringProcessPageComponent
     if (!this.validateScouterData()) {
       this.toastService.openSnackBar(
         'Your profile information is incomplete. Please update your profile first.',
-        'error'
+        'error',
       );
       return;
     }
@@ -309,22 +331,22 @@ export class ConcludeYourHiringProcessPageComponent
       console.log('Sending hire request with payload:', hirePayload);
 
       // Call the API endpoint
-      const response = await firstValueFrom(this.scouterEndpointsService.hireTalent(hirePayload))
-      if(response){
-        console.log('Hire API Response:', response);
+      const response = await this.scouterEndpointsService
+        .hireTalent(hirePayload)
+        .toPromise();
 
-        // Show success message
-        this.toastService.openSnackBar(
-          'Hire offer sent successfully! ✅',
-          'success',
-        );
-        this.emitterService.clearTalentIdForHire();
+      console.log('Hire API Response:', response);
 
-        // Navigate back after a short delay
-        setTimeout(() => {
-          this.location.back();
-        }, 1500);
-      }
+      // Show success message
+      this.toastService.openSnackBar(
+        'Hire offer sent successfully! ✅',
+        'success',
+      );
+
+      // Navigate back after a short delay
+      setTimeout(() => {
+        this.location.back();
+      }, 1500);
     } catch (error: any) {
       console.error('Error hiring talent:', error);
 

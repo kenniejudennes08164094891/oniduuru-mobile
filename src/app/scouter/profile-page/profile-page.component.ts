@@ -17,7 +17,7 @@ import { UserService } from 'src/app/services/user.service';
 import { ScouterEndpointsService } from 'src/app/services/scouter-endpoints.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastsService } from 'src/app/services/toasts.service';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, finalize } from 'rxjs';
 import * as bcrypt from 'bcryptjs';
 import { map, takeUntil, timeout } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -1018,460 +1018,517 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     // removed: debugging helper for endpoint URLs
   }
 
- // ==================== SECURITY QUESTIONS METHODS ====================
+  // ==================== SECURITY QUESTIONS METHODS ====================
 
-/**
- * Load security questions with answers - PROPERLY DECODES BASE64 RESPONSE
- */
-private loadSecurityQuestionsWithAnswers(): void {
-  if (!this.scouterId) {
-    console.log('⏭️ No scouterId, skipping security questions');
-    this.isLoadingSecurityQuestions = false;
-    this.securityQuestions = [];
-    this.updateSecurityQuestionsState();
+  /**
+   * Load security questions with answers - PROPERLY DECODES BASE64 RESPONSE
+   */
+  private loadSecurityQuestionsWithAnswers(): void {
+    if (!this.scouterId) {
+      console.log('⏭️ No scouterId, skipping security questions');
+      this.isLoadingSecurityQuestions = false;
+      this.securityQuestions = [];
+      this.updateSecurityQuestionsState();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    console.log('📝 Loading security questions with answers...');
+    this.isLoadingSecurityQuestions = true;
+    this.securityQuestionErrorMessage = '';
     this.cdr.detectChanges();
-    return;
-  }
 
-  console.log('📝 Loading security questions with answers...');
-  this.isLoadingSecurityQuestions = true;
-  this.securityQuestionErrorMessage = '';
-  this.cdr.detectChanges();
-
-  // Use the security questions service with proper error handling
-  this.securityQuestionsService
-    .getSecurityQuestionsWithAnswers(this.scouterId)
-    .subscribe({
-      next: (response: any) => {
-        console.log('✅ Raw security questions response:', response);
-
-        try {
-          // Process the response - it should contain base64 data
-          this.processSecurityQuestionsResponse(response);
-        } catch (error) {
-          console.error('❌ Error processing security questions:', error);
-          this.securityQuestions = [];
-          this.securityQuestionErrorMessage = 'Failed to process security questions';
-        } finally {
+    // Use the security questions service with proper error handling
+    this.securityQuestionsService
+      .getSecurityQuestionsWithAnswers(this.scouterId)
+      .pipe(
+        finalize(() => {
+          console.log('🛑 finalize: clearing security questions loading state');
+          // ensure spinner stops no matter what
           this.isLoadingSecurityQuestions = false;
           this.updateSecurityQuestionsState();
           this.cdr.detectChanges();
-        }
-      },
-      error: (error) => {
-        console.error('❌ Failed to load security questions:', error);
-        
-        // Handle different error types
-        if (error.status === 404) {
-          // 404 means no questions exist - this is OK
-          console.log('ℹ️ No security questions found (404)');
+        }),
+      )
+      .subscribe({
+        next: (response: any) => {
+          console.log('✅ Raw security questions response:', response);
+
+          // if service told us there's no data, skip processing
+          if (response?.type === 'no-data') {
+            console.log('ℹ️ service indicated no security questions exist');
+            this.securityQuestions = [];
+            return;
+          }
+
+          try {
+            // Process the response - it should contain base64 data
+            this.processSecurityQuestionsResponse(response);
+          } catch (error) {
+            console.error('❌ Error processing security questions:', error);
+            this.securityQuestions = [];
+            this.securityQuestionErrorMessage =
+              'Failed to process security questions';
+          }
+        },
+        error: (error) => {
+          console.error('❌ Failed to load security questions:', error);
+          console.error('📋 Error type:', error?.type);
+          console.error('📋 Error status:', error?.status);
+
+          // Use the displayMessage from the service error response for better UX
+          let errorMessage = 'Failed to load security questions';
+
+          // Handle different error types provided by the service
+          if (error?.type === 'network') {
+            errorMessage = 'Network error. Please check your connection.';
+            console.log('🌐 Network connectivity issue detected');
+          } else if (error?.type === 'timeout') {
+            errorMessage = 'Request timed out. Please try again.';
+            console.log('⏱️ Request timeout (15s exceeded)');
+          } else if (error?.type === 'server') {
+            errorMessage = 'Server error. Please try again later.';
+            console.log('🖥️ Server error (5xx) detected');
+          } else if (error?.type === 'no-data') {
+            // No data found - don't show error, just empty state
+            console.log('ℹ️ No security questions found for this user');
+            this.securityQuestions = [];
+            this.securityQuestionErrorMessage = '';
+            return;
+          } else if (error?.type === 'unauthorized') {
+            errorMessage = 'Unauthorized. Please login again.';
+            console.warn('🔒 Authorization error');
+          } else if (error?.displayMessage) {
+            // Use custom display message from service
+            errorMessage = error.displayMessage;
+          } else if (error?.error?.message) {
+            // Fallback to backend message if provided
+            errorMessage = error.error.message;
+            console.log('💬 Backend error message:', errorMessage);
+          }
+
+          this.securityQuestionErrorMessage = errorMessage;
           this.securityQuestions = [];
-          this.securityQuestionErrorMessage = '';
-        } else if (error.name === 'TimeoutError' || error.message?.includes('timeout')) {
-          this.securityQuestionErrorMessage = 'Request timed out. Please try again.';
-        } else {
-          this.securityQuestionErrorMessage = 'Failed to load security questions';
-        }
-        
-        this.isLoadingSecurityQuestions = false;
-        this.securityQuestions = [];
-        this.updateSecurityQuestionsState();
-        this.cdr.detectChanges();
-      }
-    });
-}
-
-/**
- * Process security questions response - DECODES BASE64 DATA
- */
-private processSecurityQuestionsResponse(response: any): void {
-  // Clear existing questions
-  this.securityQuestions = [];
-  
-  console.log('🔍 Processing response:', response);
-
-  // Check if response has the expected structure with base64 data
-  if (response?.data && typeof response.data === 'string') {
-    try {
-      // DECODE the base64 data
-      console.log('🔓 Decoding base64 data...');
-      const decodedString = atob(response.data);
-      console.log('✅ Decoded string:', decodedString);
-      
-      // Parse the decoded JSON
-      const questionsArray = JSON.parse(decodedString);
-      console.log('📋 Parsed questions array:', questionsArray);
-      
-      if (Array.isArray(questionsArray) && questionsArray.length > 0) {
-        // Map the questions to our SecurityQuestion interface
-        this.securityQuestions = questionsArray.map((item: any, index: number) => {
-          // Determine if answer is hashed (BCrypt format)
-          const answerText = item.answer || '';
-          const isHashed = this.isHashedAnswer(answerText);
-          
-          return {
-            id: `q-${Date.now()}-${index}`,
-            question: item.question || '',
-            answer: answerText, // Store the actual answer (may be hashed)
-            isHashed: isHashed,
-            showAnswer: false,
-            originalAnswer: answerText, // Store original for reference
-            createdAt: new Date().toISOString()
-          };
-        });
-        
-        console.log(`✅ Loaded ${this.securityQuestions.length} security questions with answers`);
-      } else {
-        console.log('ℹ️ No questions in array');
-        this.securityQuestions = [];
-      }
-    } catch (error) {
-      console.error('❌ Failed to decode/parse base64 data:', error);
-      
-      // Try to handle if it's not base64 but plain JSON
-      try {
-        const directArray = JSON.parse(response.data);
-        if (Array.isArray(directArray)) {
-          this.securityQuestions = directArray.map((item: any, index: number) => ({
-            id: `q-${Date.now()}-${index}`,
-            question: item.question || '',
-            answer: item.answer || '',
-            isHashed: this.isHashedAnswer(item.answer || ''),
-            showAnswer: false,
-            originalAnswer: item.answer || '',
-            createdAt: new Date().toISOString()
-          }));
-          console.log(`✅ Loaded ${this.securityQuestions.length} questions from direct JSON`);
-        }
-      } catch (e) {
-        console.error('❌ Also failed to parse as direct JSON:', e);
-        this.securityQuestions = [];
-      }
-    }
-  } 
-  // Handle array response directly
-  else if (Array.isArray(response?.data)) {
-    console.log('📋 Response data is array:', response.data);
-    this.securityQuestions = response.data.map((item: any, index: number) => ({
-      id: `q-${Date.now()}-${index}`,
-      question: item.question || '',
-      answer: item.answer || '',
-      isHashed: this.isHashedAnswer(item.answer || ''),
-      showAnswer: false,
-      originalAnswer: item.answer || '',
-      createdAt: new Date().toISOString()
-    }));
-  }
-  // Handle response that IS the array
-  else if (Array.isArray(response)) {
-    console.log('📋 Response is array:', response);
-    this.securityQuestions = response.map((item: any, index: number) => ({
-      id: `q-${Date.now()}-${index}`,
-      question: item.question || '',
-      answer: item.answer || '',
-      isHashed: this.isHashedAnswer(item.answer || ''),
-      showAnswer: false,
-      originalAnswer: item.answer || '',
-      createdAt: new Date().toISOString()
-    }));
-  }
-  
-  console.log('📊 Final security questions:', this.securityQuestions);
-}
-
-/**
- * Check if answer is hashed (BCrypt format)
- */
-private isHashedAnswer(answer: string): boolean {
-  if (!answer || typeof answer !== 'string') return false;
-  
-  // BCrypt hashes typically start with $2a$, $2b$, or $2y$ and are 60 chars
-  const bcryptPattern = /^\$2[ayb]\$.{56}$/;
-  
-  // Check common hash patterns
-  const isBCrypt = bcryptPattern.test(answer);
-  const looksLikeHash = answer.length >= 60 && /^[a-zA-Z0-9$.+/]+$/.test(answer);
-  
-  return isBCrypt || looksLikeHash;
-}
-
-/**
- * Get display answer text
- */
-getDisplayAnswer(qa: SecurityQuestion): string {
-  // If answer is not visible and should be masked
-  if (!qa.showAnswer) {
-    // If there's no answer at all, show placeholder
-    if (!qa.answer || qa.answer.length === 0) {
-      return 'No answer set';
-    }
-    // Show mask for all answers when not visible
-    return this.ANSWER_MASK;
-  }
-
-  // Answer is visible
-  if (qa.isHashed) {
-    // For hashed answers, show a message instead of the hash
-    return '[Secured Answer]';
-  }
-
-  // Show the actual answer if it's not hashed
-  return qa.answer || 'No answer set';
-}
-
-/**
- * Toggle answer visibility
- */
-toggleAnswerVisibility(index: number): void {
-  const question = this.securityQuestions[index];
-  if (!question) return;
-
-  question.showAnswer = !question.showAnswer;
-
-  // For hashed answers, auto-hide after 3 seconds
-  if (question.showAnswer && question.isHashed) {
-    setTimeout(() => {
-      if (question.showAnswer) {
-        question.showAnswer = false;
-        this.cdr.detectChanges();
-      }
-    }, 3000);
-  }
-
-  this.cdr.detectChanges();
-}
-
-/**
- * Initialize security questions for editing
- */
-private initializeSecurityQuestions(): void {
-  console.log('📝 Initializing security questions for editing...');
-  
-  this.tempSecurityQuestions = [];
-
-  if (this.securityQuestions.length > 0) {
-    // Copy existing questions
-    this.tempSecurityQuestions = this.securityQuestions.map((q) => ({
-      question: q.question,
-      // For hashed answers, show empty so user can enter new or leave blank
-      answer: q.isHashed ? '' : q.answer,
-      revealAttempt: '',
-      revealed: false,
-      verifyInProgress: false,
-      showAnswer: false,
-      isHashed: q.isHashed,
-      originalAnswer: q.originalAnswer || q.answer,
-      masked: q.isHashed
-    }));
-
-    // If we have space for more, add ONE empty slot
-    if (this.securityQuestions.length < this.maxSecurityQuestions) {
-      this.tempSecurityQuestions.push({
-        question: '',
-        answer: '',
-        showAnswer: false,
-        isHashed: false,
-        originalAnswer: ''
+        },
       });
-    }
-  } else {
-    // No existing questions - start with ONE empty question
-    this.tempSecurityQuestions = [{
-      question: '',
-      answer: '',
-      showAnswer: false,
-      isHashed: false,
-      originalAnswer: ''
-    }];
   }
 
-  this.isEditingSecurityQuestions = true;
-  this.updateSecurityQuestionCount();
-  
-  console.log('✅ Initialized editing with:', this.tempSecurityQuestions.length, 'questions');
-  this.cdr.detectChanges();
-}
+  /**
+   * Process security questions response - DECODES BASE64 DATA
+   */
+  private processSecurityQuestionsResponse(response: any): void {
+    // Clear existing questions
+    this.securityQuestions = [];
 
-/**
- * Save security questions
- */
-async saveSecurityQuestions(): Promise<void> {
-  console.log('💾 Saving security questions...');
+    console.log('🔍 Processing response:', response);
 
-  // Validate all questions
-  if (!this.canSaveSecurityQuestions()) {
-    this.toastService.openSnackBar(
-      'Please fill in all questions and answers (minimum 5 chars for question, 3 for answer)',
-      'warning'
-    );
-    return;
-  }
-
-  // Check for duplicates
-  if (this.hasDuplicateQuestions()) {
-    this.toastService.openSnackBar(
-      'Duplicate questions found. Please use unique questions.',
-      'warning'
-    );
-    return;
-  }
-
-  this.isSavingSecurityQuestions = true;
-  this.securityQuestionErrorMessage = '';
-  this.cdr.detectChanges();
-
-  try {
-    // Filter only filled questions
-    const filledQuestions = this.tempSecurityQuestions.filter(
-      q => q.question.trim() && q.answer.trim()
-    );
-
-    if (filledQuestions.length === 0) {
-      throw new Error('No valid questions to save');
+    // Check if response has the expected structure with base64 data
+    if (response?.data === null || response?.data === undefined) {
+      console.log('ℹ️ Server returned no security question data');
+      this.securityQuestions = [];
+      return;
     }
 
-    // Hash all answers
-    const questionsToSave = await Promise.all(
-      filledQuestions.map(async (qa) => {
-        // If editing existing question with hashed answer and answer wasn't changed
-        if (qa.isHashed && qa.originalAnswer && qa.answer === '') {
-          // Keep the original hashed answer
+    if (typeof response.data === 'string') {
+      try {
+        // DECODE the base64 data
+        console.log('🔓 Decoding base64 data...');
+        const decodedString = atob(response.data);
+        console.log('✅ Decoded string:', decodedString);
+
+        // Parse the decoded JSON
+        const questionsArray = JSON.parse(decodedString);
+        console.log('📋 Parsed questions array:', questionsArray);
+
+        if (Array.isArray(questionsArray) && questionsArray.length > 0) {
+          // Map the questions to our SecurityQuestion interface
+          this.securityQuestions = questionsArray.map(
+            (item: any, index: number) => {
+              // Determine if answer is hashed (BCrypt format)
+              const answerText = item.answer || '';
+              const isHashed = this.isHashedAnswer(answerText);
+
+              return {
+                id: `q-${Date.now()}-${index}`,
+                question: item.question || '',
+                answer: answerText, // Store the actual answer (may be hashed)
+                isHashed: isHashed,
+                showAnswer: false,
+                originalAnswer: answerText, // Store original for reference
+                createdAt: new Date().toISOString(),
+              };
+            },
+          );
+
+          console.log(
+            `✅ Loaded ${this.securityQuestions.length} security questions with answers`,
+          );
+        } else {
+          console.log('ℹ️ No questions in array');
+          this.securityQuestions = [];
+        }
+      } catch (error) {
+        console.error('❌ Failed to decode/parse base64 data:', error);
+
+        // Try to handle if it's not base64 but plain JSON
+        try {
+          const directArray = JSON.parse(response.data);
+          if (Array.isArray(directArray)) {
+            this.securityQuestions = directArray.map(
+              (item: any, index: number) => ({
+                id: `q-${Date.now()}-${index}`,
+                question: item.question || '',
+                answer: item.answer || '',
+                isHashed: this.isHashedAnswer(item.answer || ''),
+                showAnswer: false,
+                originalAnswer: item.answer || '',
+                createdAt: new Date().toISOString(),
+              }),
+            );
+            console.log(
+              `✅ Loaded ${this.securityQuestions.length} questions from direct JSON`,
+            );
+          }
+        } catch (e) {
+          console.error('❌ Also failed to parse as direct JSON:', e);
+          this.securityQuestions = [];
+        }
+      }
+    }
+    // Handle array response directly
+    else if (Array.isArray(response?.data)) {
+      console.log('📋 Response data is array:', response.data);
+      this.securityQuestions = response.data.map(
+        (item: any, index: number) => ({
+          id: `q-${Date.now()}-${index}`,
+          question: item.question || '',
+          answer: item.answer || '',
+          isHashed: this.isHashedAnswer(item.answer || ''),
+          showAnswer: false,
+          originalAnswer: item.answer || '',
+          createdAt: new Date().toISOString(),
+        }),
+      );
+    }
+    // Handle response that IS the array
+    else if (Array.isArray(response)) {
+      console.log('📋 Response is array:', response);
+      this.securityQuestions = response.map((item: any, index: number) => ({
+        id: `q-${Date.now()}-${index}`,
+        question: item.question || '',
+        answer: item.answer || '',
+        isHashed: this.isHashedAnswer(item.answer || ''),
+        showAnswer: false,
+        originalAnswer: item.answer || '',
+        createdAt: new Date().toISOString(),
+      }));
+    }
+
+    console.log('📊 Final security questions:', this.securityQuestions);
+  }
+
+  /**
+   * Check if answer is hashed (BCrypt format)
+   */
+  private isHashedAnswer(answer: string): boolean {
+    if (!answer || typeof answer !== 'string') return false;
+
+    // BCrypt hashes typically start with $2a$, $2b$, or $2y$ and are 60 chars
+    const bcryptPattern = /^\$2[ayb]\$.{56}$/;
+
+    // Check common hash patterns
+    const isBCrypt = bcryptPattern.test(answer);
+    const looksLikeHash =
+      answer.length >= 60 && /^[a-zA-Z0-9$.+/]+$/.test(answer);
+
+    return isBCrypt || looksLikeHash;
+  }
+
+  /**
+   * Get display answer text
+   */
+  getDisplayAnswer(qa: SecurityQuestion): string {
+    // If answer is not visible and should be masked
+    if (!qa.showAnswer) {
+      // If there's no answer at all, show placeholder
+      if (!qa.answer || qa.answer.length === 0) {
+        return 'No answer set';
+      }
+      // Show mask for all answers when not visible
+      return this.ANSWER_MASK;
+    }
+
+    // Answer is visible
+    if (qa.isHashed) {
+      // For hashed answers, show a message instead of the hash
+      return '[Secured Answer]';
+    }
+
+    // Show the actual answer if it's not hashed
+    return qa.answer || 'No answer set';
+  }
+
+  /**
+   * Toggle answer visibility
+   */
+  toggleAnswerVisibility(index: number): void {
+    const question = this.securityQuestions[index];
+    if (!question) return;
+
+    question.showAnswer = !question.showAnswer;
+
+    // For hashed answers, auto-hide after 3 seconds
+    if (question.showAnswer && question.isHashed) {
+      setTimeout(() => {
+        if (question.showAnswer) {
+          question.showAnswer = false;
+          this.cdr.detectChanges();
+        }
+      }, 3000);
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Initialize security questions for editing
+   */
+  private initializeSecurityQuestions(): void {
+    console.log('📝 Initializing security questions for editing...');
+
+    this.tempSecurityQuestions = [];
+
+    if (this.securityQuestions.length > 0) {
+      // Copy existing questions
+      this.tempSecurityQuestions = this.securityQuestions.map((q) => ({
+        question: q.question,
+        // For hashed answers, show empty so user can enter new or leave blank
+        answer: q.isHashed ? '' : q.answer,
+        revealAttempt: '',
+        revealed: false,
+        verifyInProgress: false,
+        showAnswer: false,
+        isHashed: q.isHashed,
+        originalAnswer: q.originalAnswer || q.answer,
+        masked: q.isHashed,
+      }));
+
+      // If we have space for more, add ONE empty slot
+      if (this.securityQuestions.length < this.maxSecurityQuestions) {
+        this.tempSecurityQuestions.push({
+          question: '',
+          answer: '',
+          showAnswer: false,
+          isHashed: false,
+          originalAnswer: '',
+        });
+      }
+    } else {
+      // No existing questions - start with ONE empty question
+      this.tempSecurityQuestions = [
+        {
+          question: '',
+          answer: '',
+          showAnswer: false,
+          isHashed: false,
+          originalAnswer: '',
+        },
+      ];
+    }
+
+    this.isEditingSecurityQuestions = true;
+    this.updateSecurityQuestionCount();
+
+    console.log(
+      '✅ Initialized editing with:',
+      this.tempSecurityQuestions.length,
+      'questions',
+    );
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Save security questions
+   */
+  async saveSecurityQuestions(): Promise<void> {
+    console.log('💾 Saving security questions...');
+
+    // Validate all questions
+    if (!this.canSaveSecurityQuestions()) {
+      this.toastService.openSnackBar(
+        'Please fill in all questions and answers (minimum 5 chars for question, 3 for answer)',
+        'warning',
+      );
+      return;
+    }
+
+    // Check for duplicates
+    if (this.hasDuplicateQuestions()) {
+      this.toastService.openSnackBar(
+        'Duplicate questions found. Please use unique questions.',
+        'warning',
+      );
+      return;
+    }
+
+    this.isSavingSecurityQuestions = true;
+    this.securityQuestionErrorMessage = '';
+    this.cdr.detectChanges();
+
+    try {
+      // Filter only filled questions
+      const filledQuestions = this.tempSecurityQuestions.filter(
+        (q) => q.question.trim() && q.answer.trim(),
+      );
+
+      if (filledQuestions.length === 0) {
+        throw new Error('No valid questions to save');
+      }
+
+      // Hash all answers
+      const questionsToSave = await Promise.all(
+        filledQuestions.map(async (qa) => {
+          // If editing existing question with hashed answer and answer wasn't changed
+          if (qa.isHashed && qa.originalAnswer && qa.answer === '') {
+            // Keep the original hashed answer
+            return {
+              question: qa.question.trim(),
+              answer: qa.originalAnswer,
+            };
+          }
+
+          // Hash new answer (case-insensitive)
+          const hashedAnswer = await bcrypt.hash(
+            qa.answer.trim().toLowerCase(),
+            10,
+          );
+
           return {
             question: qa.question.trim(),
-            answer: qa.originalAnswer
+            answer: hashedAnswer,
           };
-        }
-        
-        // Hash new answer (case-insensitive)
-        const hashedAnswer = await bcrypt.hash(
-          qa.answer.trim().toLowerCase(),
-          10
-        );
-        
-        return {
-          question: qa.question.trim(),
-          answer: hashedAnswer
-        };
-      })
+        }),
+      );
+
+      const payload = {
+        uniqueId: this.scouterId,
+        securityQuestions: questionsToSave,
+      };
+
+      console.log('📤 Saving security questions:', {
+        count: questionsToSave.length,
+        scouterId: this.scouterId,
+      });
+
+      // Call the API to save
+      this.authService.createScouterSecurityQuestion(payload).subscribe({
+        next: (response) => {
+          console.log('✅ Security questions saved:', response);
+          this.handleSecurityQuestionsSaveSuccess(response);
+        },
+        error: (error) => {
+          console.error('❌ Failed to save security questions:', error);
+
+          // If it's a "already exists" error, try update instead
+          if (
+            error.status === 403 &&
+            error.error?.message?.toLowerCase().includes('already exists')
+          ) {
+            console.log('🔄 Questions exist, trying update instead...');
+
+            this.authService
+              .updateScouterSecurityQuestions(this.scouterId, questionsToSave)
+              .subscribe({
+                next: (updateResponse) => {
+                  console.log('✅ Security questions updated:', updateResponse);
+                  this.handleSecurityQuestionsSaveSuccess(updateResponse);
+                },
+                error: (updateError) => {
+                  console.error('❌ Update also failed:', updateError);
+                  this.handleSecurityQuestionsSaveError(updateError);
+                },
+              });
+          } else {
+            this.handleSecurityQuestionsSaveError(error);
+          }
+        },
+      });
+    } catch (error) {
+      console.error('❌ Error in save flow:', error);
+      this.handleSecurityQuestionsSaveError(error);
+    }
+  }
+
+  /**
+   * Handle successful save
+   */
+  private handleSecurityQuestionsSaveSuccess(res: any): void {
+    this.isSavingSecurityQuestions = false;
+    this.isEditingSecurityQuestions = false;
+
+    this.toastService.openSnackBar(
+      'Security questions saved successfully!',
+      'success',
     );
 
-    const payload = {
-      uniqueId: this.scouterId,
-      securityQuestions: questionsToSave
-    };
+    // Reload questions to show updated state
+    setTimeout(() => {
+      this.loadSecurityQuestionsWithAnswers();
+    }, 500);
 
-    console.log('📤 Saving security questions:', {
-      count: questionsToSave.length,
-      scouterId: this.scouterId
-    });
-
-    // Call the API to save
-    this.authService.createScouterSecurityQuestion(payload).subscribe({
-      next: (response) => {
-        console.log('✅ Security questions saved:', response);
-        this.handleSecurityQuestionsSaveSuccess(response);
-      },
-      error: (error) => {
-        console.error('❌ Failed to save security questions:', error);
-        
-        // If it's a "already exists" error, try update instead
-        if (error.status === 403 && error.error?.message?.toLowerCase().includes('already exists')) {
-          console.log('🔄 Questions exist, trying update instead...');
-          
-          this.authService.updateScouterSecurityQuestions(
-            this.scouterId,
-            questionsToSave
-          ).subscribe({
-            next: (updateResponse) => {
-              console.log('✅ Security questions updated:', updateResponse);
-              this.handleSecurityQuestionsSaveSuccess(updateResponse);
-            },
-            error: (updateError) => {
-              console.error('❌ Update also failed:', updateError);
-              this.handleSecurityQuestionsSaveError(updateError);
-            }
-          });
-        } else {
-          this.handleSecurityQuestionsSaveError(error);
-        }
-      }
-    });
-  } catch (error) {
-    console.error('❌ Error in save flow:', error);
-    this.handleSecurityQuestionsSaveError(error);
-  }
-}
-
-/**
- * Handle successful save
- */
-private handleSecurityQuestionsSaveSuccess(res: any): void {
-  this.isSavingSecurityQuestions = false;
-  this.isEditingSecurityQuestions = false;
-  
-  this.toastService.openSnackBar(
-    'Security questions saved successfully!',
-    'success'
-  );
-
-  // Reload questions to show updated state
-  setTimeout(() => {
-    this.loadSecurityQuestionsWithAnswers();
-  }, 500);
-
-  this.cdr.detectChanges();
-}
-
-/**
- * Handle error during security questions save
- */
-private handleSecurityQuestionsSaveError(err: any): void {
-  this.isSavingSecurityQuestions = false;
-  console.error('❌ Failed to save security questions:', err);
-
-  let errorMessage = 'Failed to save security questions';
-
-  if (err?.error?.message) {
-    errorMessage = err.error.message;
-  } else if (err?.message) {
-    errorMessage = err.message;
+    this.cdr.detectChanges();
   }
 
-  this.securityQuestionErrorMessage = errorMessage;
-  this.toastService.openSnackBar(errorMessage, 'error');
-  this.cdr.detectChanges();
-}
+  /**
+   * Handle error during security questions save
+   */
+  private handleSecurityQuestionsSaveError(err: any): void {
+    this.isSavingSecurityQuestions = false;
+    console.error('❌ Failed to save security questions:', err);
 
-/**
- * Check if can save security questions
- */
-canSaveSecurityQuestions(): boolean {
-  if (this.tempSecurityQuestions.length === 0) return false;
+    let errorMessage = 'Failed to save security questions';
 
-  // Get only filled questions
-  const filledQuestions = this.tempSecurityQuestions.filter(
-    q => q.question.trim() && q.answer.trim()
-  );
+    if (err?.error?.message) {
+      errorMessage = err.error.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
 
-  if (filledQuestions.length === 0) return false;
+    this.securityQuestionErrorMessage = errorMessage;
+    this.toastService.openSnackBar(errorMessage, 'error');
+    this.cdr.detectChanges();
+  }
 
-  // Check all filled questions have valid lengths
-  return filledQuestions.every(q => 
-    q.question.trim().length >= 5 && q.answer.trim().length >= 3
-  );
-}
+  /**
+   * Check if can save security questions
+   */
+  canSaveSecurityQuestions(): boolean {
+    if (this.tempSecurityQuestions.length === 0) return false;
 
-/**
- * Check for duplicate questions
- */
-hasDuplicateQuestions(): boolean {
-  const questions = this.tempSecurityQuestions
-    .map(q => q.question.trim().toLowerCase())
-    .filter(q => q.length >= 5);
+    // Get only filled questions
+    const filledQuestions = this.tempSecurityQuestions.filter(
+      (q) => q.question.trim() && q.answer.trim(),
+    );
 
-  const uniqueQuestions = new Set(questions);
-  return uniqueQuestions.size !== questions.length;
-}
+    if (filledQuestions.length === 0) return false;
+
+    // Check all filled questions have valid lengths
+    return filledQuestions.every(
+      (q) => q.question.trim().length >= 5 && q.answer.trim().length >= 3,
+    );
+  }
+
+  /**
+   * Check for duplicate questions
+   */
+  hasDuplicateQuestions(): boolean {
+    const questions = this.tempSecurityQuestions
+      .map((q) => q.question.trim().toLowerCase())
+      .filter((q) => q.length >= 5);
+
+    const uniqueQuestions = new Set(questions);
+    return uniqueQuestions.size !== questions.length;
+  }
   /**
    * Retry loading security questions with exponential backoff
    */
@@ -1632,14 +1689,6 @@ hasDuplicateQuestions(): boolean {
 
     console.log(` Loaded ${this.securityQuestions.length} security questions`);
   }
-
-
-
-
- 
-
-
-
 
   /**
    * Handle security questions response (unified)
@@ -2038,7 +2087,6 @@ hasDuplicateQuestions(): boolean {
     }
   }
 
-
   /**
    * Delete a question
    */
@@ -2146,10 +2194,6 @@ hasDuplicateQuestions(): boolean {
     this.updateSecurityQuestionCount();
     this.cdr.detectChanges();
   }
-
-
-
- 
 
   /**
    * Update the security questions state after changes
@@ -2477,4 +2521,3 @@ hasDuplicateQuestions(): boolean {
     console.log(' ProfilePageComponent destroyed');
   }
 }
-

@@ -63,20 +63,27 @@
         placeholder="₦ 45,000"
         required
         class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
-        [ngClass]="validationErrors.amount ? 'border-red-500' : 'border-[#D9DCE5]'"
+        [ngClass]="
+          validationErrors.amount ? 'border-red-500' : 'border-[#D9DCE5]'
+        "
         (blur)="onAmountBlur()"
       />
       <p *ngIf="validationErrors.amount" class="text-red-500 text-sm">
         {{ validationErrors.amount }}
       </p>
-      <p *ngIf="!validationErrors.amount && !amount && formSubmitted" class="text-red-500 text-sm">
+      <p
+        *ngIf="!validationErrors.amount && !amount && formSubmitted"
+        class="text-red-500 text-sm"
+      >
         Amount is required.
       </p>
     </div>
 
     <!-- Wallet Acc -->
-    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
-      <label class="text-[#344054] text-[14px]">Designated Wallet Account *</label>
+    <div class="space-y-2 mt-8">
+      <label class="text-[#344054] text-[14px]"
+        >Designated Wallet Account *</label
+      >
       <input
         type="text"
         [ngModel]="walletAccNo"
@@ -84,61 +91,54 @@
         name="walletAcc"
         placeholder="3056578914"
         required
-        maxlength="10"
+        maxlength="11"
         class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
-        [ngClass]="validationErrors.walletAccNo ? 'border-red-500' : 'border-[#D9DCE5]'"
+        [ngClass]="
+          validationErrors.walletAccNo ? 'border-red-500' : 'border-[#D9DCE5]'
+        "
         inputmode="numeric"
         pattern="[0-9]*"
       />
-
       <p *ngIf="validationErrors.walletAccNo" class="text-red-500 text-sm">
         {{ validationErrors.walletAccNo }}
       </p>
-
-      <p *ngIf="!validationErrors.walletAccNo && !walletAccNo && formSubmitted" class="text-red-500 text-sm">
+      <p
+        *ngIf="!validationErrors.walletAccNo && !walletAccNo && formSubmitted"
+        class="text-red-500 text-sm"
+      >
         Wallet account number is required.
       </p>
-
-      <small *ngIf="showMessageResp === null && walletAccNo.length === 10" class="text-blue-700">
-        Processing...
-      </small>
-
-      <small *ngIf="showMessageResp === true" class="text-lime-500">
-        {{ responseMessage }}
-      </small>
-
-      <small *ngIf="showMessageResp === false" class="text-red-600">
-        {{ responseMessage }}
-      </small>
-
     </div>
 
-
     <!-- Wallet Name -->
-    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
+    <div class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Designated Wallet Name *</label>
       <input
         type="text"
         [ngModel]="walletName"
         (ngModelChange)="onWalletNameChange($event)"
-        readonly
         name="walletName"
-        placeholder="Viki West"
+        placeholder="Enter wallet name"
         required
         maxlength="50"
         class="border px-3 py-4 w-full rounded-lg bg-white placeholder:text-gray-300"
-        [ngClass]="validationErrors.walletName ? 'border-red-500' : 'border-[#D9DCE5]'"
+        [ngClass]="
+          validationErrors.walletName ? 'border-red-500' : 'border-[#D9DCE5]'
+        "
       />
       <p *ngIf="validationErrors.walletName" class="text-red-500 text-sm">
         {{ validationErrors.walletName }}
       </p>
-      <p *ngIf="!validationErrors.walletName && !walletName && formSubmitted" class="text-red-500 text-sm">
+      <p
+        *ngIf="!validationErrors.walletName && !walletName && formSubmitted"
+        class="text-red-500 text-sm"
+      >
         Wallet name is required.
       </p>
     </div>
 
     <!-- Reason OPTIONAL -->
-    <div *ngIf="fundType === 'Fund Others'" class="space-y-2 mt-8">
+    <div class="space-y-2 mt-8">
       <label class="text-[#344054] text-[14px]">Reason (Optional)</label>
       <textarea
         [ngModel]="reason"
@@ -147,22 +147,17 @@
         placeholder="Write your thoughts here..."
         maxlength="500"
         class="border px-3 pt-2 pb-10 w-full rounded-lg bg-white placeholder:text-gray-300"
-        [ngClass]="validationErrors.reason ? 'border-red-500' : 'border-[#D9DCE5]'"
+        [ngClass]="
+          validationErrors.reason ? 'border-red-500' : 'border-[#D9DCE5]'
+        "
       ></textarea>
       <p *ngIf="validationErrors.reason" class="text-red-500 text-sm">
         {{ validationErrors.reason }}
       </p>
       <div class="flex justify-between text-xs text-gray-500">
-        <span>{{ reason.length || '' }}/500 characters</span>
+        <span>{{ reason.length || "" }}/500 characters</span>
         <span *ngIf="reason">Optional</span>
       </div>
-    </div>
-
-    <!-- Transaction charge info for Fund Others calculatedCharge -->
-    <div *ngIf="fundType === 'Fund Others' && amount && amount > 0" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-      <p class="text-sm text-blue-800">
-        <span class="font-medium">Important!</span> Note that a POS charge of <b>₦ {{calculatedCharge}}</b> shall be deducted from this transaction.
-      </p>
     </div>
 
     <!-- Terms -->
@@ -176,7 +171,9 @@
       />
       <label for="termsCheckbox" class="cursor-pointer">
         I agree with
-        <span class="text-[#0033FF] cursor-pointer hover:underline">terms and conditions</span>
+        <span class="text-[#0033FF] cursor-pointer hover:underline"
+          >terms and conditions</span
+        >
       </label>
     </div>
     <p *ngIf="validationErrors.agreed" class="text-red-500 text-sm mt-1 ml-6">
@@ -188,18 +185,43 @@
     <button
       class="px-4 py-3 w-full items-center text-center bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       (click)="submitDeposit()"
-      [disabled]="!agreed"
-      [ngStyle]="{ 'background-color': !agreed ? '#CDD5DF' : '#101323' }"
+      [disabled]="isProcessing"
     >
-      <span *ngIf="!isProcessing">{{submitText}}</span>
+      <span *ngIf="!isProcessing">Create Fund Deposit</span>
       <span *ngIf="isProcessing" class="flex items-center justify-center gap-2">
-        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        <svg
+          class="animate-spin h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          ></path>
         </svg>
         Processing...
       </span>
     </button>
 
+    <!-- Transaction charge info for Fund Others -->
+    <div
+      *ngIf="fundType === 'Fund Others' && amount && amount > 0"
+      class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg"
+    >
+      <p class="text-sm text-blue-800">
+        <strong>Note:</strong> A transaction charge will be applied for funding
+        others' wallets.
+      </p>
+    </div>
   </div>
 </ion-content>

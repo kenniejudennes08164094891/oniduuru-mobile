@@ -414,6 +414,14 @@
         <div class="flex items-center gap-2 text-red-700">
           <ion-icon name="warning-outline"></ion-icon>
           <span class="text-sm">{{ securityQuestionErrorMessage }}</span>
+          <!-- provide a retry link when an error occurs -->
+          <button
+            *ngIf="!isLoadingSecurityQuestions"
+            (click)="retryLoadSecurityQuestions()"
+            class="ml-2 text-blue-600 underline text-sm"
+          >
+            Retry
+          </button>
         </div>
       </div>
 

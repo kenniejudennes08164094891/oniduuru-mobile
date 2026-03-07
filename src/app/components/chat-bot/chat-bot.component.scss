@@ -37,14 +37,15 @@ button {
   cursor: grabbing !important;
 }
 
-
 .draggable-chat-button {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
   &:active {
     transform: scale(0.95);
   }
-  
+
   // Add a subtle shadow when dragging
   &.dragging {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -52,6 +53,8 @@ button {
 }
 
 // Ensure the button has proper z-index and doesn't interfere with other elements
+// placed above typical overlay z-index values so the icon can act as a
+// recovery mechanism if something else goes wrong.
 .fixed {
-  z-index: 9999;
+  z-index: 20000;
 }

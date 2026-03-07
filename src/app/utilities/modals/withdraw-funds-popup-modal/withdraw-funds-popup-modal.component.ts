@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 import { banks, MockRecentHires } from 'src/app/models/mocks';
 import { imageIcons } from 'src/app/models/stores';
 import { PaymentService } from 'src/app/services/payment.service';
@@ -65,9 +66,10 @@ export class WithdrawFundsPopupModalComponent
   // file preview
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
-  selectedBankObj:any = {};
-  isValidAcctNum: boolean | null | string = null;
-  validationProps: any = {};
+
+  // Account validation properties
+  isValidAcctNum: boolean | 'processing' = false;
+  validationProps: { fullName: string } = { fullName: '' };
 
   constructor(
     modalCtrl: ModalController,
@@ -76,8 +78,9 @@ export class WithdrawFundsPopupModalComponent
     private toast: ToastsService,
     private ngZone: NgZone,
     private endpointService: EndpointService,
+    protected override overlayCleanup: OverlayCleanupService,
   ) {
-    super(modalCtrl, platform);
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   override ngOnInit() {
@@ -86,7 +89,7 @@ export class WithdrawFundsPopupModalComponent
       currentUser: this.currentUser,
       userUniqueId: this.userUniqueId,
       walletId: this.walletId,
-      userRole: this.userRole
+      userRole: this.userRole,
     });
 
     // Load banks from API
@@ -121,11 +124,9 @@ export class WithdrawFundsPopupModalComponent
         this.banks = banks.map((name: string) => ({ bankName: name }));
 
         this.toast.openSnackBar('Using offline bank list', 'info');
-      }
+      },
     });
   }
-
-
 
   toggleBankDropdown() {
     this.isBankDropdownOpen = !this.isBankDropdownOpen;
@@ -137,33 +138,12 @@ export class WithdrawFundsPopupModalComponent
     this.bank = bankName;
 
     // Find the full bank object if needed
-    this.selectedBankObj = this.banks.find(b => b.bankName === bankName);
+    const selectedBankObj = this.banks.find((b) => b.bankName === bankName);
+    console.log('🏦 Selected bank:', selectedBankObj);
   }
 
-  handleAcctNum(event:any){
-    if(event?.length === 10){
-      this.isValidAcctNum = "processing";
-      // console.log('Account Num>>', event);
-      // console.log('Selected bank>>', this.selectedBankObj);
-      const payload = {
-        bankCode: this.selectedBankObj.bankCode,
-        bankName: this.selectedBankObj.bankName,
-        bankAccountNo: event
-      }
-      this.endpointService.verifyAccountNumber(payload).subscribe({
-        next: (response:any) => {
-          const acctName = `${response?.data?.accountName}`;
-          this.isValidAcctNum = true;
-          this.validationProps = {fullName: acctName, ...this.validationProps};
-        },error: (err:any) => {
-          this.isValidAcctNum = false;
-        }
-      })
-    }
-  }
-
-  async closeModal() {
-  await this.modalCtrl.dismiss();
+  closeModal() {
+    this.modalCtrl.dismiss();
   }
 
   onFileSelected(event: Event) {
@@ -185,6 +165,41 @@ export class WithdrawFundsPopupModalComponent
   removeScreenshot() {
     this.selectedFile = null;
     this.previewUrl = null;
+  }
+
+  /**
+   * Handle account number validation
+   */
+  handleAcctNum(event: any): void {
+    const accountNumber = event.target?.value || event;
+
+    // Reset validation state
+    if (!accountNumber || accountNumber.length < 10) {
+      this.isValidAcctNum = false;
+      this.validationProps = { fullName: '' };
+      return;
+    }
+
+    // Show processing state
+    this.isValidAcctNum = 'processing';
+
+    // Validate account number via API
+    this.endpointService.validateAccountNumber(accountNumber).subscribe({
+      next: (res: any) => {
+        if (res?.data?.account_name) {
+          this.isValidAcctNum = true;
+          this.validationProps = { fullName: res.data.account_name };
+        } else {
+          this.isValidAcctNum = false;
+          this.validationProps = { fullName: '' };
+        }
+      },
+      error: (err) => {
+        console.error('Account validation error:', err);
+        this.isValidAcctNum = false;
+        this.validationProps = { fullName: '' };
+      },
+    });
   }
 
   private validateInputs(): boolean {
@@ -224,7 +239,10 @@ export class WithdrawFundsPopupModalComponent
 
     // Check if we have the required user data
     if (!this.userUniqueId) {
-      this.toast.openSnackBar('User information missing. Please try again.', 'error');
+      this.toast.openSnackBar(
+        'User information missing. Please try again.',
+        'error',
+      );
       console.error('❌ Missing userUniqueId in withdraw modal');
       return;
     }
@@ -250,7 +268,8 @@ export class WithdrawFundsPopupModalComponent
         const withdrawalData = res.data || res;
         const newWithdrawal = {
           id: withdrawalData.withdrawalReferenceNumber || transactionId,
-          transactionId: withdrawalData.withdrawalReferenceNumber || transactionId,
+          transactionId:
+            withdrawalData.withdrawalReferenceNumber || transactionId,
           amount: this.amount!,
           bank: this.bank!,
           nubamAccNo: this.accountNumber,
@@ -261,7 +280,7 @@ export class WithdrawFundsPopupModalComponent
           withdrawalReferenceNumber: withdrawalData.withdrawalReferenceNumber,
         };
 
-       await this.modalCtrl.dismiss(newWithdrawal, 'submitted');
+        this.modalCtrl.dismiss(newWithdrawal, 'submitted');
 
         // Show receipt modal
         const receiptModal = await this.modalCtrl.create({
@@ -283,11 +302,14 @@ export class WithdrawFundsPopupModalComponent
         console.error('❌ Withdrawal error:', err);
 
         // Show error toast with specific message
-        const errorMessage = err.error?.message || err.message || 'Withdrawal failed. Please try again.';
+        const errorMessage =
+          err.error?.message ||
+          err.message ||
+          'Withdrawal failed. Please try again.';
         this.toast.openSnackBar(errorMessage, 'error');
 
         // Still dismiss but with error status
-       await this.modalCtrl.dismiss(null, 'error');
+        this.modalCtrl.dismiss(null, 'error');
       },
     });
   }

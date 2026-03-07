@@ -25,3 +25,28 @@ export class AuthRedirectGuard implements CanActivate {
     return false;
   }
 }
+
+/**
+ * Guard to protect routes that require authentication
+ * Redirects to login if user is not authenticated
+ */
+@Injectable({
+  providedIn: 'root',
+})
+export class ProtectedRouteGuard implements CanActivate {
+  constructor(private router: Router) {}
+
+  canActivate(): boolean {
+    const token = localStorage.getItem('access_token');
+    const userData = localStorage.getItem('user_data');
+
+    // ✅ User is authenticated
+    if (token && userData) {
+      return true;
+    }
+
+    // ❌ Not authenticated - redirect to login and replace history to prevent back button
+    this.router.navigate(['/auth/login'], { replaceUrl: true });
+    return false;
+  }
+}

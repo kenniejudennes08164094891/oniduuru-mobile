@@ -148,29 +148,114 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
     private toastService: ToastsService,
     private endpointService: EndpointService,
     private toggleVisibilityService: ToggleVisibilitySharedStateService,
-  ) {}
+  ) {
+    // reset state whenever login status changes to avoid stale values
+    this.authService.userLoggedIn$.subscribe((loggedIn) => {
+      console.log('🔄 Dashboard login state changed:', loggedIn);
+      this.resetDashboardState();
+      if (loggedIn) {
+        // reload user details (name, etc.)
+        this.getScouterDetails();
+        // reload wallet profile and payment status
+        this.paymentStatus = this.getPaymentStatus();
+        if (this.paymentStatus === 'true') {
+          this.fetchWalletBalance();
+          this.getWalletProfile().then(() => this.debugWalletCheck());
+        }
+        this.loadDashboardData();
+      }
+    });
+
+    // also watch for changes to the currentUser subject to update name
+    this.authService.currentUser$.subscribe((user) => {
+      if (user) {
+        this.userName = this.extractUserName(user);
+      }
+    });
+  }
+
+  // helper to notify application-wide wallet profile status changes
+  private emitWalletFound(): void {
+    try {
+      // use injector from AuthService to avoid circular imports
+      const walletEvents: any = (this.authService as any).injector?.get
+        ? (this.authService as any).injector.get('WalletEventsService')
+        : null;
+      if (walletEvents && walletEvents.emitWalletProfileCreated) {
+        walletEvents.emitWalletProfileCreated();
+      }
+    } catch (e) {
+      console.warn('Unable to emit wallet found event', e);
+    }
+  }
+
+  // helper used by constructor and any manual refreshes
+  private resetDashboardState(): void {
+    this.hasWalletProfile = null;
+    this.walletBalance = 0;
+    this.paymentStatus = 'false';
+    // clear card arrays
+    this.dashboardCardsPaid.forEach((c) => (c.value = 0));
+    this.dashboardStatCardsPaid.forEach((c) => (c.value = 0));
+    this.dashboardCardsUnpaid.forEach((c) => (c.value = 0));
+    this.dashboardStatCardsUnpaid.forEach((c) => (c.value = 0));
+    // other fields
+    this.notificationCount = 0;
+    this.userName = '';
+    this.scouterDetails = null;
+  }
 
   async getWalletProfile(): Promise<void> {
     try {
-      const userData: any = localStorage.getItem('user_data');
-      if (!userData) {
-        this.hasWalletProfile = false;
+      // prefer using currentUser from AuthService, if available
+      let user: any = this.authService.getCurrentUser();
+      if (!user) {
+        const userData: any = localStorage.getItem('user_data');
+        if (!userData) {
+          this.hasWalletProfile = false;
+          return;
+        }
+        user = JSON.parse(userData);
+      }
+
+      console.log('🔍 Checking wallet profile for user object:', user);
+
+      // make sure we operate on a plain object regardless of whether the
+      // user record is stored as a string in localStorage or already parsed
+      const parsed: any = typeof user === 'string' ? JSON.parse(user) : user;
+
+      // Fallback: some backend responses include `profile: {}` when a wallet
+      // actually exists. Treat an empty object as a positive indication so the
+      // UI doesn't erroneously flip to "no wallet" during edge cases.
+      if (parsed.profile && Object.keys(parsed.profile).length === 0) {
+        this.hasWalletProfile = true;
+        console.log('💰 Wallet profile detected via empty object fallback');
+        this.emitWalletFound();
         return;
       }
 
-      const parsed = JSON.parse(userData);
-      console.log('🔍 Checking wallet profile in user_data:', parsed);
-
       // Method 1: Check completeOnboarding JSON string (primary source)
-      if (parsed.completeOnboarding) {
+      if (user.completeOnboarding) {
         try {
-          const onboarding = JSON.parse(parsed.completeOnboarding);
+          const onboarding =
+            typeof user.completeOnboarding === 'string'
+              ? JSON.parse(user.completeOnboarding)
+              : user.completeOnboarding;
           console.log('📦 Parsed completeOnboarding:', onboarding);
 
           // IMPORTANT: Check the value explicitly
           if (onboarding.hasWalletProfile === true) {
             this.hasWalletProfile = true;
             console.log('✅ Wallet profile found in completeOnboarding (true)');
+            // notify global listeners (app component menu etc.)
+            try {
+              const walletEvents =
+                this.authService['injector']?.get('WalletEventsService') ??
+                null;
+              if (walletEvents && walletEvents.emitWalletProfileCreated) {
+                walletEvents.emitWalletProfileCreated();
+              }
+            } catch {}
             return;
           } else if (onboarding.hasWalletProfile === false) {
             this.hasWalletProfile = false;
@@ -192,6 +277,9 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
           '💰 Wallet profile from direct property:',
           this.hasWalletProfile,
         );
+        if (this.hasWalletProfile) {
+          this.emitWalletFound();
+        }
         return;
       }
 
@@ -199,6 +287,8 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       if (parsed.walletId || parsed.walletAccountNumber) {
         this.hasWalletProfile = true;
         console.log('💰 Wallet profile from identifiers');
+        // broadcast to app component
+        this.emitWalletFound();
         return;
       }
 
@@ -207,6 +297,7 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
       if (this.walletBalance > 0) {
         this.hasWalletProfile = true;
         console.log('💰 Wallet profile inferred from positive balance');
+        this.emitWalletFound();
         return;
       }
 
@@ -299,6 +390,9 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         this.hasWalletProfile = false;
         this.walletBalance = 0;
       }
+
+      // percentages should always reflect current cards
+      this.initializeDashboardData();
     });
 
     this.initializeDashboardData();
@@ -395,6 +489,16 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
   getScouterDetails() {
     this.showSpinner = true;
     this.loading = "Fetching Scouter's Dashboard...";
+
+    // Prefer current user object from AuthService
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.userName = this.extractUserName(currentUser);
+      setTimeout(() => (this.showSpinner = false), 2000);
+      return;
+    }
+
+    // Fallback to localStorage if auth service not populated yet
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
@@ -516,6 +620,9 @@ export class ScouterDashboardComponent implements OnInit, OnChanges {
         status: 'pending',
       },
     ];
+
+    // recalc the percentage cards after new values
+    this.initializeDashboardData();
 
     if (stats.recentHires && stats.recentHires.length > 0) {
       this.updateRecentHiresComponent(stats.recentHires);

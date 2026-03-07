@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ModalController, Platform } from '@ionic/angular';
 import { imageIcons } from 'src/app/models/stores';
 import { BaseModal } from 'src/app/base/base-modal.abstract';
+import { OverlayCleanupService } from 'src/app/services/overlay-cleanup.service';
 
 @Component({
   selector: 'app-update-profile-confirmation-popup-modal',
@@ -12,8 +13,12 @@ import { BaseModal } from 'src/app/base/base-modal.abstract';
 export class UpdateProfileConfirmationPopupModalComponent extends BaseModal {
   images = imageIcons;
 
-  constructor(modalCtrl: ModalController, platform: Platform) {
-    super(modalCtrl, platform);
+  constructor(
+    modalCtrl: ModalController,
+    platform: Platform,
+    protected override overlayCleanup: OverlayCleanupService,
+  ) {
+    super(modalCtrl, platform, overlayCleanup);
   }
 
   onCancel() {
